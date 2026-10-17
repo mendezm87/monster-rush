@@ -873,14 +873,15 @@ const MONSTER_ART = {
   smugshi(g, v = 'front') {
     const O = TOSHI.coat, C = TOSHI.white, Ei = TOSHI.ear, PINK = '#e8b4a4';
     if (v === 'side') {
-      g.ellipse(8, 15, 4.5, 4.5, O, { edge: true });                                             // curled tail
-      g.ellipse(7.5, 14.5, 2.7, 2.7, C); g.px(7, 14, O.s);
+      g.ellipse(8, 15, 4.5, 4.5, O, { edge: true });                                             // curled tail, very fluffy
+      g.ellipse(7.5, 14.5, 3.3, 3.3, C); g.px(7, 14, O.l); g.px(8, 15, O.s);
       g.ellipse(10, 27, 1.8, 3, P(C.s, '#cbbba4', C.b)); g.ellipse(19, 27, 1.8, 3, P(C.s, '#cbbba4', C.b));   // far legs
       g.ellipse(14, 22, 8.5, 5.5, O, { edge: true });                                            // body
       g.ellipse(14, 25.5, 7, 2, C);                                                              // white belly
+      g.ellipse(9, 25, 2.2, 2.6, C);                                                             // white back of the thigh
       g.ellipse(20, 22, 3.5, 4.5, C);                                                            // white chest
       g.ellipse(11, 27.5, 1.9, 3, C, { edge: true }); g.ellipse(21, 27.5, 1.9, 3, C, { edge: true });   // white legs
-      g.ellipse(17, 17, 4.5, 3.2, C);                                                            // white ruff from the throat round the neck
+      g.poly([[13, 15], [16, 13.5], [19, 17], [22, 22], [18, 23], [15.5, 18.5]], C);             // white sash from the chest up over the neck
       g.poly([[14, 8], [13, 1], [17, 5]], O);                                                    // far ear
       g.ellipse(19, 12, 6.5, 5.5, O, { edge: true });                                            // head
       g.px(13, 15, C.b); g.px(13, 16, C.b); g.px(14, 17, C.b);                                   // the ruff showing behind the head
