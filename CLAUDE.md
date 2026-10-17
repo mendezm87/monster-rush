@@ -58,6 +58,11 @@ A real-time, top-down pixel-art **roguelike** in the style of *The Binding of Is
 - **Diagonal views (8-way turning)**, asked for by the owner: `fside` (three-quarter front, heading down-right) and `bside` (three-quarter back, heading up-right), both flipped by `face` for the left. They live in `MONSTER_ART_DIAG` in `js/sprites.js` (sets `SPRITES[id].diag`) and `TRAINER_FSIDE`/`TRAINER_BSIDE` in `js/pixel.js`; `viewFor()` picks the view from 8 directions with a little hysteresis (or 4 for a monster without diagonals). **Every monster, the evolved starters and the trainer have them** (the owner approved the first batch, then asked for the rest). The usual recipe: from the front view, shift the face and muzzle 2-4 px toward the right, shrink the far-side ear/arm/eye a little, and move the tail out to the left; for `bside`, take the back view, shift the head right and let a sliver of muzzle or cheek peek out on the right edge. The gallery shows the diagonals and spins through all 8.
 - **More music** (the owner: "we only have one song"): `Sfx.music` holds several original songs (`SONGS` in `js/audio.js`; melodies written as note names, `mel('E5.2 G5.4 r.2')`). Rush (floor 1 meadow, the original), Magma March (floor 2 crater, D minor 160), Summit Wind (floor 3 summit, A minor 150, square lead), Deep Echoes (endless grotto and ruins, B minor 138, half-time), Boss Rush (boss rooms until the boss falls, C minor 184), Coin Corner (the shop, F major 112). `roomSong()` in `js/dungeon.js` picks one per room; `Sfx.music.play(name)` crossfades and ignores the song already playing. Levels were checked with `_scheduleAll(seconds, name)`: peaks 0.16-0.20, similar RMS.
 
+### Goals and plans (2026-10-17)
+
+- The owner wants this to become a **full-fledged roguelike**, with **Steam and phones** as the release targets (browser stays for now). Plan: wrap with Electron or Tauri for Steam and Capacitor for phones; consoles only much later. Port-readiness work still to do: bundle the font locally (it comes from Google Fonts now), a settings screen (volume, fullscreen, control remapping), crisp scaling at 1080p/4K, and versioned save data.
+- **Before any paid release, the monsters that look too much like Pokémon need redesigns** (e.g. Sparkit ~ Pikachu, Slumbear ~ Snorlax), plus the trainer and the copied type chart. **The owner really likes Slumbear's design**: if it changes, go through several revisions with lots of their input, never a solo redesign.
+
 ### Not decided yet (ask the owner when it matters)
 
 Which other monsters evolve and into what (to design together); more relics and unlock types; whether the evolved starters' designs are what the owner wants; a title-screen song.
@@ -95,9 +100,11 @@ Which other monsters evolve and into what (to design together); more relics and 
 
 ## Testing
 
-There is no test suite. Check changes in the browser:
+**Run `test.html` after every change** (serve the folder with `python -m http.server 8137`, then open http://localhost:8137/test.html). It loads the real game in a frame, stubs `Save.write` so the owner's save is never touched, mutes, and checks: every sprite in all 5 views, every song renders at a sane level, and hard bots play full runs (10 normal + 2 endless per starter by default; `?runs=`, `&endless=`, `&maxfloor=`, `&starter=`). Any error or a bot stuck while exploring fails it; a fight lasting 4+ minutes is listed as a balance note. It takes about a minute. Win rates are noisy at 10 runs, so compare with more runs before reading anything into a change. Baseline (r21): Smugshi 7/10, Cinderox 3/10, Tidalisk 1/10 wins; endless bots reach floor 2-5.
 
-- Serve the folder with `python -m http.server 8137` (another port if the arena game's server is running) and open it. `window.__MBS` exposes app state.
+The bot (in `test.html`) fights with an `AI(DIFFICULTY.hard)`, swaps when a fight passes 45 s, and explores by picking up loot, visiting pedestals (recruits while there's room, takes relics, buys what it can use), then walking to the nearest unvisited room (boss last) and the stairs. For one-off checks in the console:
+
+- Serve the folder as above and open it. `window.__MBS` exposes app state.
 - **Mute first** (see Workflow).
 - Bot-play: set `App.paused = true` (so the real loop doesn't also step), override `Input.dir` to return an `AI`'s direction in fights (`ai.update(dt, battle.P, battle)` fires moves itself) and a walk-to-the-next-door direction when exploring, stub `UI.pickNext` and `openRecruit`, make `window.transition = fn => fn()`, and step `App.battle.update(1/60)`. A whole run takes a few seconds. Yield (`await setTimeout 0`) every few hundred steps. When the Browser pane is hidden the real game loop doesn't run, so step manually there too. Don't name test globals `W` or `H` (they're the view-size constants).
 - Balance checks: full bot runs per starter (floor reached, rooms cleared); log damage taken per move by wrapping `Battle.prototype.hit`. Hard bots favour ranged kits, so read results with that in mind.

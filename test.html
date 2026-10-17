@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0d0b14">
+  <title>Monster Rush Tests</title>
+  <style>
+    :root { --ink: #15111f; --ok: #6ee07a; --bad: #ff6a6a; --warn: #ffd23f; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #0d0b14; color: #eee; font: 14px/1.45 system-ui, sans-serif; padding: 16px; }
+    h1 { margin: 0 0 4px; font-size: 26px; color: #ffe066; }
+    a { color: #7fd4ff; }
+    .hint { opacity: .75; max-width: 900px; margin: 0 0 12px; }
+    #verdict { font-size: 28px; font-weight: 900; margin: 10px 0; }
+    #verdict.pass { color: var(--ok); } #verdict.fail { color: var(--bad); } #verdict.run { color: var(--warn); }
+    .wrap { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
+    iframe { width: 576px; max-width: 100%; aspect-ratio: 16 / 9; border: 2px solid #3a3358; border-radius: 10px; background: #000; }
+    table { border-collapse: collapse; margin: 8px 0 16px; }
+    th, td { padding: 4px 10px; border-bottom: 1px solid #2a2440; text-align: left; }
+    th { color: #ffe066; font-weight: 700; }
+    td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .ok { color: var(--ok); } .bad { color: var(--bad); } .warn { color: var(--warn); }
+    #log { white-space: pre-wrap; font: 12px/1.4 ui-monospace, Consolas, monospace; background: #15111f; border-radius: 8px; padding: 8px 10px; max-height: 260px; overflow: auto; min-width: 300px; flex: 1; }
+    button { font: 700 14px system-ui; padding: 6px 14px; border-radius: 8px; border: 2px solid var(--ink); background: #ffd23f; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <h1>Monster Rush tests</h1>
+  <p class="hint">Bots play the real game (muted) in the box below, and your saved progress is never touched. Options in the address bar:
+    <code>?runs=10</code> normal runs per starter, <code>&amp;endless=2</code> endless runs per starter (stopped at floor <code>&amp;maxfloor=6</code>), <code>&amp;starter=smugshi</code> to test just one.
+    <a href="gallery.html">Gallery</a> · <a href="./">Game</a></p>
+  <div id="verdict" class="run">Running…</div>
+  <div class="wrap">
+    <iframe id="game" src="index.html?test"></iframe>
+    <div id="log"></div>
+  </div>
+  <h2>Checks</h2>
+  <table id="checks"><tr><th>Check</th><th>Result</th><th>Details</th></tr></table>
+  <h2>Bot runs</h2>
+  <p class="hint">Hard bots. Balance numbers aren't pass/fail, they're there to compare before and after a change. Bots favour ranged moves, so read them with that in mind.</p>
+  <table id="runs"><tr><th>Starter</th><th>Mode</th><th>Runs</th><th>Wins</th><th>Avg floor</th><th>Best floor</th><th>Avg rooms</th><th>Avg game time</th><th>Problems</th><th>Notes</th></tr></table>
+  <button id="again">Run again</button>
+
+<script>
+const q = new URLSearchParams(location.search);
+const RUNS = +(q.get('runs') ?? 10), ENDLESS = +(q.get('endless') ?? 2), MAX_FLOOR = +(q.get('maxfloor') ?? 6);
+const $ = s => document.querySelector(s);
+const logEl = $('#log');
+const log = s => { logEl.textContent += s + '\n'; logEl.scrollTop = logEl.scrollHeight; };
+const problems = [];
+let checksOk = true;
+function check(name, ok, details = '') {
+  if (!ok) { checksOk = false; problems.push(name + ': ' + details); }
+  $('#checks').insertAdjacentHTML('beforeend', `<tr><td>${name}</td><td class="${ok ? 'ok' : 'bad'}">${ok ? 'PASS' : 'FAIL'}</td><td>${details}</td></tr>`);
+}
+$('#again').onclick = () => location.reload();
+const tick = () => new Promise(r => setTimeout(r, 0));
+
+$('#game').addEventListener('load', async () => {
+  const w = $('#game').contentWindow;
+  const G = name => w.eval(name);     // the game's globals (const/let ones aren't on window)
+  const errors = [];
+  w.addEventListener('error', e => errors.push(String(e.message || e.error)));
+  w.addEventListener('unhandledrejection', e => errors.push(String(e.reason)));
+
+  // Never touch the real save, and keep the sound off.
+  const Save = G('Save'), Sfx = G('Sfx');
+  Save.write = () => {};
+  if (!Sfx.muted) w.toggleMute();
+
+  // ---------- sprites: every monster and the trainer, in every view ----------
+  try {
+    const VIEWS = ['front', 'fside', 'side', 'bside', 'back'], bad = [];
+    for (const m of G('ALL_MONS()')) {
+      const sp = G('SPRITES')[m.id];
+      for (const v of VIEWS) {
+        const cv = sp && sp.views[v];
+        const px = cv && cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data.some((a, i) => i % 4 === 3 && a > 0);
+        if (!px) bad.push(`${m.id}/${v}`);
+      }
+    }
+    for (const v of G('TRAINER_VIEWS')) if (!w.trainerCanvas('crimson', v).width) bad.push('trainer/' + v);
+    const n = G('ALL_MONS()').length;
+    check('Sprites', !bad.length, bad.length ? 'missing or empty: ' + bad.join(', ') : `${n} monsters × ${VIEWS.length} views, plus the trainer`);
+  } catch (e) { check('Sprites', false, e.message); }
+
+  // ---------- music: every song renders without errors and at a sane level ----------
+  try {
+    const out = [];
+    let ok = true;
+    for (const name of Object.keys(Sfx.music.SONGS)) {
+      const off = new w.OfflineAudioContext(1, 22050 * 6, 22050);
+      Sfx._offline(off, ({ Music }) => Music._scheduleAll(6, name));
+      const d = (await off.startRendering()).getChannelData(0);
+      let peak = 0; for (const s of d) peak = Math.max(peak, Math.abs(s));
+      if (!(peak > 0.05 && peak < 0.5)) ok = false;
+      out.push(`${name} ${peak.toFixed(2)}`);
+    }
+    check('Music', ok, 'peak levels: ' + out.join(', '));
+  } catch (e) { check('Music', false, e.message); }
+
+  // ---------- bot runs ----------
+  const App = G('App'), Input = G('Input'), UI = G('UI');
+  const AI = G('AI'), DIFF = G('DIFFICULTY'), doorPos = G('doorPos'), RELICS = G('RELICS');
+  const origDir = Input.dir;
+  w.transition = fn => fn();
+  UI.pickNext = (team, cb) => cb(team.findIndex(m => !m.fainted));
+  const realOffer = w.openOffer, Offer = G('Offer');
+  const btn = id => w.document.getElementById(id);
+  // the bot says yes to recruits (while there's room), relics and anything useful it can afford
+  w.openOffer = ped => {
+    realOffer(ped);
+    const run = App.run;
+    let take = false;
+    if (ped.kind === 'mon') take = run.party.length < 6;
+    else if (ped.kind === 'relic') take = true;
+    else take = run.coins >= ped.item.price && (!!RELICS[ped.id] || run.useGood(ped.id, true));
+    (take ? btn('btn-recruit-yes') : btn('btn-recruit-no')).onclick();
+  };
+
+  // Which way to walk out of combat: pickups, then pedestals, the stairs, and finally
+  // the next unvisited room (the boss last).
+  function exploreTarget(b, bot) {
+    const P = b.P, room = b.room;
+    const near = b.pickups.filter(k => k.t > 0.5).sort((a, c) => Math.hypot(a.x - P.x, a.y - P.y) - Math.hypot(c.x - P.x, c.y - P.y))[0];
+    if (near) return { x: near.x, y: near.y };
+    const ped = b.pedestals.find(p => !bot.peds.has(p));
+    if (ped) {
+      if (Math.hypot(P.x - ped.x, P.y - ped.y) < 22 + P.r) bot.peds.add(ped);
+      return { x: ped.x, y: ped.y + 4 };
+    }
+    if (b.stairs) return b.stairs;
+    const dir = nextDoor(room, App.run.floor);
+    if (!dir) return null;
+    const d = doorPos(room, dir), F = b.F;
+    const inside = { n: [d.x, F.y0 + 12], s: [d.x, F.y1 - 6], w: [F.x0 + 12, d.y + 8], e: [F.x1 - 12, d.y + 8] }[dir];
+    const outside = { n: [d.x, F.y0 - 40], s: [d.x, F.y1 + 40], w: [F.x0 - 40, d.y + 8], e: [F.x1 + 40, d.y + 8] }[dir];
+    const lined = dir === 'n' || dir === 's' ? Math.abs(P.x - d.x) < 6 : Math.abs(P.y - (d.y + 8)) < 6;
+    const at = lined ? outside : inside;
+    return { x: at[0], y: at[1] };
+  }
+  // first step towards the nearest unvisited room (ignoring the boss until everything else is seen)
+  function nextDoor(from, floor) {
+    const boss = floor.rooms.find(r => r.type === 'boss');
+    const goal = r => (r.type === 'boss' ? (floor.rooms.every(o => o.visited || o.type === 'boss') && !r.cleared) : !r.visited);
+    const seen = new Set([from]), queue = [[from, null]];
+    while (queue.length) {
+      const [r, first] = queue.shift();
+      for (const [dir, n] of Object.entries(r.doors)) {
+        if (!n || seen.has(n)) continue;
+        seen.add(n);
+        const f = first || dir;
+        if (goal(n)) return f;
+        queue.push([n, f]);
+      }
+    }
+    return boss && !boss.cleared ? null : null;
+  }
+
+  async function botRun(starter, endless) {
+    App.endless = endless;
+    w.startRun(starter);
+    const ai = new AI(DIFF.hard);
+    const bot = { peds: new Set(), room: null, roomT: 0, lastPos: null, stuckT: 0, wiggle: 0, swaps: 0 };
+    let dir = { x: 0, y: 0 }, steps = 0, problem = null, note = null;
+    Input.dir = () => dir;
+    const DT = 1 / 60, LIMIT = 60 * 60 * 40;   // 40 minutes of game time at most
+    while (true) {
+      const b = App.battle;
+      if (!b || b.state === 'over') break;
+      if (endless && App.run.floorN > MAX_FLOOR) break;
+      if (++steps > LIMIT) { problem = 'took too long'; break; }
+      if (b.room !== bot.room) { bot.room = b.room; bot.roomT = 0; bot.peds = new Set(); bot.swaps = 0; }
+      bot.roomT += DT;
+      if (bot.roomT > 240) {
+        const who = b.e.filter(m => m.alive).map(m => `${m.id} ${Math.round(m.hp)}/${Math.round(m.maxHp)} HP`).join(', ');
+        const msg = `a ${b.room.type} room on floor ${App.run.floorN} (${b.P.id} ${Math.round(b.P.hp)} HP${who ? ' vs ' + who : ''})`;
+        // a fight nobody can win is a balance note; getting stuck while exploring is a bug
+        if (b.state === 'fight') note = 'fight lasted 4+ minutes in ' + msg; else problem = `stuck (${b.state}) in ` + msg;
+        break;
+      }
+      if (b.state === 'fight') {
+        dir = ai.update(DT, b.P, b);
+        // like a player would: swap someone else in when a fight drags on
+        if (bot.roomT > 45 * (bot.swaps + 1)) {
+          bot.swaps++;
+          for (let k = 1; k < b.p.length; k++) { const i = (b.pi + k) % b.p.length; if (b.canSwap('player', i)) { b.swap('player', i); break; } }
+        }
+      }
+      else if (b.state === 'explore') {
+        const t = exploreTarget(b, bot), P = b.P;
+        if (!t) dir = { x: 0, y: 0 };
+        else {
+          const dx = t.x - P.x, dy = t.y - P.y, d = Math.hypot(dx, dy) || 1;
+          dir = { x: dx / d, y: dy / d };
+          // step around pedestals that are in the way
+          for (const p of b.pedestals) {
+            const px = P.x - p.x, py = P.y - p.y, pd = Math.hypot(px, py);
+            if (pd < 34 && pd > 0 && Math.hypot(t.x - p.x, t.y - p.y) > 8) { dir.x += -py / pd * 0.9; dir.y += px / pd * 0.9; }
+          }
+          // nudged sideways if it hasn't moved for a while
+          const moved = bot.lastPos ? Math.hypot(P.x - bot.lastPos.x, P.y - bot.lastPos.y) : 1;
+          bot.lastPos = { x: P.x, y: P.y };
+          bot.stuckT = moved < 0.2 ? bot.stuckT + DT : 0;
+          if (bot.stuckT > 0.6) bot.wiggle = 0.5;
+          if (bot.wiggle > 0) { bot.wiggle -= DT; dir = { x: -dir.y, y: dir.x }; }
+        }
+      }
+      try { b.update(DT); } catch (e) { errors.push(e.message + ' @ ' + (e.stack || '').split('\n')[1]); problem = 'error: ' + e.message; break; }
+      App.paused = true;   // keep the game's own loop from stepping too (it still draws)
+      if (steps % 400 === 0) await tick();
+    }
+    Input.dir = origDir;
+    const run = App.run;
+    const res = { win: !!(App.battle && App.battle.state === 'over' && run.floorN >= G('RUN_FLOORS') && !endless && run.party.some(m => !m.fainted)),
+      floor: run.floorN, rooms: run.stats.rooms, time: run.stats.time, problem, note };
+    w.leaveRun('title');
+    return res;
+  }
+
+  const rows = [], runProblems = [];
+  const plan = [];
+  for (const s of q.get('starter') ? [q.get('starter')] : G('STARTERS')) {
+    if (RUNS) plan.push([s, false, RUNS]);
+    if (ENDLESS) plan.push([s, true, ENDLESS]);
+  }
+  for (const [starter, endless, n] of plan) {
+    const rs = [];
+    for (let i = 0; i < n; i++) {
+      const before = errors.length;
+      const r = await botRun(starter, endless);
+      if (errors.length > before && !r.problem) r.problem = 'error: ' + errors[before];
+      rs.push(r);
+      log(`${starter} ${endless ? 'endless' : 'normal'} #${i + 1}: ${r.win ? 'WIN' : 'floor ' + r.floor}, ${r.rooms} rooms, ${Math.round(r.time)} s${r.problem ? '  ✗ ' + r.problem : ''}${r.note ? '  ⚠ ' + r.note : ''}`);
+    }
+    const avg = k => rs.reduce((a, r) => a + r[k], 0) / rs.length;
+    const probs = [...new Set(rs.map(r => r.problem).filter(Boolean))];
+    const notes = [...new Set(rs.map(r => r.note).filter(Boolean))];
+    probs.forEach(p => runProblems.push(`${starter}: ${p}`));
+    const t = Math.round(avg('time'));
+    $('#runs').insertAdjacentHTML('beforeend', `<tr><td>${G('ROSTER_BY_ID')[starter].name}</td><td>${endless ? 'Endless' : 'Normal'}</td>
+      <td class="num">${rs.length}</td><td class="num">${endless ? '–' : rs.filter(r => r.win).length}</td>
+      <td class="num">${avg('floor').toFixed(1)}</td><td class="num">${Math.max(...rs.map(r => r.floor))}</td>
+      <td class="num">${avg('rooms').toFixed(1)}</td><td class="num">${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}</td>
+      <td class="${probs.length ? 'bad' : 'ok'}">${probs.join('; ') || 'none'}</td><td class="warn">${notes.join('; ')}</td></tr>`);
+    rows.push({ starter, endless, rs });
+  }
+  check('Bot runs', !runProblems.length, runProblems.length ? runProblems.join(' | ') : `${rows.reduce((a, r) => a + r.rs.length, 0)} runs, no errors and nobody got stuck`);
+  check('No errors in the page', !errors.length, errors.length ? [...new Set(errors)].slice(0, 5).join(' | ') : 'none');
+
+  const pass = checksOk && !problems.length;
+  const v = $('#verdict');
+  v.className = pass ? 'pass' : 'fail';
+  v.textContent = pass ? 'PASS' : `FAIL: ${problems.length} problem${problems.length > 1 ? 's' : ''}`;
+  window.__results = { pass, problems, rows: rows.map(r => ({ starter: r.starter, endless: r.endless, rs: r.rs })) };
+  document.title = (pass ? 'PASS' : 'FAIL') + ' · Monster Rush Tests';
+});
+</script>
+</body>
+</html>
