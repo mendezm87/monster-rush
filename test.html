@@ -95,6 +95,15 @@ $('#game').addEventListener('load', async () => {
     check('Sprites', !bad.length, bad.length ? 'missing or empty: ' + bad.join(', ') : `${n} monsters × ${VIEWS.length} views, plus the trainer`);
   } catch (e) { check('Sprites', false, e.message); }
 
+  // ---------- saves: an old save upgrades step by step to the current version ----------
+  try {
+    const UP = G('SAVE_UPGRADES'), VERSION = G('SAVE_VERSION');
+    const d = { starters: ['smugshi', 'cinderox', 'tidalisk', 'lumawool'], runs: 7, wins: 2, bestFloor: 3, bestEndless: 5, recruited: ['mindra'], lighting: false };
+    for (let v = 1; v < VERSION; v++) if (UP[v]) UP[v](d);
+    const ok = d.settings && d.settings.lighting === false && !('lighting' in d) && d.runs === 7 && d.starters.length === 4;
+    check('Save upgrade', ok, `a version 1 save upgrades to version ${VERSION} and keeps its progress`);
+  } catch (e) { check('Save upgrade', false, e.message); }
+
   // ---------- music: every song renders without errors and at a sane level ----------
   try {
     const out = [];

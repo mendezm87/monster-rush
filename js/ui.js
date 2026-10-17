@@ -3,7 +3,7 @@
 const $ = sel => document.querySelector(sel);
 
 const UI = {
-  screens: ['title', 'help', 'starter', 'recruit', 'party', 'pick', 'pause', 'result'],
+  screens: ['title', 'help', 'starter', 'recruit', 'party', 'pick', 'pause', 'result', 'settings'],
 
   show(name) {
     for (const s of this.screens) $('#screen-' + s).classList.toggle('hidden', s !== name);
@@ -148,12 +148,13 @@ const UI = {
       const col = TYPES[mv.type].color;
       b.style.background = `linear-gradient(${col}, ${shadeHex(col, -0.25)})`;
       const key = `${i >= 2 ? '<b>⇧</b>' : ''}${mouseIcon(i % 2 === 0 ? 'left' : 'right')}`;
-      b.title = keys[i].replace('⇧', 'Shift +');
+      b.title = keys[i].replace('⇧', 'Shift +') + ' or ' + Input.keyName(Input.keysFor('move' + (i + 1))[0]);
       b.innerHTML = `<span class="key">${key}</span><span class="nm">${mv.name}</span><div class="cd"></div>`;
       Input.bindMoveButton(b, i, 0);
       box.appendChild(b);
       return { el: b, cd: b.querySelector('.cd') };
     });
+    $('#btn-swap .key').textContent = Input.swapLabel();
   },
 
   hudCache: {},

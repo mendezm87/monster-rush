@@ -1,6 +1,10 @@
 // Room drawing: pixel-noise floors, walls and doorways for dungeon rooms.
 
-const W = 576, H = 324;   // the view in world units (the canvas is 2x this); rooms can be bigger and scroll
+const W = 576, H = 324;   // the view in world units (the canvas is RES x this); rooms can be bigger and scroll
+// Canvas pixels per world unit. Always even, so a sprite pixel (1.5 world units) is a whole
+// number of canvas pixels: 2 on small screens, 4 at 1080p, 6 at 4K. main.js picks it to
+// match the screen (fitScreen) and the browser smoothly shrinks that to the exact size.
+let RES = 2;
 const WALL = { top: 44, side: 26, bottom: 26 };
 const DOOR_W = 52;        // doorway width
 const DOOR_DIRS = { n: [0, -1, 's'], s: [0, 1, 'n'], w: [-1, 0, 'e'], e: [1, 0, 'w'] };

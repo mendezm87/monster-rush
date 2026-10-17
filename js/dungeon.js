@@ -146,15 +146,42 @@ function tryFloor(floorN, partyIds, relics) {
 }
 
 // Progress kept between runs (in this browser). Beating a boss unlocks its species as a starter.
-const SAVE_KEY = 'monsterRush.save.v1';
+// The save carries a version number. When its shape changes, bump SAVE_VERSION and add a
+// step to SAVE_UPGRADES that turns version n into n + 1, so older saves keep working after an
+// update. Before upgrading, the old save is copied to a backup key.
+const SAVE_KEY = 'monsterRush.save.v1';   // the storage key stays the same; the version lives inside
+const SAVE_VERSION = 2;
+const SAVE_UPGRADES = {
+  // 1 -> 2: settings get their own section (the lighting switch moves into it)
+  1(d) {
+    d.settings = { lighting: d.lighting !== false };
+    delete d.lighting;
+  },
+};
+const DEFAULT_SETTINGS = { lighting: true, music: 0.8, sfx: 0.8, keys: {} };   // keys: action -> key code (see Input)
 const Save = {
-  data: { starters: [...STARTERS], runs: 0, wins: 0, bestFloor: 0, bestEndless: 0, recruited: [] },
+  data: { version: SAVE_VERSION, starters: [...STARTERS], runs: 0, wins: 0, bestFloor: 0, bestEndless: 0, recruited: [], settings: { ...DEFAULT_SETTINGS } },
   load() {
-    try { const d = JSON.parse(localStorage.getItem(SAVE_KEY)); if (d) Object.assign(this.data, d); } catch (e) { /* storage blocked: play without saving */ }
+    let d = null;
+    try { d = JSON.parse(localStorage.getItem(SAVE_KEY)); } catch (e) { /* storage blocked or broken: play without it */ }
+    if (d && typeof d === 'object') {
+      const from = d.version || 1;
+      if (from < SAVE_VERSION) {
+        try { localStorage.setItem(`${SAVE_KEY}.backup-v${from}`, JSON.stringify(d)); } catch (e) { /* ignore */ }
+        for (let v = from; v < SAVE_VERSION; v++) if (SAVE_UPGRADES[v]) SAVE_UPGRADES[v](d);
+        d.version = SAVE_VERSION;
+      }
+      // a save from a newer build (e.g. a stale cached page): use what we understand, keep its version
+      Object.assign(this.data, d);
+      this.data.settings = { ...DEFAULT_SETTINGS, ...(d.settings || {}) };
+      if (from < SAVE_VERSION) this.write();
+    }
     for (const id of STARTERS) if (!this.data.starters.includes(id)) this.data.starters.push(id);
     this.data.starters = this.data.starters.filter(id => ROSTER.some(m => m.id === id));
   },
   write() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(this.data)); } catch (e) { /* ignore */ } },
+  get settings() { return this.data.settings; },
+  setSetting(key, value) { this.data.settings[key] = value; this.write(); },
   unlockStarter(id) {
     if (this.data.starters.includes(id) || !ROSTER.some(m => m.id === id)) return false;
     this.data.starters.push(id); this.write(); return true;

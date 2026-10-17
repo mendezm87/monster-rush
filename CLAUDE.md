@@ -60,7 +60,14 @@ A real-time, top-down pixel-art **roguelike** in the style of *The Binding of Is
 
 ### Goals and plans (2026-10-17)
 
-- The owner wants this to become a **full-fledged roguelike**, with **Steam and phones** as the release targets (browser stays for now). Plan: wrap with Electron or Tauri for Steam and Capacitor for phones; consoles only much later. Port-readiness work still to do: bundle the font locally (it comes from Google Fonts now), a settings screen (volume, fullscreen, control remapping), crisp scaling at 1080p/4K, and versioned save data.
+- The owner wants this to become a **full-fledged roguelike**, with **Steam and phones** as the release targets (browser stays for now). Plan: wrap with Electron or Tauri for Steam and Capacitor for phones; consoles only much later. Port-readiness basics done in r23 (below); still to do: gamepad button remapping, and an installable web app (manifest + offline cache).
+
+### Port-readiness basics (r23)
+
+- **No internet needed:** the Lilita One font is bundled (`fonts/`, `css/fonts.css`, SIL OFL in `fonts/OFL.txt`). Don't add CDN or Google Fonts links to the game pages.
+- **Versioned saves:** `Save.data.version` (`SAVE_VERSION` in `js/dungeon.js`). To change the save's shape, bump `SAVE_VERSION` and add `SAVE_UPGRADES[n]` that turns version n into n + 1; `Save.load` copies the old save to `monsterRush.save.v1.backup-v<n>` first. test.html checks a version-1 save upgrades. The storage key stays `monsterRush.save.v1`.
+- **Settings** (title screen and pause menu, `#screen-settings`, logic in `js/main.js`), saved in `Save.data.settings`: music and effects volume (`Sfx.setVolume`; effects go through `master`, music through `musicBus`, both into `mainOut`, which mute silences), fullscreen (not remembered: browsers need a click; on phones it also locks landscape), lighting, and keyboard remapping (`Input.ACTIONS`, `Input.bind`; the first key of each action is remappable, extras such as the arrows stay unless taken; Esc, P and M are reserved). Mute still resets on reload on purpose.
+- **Crisp scaling:** `RES` (in `js/arena.js`) is canvas pixels per world unit, always even so sprite pixels stay whole: 2 below ~1152 px, 4 at 1080p, 6 at 1440p/4K (capped there for speed). `fitScreen` in main.js picks it from the game box's real pixel size and the browser smoothly shrinks the canvas to fit. Draw world things after `ctx.setTransform(RES, 0, 0, RES, 0, 0)`; never assume the canvas is 1152 wide. The lighting buffers stay at 2x and are stretched (`RES / 2`).
 - **Before any paid release, the monsters that look too much like Pokémon need redesigns** (e.g. Sparkit ~ Pikachu, Slumbear ~ Snorlax), plus the trainer and the copied type chart. **The owner really likes Slumbear's design**: if it changes, go through several revisions with lots of their input, never a solo redesign.
 
 ### Not decided yet (ask the owner when it matters)
@@ -97,10 +104,10 @@ Which other monsters evolve and into what (to design together); more relics and 
 | `js/combat.js` | `mixInto(Battle, class {...})`: moves (`tryMove`, `aim`, `execute`), `hit`, statuses, move actions in flight (dashes, beams, bursts, vortexes), projectiles, zones, thrown balls |
 | `js/render.js` | Sprite tints (`tinted`), `ICON_ART`/`itemIcon` for relic and shop icons, and `mixInto(Battle, ...)`: effects (shake, particles, numbers, weather) and all of a room's drawing, minimap included |
 | `js/audio.js` | `Sfx`: synthesized SFX (incl. `coin`, `doorShut`, `doorOpen`, `stairs`), `beamCharge`/`beamFire` + per-type layers, `Sfx.music` sequencer, `_offline` render hook for level checks |
-| `js/ui.js`, `js/main.js` | HUD (active monster, boss bar), callouts, swap tray, starter / recruit / party / pick / result screens, room-to-room flow (`enterRoom`, `roomHooks`), game loop, `VERSION` |
+| `js/ui.js`, `js/main.js` | HUD (active monster, boss bar), callouts, swap tray, starter / recruit / party / pick / result screens, room-to-room flow (`enterRoom`, `roomHooks`), the settings screen, `fitScreen` (picks `RES`), game loop, `VERSION` |
 | `gallery.html` | Sprite gallery (linked from the title screen): every monster and the trainer in front/side/back plus a turning preview, on any floor theme. New monsters appear in it automatically |
 | `js/lighting.js` | `Lighting`: room lighting (`apply` after the room and monsters are drawn, `overlay` after the crisp layer), wall torches, soft shadows (`Lighting.shadow`), on/off |
-| `js/input.js` | Keyboard, mouse, touch and gamepad input (`Input.dir(p)`, `Input.moves(p)`, `Input.mouse`) |
+| `js/input.js` | Keyboard, mouse, touch and gamepad input (`Input.dir(p)`, `Input.moves(p)`, `Input.mouse`), keyboard remapping (`ACTIONS`, `bind`, `setBindings`, `captureKey`, `keyName`) |
 
 ## Testing
 

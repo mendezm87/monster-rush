@@ -5,8 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#0d0b14">
   <title>Monster Rush</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap">
+  <link rel="stylesheet" href="css/fonts.css">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -57,9 +56,10 @@
         <button class="big-btn alt" id="btn-endless">ENDLESS</button>
       </div>
       <button class="small-btn" id="btn-help">How to play</button>
-      <a class="small-btn" id="btn-gallery" href="gallery.html">Monster gallery</a>
-      <button class="small-btn" id="btn-mute">Sound: On</button>
-      <button class="small-btn" id="btn-light">Lighting: On</button>
+      <div class="row">
+        <a class="small-btn" id="btn-gallery" href="gallery.html">Monster gallery</a>
+        <button class="small-btn" id="btn-settings">Settings</button>
+      </div>
       <div id="title-stats"></div>
       <div id="version"></div>
     </div>
@@ -126,8 +126,30 @@
       <h2>Paused</h2>
       <button class="big-btn" id="btn-resume">Resume</button>
       <button class="small-btn" id="btn-party">Party</button>
-      <button class="small-btn" id="btn-light2">Lighting: On</button>
+      <button class="small-btn" id="btn-settings2">Settings</button>
       <button class="small-btn" id="btn-quit">Give up run</button>
+    </div>
+
+    <div class="screen hidden dim" id="screen-settings">
+      <h2>Settings</h2>
+      <div class="settings">
+        <div class="set-col">
+          <h3>Sound</h3>
+          <label class="set-row"><span>Music</span><input type="range" id="set-music" min="0" max="100" step="5"><b id="set-music-v"></b></label>
+          <label class="set-row"><span>Effects</span><input type="range" id="set-sfx" min="0" max="100" step="5"><b id="set-sfx-v"></b></label>
+          <button class="small-btn" id="btn-mute">Sound: On</button>
+          <h3>Display</h3>
+          <button class="small-btn" id="btn-fullscreen">Fullscreen: Off</button>
+          <button class="small-btn" id="btn-light">Lighting: On</button>
+        </div>
+        <div class="set-col">
+          <h3>Keyboard</h3>
+          <div id="set-keys"></div>
+          <button class="small-btn" id="btn-keys-reset">Reset keys</button>
+          <div class="hint">Click a key to change it. Arrow keys always move too. Mouse: click and right-click (hold Shift for moves 3 and 4). <kbd>Esc</kbd> / <kbd>P</kbd> pause, <kbd>M</kbd> mutes.</div>
+        </div>
+      </div>
+      <button class="big-btn" id="btn-settings-back">Back</button>
     </div>
 
     <div class="screen hidden dim" id="screen-result">

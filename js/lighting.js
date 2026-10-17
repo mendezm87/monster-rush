@@ -4,7 +4,7 @@
 // stay crisp pixel art. Can be switched off (Settings) for slow devices.
 
 const Lighting = (() => {
-  const CW = W * 2, CH = H * 2;   // the view canvas size
+  const CW = W * 2, CH = H * 2;   // the light buffers work at 2x whatever the canvas size (RES)
   const mk = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
   const light = mk(CW, CH), small = mk(CW / 4, CH / 4), blur = mk(CW, CH), mask = mk(CW, CH);
   // where the lens blur shows: the top and bottom edges of the screen
@@ -86,7 +86,8 @@ const Lighting = (() => {
       for (const m of b.e) if (m.alive) glow(m.x, m.y - 10, 70, [255, 235, 210], 0.18);
       if (b.stairs) glow(b.stairs.x, b.stairs.y, 60, [255, 220, 120], 0.4);
       ctx.save();
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.setTransform(RES / 2, 0, 0, RES / 2, 0, 0);   // the light buffers are 2x; stretch them to the canvas
+      ctx.imageSmoothingEnabled = true;
       ctx.globalCompositeOperation = 'multiply'; ctx.drawImage(light, 0, 0);
       ctx.globalCompositeOperation = 'soft-light'; ctx.globalAlpha = 0.5; ctx.drawImage(light, 0, 0);
       ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
@@ -107,7 +108,7 @@ const Lighting = (() => {
       const mood = b.stage.light, t = b.time, dt = lastT === null ? 0 : Math.max(0, Math.min(0.05, t - lastT));
       lastT = t;
       ctx.save();
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.setTransform(RES / 2, 0, 0, RES / 2, 0, 0);
       ctx.globalCompositeOperation = 'lighter';
       const [R, G, B] = mood.torch;
       for (const m of motes) {

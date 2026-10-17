@@ -2,7 +2,7 @@
 
 // Shown on the title screen so players can tell whether their browser has the latest
 // build (GitHub Pages lets browsers cache files for up to 10 minutes). Bump on every release.
-const VERSION = '2026.10.17-r22';
+const VERSION = '2026.10.17-r23';
 
 const App = {
   endless: false,   // the mode picked on the title screen
@@ -14,6 +14,19 @@ const App = {
 
 const canvas = $('#view');
 const ctx = canvas.getContext('2d');
+
+// Crisp at any screen size: draw at the smallest even RES at least as big as the real screen
+// pixels (2 = 1152 wide, 4 = 2304 for 1080p), and let the browser smoothly shrink it to fit.
+// Whole-pixel sprites, no uneven columns. Capped at 6 (3456 wide) so 4K stays fast; there it's
+// stretched about 10%, which is barely softer.
+function fitScreen() {
+  const px = $('#game').getBoundingClientRect().width * (window.devicePixelRatio || 1);
+  const res = Math.min(6, Math.max(2, Math.ceil(px / W / 2 - 0.02) * 2));
+  if (res !== RES) { RES = res; canvas.width = W * RES; canvas.height = H * RES; }
+}
+fitScreen();
+window.addEventListener('resize', fitScreen);   // also catches a change of screen (pixel density)
+if (window.ResizeObserver) new ResizeObserver(fitScreen).observe($('#game'));
 buildSprites();
 
 // ---------- menu backdrop: a meadow with a few idle monsters ----------
@@ -24,7 +37,7 @@ const Backdrop = {
     this.mons = ['slumbear', 'sparkit', 'smugshi', 'tidalisk', 'cinderox', 'galewing'].map((id, i) => ({ id, x: 60 + i * 92, y: 270 + (i % 2) * 22, face: i % 2 ? -1 : 1 }));
   },
   render(dt, t) {
-    ctx.setTransform(2, 0, 0, 2, 0, 0);
+    ctx.setTransform(RES, 0, 0, RES, 0, 0);
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(this.stage.canvas, 0, 0);
     for (const m of this.mons) {
@@ -56,13 +69,89 @@ function toggleMute() { Sfx.init(); const m = Sfx.toggle(); muteBtn.textContent 
 muteBtn.onclick = toggleMute;
 Input.onMute = toggleMute;
 
-// Room lighting can be switched off on slow devices (remembered in this browser).
-Lighting.on = Save.data.lighting !== false;
-function showLighting() { for (const id of ['#btn-light', '#btn-light2']) $(id).textContent = 'Lighting: ' + (Lighting.on ? 'On' : 'Off'); }
-function toggleLighting() { Sfx.init(); Sfx.play('select'); Lighting.on = !Lighting.on; Save.data.lighting = Lighting.on; Save.write(); showLighting(); }
-$('#btn-light').onclick = toggleLighting;
-$('#btn-light2').onclick = toggleLighting;
-showLighting();
+// ---------- settings (saved with the progress, see Save.settings) ----------
+// Opened from the title screen or the pause menu; Back returns there.
+Sfx.setVolume('music', Save.settings.music);
+Sfx.setVolume('sfx', Save.settings.sfx);
+Input.setBindings(Save.settings.keys);
+let settingsFrom = 'title';
+function openSettings(from) { settingsFrom = from; drawSettings(); UI.show('settings'); }
+$('#btn-settings').onclick = () => { Sfx.init(); Sfx.play('select'); openSettings('title'); };
+$('#btn-settings2').onclick = () => { Sfx.play('select'); openSettings('pause'); };
+$('#btn-settings-back').onclick = () => { Input.cancelCapture(); Sfx.play('back'); UI.show(settingsFrom); };
+
+function drawSettings() {
+  for (const which of ['music', 'sfx']) {
+    const v = Math.round(Sfx.volume(which) * 100);
+    $('#set-' + which).value = v; $('#set-' + which + '-v').textContent = v;
+  }
+  showFullscreen(); showLighting(); drawKeys();
+}
+for (const which of ['music', 'sfx']) {
+  const el = $('#set-' + which);
+  el.oninput = () => { Sfx.init(); Sfx.setVolume(which, el.value / 100); $('#set-' + which + '-v').textContent = el.value; };
+  el.onchange = () => { Save.setSetting(which, el.value / 100); if (which === 'sfx') Sfx.play('select'); };
+}
+
+// Room lighting can be switched off on slow devices.
+Lighting.on = Save.settings.lighting !== false;
+function showLighting() { $('#btn-light').textContent = 'Lighting: ' + (Lighting.on ? 'On' : 'Off'); }
+$('#btn-light').onclick = () => { Sfx.init(); Sfx.play('select'); Lighting.on = !Lighting.on; Save.setSetting('lighting', Lighting.on); showLighting(); };
+
+// Fullscreen (browsers only allow it from a click, so it isn't remembered between visits).
+// On phones it also tries to lock the screen sideways.
+function showFullscreen() {
+  $('#btn-fullscreen').classList.toggle('hidden', !document.fullscreenEnabled);
+  $('#btn-fullscreen').textContent = 'Fullscreen: ' + (document.fullscreenElement ? 'On' : 'Off');
+}
+$('#btn-fullscreen').onclick = async () => {
+  Sfx.play('select');
+  try {
+    if (document.fullscreenElement) await document.exitFullscreen();
+    else {
+      await document.documentElement.requestFullscreen({ navigationUI: 'hide' });
+      if (Input.isTouch && screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {});
+    }
+  } catch (e) { /* refused: stay as we are */ }
+};
+document.addEventListener('fullscreenchange', () => { showFullscreen(); fitScreen(); });
+
+// Keyboard remapping: click a key, press the new one (Esc cancels).
+function drawKeys() {
+  const box = $('#set-keys');
+  box.innerHTML = '';
+  for (const a of Input.ACTIONS) {
+    const name = document.createElement('span');
+    name.textContent = a.name;
+    const b = document.createElement('button');
+    b.className = 'keybtn';
+    b.textContent = Input.keyName(Input.keysFor(a.id)[0]);
+    b.onclick = () => {
+      Sfx.play('select');
+      drawKeys();
+      const btn = [...box.querySelectorAll('.keybtn')].find(x => x.dataset.a === a.id);
+      btn.classList.add('wait'); btn.textContent = 'Press a key';
+      Input.captureKey(code => {
+        if (Input.RESERVED.includes(code) && code !== 'Escape') {
+          btn.textContent = `${Input.keyName(code)} is taken`;
+          setTimeout(drawKeys, 900);
+          return;
+        }
+        if (code !== 'Escape') { Save.setSetting('keys', Input.bind(a.id, code)); Sfx.play('select'); }
+        drawKeys();
+        if (App.battle) UI.buildMoveButtons(App.battle.P);
+      });
+    };
+    b.dataset.a = a.id;
+    box.append(name, b);
+  }
+}
+$('#btn-keys-reset').onclick = () => {
+  Sfx.play('back');
+  Input.setBindings({}); Save.setSetting('keys', {});
+  drawKeys();
+  if (App.battle) UI.buildMoveButtons(App.battle.P);
+};
 
 // ---------- starter pick ----------
 function openStarter() {

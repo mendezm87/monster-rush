@@ -1,6 +1,9 @@
 // Tiny synthesized sound effects (WebAudio, no asset files).
 const Sfx = (() => {
-  let ctx = null, master = null, noiseBuf = null, muted = false;
+  // Sound effects play into `master` (the effects volume) and music into `musicBus` (the music
+  // volume); both feed `mainOut`, the overall level that mute silences.
+  let ctx = null, master = null, musicBus = null, mainOut = null, noiseBuf = null, muted = false;
+  const vol = { music: 0.8, sfx: 0.8 };   // 0..1, from the settings
   const last = {};
 
   function init() {
@@ -8,9 +11,11 @@ const Sfx = (() => {
       const AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) return;
       ctx = new AC();
-      master = ctx.createGain();
-      master.gain.value = 0.3;
-      master.connect(ctx.destination);
+      mainOut = ctx.createGain();
+      mainOut.gain.value = muted ? 0 : 0.3;
+      mainOut.connect(ctx.destination);
+      master = ctx.createGain(); master.gain.value = vol.sfx; master.connect(mainOut);
+      musicBus = ctx.createGain(); musicBus.gain.value = vol.music; musicBus.connect(mainOut);
       noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
       const d = noiseBuf.getChannelData(0);
       for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
@@ -583,7 +588,7 @@ const Sfx = (() => {
         if (!ctx) return;
         this.stop();
         song = SONGS[name] || SONGS.rush; songName = name;
-        out = ctx.createGain(); out.gain.value = 0.8; out.connect(master);
+        out = ctx.createGain(); out.gain.value = 0.8; out.connect(musicBus);
         barN = 0; step = 0; nextT = ctx.currentTime + 0.1; playing = true;
         tick();
         timer = setInterval(tick, 25);
@@ -605,7 +610,7 @@ const Sfx = (() => {
       get song() { return songName; },
       _scheduleAll(seconds, name = 'rush') {
         waves = {}; song = SONGS[name];
-        out = ctx.createGain(); out.gain.value = 0.8; out.connect(master);
+        out = ctx.createGain(); out.gain.value = 0.8; out.connect(musicBus);
         barN = 0; step = 0; nextT = 0.05;
         while (nextT < seconds) { scheduleStep(nextT); advance(); }
         out = null; waves = {};
@@ -630,18 +635,26 @@ const Sfx = (() => {
     resume() { if (ctx && ctx.state === 'suspended') ctx.resume(); },
     toggle() {
       muted = !muted;
-      if (master) master.gain.setValueAtTime(muted ? 0 : 0.3, ctx.currentTime);
+      if (mainOut) mainOut.gain.setValueAtTime(muted ? 0 : 0.3, ctx.currentTime);
       return muted;
     },
     get muted() { return muted; },
+    // which: 'music' | 'sfx'; v: 0..1. Works before init too (applied when audio starts).
+    setVolume(which, v) {
+      vol[which] = Math.max(0, Math.min(1, v));
+      const bus = which === 'music' ? musicBus : master;
+      if (bus) bus.gain.setTargetAtTime(vol[which], ctx.currentTime, 0.03);
+    },
+    volume(which) { return vol[which]; },
     // Test hook: render audio into an OfflineAudioContext (used to preview / level-check the mix).
     _offline(off, fn) {
-      const saved = [ctx, master, noiseBuf];
-      ctx = off; master = off.createGain(); master.gain.value = 0.3; master.connect(off.destination);
+      const saved = [ctx, master, musicBus, mainOut, noiseBuf];
+      ctx = off; mainOut = off.createGain(); mainOut.gain.value = 0.3; mainOut.connect(off.destination);
+      master = off.createGain(); master.connect(mainOut); musicBus = off.createGain(); musicBus.connect(mainOut);   // full volume
       noiseBuf = off.createBuffer(1, off.sampleRate, off.sampleRate);
       const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
       const layer = (type, t, dur) => { bus = ctx.createGain(); bus.gain.value = LAYER_GAIN[type] || 1; bus.connect(master); BEAM_LAYERS[type](t, dur, BEAM_PITCH[type] || 58); bus = null; };
-      try { fn({ tone, beamCharge, beamFire, Music, BEAM_LAYERS, layer, lib }); } finally { [ctx, master, noiseBuf] = saved; }
+      try { fn({ tone, beamCharge, beamFire, Music, BEAM_LAYERS, layer, lib }); } finally { [ctx, master, musicBus, mainOut, noiseBuf] = saved; }
     },
   };
 })();

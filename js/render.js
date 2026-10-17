@@ -160,7 +160,7 @@ mixInto(Battle, class {
 
   // ---------------------------------------------------------- render
   render(ctx) {
-    ctx.setTransform(2, 0, 0, 2, 0, 0);
+    ctx.setTransform(RES, 0, 0, RES, 0, 0);
     ctx.imageSmoothingEnabled = false;
     const shx = this.shake > 0.3 ? Math.round(rand(-1, 1) * this.shake * 2) / 2 : 0;
     const shy = this.shake > 0.3 ? Math.round(rand(-1, 1) * this.shake * 2) / 2 : 0;
@@ -196,10 +196,10 @@ mixInto(Battle, class {
     }
     this.drawBars(ctx);
     this.drawFloats(ctx);
-    ctx.setTransform(2, 0, 0, 2, 0, 0);
+    ctx.setTransform(RES, 0, 0, RES, 0, 0);
     this.drawWeather(ctx);
     Lighting.overlay(ctx, this);
-    ctx.setTransform(2, 0, 0, 2, 0, 0);
+    ctx.setTransform(RES, 0, 0, RES, 0, 0);
     this.drawMinimap(ctx);
   }
 

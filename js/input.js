@@ -7,14 +7,46 @@ const Input = (() => {
   const mk = () => ({ stick: { x: 0, y: 0, id: null, cx: 0, cy: 0 }, btnHeld: [false, false, false, false], held: [false, false, false, false] });
   const pl = [mk(), mk()];
 
-  // Solo play keeps the original layout; 2-player splits the keyboard in half.
+  // Solo keys, remappable in Settings. The first key of each action is the one the player can
+  // change; the rest are fixed extras (arrows, number keys) that stay unless the player gives
+  // one of them to another action. The mouse is the main way to attack (see below).
+  const ACTIONS = [
+    ['up', 'Move up', ['KeyW', 'ArrowUp']], ['down', 'Move down', ['KeyS', 'ArrowDown']],
+    ['left', 'Move left', ['KeyA', 'ArrowLeft']], ['right', 'Move right', ['KeyD', 'ArrowRight']],
+    ['move1', 'Move 1', ['KeyJ', 'Digit1', 'Space']], ['move2', 'Move 2', ['KeyK', 'Digit2']],
+    ['move3', 'Move 3', ['KeyL', 'Digit3']], ['move4', 'Move 4', ['Semicolon', 'Digit4', 'KeyI']],
+    ['swap', 'Swap', ['KeyQ', 'Tab']],
+  ];
+  const DEFAULT_KEYS = Object.fromEntries(ACTIONS.map(([a, , keys]) => [a, keys]));
+  const RESERVED = ['Escape', 'KeyP', 'KeyM'];   // pause, pause, mute
+  let custom = {};   // action -> key code, from the settings
+  function soloLayout() {
+    const taken = new Set(Object.values(custom));
+    const keysFor = a => {
+      const first = custom[a] || (taken.has(DEFAULT_KEYS[a][0]) ? null : DEFAULT_KEYS[a][0]);
+      return [first, ...DEFAULT_KEYS[a].slice(1).filter(k => !taken.has(k))].filter(Boolean);
+    };
+    const swap = keysFor('swap');
+    return {
+      up: keysFor('up'), down: keysFor('down'), left: keysFor('left'), right: keysFor('right'),
+      moves: [keysFor('move1'), keysFor('move2'), keysFor('move3'), keysFor('move4')],
+      swap, labels: ['CLICK', 'R-CLICK', '⇧ CLICK', '⇧ R-CLICK'], swapLabel: keyName(swap[0]),
+    };
+  }
+  function keyName(code) {
+    if (!code) return '–';
+    const named = { Space: 'Space', Tab: 'Tab', Semicolon: ';', Quote: "'", Comma: ',', Period: '.', Slash: '/', Backslash: '\\',
+      BracketLeft: '[', BracketRight: ']', Minus: '-', Equal: '=', Backquote: '`', Enter: 'Enter', Backspace: 'Bksp',
+      ShiftLeft: 'L Shift', ShiftRight: 'R Shift', ControlLeft: 'L Ctrl', ControlRight: 'R Ctrl', AltLeft: 'L Alt', AltRight: 'R Alt',
+      ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→', CapsLock: 'Caps' };
+    if (named[code]) return named[code];
+    return code.replace(/^Key|^Digit/, '').replace(/^Numpad/, 'Num ');
+  }
+  let capture = null;   // set while Settings waits for a key to bind
+
+  // 2-player splits the keyboard in half (the mode is gone for now; kept for later).
   const LAYOUT = {
-    solo: [{
-      up: ['KeyW', 'ArrowUp'], down: ['KeyS', 'ArrowDown'], left: ['KeyA', 'ArrowLeft'], right: ['KeyD', 'ArrowRight'],
-      // the mouse is the main way to attack (see the mouse section below); these keys still work too
-      moves: [['KeyJ', 'Digit1', 'Space'], ['KeyK', 'Digit2'], ['KeyL', 'Digit3'], ['Semicolon', 'Digit4', 'KeyI']],
-      swap: ['KeyQ', 'Tab'], labels: ['CLICK', 'R-CLICK', '⇧ CLICK', '⇧ R-CLICK'], swapLabel: 'Q',
-    }],
+    solo: [soloLayout()],
     duo: [{
       up: ['KeyW'], down: ['KeyS'], left: ['KeyA'], right: ['KeyD'],
       moves: [['KeyR'], ['KeyT'], ['KeyF'], ['KeyG']],
@@ -30,6 +62,7 @@ const Input = (() => {
   const anyKey = list => list.some(k => keys[k]);
 
   window.addEventListener('keydown', e => {
+    if (capture) { e.preventDefault(); const cb = capture; capture = null; cb(e.code); return; }
     if (e.repeat) return;
     keys[e.code] = true;
     // in 2-player mode P is player 2's swap key, so only Esc pauses
@@ -158,6 +191,22 @@ const Input = (() => {
     set mouse(on) { mouseOn = on; if (!on) clearMouse(); },
     get mode() { return mode; },
     labels(p = 0) { return LAYOUT[mode][p] ? LAYOUT[mode][p].labels : LAYOUT.solo[0].labels; },
+    swapLabel() { return LAYOUT.solo[0].swapLabel; },
+    // ---- remapping (Settings) ----
+    ACTIONS: ACTIONS.map(([id, name]) => ({ id, name })),
+    RESERVED, keyName,
+    keysFor(action) { const L = LAYOUT.solo[0]; return action.startsWith('move') ? L.moves[+action[4] - 1] : L[action]; },
+    // custom: { action: code }. A key given to one action is taken away from any other.
+    setBindings(map) { custom = { ...map }; LAYOUT.solo[0] = soloLayout(); },
+    bind(action, code) {
+      for (const a in custom) if (custom[a] === code) delete custom[a];
+      if (DEFAULT_KEYS[action][0] === code) delete custom[action]; else custom[action] = code;
+      LAYOUT.solo[0] = soloLayout();
+      return { ...custom };
+    },
+    // the next key pressed goes to cb(code) instead of the game
+    captureKey(cb) { capture = cb; },
+    cancelCapture() { capture = null; },
     dir(p = 0) {
       const L = LAYOUT[mode][p];
       let x = pl[p].stick.x, y = pl[p].stick.y;
