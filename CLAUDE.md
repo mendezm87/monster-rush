@@ -22,6 +22,7 @@ A real-time, top-down pixel-art **roguelike** in the style of *The Binding of Is
 - **Combat = the arena game's combat, expanded.** Real-time, auto-aimed moves, types, statuses, beams, the newer move kinds, mid-fight swapping. The big expansion: **rooms hold 1–3 wild monsters at once**, all fighting your one active monster (done: auto-aim targets the nearest wild monster, and beams, bursts, zones, vortexes and pools hit every wild monster they touch). Some special rooms hold a single tougher monster.
 - **Your team.** Pick **a starter** at the beginning of a run and **recruit** along the way. **Recruit rooms offer a choice of monsters (e.g. pick 1 of 3).** The party has a size limit (6, like now); the player must be able to **release a monster or swap one out** for a newly offered one. One monster is active at a time; you can swap between party members as now.
 - **Exploring:** the player controls their active monster directly; **their trainer character walks behind, following them.**
+- **Trainer look** (owner liked the vibe of a famous cap-wearing anime trainer, so we made an original take, not a copy): cap pulled low over shadowed eyes, spiky dark hair, popped-collar short-sleeve jacket over a dark tee, fingerless gloves, wristbands, jeans, sneakers. 16x24 sprite, three outfit colourways in `TRAINER_OUTFITS` (Midnight is used; Ember and Forest are options shown in the gallery). Never use that character's red-and-white cap/vest combo or logo.
 - **Currency and items, picked up along the way.** Coins drop from fights and rooms and are spent in the shop. Items/relics change how moves work (ideas: "beams also drain", "dashes leave fire", stat ups, healing items, revives).
 - **Growth within a run:** monsters **level up** (stats grow).
 - **Evolution / transformation:** **some monsters transform** at a level, or with a special item, gaining a new look and new or upgraded moves.
@@ -74,7 +75,7 @@ Which other monsters evolve and into what (to design together); more relics and 
 | File | Purpose |
 | --- | --- |
 | `js/data.js` | `TYPES` (colours and FX palettes), `CHART`, `MOVES`, `ITEMS` (held items), `ROSTER` (20 monsters), `EVOLVED` (evolved starters, not in the wild pool), `ROSTER_BY_ID` (both), `DIFFICULTY` (arena bot levels, used by test bots) |
-| `js/pixel.js` | `PixGrid` (shaded ellipses and polygons, auto-outline), bitmap digits, trainer sprites (`trainerCanvas`, front and back) |
+| `js/pixel.js` | `PixGrid` (shaded ellipses and polygons, auto-outline), bitmap digits, the trainer (`TRAINER_FRONT/BACK/SIDE`, `TRAINER_OUTFITS`, `trainerCanvas(outfit, view)`) |
 | `js/sprites.js` | `MONSTER_ART[id](grid, view)`: the procedural monster designs (32px, or 44px for size `L`) in `front` / `side` / `back` (evolved starters are 44px designs of their own); `SPRITES[id].views` |
 | `js/arena.js` | Room drawing: `W`/`H` = the 576x324 view, `WALL`, `DOOR_W`, `DOOR_DIRS`, `STAGES` (floor themes: palette, walls, weather), `roomField`, `doorPos`, `roomCanvas` (cached per room) |
 | `js/dungeon.js` | `RUN_FLOORS`, `STARTERS`, XP/level constants, `WILD_AI`, `wildSpec`/`makeWave` (who's in a room), `RELICS`, `GOODS`, `genFloor` (Isaac-style grid: start, fights, recruit, shop, treasure, boss), `Save` (unlocks), `RunState` (party, coins, relics, XP, floor, stats) |

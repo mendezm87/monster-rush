@@ -171,76 +171,104 @@ function numberCanvas(text, fill = '#fff6c8', shade = '#e0b040') {
   return g.toCanvas();
 }
 
-// ---------- trainers ----------
+// ---------- the trainer ----------
+// An original design: a cap pulled low over shadowed eyes with spiky hair poking out,
+// a popped-collar jacket with short sleeves over a dark tee, fingerless gloves and
+// wristbands, jeans and sneakers. 16x24, in front, back and side (facing right) views.
+// Keys: c cap, C cap's front panel, e emblem, b brim, h hair, s skin, S shaded skin,
+// x deep shade under the brim, r eye, K mouth, w collar and sleeves, j jacket, J seam,
+// t tee, W wristband, g glove, p jeans, P jeans shade, f shoe, F sole.
 const TRAINER_FRONT = [
-  '...kkkkkk...',
-  '..khhhhhhk..',
-  '.khhhwwhhhk.',
-  '.khhhhhhhhk.',
-  'kkHHHHHHHHkk',
-  '.krsssssssk.',
-  '.krsksskssk.',
-  '..kssssssk..',
-  '..kjjwwjjk..',
-  '.kjjjwwjjjk.',
-  'kjjjjwwjjjjk',
-  'ksjjjwwjjjsk',
-  'kskjjjjjjksk',
-  '.kkppppppkk.',
-  '..kppkkppk..',
-  '..kpk..kpk..',
-  '..kbk..kbk..',
-  '..kkk..kkk..',
+  '.....kkkkkk.....',
+  '....kCCCCCCk....',
+  '...kCCCeeCCCk...',
+  '...kcCCCCCCck...',
+  '..kccccccccck...',
+  '.kbbbbbbbbbbbk..',
+  '.khkxxxxxxxxkhk.',
+  '..hksSrSSrSskh..',
+  '...kssssssssk...',
+  '...ksssKKsssk...',
+  '..kwwkssssskwwk.',
+  '.kjwwjttttjwwjk.',
+  'kwwjjjttttjjjwwk',
+  'kwwjjjttttjjjwwk',
+  'ksjjjjttttjjjjsk',
+  'ksjjJjttttjJjjsk',
+  'kWjjjjkkkkjjjjWk',
+  'kgjjjjppppjjjjgk',
+  '.kkkkppppppkkkk.',
+  '....kppPPppk....',
+  '....kpppkpppk...',
+  '....kppk.kppk...',
+  '...kffk..kffk...',
+  '...kFFk..kFFk...',
 ];
 const TRAINER_BACK = [
-  '...kkkkkk...',
-  '..khhhhhhk..',
-  '.khhhhhhhhk.',
-  '.khhhhhhhhk.',
-  '.kHHHHHHHHk.',
-  '.krrrrrrrrk.',
-  '.krrrrrrrrk.',
-  '..krrrrrrk..',
-  '..kjjjjjjk..',
-  '.kjjjjjjjjk.',
-  'kjjjJJJJjjjk',
-  'ksjjjJJjjjsk',
-  'kskjjjjjjksk',
-  '.kkppppppkk.',
-  '..kppkkppk..',
-  '..kpk..kpk..',
-  '..kbk..kbk..',
-  '..kkk..kkk..',
+  '.....kkkkkk.....',
+  '....kcccccck....',
+  '...kccccccccck..',
+  '...kccccccccck..',
+  '..kcccckkccccck.',
+  '..khhhhhhhhhhhk.',
+  '.khhhhhhhhhhhhk.',
+  '..khhhhhhhhhhk..',
+  '...khhhhhhhhk...',
+  '...kssssssssk...',
+  '..kwwwwwwwwwwk..',
+  '.kjjjjjjjjjjjjk.',
+  'kwwjjjjjjjjjjwwk',
+  'kwwjjjjjjjjjjwwk',
+  'ksjjjJJJJJJjjjsk',
+  'ksjjjjjjjjjjjjsk',
+  'kWjjjjjjjjjjjjWk',
+  'kgjjjjjjjjjjjjgk',
+  '.kkkkppppppkkkk.',
+  '....kppPPppk....',
+  '....kpppkpppk...',
+  '....kppk.kppk...',
+  '...kffk..kffk...',
+  '...kFFk..kFFk...',
 ];
-
 const TRAINER_SIDE = [   // facing right
-  '...kkkkk....',
-  '..khhhhhk...',
-  '.khhhhhhhk..',
-  '.khhhhhhhhkk',
-  '.kHHHHHHHHHk',
-  '.krrsssssk..',
-  '.krrssksk...',
-  '..krsssssk..',
-  '..kjjjjjk...',
-  '.kjjjjjjjk..',
-  '.kjjjJjjjsk.',
-  '.kjjjjjjjsk.',
-  '.kkjjjjjjkk.',
-  '..kppppppk..',
-  '..kppkppk...',
-  '..kpk.kpk...',
-  '..kbk.kbk...',
-  '..kkk.kkk...',
+  '....kkkkkk......',
+  '...kccccccck....',
+  '..kcccccCeCk....',
+  '..kccccccCCck...',
+  '.khhcccccccccbbk',
+  '.khhhkbbbbbbbbk.',
+  '.khhhxxxxxxk....',
+  '..khhSSSrSsk....',
+  '..khhsssssssk...',
+  '...khssssKsk....',
+  '...kwwssssk.....',
+  '..kwwjjttjk.....',
+  '..kjjwwwttjk....',
+  '..kjjwwwttjk....',
+  '..kjjjssttjk....',
+  '..kjjjssttjk....',
+  '..kjjjWWkkjk....',
+  '..kjjjggppjk....',
+  '...kkkkppkk.....',
+  '....kppppk......',
+  '....kpppkpk.....',
+  '....kppkkppk....',
+  '...kffk.kfffk...',
+  '...kFFk.kFFFk...',
 ];
 
-const TRAINER_PALS = {
-  player: { k: OUTLINE, h: '#e2363c', H: '#a01f2a', w: '#ffffff', s: '#f6c79a', r: '#3a2418', j: '#2f62c8', J: '#244c9c', p: '#2a2a3a', b: '#5a3a2a' },
-  rival:  { k: OUTLINE, h: '#f2c12e', H: '#2a2a3a', w: '#2a2a3a', s: '#f6c79a', r: '#1c1c2a', j: '#d8402e', J: '#a8301e', p: '#e6dcc6', b: '#c0402e' },
+// Outfit colours. Skin, hair, face and gloves are shared; the rest is the outfit.
+const TRAINER_BASE = { k: OUTLINE, h: '#1c1a24', s: '#f2c49a', S: '#d8a27a', x: '#9a6e56', r: '#1a1222', K: '#8a4a3a',
+  t: '#26232c', W: '#f6f2ee', g: '#2a2830', e: '#ffd23f' };
+const TRAINER_OUTFITS = {
+  midnight: { name: 'Midnight', c: '#24305e', C: '#f2ead8', b: '#1a2246', w: '#f2ead8', j: '#2c3a78', J: '#1e2856', p: '#5a6a8a', P: '#46546e', f: '#e8e4dc', F: '#8a3a3a' },
+  ember:    { name: 'Ember', c: '#e8622a', C: '#2a2630', b: '#2a2630', w: '#e8622a', j: '#2a2630', J: '#1a1820', t: '#f2ead8', p: '#3a5a9a', P: '#2c4878', f: '#f6f2ee', F: '#e8622a' },
+  forest:   { name: 'Forest', c: '#2e6a3a', C: '#f2ead8', b: '#1e4a28', w: '#f2ead8', j: '#3a7a46', J: '#285a32', p: '#4a5a7a', P: '#3a4862', f: '#6a4a32', F: '#3a2a1e' },
 };
+const TRAINER_OUTFIT = 'midnight';   // the one used in the game for now
 
-// back: true for the back view, or 'side' for the profile facing right
-function trainerCanvas(side, back) {
-  const map = back === 'side' ? TRAINER_SIDE : back ? TRAINER_BACK : TRAINER_FRONT;
-  return gridFromMap(map, TRAINER_PALS[side]).toCanvas();
+// outfit: a TRAINER_OUTFITS key; view: 'front' | 'side' | 'back'
+function trainerCanvas(outfit = TRAINER_OUTFIT, view = 'front') {
+  const map = view === 'side' ? TRAINER_SIDE : view === 'back' ? TRAINER_BACK : TRAINER_FRONT;
+  return gridFromMap(map, { ...TRAINER_BASE, ...(TRAINER_OUTFITS[outfit] || TRAINER_OUTFITS[TRAINER_OUTFIT]) }).toCanvas();
 }

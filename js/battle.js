@@ -294,7 +294,7 @@ class Battle {
     this.ground = built.canvas; this.stage = built.stage;
     if (!room.decal) { room.decal = document.createElement('canvas'); room.decal.width = room.w; room.decal.height = room.h; }
     this.decal = room.decal; this.dctx = this.decal.getContext('2d');
-    this.trainerImg = { front: trainerCanvas('player', false), back: trainerCanvas('player', true), side: trainerCanvas('player', 'side') };
+    this.trainerImg = { front: trainerCanvas(TRAINER_OUTFIT, 'front'), back: trainerCanvas(TRAINER_OUTFIT, 'back'), side: trainerCanvas(TRAINER_OUTFIT, 'side') };
     this.projectiles = []; this.zones = []; this.particles = []; this.floats = []; this.texts = []; this.balls = [];
     this.pickups = room.pickups;
     this.weather = Array.from({ length: 70 }, () => this.newFlake(true));
