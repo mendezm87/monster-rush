@@ -868,7 +868,7 @@ const MONSTER_ART = {
 
   // Toshi, the owner's real-life Shiba Inu (drawn from photos): a soft ginger coat; a big
   // white bib, belly and legs; white cheeks up to his eyes; pale eyebrow spots; upright
-  // ears with pale insides; a big black nose; and his trademark smug half-shut stare.
+  // ears with pale insides; a big black nose; a ring of white ruff round the neck; and his smug half-shut stare.
   // The curled tail is ginger on top with lots of white fluff.
   smugshi(g, v = 'front') {
     const O = TOSHI.coat, C = TOSHI.white, Ei = TOSHI.ear;
@@ -880,8 +880,10 @@ const MONSTER_ART = {
       g.ellipse(14, 25.5, 7, 2, C);                                                              // white belly
       g.ellipse(20, 22, 3.5, 4.5, C);                                                            // white chest
       g.ellipse(11, 27.5, 1.9, 3, C, { edge: true }); g.ellipse(21, 27.5, 1.9, 3, C, { edge: true });   // white legs
+      g.ellipse(17, 17, 4.5, 3.2, C, { edge: true });                                            // white ruff round the neck
       g.poly([[14, 8], [13, 1], [17, 5]], O);                                                    // far ear
       g.ellipse(19, 12, 6.5, 5.5, O, { edge: true });                                            // head
+      g.px(13, 15, C.b); g.px(13, 16, C.b); g.px(14, 17, C.b);                                   // the ruff showing behind the head
       g.poly([[17, 7], [19, 0], [22, 6]], O, { edge: true });                                    // near ear
       g.poly([[18.5, 6], [19.3, 2.5], [21, 5.5]], Ei);
       g.poly([[21, 12], [28, 13.5], [27.5, 16.5], [20, 17.5]], C, { edge: true });               // white muzzle
@@ -897,8 +899,10 @@ const MONSTER_ART = {
       g.ellipse(16, 22, 7.5, 6, O, { edge: true });
       g.ellipse(16, 26, 4, 2.2, C);                                                              // white rear
       g.polyM([[9, 9], [8.5, 1], [14, 6]], O, { edge: true });
-      g.ellipse(16, 12, 8, 6.5, O, { edge: true });
+      g.ellipse(16, 17.5, 7.5, 2.4, C, { edge: true });                                          // white ruff round the neck
+      g.ellipse(16, 12, 8, 6.2, O, { edge: true });
       g.ellipseM(9, 15, 1.6, 1.6, C);                                                            // cheek fluff peeking out
+      g.rect(11, 18, 10, 1, C.b);                                                                // the ruff under the nape
       g.ellipse(16, 19, 5, 4.5, O, { edge: true });                                              // the famous curled tail
       g.ellipse(16, 18.5, 3, 2.6, C); g.px(16, 18, O.s); g.px(17, 18, O.s);
       return;
@@ -908,6 +912,7 @@ const MONSTER_ART = {
     g.ellipseM(12, 27, 2.4, 3.4, C, { edge: true });                                             // white legs
     g.ellipse(16, 22, 7.5, 6, O, { edge: true });                                                // body
     g.ellipse(16, 23.5, 5, 5.5, C);                                                              // big white bib
+    g.ellipse(16, 17.5, 8.5, 2.6, C, { edge: true });                                            // white ruff round the neck
     g.polyM([[9, 9], [8.5, 1], [14, 6]], O, { edge: true });                                     // upright ears
     g.polyM([[10, 7.5], [9.5, 3], [12.5, 6]], Ei);                                               // pale insides
     g.ellipse(16, 12, 8, 6.5, O, { edge: true });                                                // head
