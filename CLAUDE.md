@@ -39,9 +39,20 @@ A real-time, top-down pixel-art **roguelike** in the style of *The Binding of Is
 - **Wild monsters are scaled-down arena monsters** (`wildSpec` in `js/dungeon.js`: about 30% HP and 36% attack on floor 1, growing per floor); "tough" single-monster rooms and bosses (bigger sprite, big HP bar, barely knocked back) sit in between. They take turns attacking (`enemyAtkT`). Balance at this point: a hard bot reaches floor 2-3 most runs and clears all 3 about 1 run in 18.
 - The 2-player and online modes were removed (`js/net.js` deleted; it's in git history and in the arena repo).
 
+### Decided in the second pass (2026-10-17)
+
+- **Monsters and the trainer turn to face where they go:** every design has `front`, `side` (facing right, flipped for left) and `back` views (`MONSTER_ART[id](grid, view)`). A new monster needs all three.
+- **Leveling:** XP per wild monster beaten (`XP_WILD`/`XP_TOUGH`/`XP_BOSS`), full for the active monster, half for the rest; each level +3.5% HP, +2% attack/defence, heals 5%. Recruits join a level below the party's average.
+- **Evolution:** the three starters evolve at level 7 (`EVOLVE_LEVEL`) once a room is cleared: Smugshi -> **Smugshogun** (red samurai scarf, gold forehead mark), Cinderox -> **Infernox** (fire/ground, horns, rock shoulders), Tidalisk -> **Maelstrisk** (water/dragon, gold horns). Evolved art is the base design scaled to 44px plus new gear (`ScaledGrid`). Claude picked these; the owner may want to redesign them. Other monsters don't evolve yet.
+- **Every floor has a shop and a treasure room** (dead ends, like the boss and recruit rooms). The shop sells a Big Berry, a Picnic Basket or Revive Seed, and two relics; the treasure room has one free relic.
+- **Relics** (`RELICS` in `js/dungeon.js`) last the run and help the whole party: Leech Lens (beams drain), Ember Tracks (dashes leave fire), Muscle Charm, Iron Shell, Swift Boots, Hourglass, Lucky Coin, Berry Basket, Split Shot, Static Charm, Blast Core.
+- **Saved unlocks** (`Save`, localStorage key `monsterRush.save.v1`): beating a monster as a boss unlocks it as a starter; runs, wins and best floor show on the title screen.
+- Cinderox got more HP/attack here (1200 / 1.15) because it has no heal and fell behind; the arena game's numbers are separate.
+- Balance at this point: the hard bot clears floor 1 every run and wins roughly 40% of runs.
+
 ### Not decided yet (ask the owner when it matters)
 
-Exact shop prices and item list; how leveling/XP works; which monsters evolve and into what; what the first unlocks are; endless mode details.
+Endless mode details; whether more monsters evolve (and into what); more relics and unlock types; whether the evolved starters' designs are what the owner wants.
 
 ## Rules carried over from the arena game (keep these)
 
@@ -60,12 +71,12 @@ Exact shop prices and item list; how leveling/XP works; which monsters evolve an
 
 | File | Purpose |
 | --- | --- |
-| `js/data.js` | `TYPES` (colours and FX palettes), `CHART`, `MOVES`, `ITEMS`, `ROSTER` (20 monsters), `DIFFICULTY` (arena bot levels, used by test bots) |
+| `js/data.js` | `TYPES` (colours and FX palettes), `CHART`, `MOVES`, `ITEMS` (held items), `ROSTER` (20 monsters), `EVOLVED` (evolved starters, not in the wild pool), `ROSTER_BY_ID` (both), `DIFFICULTY` (arena bot levels, used by test bots) |
 | `js/pixel.js` | `PixGrid` (shaded ellipses and polygons, auto-outline), bitmap digits, trainer sprites (`trainerCanvas`, front and back) |
-| `js/sprites.js` | `MONSTER_ART[id](grid)`: the procedural monster designs (32px, or 44px for size `L`) |
+| `js/sprites.js` | `MONSTER_ART[id](grid, view)`: the procedural monster designs (32px, or 44px for size `L`) in `front` / `side` / `back`; `ScaledGrid` grows a design for evolved forms; `SPRITES[id].views` |
 | `js/arena.js` | Room drawing: `W`/`H` = the 576x324 view, `WALL`, `DOOR_W`, `DOOR_DIRS`, `STAGES` (one palette per floor), `roomField`, `doorPos`, `roomCanvas` (cached per room) |
-| `js/dungeon.js` | `RUN_FLOORS`, `STARTERS`, `WILD_AI`, `wildSpec`/`makeWave` (who's in a room), `genFloor` (Isaac-style grid of rooms: start, fights, recruit, boss), `RunState` (party, coins, floor, stats) |
-| `js/battle.js` | `Mon`, `AI` (one brain per wild monster), `Battle` = one room: exploring, doors, multi-enemy fights (`foe(m)` = nearest target, `foes(m)` = everything an attack can hit), loot (coins, berries), trainer follow, camera, rendering, minimap |
+| `js/dungeon.js` | `RUN_FLOORS`, `STARTERS`, XP/level constants, `WILD_AI`, `wildSpec`/`makeWave` (who's in a room), `RELICS`, `GOODS`, `genFloor` (Isaac-style grid: start, fights, recruit, shop, treasure, boss), `Save` (unlocks), `RunState` (party, coins, relics, XP, floor, stats) |
+| `js/battle.js` | `Mon` (levels, `look()` for facing, `setDef` for evolving), `AI` (one brain per wild monster), `Battle` = one room: exploring, doors, pedestals (recruits, shop, treasure), multi-enemy fights (`foe(m)` = nearest target, `foes(m)` = everything an attack can hit), relic effects (`relic(m, id)`), loot, XP, evolution, trainer follow, camera, rendering, minimap; `ICON_ART`/`itemIcon` for relic and shop icons |
 | `js/audio.js` | `Sfx`: synthesized SFX (incl. `coin`, `doorShut`, `doorOpen`, `stairs`), `beamCharge`/`beamFire` + per-type layers, `Sfx.music` sequencer, `_offline` render hook for level checks |
 | `js/ui.js`, `js/main.js` | HUD (active monster, boss bar), callouts, swap tray, starter / recruit / party / pick / result screens, room-to-room flow (`enterRoom`, `roomHooks`), game loop, `VERSION` |
 | `js/input.js` | Keyboard, mouse, touch and gamepad input (`Input.dir(p)`, `Input.moves(p)`, `Input.mouse`) |

@@ -25,6 +25,25 @@ const UI = {
       <div class="d-stats">HP ${def.hp} · ATK ${Math.round(def.atk * 100)} · DEF ${Math.round(def.def * 100)} · SPD ${def.spd} · ${ITEMS[def.item].name}${extra}</div>
       <div class="d-moves">${def.moves.map(k => `<div class="d-move" style="background:${TYPES[MOVES[k].type].color}">${MOVES[k].name}</div>`).join('')}</div></div>`;
   },
+  // A relic or shop good: icon, name, what it does.
+  fillItem(el, id, note) {
+    const it = itemDef(id);
+    el.innerHTML = `<canvas width="16" height="16"></canvas><div><div class="d-name">${it.name}</div>
+      <div class="d-desc">${it.desc}</div><div class="d-stats">${note}</div></div>`;
+    const c = el.querySelector('canvas').getContext('2d');
+    c.imageSmoothingEnabled = false; c.drawImage(itemIcon(id), 0, 0);
+  },
+  // the relics you hold, under the HUD panel
+  drawRelics(run) {
+    const box = $('#relics'), key = run.relics.join(',');
+    if (box.dataset.key === key) return;
+    box.dataset.key = key; box.innerHTML = '';
+    for (const id of run.relics) {
+      const cv = document.createElement('canvas'); cv.width = cv.height = 16; cv.title = RELICS[id].name + ': ' + RELICS[id].desc;
+      const c = cv.getContext('2d'); c.imageSmoothingEnabled = false; c.drawImage(itemIcon(id), 0, 0);
+      box.appendChild(cv);
+    }
+  },
   fillDetail(el, def, extra) {
     el.innerHTML = this.detailHtml(def, extra);
     drawPortrait(el.querySelector('canvas'), def.id);
@@ -40,7 +59,7 @@ const UI = {
       drawPortrait(cv, m.id, { fainted: m.fainted });
       card.appendChild(cv);
       card.insertAdjacentHTML('beforeend',
-        `<div class="c-name">${m.def.name}</div><div class="c-types">${m.def.types.map(t => this.typeTag(t)).join('')}</div>` +
+        `<div class="c-lv">Lv ${m.level}</div><div class="c-name">${m.def.name}</div><div class="c-types">${m.def.types.map(t => this.typeTag(t)).join('')}</div>` +
         (hp ? `<div class="c-hp">${m.fainted ? 'FAINTED' : `${Math.ceil(m.hp)} / ${m.maxHp} HP`}</div>` : ''));
       if (onPick) card.onclick = () => onPick(i);
       el.appendChild(card);
@@ -140,6 +159,7 @@ const UI = {
   hudCache: {},
   updateHud(battle) {
     this.updateSide('#hud-p', battle.P, battle.p, battle.pi);
+    this.drawRelics(battle.run);
     const floor = `FLOOR ${battle.run.floorN}`;
     if (this.hudCache.floor !== floor) { $('#floor-label').textContent = floor; this.hudCache.floor = floor; }
     // the boss gets a big bar along the top
@@ -170,7 +190,7 @@ const UI = {
     $('#move-buttons').classList.toggle('calm', calm);
     this.moveBtns.forEach((b, i) => {
       if (!m.moves[i]) return;
-      const full = m.moves[i].cd * (m.item.cd || 1);
+      const full = m.moves[i].cd * m.cdMul();
       b.cd.style.height = (m.cd[i] > 0 ? (m.cd[i] / full) * 100 : 0) + '%';
     });
   },
@@ -180,10 +200,12 @@ const UI = {
     const c = this.hudCache.p || (this.hudCache.p = { ghost: mon.hp });
     if (c.id !== mon.id + idx) {
       c.id = mon.id + idx; c.ghost = mon.hp;
-      root.querySelector('.mon-name').textContent = mon.def.name;
       drawPortrait(root.querySelector('.portrait canvas'), mon.id, { zoom: 1.6, crop: true });
-      c.tags = null;
+      c.tags = null; c.name = null;
     }
+    const name = `${mon.def.name}<span class="lv">Lv ${mon.level}</span>`;
+    if (c.name !== name) { root.querySelector('.mon-name').innerHTML = name; c.name = name; }
+    root.querySelector('.xpbar div').style.width = (mon.xp / XP_NEED(mon.level) * 100) + '%';
     const tags = mon.def.types.map(t => this.typeTag(t)).join('') +
       (mon.status ? `<span class="tag status ${mon.status}">${mon.status.toUpperCase()}</span>` : `<span class="tag item">${mon.item.name || ''}</span>`);
     if (c.tags !== tags) { root.querySelector('.tags').innerHTML = tags; c.tags = tags; }

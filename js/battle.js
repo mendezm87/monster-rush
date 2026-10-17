@@ -8,6 +8,8 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 let _uid = 1;
 const BERRY_HEAL = 0.25;   // a berry heals a quarter of your active monster's HP
+// The Ember Tracks relic's fire pools.
+const EMBER_MV = { id: 'emberTrail', name: 'Ember Trail', type: 'fire', kind: 'zone', power: 60, linger: 1.4, tick: 0.35, status: ['brn', 0.1] };
 
 const BALL_IMG = gridFromMap([
   '.kkkk.',
@@ -36,6 +38,37 @@ const BERRY_IMG = gridFromMap([
   '..kk..',
 ], { k: OUTLINE, g: '#4fae2e', r: '#e8435a', h: '#ffb0c0', d: '#a82a40' }).toCanvas();
 
+// 14px icons for relics and shop goods.
+const ICON_ART = {
+  leechLens(g) { g.ellipse(6.5, 6.5, 5.5, 5.5, P('#c8d6ff', '#8a9ad0', '#ffffff')); g.ellipse(6.5, 6.5, 3, 3, P('#e8435a', '#a82a40', '#ffb0c0')); g.poly([[10, 10], [13, 13], [12, 14], [9, 11]], '#8a6a4a'); },
+  emberTracks(g) { g.poly([[2, 5], [6, 5], [6, 9], [12, 9], [12, 13], [2, 13]], P('#8a5a3a', '#5a3a22', '#b07a52')); g.poly([[9, 0], [13, 5], [11, 8], [8, 6]], P('#ff7a1c', '#e2401a', '#ffd34a')); },
+  muscleCharm(g) { g.ellipse(7, 7, 5.5, 5, P('#d9a066', '#a8703e', '#f2c896')); g.rect(3, 5, 8, 1, '#a8703e'); g.rect(3, 8, 8, 1, '#a8703e'); g.rect(2, 11, 10, 2, '#d23a3a'); },
+  ironShell(g) { g.poly([[1, 1], [13, 1], [13, 7], [7, 13], [1, 7]], P('#a8b0c4', '#6e7690', '#dfe4f0')); g.rect(7, 2, 1, 9, '#6e7690'); g.rect(2, 5, 11, 1, '#6e7690'); },
+  swiftBoots(g) { g.poly([[3, 5], [7, 5], [7, 9], [13, 9], [13, 13], [3, 13]], P('#5aa0ff', '#2a6ad0', '#a8d0ff')); g.poly([[0, 3], [5, 0], [6, 5], [1, 6]], P('#ffffff', '#c8d6ff', '#ffffff')); },
+  hourglass(g) { g.rect(2, 0, 10, 2, '#8a6a4a'); g.rect(2, 12, 10, 2, '#8a6a4a'); g.poly([[3, 2], [11, 2], [7, 7]], P('#c8f0ff', '#8ac8e8', '#ffffff')); g.poly([[3, 12], [11, 12], [7, 7]], P('#c8f0ff', '#8ac8e8', '#ffffff')); g.poly([[4, 12], [10, 12], [7, 9]], '#ffd23f'); },
+  luckyCoin(g) { g.ellipse(7, 7, 6, 6, P('#ffd23f', '#d8902a', '#fff6c8')); g.ellipse(5.5, 6, 1.6, 1.6, '#4fae2e'); g.ellipse(8.5, 6, 1.6, 1.6, '#4fae2e'); g.ellipse(7, 8.6, 1.6, 1.6, '#4fae2e'); },
+  berryBasket(g) { g.ellipse(4, 5, 2.2, 2.2, P('#e8435a', '#a82a40', '#ffb0c0')); g.ellipse(7.5, 4, 2.2, 2.2, P('#e8435a', '#a82a40', '#ffb0c0')); g.ellipse(11, 5, 2.2, 2.2, P('#e8435a', '#a82a40', '#ffb0c0')); g.poly([[1, 7], [14, 7], [12, 13], [3, 13]], P('#c89a5a', '#8a6a3a', '#e8c08a')); g.rect(3, 9, 9, 1, '#8a6a3a'); },
+  splitShot(g) { g.ellipse(4, 10, 3, 3, P('#7af0e0', '#3ab8b0', '#e0fffa')); g.ellipse(10, 4, 3, 3, P('#7af0e0', '#3ab8b0', '#e0fffa')); g.rect(1, 3, 4, 1, '#3ab8b0'); g.rect(7, 11, 4, 1, '#3ab8b0'); },
+  staticCharm(g) { g.poly([[8, 0], [2, 8], [6, 8], [4, 14], [12, 5], [8, 5], [10, 0]], P('#ffd84a', '#e0a722', '#fff3a0')); },
+  blastCore(g) {
+    const pts = [];
+    for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2, r = i % 2 ? 3 : 6.5; pts.push([7 + Math.cos(a) * r, 7 + Math.sin(a) * r]); }
+    g.poly(pts, P('#ff5a2a', '#c8301a', '#ffb06a')); g.ellipse(7, 7, 2.2, 2.2, '#ffe066');
+  },
+  bigBerry(g) { g.ellipse(7, 8, 5.5, 5, P('#e8435a', '#a82a40', '#ffb0c0')); g.poly([[6, 3], [9, 0], [11, 2], [8, 4]], '#4fae2e'); g.px(5, 6, '#ffffff'); },
+  picnic(g) { g.poly([[1, 6], [13, 6], [12, 13], [2, 13]], P('#c89a5a', '#8a6a3a', '#e8c08a')); g.rect(1, 5, 12, 2, '#e8435a'); for (let x = 2; x < 13; x += 3) g.rect(x, 5, 1, 2, '#ffffff'); g.rect(4, 1, 1, 4, '#8a6a3a'); g.rect(9, 1, 1, 4, '#8a6a3a'); g.rect(4, 1, 6, 1, '#8a6a3a'); },
+  revive(g) { g.ellipse(7, 10, 4.5, 3.5, P('#c89a5a', '#8a6a3a', '#e8c08a')); g.rect(7, 3, 1, 5, '#4fae2e'); g.ellipse(4.5, 4, 2.5, 1.5, '#8be04e'); g.ellipse(10, 3, 2.5, 1.5, '#8be04e'); },
+};
+const _icons = {};
+function itemIcon(id) {
+  if (_icons[id]) return _icons[id];
+  const g = new PixGrid(16, 16), inner = new PixGrid(14, 14);
+  ICON_ART[id](inner);
+  for (let y = 0; y < 14; y++) for (let x = 0; x < 14; x++) { const c = inner.get(x, y); if (c) g.set(x + 1, y + 1, c); }
+  g.outline();
+  return (_icons[id] = g.toCanvas());
+}
+
 // Lazily tinted sprite variants (freeze / burn / paralysis / buff glow).
 const _tint = {};
 function tinted(id, color, view = 'front') {
@@ -55,19 +88,16 @@ function tinted(id, color, view = 'front') {
 // opts (wild monsters): hpMul / atkMul scale the arena stats, scale draws it bigger, boss marks a boss.
 class Mon {
   constructor(def, side, opts = {}) {
-    this.def = def; this.id = def.id; this.side = side;
-    this.item = ITEMS[def.item] || {};
+    this.side = side;
     this.atkMul = opts.atkMul || 1;
+    this.hpMul = opts.hpMul || 1;
     this.scale = opts.scale || 1;
     this.boss = !!opts.boss;
     this.aiKind = opts.ai || null;
-    this.maxHp = Math.round(def.hp * (opts.hpMul || 1)); this.hp = this.maxHp;
-    this.r = (def.size === 'L' ? 17 : 12) * this.scale;
-    this.h = SPRITES[def.id].size * SPR_SCALE * this.scale;
-    this.moves = def.moves.map(k => MOVES[k]);
-    const melee = this.moves.filter(m => m.kind === 'dash' || m.kind === 'burst' || m.kind === 'vortex').length;
-    const ranged = this.moves.filter(m => ['projectile', 'beam', 'zone'].includes(m.kind)).length;
-    this.prefRange = melee > ranged ? 45 : melee === ranged ? 85 : 125;
+    this.level = 1; this.xp = 0;
+    this.bonus = { atk: 1, def: 1, spd: 1, cd: 1 };   // from relics (player side)
+    this.setDef(def);
+    this.hp = this.maxHp;
     this.fainted = false;
     this.dmgDealt = 0;
     this.status = null; this.statusT = 0; this.statusTick = 0;
@@ -82,13 +112,38 @@ class Mon {
     this.flash = 0; this.invuln = 0; this.visible = false; this.ghosts = []; this.ghostT = 0;
     this.fadeT = 0; this.spawnT = 0;
   }
+  // Species-dependent bits (also used when evolving; HP keeps its share of the max).
+  setDef(def) {
+    const share = this.maxHp ? this.hp / this.maxHp : 1;
+    this.def = def; this.id = def.id;
+    this.item = ITEMS[def.item] || {};
+    this.maxHp = this.calcMaxHp(); this.hp = Math.round(this.maxHp * share);
+    this.r = (def.size === 'L' ? 17 : 12) * this.scale;
+    this.h = SPRITES[def.id].size * SPR_SCALE * this.scale;
+    this.moves = def.moves.map(k => MOVES[k]);
+    const melee = this.moves.filter(m => m.kind === 'dash' || m.kind === 'burst' || m.kind === 'vortex').length;
+    const ranged = this.moves.filter(m => ['projectile', 'beam', 'zone'].includes(m.kind)).length;
+    this.prefRange = melee > ranged ? 45 : melee === ranged ? 85 : 125;
+  }
+  get canEvolve() { return !this.fainted && this.def.evolve && this.level >= this.def.evolve.level; }
   get cy() { return this.y - this.h * 0.4; }
   get alive() { return this.visible && !this.fainted; }
   buffMul(stat) { return this.buffs.reduce((m, b) => (b.stat === stat ? m * b.mul : m), 1); }
-  atk() { return this.def.atk * this.atkMul * (this.item.atk || 1) * this.buffMul('atk') * (this.status === 'brn' ? 0.75 : 1); }
-  defense() { return this.def.def * (this.item.def || 1) * this.buffMul('def'); }
+  // each level adds LV_HP to HP and LV_STAT to attack and defence
+  lvMul(per) { return 1 + per * (this.level - 1); }
+  calcMaxHp() { return Math.round(this.def.hp * this.hpMul * this.lvMul(LV_HP)); }
+  atk() { return this.def.atk * this.atkMul * this.lvMul(LV_STAT) * this.bonus.atk * (this.item.atk || 1) * this.buffMul('atk') * (this.status === 'brn' ? 0.75 : 1); }
+  defense() { return this.def.def * this.lvMul(LV_STAT) * this.bonus.def * (this.item.def || 1) * this.buffMul('def'); }
+  cdMul() { return (this.item.cd || 1) * this.bonus.cd; }
+  // Gain levels; HP grows with the level (and the new HP comes filled in).
+  setLevel(n) {
+    const old = this.maxHp;
+    this.level = n;
+    this.maxHp = this.calcMaxHp();
+    if (!this.fainted) this.hp = Math.min(this.maxHp, this.hp + (this.maxHp - old));
+  }
   speed() {
-    return this.def.spd * (this.item.spd || 1) * this.buffMul('spd') *
+    return this.def.spd * (this.item.spd || 1) * this.bonus.spd * this.buffMul('spd') *
       (this.status === 'par' ? 0.55 : 1) * (this.slowT > 0 ? 0.55 : 1);
   }
   canAct() { return this.visible && !this.fainted && !this.action && this.stunT <= 0 && this.status !== 'frz'; }
@@ -268,10 +323,7 @@ class Battle {
     this.updateCamera(1);
 
     if (!room.cleared && room.enemies.length) this.startFight();
-    if (room.type === 'recruit' && !room.recruited) {
-      const cx = (F.x0 + F.x1) / 2, cy = (F.y0 + F.y1) / 2;
-      this.pedestals = room.offer.map((id, i) => ({ id, x: cx + (i - 1) * 120, y: cy - 6, cool: 0 }));
-    }
+    this.makePedestals();
     if (room.type === 'boss' && room.cleared) this.placeStairs();
   }
 
@@ -283,6 +335,8 @@ class Battle {
   get fighting() { return this.state === 'fight'; }
   get swapCd() { return { player: this.run.swapCd }; }
   get boss() { return this.e.find(m => m.boss) || null; }
+  // does this monster's side have the relic? (relics only help your party)
+  relic(m, id) { return m.side === 'player' && this.run.relics.includes(id); }
 
   // Who a monster attacks: wild monsters go for you, your moves aim at the nearest wild monster.
   foe(m) {
@@ -322,6 +376,8 @@ class Battle {
   clearRoom() {
     this.room.cleared = true;
     this.run.stats.rooms++;
+    this.evolveReady();
+    if (this.boss && this.hooks.bossBeaten) this.hooks.bossBeaten(this.boss.id);
     this.state = 'explore'; this.stateT = 0;
     this.projectiles = this.projectiles.filter(p => p.owner.side === 'player');
     this.zones = this.zones.filter(z => z.owner.side === 'player');
@@ -337,9 +393,40 @@ class Battle {
     } else this.ui.banner('ROOM CLEAR!');
   }
 
+  // Things to walk up to: recruits, shop goods, a treasure relic.
+  makePedestals() {
+    const room = this.room, F = this.F, cx = (F.x0 + F.x1) / 2, cy = (F.y0 + F.y1) / 2;
+    this.pedestals = [];
+    if (room.type === 'recruit' && !room.recruited)
+      this.pedestals = room.offer.map((id, i) => ({ kind: 'mon', id, x: cx + (i - 1) * 120, y: cy - 6, cool: 0 }));
+    if (room.type === 'shop')
+      room.stock.forEach((it, i) => { if (!it.sold) this.pedestals.push({ kind: 'shop', item: it, id: it.id, x: cx + (i - 1.5) * 100, y: cy - 6, cool: 0 }); });
+    if (room.type === 'treasure' && !room.taken)
+      this.pedestals = [{ kind: 'relic', id: room.relic, x: cx, y: cy - 6, cool: 0 }];
+  }
+
   placeStairs() {
     const F = this.F;
     this.stairs = { x: (F.x0 + F.x1) / 2, y: (F.y0 + F.y1) / 2 };
+  }
+
+  // Starters that reached their level transform (between fights, so moves don't change mid-combo).
+  evolveReady() {
+    for (const m of this.p) {
+      if (!m.canEvolve) continue;
+      const from = m.def.name, to = ROSTER_BY_ID[m.def.evolve.to];
+      m.setDef(to);
+      m.hp = Math.min(m.maxHp, m.hp + Math.round(m.maxHp * 0.25));
+      this.ui.banner(`${from} EVOLVED!`);
+      this.run.stats.evolved = (this.run.stats.evolved || 0) + 1;
+      Sfx.play('evolve');
+      if (m === this.P) {
+        m.flash = 1.2;
+        this.particles.push({ x: m.x, y: m.y - 2, r0: 4, r1: 46, life: 0.6, max: 0.6, color: '#ffffff', kind: 'ring', w: 3 });
+        this.burst(m.x, m.cy, ['#ffffff', '#ffe066', '#a8d0ff'], 40, 110, -40);
+        this.ui.onSendOut('player', m);
+      }
+    }
   }
 
   doorFx(kind) {
@@ -406,6 +493,7 @@ class Battle {
     if (m.side === 'enemy') {
       this.run.stats.kos++;
       this.dropLoot(m);
+      this.giveXp(m.boss ? XP_BOSS : m.scale > 1 ? XP_TOUGH : XP_WILD);
       return;
     }
     this.ui.banner(`${m.def.name} FAINTED!`);
@@ -433,11 +521,31 @@ class Battle {
     if (this.hooks.end) this.hooks.end(result);
   }
 
+  // ---------------------------------------------------------- xp
+  giveXp(amount) {
+    for (const ev of this.run.giveXp(amount)) {
+      const m = ev.mon, heal = Math.round(m.maxHp * LV_HEAL);
+      m.hp = Math.min(m.maxHp, m.hp + heal);
+      if (m === this.P) {
+        this.text(m.x, m.y - m.h - 14, `LEVEL ${m.level}!`, '#ffe066');
+        this.burst(m.x, m.cy, ['#ffe066', '#ffffff', '#ffd23f'], 20, 60, -50);
+        this.particles.push({ x: m.x, y: m.y - 2, r0: 4, r1: 30, life: 0.4, max: 0.4, color: '#ffe066', kind: 'ring', w: 2 });
+      } else {
+        const t = this.trainer;
+        this.text(t.x, t.y - 34, `${m.def.name} LV ${m.level}`, '#ffe9a0');
+      }
+      Sfx.play('levelUp');
+    }
+    if (this.state === 'explore') this.evolveReady();
+  }
+
   // ---------------------------------------------------------- loot
   dropLoot(m) {
-    const coins = m.boss ? 8 + this.run.floorN * 2 : m.scale > 1 ? 3 : 1 + (Math.random() < 0.5 ? 1 : 0);
+    let coins = m.boss ? 8 + this.run.floorN * 2 : m.scale > 1 ? 3 : 1 + (Math.random() < 0.5 ? 1 : 0);
+    if (this.run.relics.includes('luckyCoin')) coins = Math.round(coins * 1.5 + Math.random() * 0.5);
     for (let i = 0; i < coins; i++) this.spawnPickup('coin', m.x, m.y);
-    if (m.boss || Math.random() < 0.3) this.spawnPickup('berry', m.x, m.y);
+    const basket = this.run.relics.includes('berryBasket');
+    if (m.boss || Math.random() < (basket ? 0.45 : 0.3)) this.spawnPickup('berry', m.x, m.y);
   }
 
   spawnPickup(kind, x, y) {
@@ -473,7 +581,7 @@ class Battle {
       this.sparks(k.x, k.y - 4, 4, '#ffe066');
       Sfx.play('coin');
     } else {
-      const heal = Math.round(Math.min(P.maxHp * BERRY_HEAL, P.maxHp - P.hp));
+      const heal = Math.round(Math.min(P.maxHp * (this.run.relics.includes('berryBasket') ? 0.4 : BERRY_HEAL), P.maxHp - P.hp));
       P.hp += heal;
       this.number(P, heal, null, '#b6ff9a', '#4fae2e', '+');
       this.burst(P.x, P.cy, ['#4fae2e', '#b6ff9a', '#ffffff'], 14, 50, -50);
@@ -502,7 +610,7 @@ class Battle {
 
   execute(m, i) {
     const mv = m.moves[i], foe = this.foe(m), F = this.F;
-    m.cd[i] = mv.cd * (m.item.cd || 1);
+    m.cd[i] = mv.cd * m.cdMul();
     m.gcd = 0.35;
     if (m.side === 'enemy') {
       const alive = this.e.filter(e => e.alive).length;
@@ -516,7 +624,8 @@ class Battle {
 
     switch (mv.kind) {
       case 'projectile': {
-        const n = mv.count || 1, sp = mv.spread || 0;
+        const split = this.relic(m, 'splitShot') && !mv.boomerang;
+        const n = (mv.count || 1) + (split ? 1 : 0), sp = split ? Math.max(mv.spread || 0, 0.22) : mv.spread || 0;
         for (let k = 0; k < n; k++) {
           const a = dir + (n > 1 ? (k / (n - 1) - 0.5) * sp : 0);
           this.projectiles.push({
@@ -544,7 +653,7 @@ class Battle {
         Sfx.play('vortex');
         break;
       case 'burst':
-        m.action = { kind: 'burst', t: 0, mv, dir, lock: true, done: false };
+        m.action = { kind: 'burst', t: 0, mv, dir, lock: true, done: false, r: mv.r * (this.relic(m, 'blastCore') ? 1.25 : 1) };
         Sfx.play(mv.sfx || 'charge');   // a move can bring its own wind-up sound
         break;
       case 'zone': {
@@ -555,7 +664,7 @@ class Battle {
           this.zones.push({
             x: clamp(foe.x + Math.cos(a) * rr, F.x0 + 8, F.x1 - 8),
             y: clamp(foe.y + Math.sin(a) * rr, F.y0 + 8, F.y1 - 8),
-            r: mv.r, t: 0, delay: mv.delay + k * 0.18, mv, owner: m, done: false, tick: 0, id: _uid++,
+            r: mv.r * (this.relic(m, 'blastCore') ? 1.25 : 1), t: 0, delay: mv.delay + k * 0.18, mv, owner: m, done: false, tick: 0, id: _uid++,
           });
         }
         m.action = { kind: 'cast', t: 0, dur: 0.25, lock: true };
@@ -621,10 +730,12 @@ class Battle {
     if (mult >= 1 && dmg > 150) this.hitstop = Math.min(0.09, 0.03 + dmg / 6000);
 
     if (mv.status && Math.random() < mv.status[1] * Math.min(1, mult * 3)) this.applyStatus(tgt, mv.status[0]);
+    if (mult >= 1 && this.relic(src, 'staticCharm') && Math.random() < 0.1) this.applyStatus(tgt, 'par');
     if (mv.slow) tgt.slowT = Math.max(tgt.slowT, mv.slow);
     // drain: the attacker heals for part of the damage it dealt
-    if (mv.drain && !src.fainted && src.hp > 0) {
-      const heal = Math.round(Math.min(dmg * mv.drain, src.maxHp - src.hp));
+    const drain = (mv.drain || 0) + (mv.kind === 'beam' && this.relic(src, 'leechLens') ? 0.15 : 0);
+    if (drain && !src.fainted && src.hp > 0) {
+      const heal = Math.round(Math.min(dmg * drain, src.maxHp - src.hp));
       if (heal > 0) {
         src.hp += heal;
         this.number(src, heal, opts.merge ? 'drain' + opts.merge : null, '#b6ff9a', '#4fae2e', '+');
@@ -725,10 +836,10 @@ class Battle {
       if (d < 18 + P.r) {   // solid: push the player back out
         const ux = (P.x - ped.x) / (d || 1), uy = (P.y - ped.y) / (d || 1);
         P.x = ped.x + ux * (18 + P.r); P.y = ped.y + uy * (18 + P.r);
-        if (ped.cool <= 0 && this.hooks.recruit) {
+        if (ped.cool <= 0 && this.hooks.offer) {
           ped.cool = 1.2;
           this.state = 'pick'; Input.reset();
-          this.hooks.recruit(ped);
+          this.hooks.offer(ped);
           return;
         }
       }
@@ -740,16 +851,22 @@ class Battle {
     }
   }
 
-  // Called once the recruit menu closes. took: the monster's id, or null if the player walked away.
-  recruitDone(took) {
+  // Called once an offer menu closes. took: true if the player recruited / bought / took it.
+  offerDone(ped, took) {
     this.state = 'explore';
     if (!took) return;
-    this.room.recruited = true;
-    for (const ped of this.pedestals) {
-      this.burst(ped.x, ped.y - 20, ped.id === took ? ['#ffe066', '#ffffff'] : ['#ffffff', '#cfd6e6'], 20, 80);
+    if (ped.kind === 'mon') {
+      this.room.recruited = true;
+      for (const o of this.pedestals) this.burst(o.x, o.y - 20, o === ped ? ['#ffe066', '#ffffff'] : ['#ffffff', '#cfd6e6'], 20, 80);
+      this.pedestals = [];
+      Sfx.play('ball');
+      return;
     }
-    this.pedestals = [];
-    Sfx.play('ball');
+    if (ped.kind === 'shop') ped.item.sold = true;
+    if (ped.kind === 'relic') this.room.taken = true;
+    this.burst(ped.x, ped.y - 16, ['#ffe066', '#ffffff', '#ffd23f'], 20, 80);
+    this.pedestals = this.pedestals.filter(o => o !== ped);
+    Sfx.play(ped.kind === 'shop' ? 'coin' : 'buff');
   }
 
   // The trainer follows a step behind your monster.
@@ -942,6 +1059,10 @@ class Battle {
           if (a.t < 0.03) { const f = this.foe(m); if (f) { a.tgt = f; a.dir = this.aim(m, f, mv); } }
           break;
         }
+        if (this.relic(m, 'emberTracks') && (a.trailT = (a.trailT || 0) - dt) <= 0) {
+          a.trailT = 0.07;   // a pool of fire left along the dash
+          this.zones.push({ x: m.x, y: m.y, r: 13, t: 0, delay: 0, mv: EMBER_MV, owner: m, done: true, tick: 0.15, id: _uid++ });
+        }
         m.ghostT -= dt;
         if (m.ghostT <= 0) { m.ghostT = 0.03; m.ghosts.push({ x: m.x, y: m.y, face: m.face, view: m.view, t: 0.22, color: fx[1] }); }
         if (Math.random() < 0.7) this.particles.push({ x: m.x + rand(-6, 6), y: m.cy + rand(-6, 6), vx: -m.vx * 0.2, vy: -m.vy * 0.2, life: 0.3, max: 0.3, size: 2, color: fx[rand() < 0.5 ? 0 : 1], kind: 'sq' });
@@ -975,14 +1096,14 @@ class Battle {
         const mv = a.mv;
         if (!a.done && a.t >= mv.delay) {
           a.done = true;
-          this.particles.push({ x: m.x, y: m.y - 2, r0: 6, r1: mv.r, life: 0.35, max: 0.35, color: fx[2], kind: 'ring', w: 3 });
-          this.particles.push({ x: m.x, y: m.y - 2, r0: 4, r1: mv.r * 0.8, life: 0.45, max: 0.45, color: fx[1], kind: 'ring', w: 2 });
-          this.burst(m.x, m.y - 4, fx, 30, mv.r * 2.6, 0, 4);
-          this.decalAt(m.x, m.y, mv.r * 0.6);
+          this.particles.push({ x: m.x, y: m.y - 2, r0: 6, r1: a.r, life: 0.35, max: 0.35, color: fx[2], kind: 'ring', w: 3 });
+          this.particles.push({ x: m.x, y: m.y - 2, r0: 4, r1: a.r * 0.8, life: 0.45, max: 0.45, color: fx[1], kind: 'ring', w: 2 });
+          this.burst(m.x, m.y - 4, fx, 30, a.r * 2.6, 0, 4);
+          this.decalAt(m.x, m.y, a.r * 0.6);
           this.addShake(6);
           Sfx.play('boom');
           for (const foe of this.foes(m)) {
-            if (Math.hypot(foe.x - m.x, foe.y - m.y) < mv.r + foe.r * 0.6) this.hit(m, foe, mv, 1);
+            if (Math.hypot(foe.x - m.x, foe.y - m.y) < a.r + foe.r * 0.6) this.hit(m, foe, mv, 1);
             if (m.fainted || this.state === 'faint') return;
           }
         }
@@ -1301,20 +1422,38 @@ class Battle {
   }
 
   drawPedestal(ctx, ped) {
-    const def = ROSTER_BY_ID[ped.id], sp = SPRITES[ped.id], S = sp.size * SPR_SCALE;
     const X = Math.round(ped.x), Y = Math.round(ped.y);
     ctx.fillStyle = 'rgba(0,0,0,0.3)';
     ctx.beginPath(); ctx.ellipse(X, Y + 4, 22, 7, 0, 0, TAU); ctx.fill();
     ctx.fillStyle = OUTLINE; ctx.fillRect(X - 19, Y - 7, 38, 13);
-    ctx.fillStyle = '#b8b0c8'; ctx.fillRect(X - 18, Y - 6, 36, 5);
-    ctx.fillStyle = '#7a7090'; ctx.fillRect(X - 18, Y - 1, 36, 6);
-    const bob = Math.sin(this.time * 3 + ped.x) > 0.6 ? -1 : 0;
-    ctx.save(); ctx.translate(X, Y - 6 + bob); if (ped.x > this.P.x) ctx.scale(-1, 1);
-    ctx.drawImage(sp.img, -S / 2, -S + 3, S, S); ctx.restore();
+    ctx.fillStyle = ped.kind === 'relic' ? '#e0c060' : '#b8b0c8'; ctx.fillRect(X - 18, Y - 6, 36, 5);
+    ctx.fillStyle = ped.kind === 'relic' ? '#a8862a' : '#7a7090'; ctx.fillRect(X - 18, Y - 1, 36, 6);
+    let name;
+    if (ped.kind === 'mon') {
+      const def = ROSTER_BY_ID[ped.id], sp = SPRITES[ped.id], S = sp.size * SPR_SCALE;
+      const bob = Math.sin(this.time * 3 + ped.x) > 0.6 ? -1 : 0;
+      ctx.save(); ctx.translate(X, Y - 6 + bob); if (ped.x > this.P.x) ctx.scale(-1, 1);
+      ctx.drawImage(sp.img, -S / 2, -S + 3, S, S); ctx.restore();
+      name = def.name;
+    } else {
+      const img = itemIcon(ped.id), S = img.width * 1.5, bob = Math.round(Math.sin(this.time * 2.5 + ped.x) * 2);
+      if (ped.kind === 'relic') {   // a soft glow under treasure
+        ctx.globalAlpha = 0.25 + Math.sin(this.time * 4) * 0.1; ctx.fillStyle = '#ffe066';
+        ctx.beginPath(); ctx.arc(X, Y - 20 + bob, 15, 0, TAU); ctx.fill(); ctx.globalAlpha = 1;
+      }
+      ctx.drawImage(img, Math.round(X - S / 2), Math.round(Y - 12 - S + bob), S, S);
+      name = itemDef(ped.id).name;
+    }
     ctx.font = 'italic 900 8px "Lilita One", "Arial Black", Arial, sans-serif';
     ctx.textAlign = 'center'; ctx.lineJoin = 'round';
-    ctx.lineWidth = 3; ctx.strokeStyle = '#2a1405'; ctx.strokeText(def.name, X, Y + 16);
-    ctx.fillStyle = '#ffe066'; ctx.fillText(def.name, X, Y + 16);
+    ctx.lineWidth = 3; ctx.strokeStyle = '#2a1405'; ctx.strokeText(name, X, Y + 16);
+    ctx.fillStyle = '#ffe066'; ctx.fillText(name, X, Y + 16);
+    if (ped.kind === 'shop') {   // price tag
+      const img = numberCanvas(ped.item.price, this.run.coins >= ped.item.price ? '#fff6c8' : '#ff9a8a', this.run.coins >= ped.item.price ? '#e0b040' : '#c04a3a');
+      const w = img.width * 1.5 + 11;
+      ctx.drawImage(COIN_IMG, Math.round(X - w / 2), Y + 20, COIN_IMG.width * 1.5, COIN_IMG.height * 1.5);
+      ctx.drawImage(img, Math.round(X - w / 2 + 10), Y + 20, img.width * 1.5, img.height * 1.5);
+    }
   }
 
   // Each wild monster carries a small HP bar (the boss gets the big one in the HUD).
@@ -1454,10 +1593,10 @@ class Battle {
         const k = clamp(a.t / a.mv.delay, 0, 1);
         ctx.fillStyle = TYPES[a.mv.type].fx[0];
         ctx.globalAlpha = 0.15 + k * 0.2;
-        ctx.beginPath(); ctx.ellipse(X, Y, a.mv.r * k, a.mv.r * k * 0.7, 0, 0, TAU); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(X, Y, a.r * k, a.r * k * 0.7, 0, 0, TAU); ctx.fill();
         ctx.globalAlpha = pulse; ctx.strokeStyle = '#ffffff';
         ctx.setLineDash([4, 3]);
-        ctx.beginPath(); ctx.ellipse(X, Y, a.mv.r, a.mv.r * 0.7, 0, 0, TAU); ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(X, Y, a.r, a.r * 0.7, 0, 0, TAU); ctx.stroke();
         ctx.setLineDash([]);
       }
       if (a.kind === 'beam' && a.phase === 'charge') {
@@ -1678,7 +1817,8 @@ class Battle {
       const x = x0 + 2 + (r.gx - minX) * (cw + gap), y = y0 + 2 + (r.gy - minY) * (ch + gap);
       ctx.fillStyle = r === this.room ? '#ffffff' : r.visited ? '#8a84a0' : '#3a3450';
       ctx.fillRect(x, y, cw, ch);
-      const icon = r.type === 'boss' ? '#e8433a' : r.type === 'recruit' && !r.recruited ? '#5aa0ff' : null;
+      const icon = r.type === 'boss' ? '#e8433a' : r.type === 'recruit' && !r.recruited ? '#5aa0ff'
+        : r.type === 'shop' ? '#ffd23f' : r.type === 'treasure' && !r.taken ? '#ffffff' : null;
       if (icon) { ctx.fillStyle = icon; ctx.fillRect(x + 4, y + 3, 5, 3); }
     }
     // coins

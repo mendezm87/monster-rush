@@ -123,6 +123,8 @@ const Sfx = (() => {
     coin() { tone(988, 0.05, 'square', 0.07); tone(1319, 0.12, 'square', 0.07, 0, 0.05); },
     doorShut() { noise(0.25, 0.4, 500); tone(80, 0.25, 'square', 0.16, -30); },
     doorOpen() { noise(0.2, 0.2, 900); tone(220, 0.15, 'triangle', 0.12, 220); },
+    levelUp() { [523, 659, 784, 1047, 1319].forEach((f, i) => tone(f, 0.1, 'square', 0.07, 0, i * 0.06)); },
+    evolve() { [392, 523, 659, 784, 1047, 1319, 1568].forEach((f, i) => tone(f, 0.14, 'triangle', 0.12, 0, i * 0.08)); },
     stairs() { [392, 330, 262, 196, 165].forEach((f, i) => tone(f, 0.12, 'square', 0.08, 0, i * 0.07)); },
   };
 

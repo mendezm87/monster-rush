@@ -2,7 +2,7 @@
 
 // Shown on the title screen so players can tell whether their browser has the latest
 // build (GitHub Pages lets browsers cache files for up to 10 minutes). Bump on every release.
-const VERSION = '2026.10.17-r3';
+const VERSION = '2026.10.17-r4';
 
 const App = {
   run: null,        // the current RunState
@@ -59,7 +59,7 @@ function openStarter() {
   App.starter = null;
   const list = $('#starter-list');
   list.innerHTML = '';
-  for (const id of STARTERS) {
+  for (const id of Save.data.starters) {
     const def = ROSTER_BY_ID[id];
     const card = document.createElement('div');
     card.className = 'card'; card.dataset.id = id;
@@ -76,7 +76,8 @@ function openStarter() {
     };
     list.appendChild(card);
   }
-  $('#starter-detail').innerHTML = '<div class="hint">Pick the monster you start the run with. You can recruit more along the way.</div>';
+  $('#starter-detail').innerHTML = `<div class="hint">Pick the monster you start the run with. You can recruit more along the way.<br>
+    Beat a monster as a boss to unlock it as a starter (${Save.data.starters.length} of ${ROSTER.length} unlocked).</div>`;
   $('#btn-starter-go').disabled = true;
   UI.show('starter');
 }
@@ -109,8 +110,9 @@ const roomHooks = {
       UI.banner(`FLOOR ${run.floorN}`);
     });
   },
-  recruit(ped) { openRecruit(ped); },
-  end(result) { showResult(result); },
+  offer(ped) { openOffer(ped); },
+  bossBeaten(id) { if (Save.unlockStarter(id)) setTimeout(() => UI.banner(`NEW STARTER: ${ROSTER_BY_ID[id].name}!`), 2000); },
+  end(result) { Save.endRun(App.run.floorN, result === 'win'); showResult(result); },
 };
 
 function enterRoom(room, entry) {
@@ -119,6 +121,7 @@ function enterRoom(room, entry) {
   UI.hudCache = {};
   UI.closeSwap();
   UI.buildMoveButtons(App.battle.P);
+  UI.drawRelics(App.run);
 }
 
 // A quick fade to black between rooms.
@@ -128,11 +131,17 @@ function transition(fn) {
   setTimeout(() => { if (App.run) fn(); f.classList.remove('on'); }, 200);
 }
 
+function titleStats() {
+  const d = Save.data;
+  $('#title-stats').textContent = d.runs ? `Runs ${d.runs} · Wins ${d.wins} · Best floor ${d.bestFloor} · Starters ${d.starters.length}/${ROSTER.length}` : '';
+}
+
 function leaveRun(to) {
   App.battle = null; App.run = null; App.paused = false;
   Sfx.resume(); Sfx.music.stop();
   UI.setRunChrome(false);
   Input.mouse = false;
+  titleStats();
   if (to === 'title') UI.show('title'); else if (to === 'starter') openStarter();
 }
 
@@ -144,63 +153,87 @@ function showResult(result) {
     const t = Math.floor(run.stats.time), ts = `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
     $('#result-stats').innerHTML = `Reached floor ${run.floorN} &nbsp;·&nbsp; Time ${ts}<br>
       Rooms cleared ${run.stats.rooms} &nbsp;·&nbsp; Wild monsters beaten ${run.stats.kos}<br>
-      Coins ${run.coins} &nbsp;·&nbsp; Party ${run.party.map(m => m.def.name).join(', ')}`;
+      Coins ${run.coins} &nbsp;·&nbsp; Relics ${run.relics.length}<br>
+      Party ${run.party.map(m => `${m.def.name} Lv ${m.level}`).join(', ')}`;
     UI.show('result');
   }, 1400);
 }
 $('#btn-again').onclick = () => { Sfx.play('select'); leaveRun('starter'); };
 $('#btn-title').onclick = () => { Sfx.play('back'); leaveRun('title'); };
 
-// ---------- recruit rooms ----------
-const Recruit = { ped: null, release: -1 };
-function openRecruit(ped) {
-  const run = App.run, def = ROSTER_BY_ID[ped.id];
-  Recruit.ped = ped; Recruit.release = -1;
-  $('#recruit-title').textContent = `Recruit ${def.name}?`;
-  UI.fillDetail($('#recruit-detail'), def);
-  const full = run.party.length >= 6;
+// ---------- offers: recruit rooms, the shop, treasure ----------
+const Offer = { ped: null, release: -1 };
+function openOffer(ped) {
+  const run = App.run;
+  Offer.ped = ped; Offer.release = -1;
+  const yes = $('#btn-recruit-yes'), full = ped.kind === 'mon' && run.party.length >= 6;
   $('#recruit-full').classList.toggle('hidden', !full);
-  if (full) drawRecruitParty();
-  $('#btn-recruit-yes').disabled = full;
+  if (ped.kind === 'mon') {
+    const def = ROSTER_BY_ID[ped.id];
+    $('#recruit-title').textContent = `Recruit ${def.name}?`;
+    UI.fillDetail($('#recruit-detail'), def, ` · joins at Lv ${run.joinLevel()}`);
+    if (full) drawOfferParty();
+    yes.textContent = 'RECRUIT'; yes.disabled = full;
+  } else {
+    const it = itemDef(ped.id), relic = !!RELICS[ped.id];
+    $('#recruit-title').textContent = ped.kind === 'shop' ? 'Shop' : 'Treasure!';
+    UI.fillItem($('#recruit-detail'), ped.id, relic ? 'Relic: lasts the whole run' : 'Used straight away');
+    if (ped.kind === 'shop') {
+      const price = ped.item.price, useful = relic || run.useGood(ped.id, true);
+      yes.textContent = run.coins < price ? `NEED ${price} COINS` : !useful ? 'NOT NEEDED NOW' : `BUY FOR ${price}`;
+      yes.disabled = run.coins < price || !useful;
+    } else { yes.textContent = 'TAKE IT'; yes.disabled = false; }
+  }
   App.paused = true;
   UI.show('recruit');
 }
-function drawRecruitParty() {
+function drawOfferParty() {
   UI.partyCards($('#recruit-party'), App.run.party, {
-    mark: i => (i === Recruit.release ? 'sel' : ''),
+    mark: i => (i === Offer.release ? 'sel' : ''),
     onPick: i => {
       Sfx.play('select');
-      Recruit.release = i;
-      drawRecruitParty();
+      Offer.release = i;
+      drawOfferParty();
       $('#btn-recruit-yes').disabled = false;
       $('#btn-recruit-yes').textContent = `SWAP FOR ${App.run.party[i].def.name}`;
     },
   });
 }
-function closeRecruit(took) {
-  const b = App.battle;
+function closeOffer(took) {
+  const b = App.battle, ped = Offer.ped;
   UI.hideScreens();
   App.paused = false;
-  $('#btn-recruit-yes').textContent = 'RECRUIT';
   if (!b) return;
-  b.recruitDone(took);
+  b.offerDone(ped, took);
   if (!took) {   // step back from the pedestal
-    const P = b.P, ped = Recruit.ped;
+    const P = b.P;
     const d = Math.hypot(P.x - ped.x, P.y - ped.y) || 1;
     P.x += (P.x - ped.x) / d * 14; P.y += (P.y - ped.y) / d * 14;
   }
 }
-$('#btn-recruit-no').onclick = () => { Sfx.play('back'); closeRecruit(null); };
+$('#btn-recruit-no').onclick = () => { Sfx.play('back'); closeOffer(false); };
 $('#btn-recruit-yes').onclick = () => {
-  const run = App.run, b = App.battle, ped = Recruit.ped;
+  const run = App.run, b = App.battle, ped = Offer.ped;
   if (!run || !b || !ped) return;
-  if (run.party.length >= 6 && Recruit.release < 0) return;
-  const before = b.P, at = { x: before.x, y: before.y };
-  const m = run.recruit(ped.id, run.party.length >= 6 ? Recruit.release : -1);
-  if (b.P !== before) b.replaceActive(at);
+  if (ped.kind === 'mon') {
+    if (run.party.length >= 6 && Offer.release < 0) return;
+    const before = b.P, at = { x: before.x, y: before.y };
+    const m = run.recruit(ped.id, run.party.length >= 6 ? Offer.release : -1);
+    if (b.P !== before) b.replaceActive(at);
+    Save.noteRecruit(ped.id);
+    UI.hudCache = {};
+    closeOffer(true);
+    UI.banner(`${m.def.name} JOINED!`);
+    return;
+  }
+  if (ped.kind === 'shop') {
+    if (run.coins < ped.item.price) return;
+    run.coins -= ped.item.price;
+  }
+  if (RELICS[ped.id]) { run.addRelic(ped.id); UI.banner(`GOT ${RELICS[ped.id].name}!`); }
+  else { run.useGood(ped.id); UI.banner(GOODS[ped.id].name + '!'); }
   UI.hudCache = {};
-  closeRecruit(ped.id);
-  UI.banner(`${m.def.name} JOINED!`);
+  closeOffer(true);
 };
 
 // ---------- party screen (from the pause menu) ----------
@@ -296,6 +329,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 $('#version').textContent = 'version ' + VERSION;
+titleStats();
 UI.show('title');
 
 // Debug / testing hook

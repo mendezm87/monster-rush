@@ -172,6 +172,15 @@ const MOVES = {
   heavySigh:    { name: 'Heavy Sigh', type: 'normal', kind: 'burst', power: 210, cd: 5, r: 70, delay: 0.5, slow: 2.5 },
   blankStare:   { name: 'Blank Stare', type: 'dark', kind: 'beam', power: 300, cd: 5.5, charge: 0.6, dur: 0.6, width: 10, len: 290 },
   coffeeBreak:  { name: 'Coffee Break', type: 'normal', kind: 'buff', buff: { spd: 1.6, atk: 1.3 }, dur: 8, cd: 14 },
+  // evolved starters' upgraded moves
+  zoomiesMax:   { name: 'Zoomies Max', type: 'normal', kind: 'dash', power: 110, cd: 2.6, speed: 440, dur: 0.38, hits: 3 },
+  shibaRoar:    { name: 'Shiba Roar', type: 'normal', kind: 'burst', power: 300, cd: 5, r: 78, delay: 0.35, status: ['par', 0.35], sfx: 'shibaScream' },
+  supremeSmug:  { name: 'Supreme Smug Beam', type: 'fairy', kind: 'beam', power: 350, cd: 5.5, charge: 0.45, dur: 0.7, width: 15, len: 310 },
+  blazeRush:    { name: 'Blaze Rush', type: 'fire', kind: 'dash', power: 290, cd: 3.5, speed: 330, dur: 0.45, status: ['brn', 0.35] },
+  infernoBeam:  { name: 'Inferno Beam', type: 'fire', kind: 'beam', power: 370, cd: 6, charge: 0.45, dur: 0.75, width: 14, len: 260, status: ['brn', 0.3] },
+  magmaQuake:   { name: 'Magma Quake', type: 'ground', kind: 'burst', power: 330, cd: 7, r: 80, delay: 0.55, slow: 1.5 },
+  tidalCannon:  { name: 'Tidal Cannon', type: 'water', kind: 'beam', power: 410, cd: 6.5, charge: 0.55, dur: 0.75, width: 15, len: 310 },
+  maelstrom:    { name: 'Maelstrom', type: 'water', kind: 'vortex', power: 460, cd: 6, r: 120, dur: 1.6, pull: 140 },
 };
 
 for (const k in MOVES) MOVES[k].id = k;   // lets moves be referenced by name over the network
@@ -193,7 +202,7 @@ const ITEMS = {
 const ROSTER = [
   { id: 'sparkit',   name: 'SPARKIT',   types: ['electric'], hp: 820,  atk: 1.2,  def: 0.85, spd: 105, size: 'M', item: 'voltCharm',
     moves: ['voltRush', 'thunderbolt', 'thunder', 'voltCannon'] },
-  { id: 'cinderox',  name: 'CINDEROX',  types: ['fire'],     hp: 1080, atk: 1.12, def: 1.0,  spd: 90,  size: 'M', item: 'emberStone',
+  { id: 'cinderox',  name: 'CINDEROX',  types: ['fire'],     hp: 1200, atk: 1.15, def: 1.0,  spd: 90,  size: 'M', item: 'emberStone',
     moves: ['flameWheel', 'flamethrower', 'fireBlast', 'eruption'] },
   { id: 'tidalisk',  name: 'TIDALISK',  types: ['water'],    hp: 1240, atk: 1.04, def: 1.1,  spd: 86,  size: 'M', item: 'mysticDrop',
     moves: ['hydroCannon', 'bubbleBeam', 'aquaJet', 'whirlpool'] },
@@ -234,10 +243,20 @@ const ROSTER = [
     moves: ['deadlineDash', 'heavySigh', 'blankStare', 'coffeeBreak'] },
 ];
 
-// Evolved forms (filled in below) aren't part of the wild / recruit pool.
-const EVOLVED = [];
+// Evolved forms: a starter becomes one of these at `evolve.level` (see `evolve` on the base
+// monster). They aren't part of the wild / recruit pool.
+const EVOLVED = [
+  { id: 'smugshogun', name: 'SMUGSHOGUN', types: ['normal', 'fairy'], hp: 1360, atk: 1.32, def: 1.1, spd: 114, size: 'L', item: 'snackPouch',
+    moves: ['zoomiesMax', 'shibaRoar', 'supremeSmug', 'blanketNap'], from: 'smugshi' },
+  { id: 'infernox', name: 'INFERNOX', types: ['fire', 'ground'], hp: 1400, atk: 1.26, def: 1.15, spd: 90, size: 'L', item: 'emberStone',
+    moves: ['blazeRush', 'infernoBeam', 'fireBlast', 'magmaQuake'], from: 'cinderox' },
+  { id: 'maelstrisk', name: 'MAELSTRISK', types: ['water', 'dragon'], hp: 1560, atk: 1.16, def: 1.22, spd: 88, size: 'L', item: 'mysticDrop',
+    moves: ['tidalCannon', 'bubbleBeam', 'dragonPulse', 'maelstrom'], from: 'tidalisk' },
+];
+const EVOLVE_LEVEL = 7;
+for (const e of EVOLVED) ROSTER.find(m => m.id === e.from).evolve = { to: e.id, level: EVOLVE_LEVEL };
 const ALL_MONS = () => [...ROSTER, ...EVOLVED];
-const ROSTER_BY_ID = Object.fromEntries(ROSTER.map(m => [m.id, m]));
+const ROSTER_BY_ID = Object.fromEntries(ALL_MONS().map(m => [m.id, m]));
 
 const DIFFICULTY = {
   easy:   { think: 0.38, dodge: 0.25, aggro: 0.45, react: 0.55, aimErr: 0.28, lead: false, swap: 0 },

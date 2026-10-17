@@ -4,7 +4,81 @@
 const P = (b, s, l) => ({ b, s, l });
 const DARK_EYE = '#1a1222';
 
+// Draws 32px art onto a bigger grid (used to grow a starter into its evolved form).
+class ScaledGrid {
+  constructor(g, k) { this.g = g; this.k = k; this.w = 32; this.h = 32; }
+  ellipse(cx, cy, rx, ry, pal, opt) { this.g.ellipse(cx * this.k, cy * this.k, rx * this.k, ry * this.k, pal, opt); return this; }
+  ellipseM(cx, cy, rx, ry, pal, opt) { this.ellipse(cx, cy, rx, ry, pal, opt); return this.ellipse(this.w - cx, cy, rx, ry, pal, opt); }
+  poly(pts, pal, opt) { this.g.poly(pts.map(([x, y]) => [x * this.k, y * this.k]), pal, opt); return this; }
+  polyM(pts, pal, opt) { this.poly(pts, pal, opt); return this.poly(pts.map(([x, y]) => [this.w - x, y]), pal, opt); }
+  rect(x, y, w, h, col) {
+    const k = this.k, x0 = Math.round(x * k), y0 = Math.round(y * k);
+    this.g.rect(x0, y0, Math.max(1, Math.round((x + w) * k) - x0), Math.max(1, Math.round((y + h) * k) - y0), col);
+    return this;
+  }
+  rectM(x, y, w, h, col) { this.rect(x, y, w, h, col); return this.rect(this.w - x - w, y, w, h, col); }
+  px(x, y, col) { return this.rect(x, y, 1, 1, col); }
+  pxM(x, y, col) { this.px(x, y, col); return this.px(this.w - 1 - x, y, col); }
+  eyes(...a) { return PixGrid.prototype.eyes.apply(this, a); }
+}
+const EVO_K = 44 / 32;
+
 const MONSTER_ART = {
+  // ---- evolved starters: the base design grown to 44px, plus new gear ----
+  smugshogun(g, v = 'front') {
+    MONSTER_ART.smugshi(new ScaledGrid(g, EVO_K), v);
+    const R = P('#c8303a', '#8a1a24', '#ff6a6a'), Gd = '#ffd23f';
+    if (v === 'front') {
+      g.poly([[27, 26], [35, 34], [31, 35], [26, 29]], R, { edge: true });           // scarf tail
+      g.ellipse(22, 25, 9, 2.6, R, { edge: true });                                  // samurai scarf
+      g.rect(14, 26, 16, 1, Gd);
+      g.poly([[22, 9], [24, 11], [22, 13], [20, 11]], Gd);                           // gold forehead mark
+    } else if (v === 'side') {
+      g.poly([[22, 25], [9, 22], [11, 27], [21, 29]], R, { edge: true });            // scarf streaming back
+      g.ellipse(26, 26, 6, 2.6, R, { edge: true });
+      g.rect(21, 27, 10, 1, Gd);
+      g.poly([[30, 11], [32, 13], [30, 15], [28, 13]], Gd);
+    } else {
+      g.ellipse(22, 22, 9, 2.6, R, { edge: true });
+      g.poly([[20, 23], [17, 34], [21, 33]], R, { edge: true }); g.poly([[24, 23], [27, 34], [23, 33]], R, { edge: true });
+      g.rect(14, 23, 16, 1, Gd);
+    }
+  },
+  infernox(g, v = 'front') {
+    MONSTER_ART.cinderox(new ScaledGrid(g, EVO_K), v);
+    const H = P('#f3dd9a', '#b89a5a', '#fffbe6'), Rk = P('#4a3a34', '#2a201c', '#6a564c'), L = '#ff7a1c';
+    if (v === 'front') {
+      g.polyM([[14, 17], [5, 9], [7, 15], [11, 20]], H, { edge: true });             // horns
+      g.ellipseM(9, 27, 5, 4, Rk, { edge: true });                                   // rock shoulders
+      g.pxM(8, 26, L); g.pxM(9, 27, L); g.pxM(10, 28, L);                            // lava cracks
+    } else if (v === 'side') {
+      g.poly([[27, 15], [35, 7], [34, 13], [30, 18]], H, { edge: true });
+      g.ellipse(21, 27, 5.5, 4, Rk, { edge: true });
+      g.px(20, 26, L); g.px(21, 27, L); g.px(22, 28, L);
+    } else {
+      g.polyM([[14, 17], [5, 9], [7, 15], [11, 20]], H, { edge: true });
+      g.ellipseM(9, 27, 5, 4, Rk, { edge: true });
+      g.pxM(8, 26, L); g.pxM(10, 28, L);
+      for (const y of [21, 25, 29]) g.rect(21, y, 2, 2, L);                          // glowing ridge
+    }
+  },
+  maelstrisk(g, v = 'front') {
+    MONSTER_ART.tidalisk(new ScaledGrid(g, EVO_K), v);
+    const H = P('#ffd23f', '#d89a1a', '#fff3a0'), Wh = '#e8fbff';
+    if (v === 'front') {
+      g.polyM([[17, 10], [12, 1], [19, 8]], H, { edge: true });                      // dragon horns
+      g.polyM([[16, 18], [10, 22], [11, 23], [17, 19]], Wh);                         // whiskers
+      g.rect(21, 22, 2, 14, '#7ab4ff');                                              // belly scales
+    } else if (v === 'side') {
+      g.poly([[24, 9], [22, 0], [29, 7]], H, { edge: true });
+      g.poly([[34, 17], [40, 20], [39, 21], [33, 18]], Wh);
+    } else {
+      g.polyM([[17, 10], [12, 1], [19, 8]], H, { edge: true });
+      for (const y of [16, 21, 26, 31]) g.poly([[20, y], [22, y - 3], [24, y]], H);  // golden spines
+    }
+  },
+
+
   sparkit(g, v = 'front') {
     if (v === 'side') {
       const Y = P('#ffd84a', '#e0a722', '#fff3a0');

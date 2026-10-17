@@ -6,6 +6,12 @@ const STARTERS = ['smugshi', 'cinderox', 'tidalisk'];
 const ROOM_SIZES = { s: [576, 324], wide: [864, 324], tall: [576, 486], big: [864, 486], boss: [864, 540] };
 const REVIVE_HP = 0.3;                                   // fainted party members come back at 30% on a new floor
 
+// Leveling: XP for each wild monster beaten. The monster that's out gets it all, the
+// rest of the party (not fainted) gets half. Level n -> n+1 needs XP_NEED(n).
+const XP_WILD = 10, XP_TOUGH = 20, XP_BOSS = 50, XP_BENCH = 0.5;
+const XP_NEED = n => 15 + 8 * n;
+const LV_HP = 0.035, LV_STAT = 0.02, LV_HEAL = 0.05;     // per level: +3.5% HP, +2% atk/def; leveling heals 5%
+
 // Wild monsters are weaker than arena monsters (there can be three of them) and get
 // tougher each floor; a boss is close to full arena strength.
 const WILD_AI = {
@@ -14,10 +20,33 @@ const WILD_AI = {
 };
 function wildSpec(id, floorN, kind) {
   const f = floorN - 1;
-  if (kind === 'boss') return { id, hpMul: 1.3 + 0.3 * f, atkMul: 0.7 + 0.08 * f, scale: 1.35, boss: true, ai: 'boss' };
-  if (kind === 'tough') return { id, hpMul: 0.65 + 0.15 * f, atkMul: 0.5 + 0.07 * f, scale: 1.15, ai: 'wild' };
-  return { id, hpMul: 0.3 + 0.08 * f, atkMul: 0.36 + 0.07 * f, ai: 'wild' };
+  if (kind === 'boss') return { id, hpMul: 1.3 + 0.7 * f, atkMul: 0.7 + 0.2 * f, scale: 1.35, boss: true, ai: 'boss' };
+  if (kind === 'tough') return { id, hpMul: 0.65 + 0.4 * f, atkMul: 0.5 + 0.2 * f, scale: 1.15, ai: 'wild' };
+  return { id, hpMul: 0.3 + 0.25 * f, atkMul: 0.36 + 0.2 * f, ai: 'wild' };
 }
+
+// Relics last for the whole run and help the whole party. bonus multiplies stats.
+const RELICS = {
+  leechLens:   { name: 'LEECH LENS', desc: 'Beams also drain: your monster heals 15% of the damage its beams deal.' },
+  emberTracks: { name: 'EMBER TRACKS', desc: 'Dashes leave a trail of fire behind them.' },
+  muscleCharm: { name: 'MUSCLE CHARM', desc: '+15% attack for your whole party.', bonus: { atk: 1.15 } },
+  ironShell:   { name: 'IRON SHELL', desc: '+15% defence for your whole party.', bonus: { def: 1.15 } },
+  swiftBoots:  { name: 'SWIFT BOOTS', desc: '+12% speed for your whole party.', bonus: { spd: 1.12 } },
+  hourglass:   { name: 'HOURGLASS', desc: 'Moves recharge 15% faster.', bonus: { cd: 0.85 } },
+  luckyCoin:   { name: 'LUCKY COIN', desc: 'Wild monsters drop 50% more coins.' },
+  berryBasket: { name: 'BERRY BASKET', desc: 'Berries drop more often and heal 40% instead of 25%.' },
+  splitShot:   { name: 'SPLIT SHOT', desc: 'Shots fire one extra projectile.' },
+  staticCharm: { name: 'STATIC CHARM', desc: 'Every hit has a 10% chance to paralyze.' },
+  blastCore:   { name: 'BLAST CORE', desc: 'Blasts and strikes from above are 25% bigger.' },
+};
+// Shop goods that are used up straight away.
+const GOODS = {
+  bigBerry: { name: 'BIG BERRY', desc: 'Heals your active monster by 50%.', price: 5 },
+  picnic:   { name: 'PICNIC BASKET', desc: 'Heals your whole party by 40%.', price: 10 },
+  revive:   { name: 'REVIVE SEED', desc: 'Fainted party members get back up with 40% HP.', price: 12 },
+};
+const itemDef = id => RELICS[id] || GOODS[id];
+const relicPrice = floorN => 18 + 7 * (floorN - 1);
 
 const pickRand = a => a[(Math.random() * a.length) | 0];
 function shuffle(a) {
@@ -36,15 +65,15 @@ function makeWave(floorN, sizeKey) {
   return shuffle(ids.slice()).slice(0, n).map(id => wildSpec(id, floorN, 'wild'));
 }
 
-function genFloor(floorN, partyIds) {
-  for (let tries = 0; tries < 500; tries++) {
-    const f = tryFloor(floorN, partyIds);
+function genFloor(floorN, partyIds, relics = []) {
+  for (let tries = 0; tries < 2000; tries++) {
+    const f = tryFloor(floorN, partyIds, relics);
     if (f) return f;
   }
   throw new Error('could not build a floor');
 }
 
-function tryFloor(floorN, partyIds) {
+function tryFloor(floorN, partyIds, relics) {
   const G = 9, target = 8 + Math.min(floorN, 4) + ((Math.random() * 2) | 0);
   const grid = new Map(), key = (x, y) => x + ',' + y;
   const rooms = [];
@@ -77,12 +106,15 @@ function tryFloor(floorN, partyIds) {
     for (const o of Object.values(r.doors)) if (!dist.has(o)) { dist.set(o, dist.get(r) + 1); bfs.push(o); }
   }
   const ends = rooms.filter(r => r !== start && Object.keys(r.doors).length === 1).sort((a, b) => dist.get(b) - dist.get(a));
-  if (ends.length < 2 || dist.get(ends[0]) < 3) return null;
-  const boss = ends[0], recruit = pickRand(ends.slice(1));
+  // dead ends hold the special rooms: the farthest is the boss
+  if (ends.length < 4 || dist.get(ends[0]) < 3) return null;
+  const [boss, ...rest] = ends;
+  shuffle(rest);
+  const [recruit, shop, treasure] = rest;
 
   const ids = ROSTER.map(m => m.id);
   for (const r of rooms) {
-    r.type = r === start ? 'start' : r === boss ? 'boss' : r === recruit ? 'recruit' : 'fight';
+    r.type = r === start ? 'start' : r === boss ? 'boss' : r === recruit ? 'recruit' : r === shop ? 'shop' : r === treasure ? 'treasure' : 'fight';
     const sizeKey = r.type === 'boss' ? 'boss' : r.type === 'fight' ? pickRand(['s', 's', 'wide', 'tall', 'big']) : 's';
     [r.w, r.h] = ROOM_SIZES[sizeKey];
     r.seed = (Math.random() * 1e9) | 0;
@@ -96,8 +128,39 @@ function tryFloor(floorN, partyIds) {
     }
     if (r.type === 'recruit') r.offer = shuffle(ids.filter(id => !partyIds.includes(id))).slice(0, 3);
   }
+  // a relic in the treasure room, two more (and two goods) in the shop
+  const free = shuffle(Object.keys(RELICS).filter(id => !relics.includes(id)));
+  treasure.relic = free[0];
+  shop.stock = [
+    { id: 'bigBerry', price: GOODS.bigBerry.price },
+    ...shuffle(['picnic', 'revive']).slice(0, 1).map(id => ({ id, price: GOODS[id].price })),
+    ...free.slice(1, 3).map(id => ({ id, price: relicPrice(floorN), relic: true })),
+  ];
   return { n: floorN, rooms, start, boss, stage: FLOOR_STAGES[(floorN - 1) % FLOOR_STAGES.length] };
 }
+
+// Progress kept between runs (in this browser). Beating a boss unlocks its species as a starter.
+const SAVE_KEY = 'monsterRush.save.v1';
+const Save = {
+  data: { starters: [...STARTERS], runs: 0, wins: 0, bestFloor: 0, recruited: [] },
+  load() {
+    try { const d = JSON.parse(localStorage.getItem(SAVE_KEY)); if (d) Object.assign(this.data, d); } catch (e) { /* storage blocked: play without saving */ }
+    for (const id of STARTERS) if (!this.data.starters.includes(id)) this.data.starters.push(id);
+    this.data.starters = this.data.starters.filter(id => ROSTER.some(m => m.id === id));
+  },
+  write() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(this.data)); } catch (e) { /* ignore */ } },
+  unlockStarter(id) {
+    if (this.data.starters.includes(id) || !ROSTER.some(m => m.id === id)) return false;
+    this.data.starters.push(id); this.write(); return true;
+  },
+  noteRecruit(id) { if (!this.data.recruited.includes(id)) { this.data.recruited.push(id); this.write(); } },
+  endRun(floorN, win) {
+    this.data.runs++; if (win) this.data.wins++;
+    this.data.bestFloor = Math.max(this.data.bestFloor, floorN);
+    this.write();
+  },
+};
+Save.load();
 
 // Everything that lasts for one run.
 class RunState {
@@ -106,20 +169,58 @@ class RunState {
     this.pi = 0;
     this.coins = 0;
     this.swapCd = 0;
+    this.relics = [];
     this.stats = { rooms: 0, kos: 0, time: 0, floors: 0 };
     this.newFloor(1);
   }
   newFloor(n) {
     this.floorN = n;
-    this.floor = genFloor(n, this.party.map(m => m.id));
+    this.floor = genFloor(n, this.party.map(m => m.def.from || m.id), this.relics);
     // fainted monsters get back up at 30% for the new floor
     for (const m of this.party) if (m.fainted) { m.fainted = false; m.hp = Math.round(m.maxHp * REVIVE_HP); m.status = null; }
     if (this.party[this.pi].fainted) this.pi = this.party.findIndex(m => !m.fainted);
     this.room = this.floor.start;
   }
   get stageKey() { return this.floor.stage; }
+  addRelic(id) { if (!this.relics.includes(id)) this.relics.push(id); this.applyRelics(); }
+  // stat relics multiply into every party member's bonus
+  applyRelics() {
+    const b = { atk: 1, def: 1, spd: 1, cd: 1 };
+    for (const id of this.relics) for (const [k, v] of Object.entries(RELICS[id].bonus || {})) b[k] *= v;
+    for (const m of this.party) m.bonus = { ...b };
+  }
+  // Use a shop good; returns false if it would do nothing.
+  useGood(id, dry = false) {
+    const alive = this.party.filter(m => !m.fainted), down = this.party.filter(m => m.fainted);
+    const P = this.party[this.pi];
+    if (id === 'bigBerry') { if (P.hp >= P.maxHp) return false; if (!dry) P.hp = Math.min(P.maxHp, P.hp + Math.round(P.maxHp * 0.5)); }
+    if (id === 'picnic') { if (alive.every(m => m.hp >= m.maxHp)) return false; if (!dry) for (const m of alive) m.hp = Math.min(m.maxHp, m.hp + Math.round(m.maxHp * 0.4)); }
+    if (id === 'revive') { if (!down.length) return false; if (!dry) for (const m of down) { m.fainted = false; m.hp = Math.round(m.maxHp * 0.4); m.status = null; } }
+    return true;
+  }
+  // Returns the level-ups: [{ mon, level }]
+  giveXp(amount) {
+    const ups = [];
+    this.party.forEach((m, i) => {
+      if (m.fainted) return;
+      m.xp += Math.round(amount * (i === this.pi ? 1 : XP_BENCH));
+      while (m.xp >= XP_NEED(m.level)) {
+        m.xp -= XP_NEED(m.level);
+        m.setLevel(m.level + 1);
+        ups.push({ mon: m, level: m.level });
+      }
+    });
+    return ups;
+  }
+  // new recruits join a level behind the party's average, at full HP
+  joinLevel() {
+    const avg = this.party.reduce((s, m) => s + m.level, 0) / this.party.length;
+    return Math.max(1, Math.round(avg) - 1);
+  }
   recruit(id, releaseIdx = -1) {
     const m = new Mon(ROSTER_BY_ID[id], 'player');
+    m.setLevel(this.joinLevel()); m.hp = m.maxHp;
+    m.bonus = { ...this.party[0].bonus };
     if (releaseIdx >= 0) this.release(releaseIdx, m);
     else this.party.push(m);
     return m;
