@@ -43,12 +43,13 @@ A real-time, top-down pixel-art **roguelike** in the style of *The Binding of Is
 
 - **Monsters and the trainer turn to face where they go:** every design has `front`, `side` (facing right, flipped for left) and `back` views (`MONSTER_ART[id](grid, view)`). A new monster needs all three.
 - **Leveling:** XP per wild monster beaten (`XP_WILD`/`XP_TOUGH`/`XP_BOSS`), full for the active monster, half for the rest; each level +3.5% HP, +2% attack/defence, heals 5%. Recruits join a level below the party's average.
-- **Evolution:** the three starters evolve at level 7 (`EVOLVE_LEVEL`) once a room is cleared: Smugshi -> **Smugshogun** (red samurai scarf, gold forehead mark), Cinderox -> **Infernox** (fire/ground, horns, rock shoulders), Tidalisk -> **Maelstrisk** (water/dragon, gold horns). Evolved art is the base design scaled to 44px plus new gear (`ScaledGrid`). Claude picked these; the owner may want to redesign them. Other monsters don't evolve yet.
+- **Evolution:** the three starters evolve at level 6 (`EVOLVE_LEVEL`) once a room is cleared: Smugshi -> **Smugshogun** (red samurai scarf, gold forehead mark), Cinderox -> **Infernox** (fire/ground, horns, rock shoulders), Tidalisk -> **Maelstrisk** (water/dragon, gold horns). Evolved art is the base design scaled to 44px plus new gear (`ScaledGrid`). Claude picked these; the owner may want to redesign them. Other monsters don't evolve yet.
 - **Every floor has a shop and a treasure room** (dead ends, like the boss and recruit rooms). The shop sells a Big Berry, a Picnic Basket or Revive Seed, and two relics; the treasure room has one free relic.
 - **Relics** (`RELICS` in `js/dungeon.js`) last the run and help the whole party: Leech Lens (beams drain), Ember Tracks (dashes leave fire), Muscle Charm, Iron Shell, Swift Boots, Hourglass, Lucky Coin, Berry Basket, Split Shot, Static Charm, Blast Core.
 - **Saved unlocks** (`Save`, localStorage key `monsterRush.save.v1`): beating a monster as a boss unlocks it as a starter; runs, wins and best floor show on the title screen.
-- Cinderox got more HP/attack here (1200 / 1.15) because it has no heal and fell behind; the arena game's numbers are separate.
-- Balance at this point: the hard bot clears floor 1 every run and wins roughly 40% of runs.
+- Cinderox got more HP/attack/defence here (1200 / 1.15 / 1.1) and a bigger, quicker Eruption (r 74, delay 0.42, power 300, cd 7), because it has no heal and wild monsters kept stepping out of Eruption; the arena game's numbers are separate.
+- Floors have 11-15 rooms (`target` in `tryFloor`), 4 of them special (recruit, shop, treasure, boss). Level n needs `18 + 11n` XP.
+- Balance at this point: the hard bot nearly always clears floor 1 and wins a bit over half its runs (Smugshi most, Cinderox least); most losses come on floor 2.
 
 ### Not decided yet (ask the owner when it matters)
 

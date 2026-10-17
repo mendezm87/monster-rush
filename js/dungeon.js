@@ -9,7 +9,7 @@ const REVIVE_HP = 0.3;                                   // fainted party member
 // Leveling: XP for each wild monster beaten. The monster that's out gets it all, the
 // rest of the party (not fainted) gets half. Level n -> n+1 needs XP_NEED(n).
 const XP_WILD = 10, XP_TOUGH = 20, XP_BOSS = 50, XP_BENCH = 0.5;
-const XP_NEED = n => 15 + 8 * n;
+const XP_NEED = n => 18 + 11 * n;
 const LV_HP = 0.035, LV_STAT = 0.02, LV_HEAL = 0.05;     // per level: +3.5% HP, +2% atk/def; leveling heals 5%
 
 // Wild monsters are weaker than arena monsters (there can be three of them) and get
@@ -74,7 +74,7 @@ function genFloor(floorN, partyIds, relics = []) {
 }
 
 function tryFloor(floorN, partyIds, relics) {
-  const G = 9, target = 8 + Math.min(floorN, 4) + ((Math.random() * 2) | 0);
+  const G = 9, target = 10 + Math.min(floorN, 4) + ((Math.random() * 2) | 0);
   const grid = new Map(), key = (x, y) => x + ',' + y;
   const rooms = [];
   const add = (gx, gy) => { const r = { gx, gy, doors: {} }; grid.set(key(gx, gy), r); rooms.push(r); return r; };

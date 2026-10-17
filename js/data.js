@@ -87,7 +87,7 @@ const MOVES = {
   flameWheel:   { name: 'Flame Wheel', type: 'fire', kind: 'dash', power: 220, cd: 3.5, speed: 300, dur: 0.42, status: ['brn', 0.25] },
   flamethrower: { name: 'Flamethrower', type: 'fire', kind: 'beam', power: 290, cd: 6, charge: 0.45, dur: 0.7, width: 11, len: 240, status: ['brn', 0.25] },
   fireBlast:    { name: 'Fire Blast', type: 'fire', kind: 'projectile', power: 330, cd: 7, speed: 165, r: 8, explode: 32, status: ['brn', 0.3] },
-  eruption:     { name: 'Eruption', type: 'fire', kind: 'burst', power: 280, cd: 8, r: 62, delay: 0.55, status: ['brn', 0.2] },
+  eruption:     { name: 'Eruption', type: 'fire', kind: 'burst', power: 300, cd: 7, r: 74, delay: 0.42, status: ['brn', 0.25] },
   // water
   hydroCannon:  { name: 'Hydro Cannon', type: 'water', kind: 'beam', power: 320, cd: 6.5, charge: 0.5, dur: 0.7, width: 12, len: 270 },
   bubbleBeam:   { name: 'Bubble Spray', type: 'water', kind: 'projectile', power: 55, cd: 2, speed: 170, r: 4, count: 5, spread: 0.5, slow: 1.5 },
@@ -202,7 +202,7 @@ const ITEMS = {
 const ROSTER = [
   { id: 'sparkit',   name: 'SPARKIT',   types: ['electric'], hp: 820,  atk: 1.2,  def: 0.85, spd: 105, size: 'M', item: 'voltCharm',
     moves: ['voltRush', 'thunderbolt', 'thunder', 'voltCannon'] },
-  { id: 'cinderox',  name: 'CINDEROX',  types: ['fire'],     hp: 1200, atk: 1.15, def: 1.0,  spd: 90,  size: 'M', item: 'emberStone',
+  { id: 'cinderox',  name: 'CINDEROX',  types: ['fire'],     hp: 1200, atk: 1.15, def: 1.1,  spd: 90,  size: 'M', item: 'emberStone',
     moves: ['flameWheel', 'flamethrower', 'fireBlast', 'eruption'] },
   { id: 'tidalisk',  name: 'TIDALISK',  types: ['water'],    hp: 1240, atk: 1.04, def: 1.1,  spd: 86,  size: 'M', item: 'mysticDrop',
     moves: ['hydroCannon', 'bubbleBeam', 'aquaJet', 'whirlpool'] },
@@ -253,7 +253,7 @@ const EVOLVED = [
   { id: 'maelstrisk', name: 'MAELSTRISK', types: ['water', 'dragon'], hp: 1560, atk: 1.16, def: 1.22, spd: 88, size: 'L', item: 'mysticDrop',
     moves: ['tidalCannon', 'bubbleBeam', 'dragonPulse', 'maelstrom'], from: 'tidalisk' },
 ];
-const EVOLVE_LEVEL = 7;
+const EVOLVE_LEVEL = 6;
 for (const e of EVOLVED) ROSTER.find(m => m.id === e.from).evolve = { to: e.id, level: EVOLVE_LEVEL };
 const ALL_MONS = () => [...ROSTER, ...EVOLVED];
 const ROSTER_BY_ID = Object.fromEntries(ALL_MONS().map(m => [m.id, m]));
