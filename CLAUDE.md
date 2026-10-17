@@ -19,7 +19,7 @@ A real-time, top-down pixel-art **roguelike** in the style of *The Binding of Is
 ## The design (decided with the owner)
 
 - **Structure like The Binding of Isaac.** Each floor is a grid of rooms connected by doors. Entering a room with monsters **locks the doors until it's cleared**. A floor has a start room, normal fight rooms, a **boss room** (beat it to open the way down), a **treasure room**, a **shop**, and **recruit rooms**. Clear floors to go deeper.
-- **Combat = the arena game's combat, expanded.** Real-time, auto-aimed moves, types, statuses, beams, the newer move kinds, mid-fight swapping. The big expansion: **rooms hold 1–3 wild monsters at once**, all fighting your one active monster (the engine is currently strictly 1v1, so `Battle`, `AI`, targeting/auto-aim, projectile/zone/beam hit tests and the HUD need multi-enemy support). Some special rooms hold a single tougher monster.
+- **Combat = the arena game's combat, expanded.** Real-time, auto-aimed moves, types, statuses, beams, the newer move kinds, mid-fight swapping. The big expansion: **rooms hold 1–3 wild monsters at once**, all fighting your one active monster (done: auto-aim targets the nearest wild monster, and beams, bursts, zones, vortexes and pools hit every wild monster they touch). Some special rooms hold a single tougher monster.
 - **Your team.** Pick **a starter** at the beginning of a run and **recruit** along the way. **Recruit rooms offer a choice of monsters (e.g. pick 1 of 3).** The party has a size limit (6, like now); the player must be able to **release a monster or swap one out** for a newly offered one. One monster is active at a time; you can swap between party members as now.
 - **Exploring:** the player controls their active monster directly; **their trainer character walks behind, following them.**
 - **Currency and items, picked up along the way.** Coins drop from fights and rooms and are spent in the shop. Items/relics change how moves work (ideas: "beams also drain", "dashes leave fire", stat ups, healing items, revives).
@@ -28,9 +28,20 @@ A real-time, top-down pixel-art **roguelike** in the style of *The Binding of Is
 - **Between runs:** unlocks (new starters, monsters, items) are **saved in the browser** (localStorage, wrapped in try/catch) and kept across runs.
 - **Permadeath:** if your whole party faints, the run ends. Unlocks stay.
 
+### Decided for the first playable (2026-10-17)
+
+- **Wide screen, and rooms may be bigger than the screen** (Hades-style scrolling). The view is 576x324 world units (canvas 2x); rooms are 576x324, 864x324, 576x486, 864x486, and 864x540 for bosses. Phones are played sideways (a "turn your phone" notice shows in portrait).
+- **3 floors per run** (`RUN_FLOORS`); an **endless mode** is wanted later, so floors keep generating from a floor number.
+- **Starters:** Smugshi, Cinderox, Tidalisk (`STARTERS`); unlocks can add more.
+- **Fainted monsters stay fainted until the next floor**, then get back up at 30% HP (`REVIVE_HP`). Stricter once revives are in the shop.
+- **Recruit rooms** offer 3 random monsters not in your party; walk onto a pedestal to see the card. With a full party you pick who to let go. Release also lives in pause > Party (not the monster that's out mid-fight).
+- **Berries** (Claude's addition, like Isaac's hearts): 30% of wild monsters drop one, healing 25% of the active monster. Needed because monsters without a heal move otherwise wear down across rooms.
+- **Wild monsters are scaled-down arena monsters** (`wildSpec` in `js/dungeon.js`: about 30% HP and 36% attack on floor 1, growing per floor); "tough" single-monster rooms and bosses (bigger sprite, big HP bar, barely knocked back) sit in between. They take turns attacking (`enemyAtkT`). Balance at this point: a hard bot reaches floor 2-3 most runs and clears all 3 about 1 run in 18.
+- The 2-player and online modes were removed (`js/net.js` deleted; it's in git history and in the arena repo).
+
 ### Not decided yet (ask the owner when it matters)
 
-Floor count and length of a run; exact recruit-room rules; how leveling/XP works; which monsters evolve and into what; shop prices and the item list; what the first unlocks are; whether 2-player or online come back in any form (the copied 2-player/online code is still in the repo and can be removed if it gets in the way).
+Exact shop prices and item list; how leveling/XP works; which monsters evolve and into what; what the first unlocks are; endless mode details.
 
 ## Rules carried over from the arena game (keep these)
 
@@ -45,18 +56,18 @@ Floor count and length of a run; exact recruit-room rules; how leveling/XP works
 - **PC controls:** move with WASD/arrows; left click = move 1, right click = move 2, Shift + left = move 3, Shift + right = move 4 (J K L ; also work); Q swaps; Esc/P pauses; M mutes. On PC the move buttons sit in a 2×2 block shaped like the mouse. Touch has a floating stick and move buttons; gamepads use A/B/X/Y, bumpers swap, Start pauses.
 - **Floating numbers are rounded** (the pixel font has no decimal point; 245.6 would read "2456").
 
-## Code map (as copied from the arena game)
+## Code map
 
 | File | Purpose |
 | --- | --- |
-| `js/data.js` | `TYPES` (colours and FX palettes), `CHART`, `MOVES`, `ITEMS`, `ROSTER` (20 monsters), `DIFFICULTY` |
+| `js/data.js` | `TYPES` (colours and FX palettes), `CHART`, `MOVES`, `ITEMS`, `ROSTER` (20 monsters), `DIFFICULTY` (arena bot levels, used by test bots) |
 | `js/pixel.js` | `PixGrid` (shaded ellipses and polygons, auto-outline), bitmap digits, trainer sprites (`trainerCanvas`, front and back) |
 | `js/sprites.js` | `MONSTER_ART[id](grid)`: the procedural monster designs (32px, or 44px for size `L`) |
-| `js/arena.js` | Arena stage generation (`STAGES`: summit, crater, meadow); `W`/`H` = 288×512 world, `FIELD` bounds |
-| `js/battle.js` | `Mon`, `AI`, `Battle`: simulation, effects, rendering (canvas is 2× world; sprites at `SPR_SCALE` 1.5). Also has the online "flip" view helpers (`sx`/`sy`/`gy`) |
-| `js/audio.js` | `Sfx`: synthesized SFX, `beamCharge`/`beamFire` + per-type layers, `Sfx.music` sequencer, `_offline` render hook for level checks |
-| `js/ui.js`, `js/main.js` | HUD, callouts, swap tray, menus, team select, online lobby, game loop, `VERSION` |
-| `js/net.js` | Online play (PeerJS + the owner's Metered TURN relay). Probably not needed here |
+| `js/arena.js` | Room drawing: `W`/`H` = the 576x324 view, `WALL`, `DOOR_W`, `DOOR_DIRS`, `STAGES` (one palette per floor), `roomField`, `doorPos`, `roomCanvas` (cached per room) |
+| `js/dungeon.js` | `RUN_FLOORS`, `STARTERS`, `WILD_AI`, `wildSpec`/`makeWave` (who's in a room), `genFloor` (Isaac-style grid of rooms: start, fights, recruit, boss), `RunState` (party, coins, floor, stats) |
+| `js/battle.js` | `Mon`, `AI` (one brain per wild monster), `Battle` = one room: exploring, doors, multi-enemy fights (`foe(m)` = nearest target, `foes(m)` = everything an attack can hit), loot (coins, berries), trainer follow, camera, rendering, minimap |
+| `js/audio.js` | `Sfx`: synthesized SFX (incl. `coin`, `doorShut`, `doorOpen`, `stairs`), `beamCharge`/`beamFire` + per-type layers, `Sfx.music` sequencer, `_offline` render hook for level checks |
+| `js/ui.js`, `js/main.js` | HUD (active monster, boss bar), callouts, swap tray, starter / recruit / party / pick / result screens, room-to-room flow (`enterRoom`, `roomHooks`), game loop, `VERSION` |
 | `js/input.js` | Keyboard, mouse, touch and gamepad input (`Input.dir(p)`, `Input.moves(p)`, `Input.mouse`) |
 
 ## Testing
@@ -65,6 +76,6 @@ There is no test suite. Check changes in the browser:
 
 - Serve the folder with `python -m http.server 8137` (another port if the arena game's server is running) and open it. `window.__MBS` exposes app state.
 - **Mute first** (see Workflow).
-- Bot-play: override `Input.dir`/`Input.moves` so they drive an `AI` for the player, and step `battle.update(1/60)` in a loop; a battle runs in well under a second. Stub `UI.pickNext` to auto-pick. Keep the tab in front during long bot runs (background tabs crawl), and don't name test globals `W` or `H` (they're the world-size constants).
-- Balance checks: bot round robins, as in the arena game (hard bots favour ranged kits, so read results with that in mind).
+- Bot-play: set `App.paused = true` (so the real loop doesn't also step), override `Input.dir` to return an `AI`'s direction in fights (`ai.update(dt, battle.P, battle)` fires moves itself) and a walk-to-the-next-door direction when exploring, stub `UI.pickNext` and `openRecruit`, make `window.transition = fn => fn()`, and step `App.battle.update(1/60)`. A whole run takes a few seconds. Yield (`await setTimeout 0`) every few hundred steps. When the Browser pane is hidden the real game loop doesn't run, so step manually there too. Don't name test globals `W` or `H` (they're the view-size constants).
+- Balance checks: full bot runs per starter (floor reached, rooms cleared); log damage taken per move by wrapping `Battle.prototype.hit`. Hard bots favour ranged kits, so read results with that in mind.
 - Audio levels: `Sfx._offline(new OfflineAudioContext(...), ({ lib, beamFire, layer }) => ...)` renders silently; compare peak and loudest-50 ms RMS against existing sounds.

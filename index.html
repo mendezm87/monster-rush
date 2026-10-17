@@ -11,9 +11,9 @@
 </head>
 <body>
   <div id="game">
-    <canvas id="view" width="576" height="1024"></canvas>
+    <canvas id="view" width="1152" height="648"></canvas>
 
-    <!-- In-battle HUD -->
+    <!-- In-run HUD -->
     <div id="hud" class="hidden">
       <div class="hud-side left" id="hud-p">
         <div class="portrait"><canvas width="48" height="48"></canvas></div>
@@ -22,25 +22,19 @@
           <div class="tags"></div>
           <div class="hpbar"><div class="ghost"></div><div class="fill"></div><span class="hpnum"></span></div>
         </div>
-        <div class="trainer-icon"><canvas width="24" height="24"></canvas></div>
         <div class="balls"></div>
       </div>
-      <div class="hud-side right" id="hud-e">
-        <div class="portrait"><canvas width="48" height="48"></canvas></div>
-        <div class="info">
-          <div class="mon-name"></div>
-          <div class="tags"></div>
-          <div class="hpbar"><div class="ghost"></div><div class="fill"></div><span class="hpnum"></span></div>
-        </div>
-        <div class="trainer-icon"><canvas width="24" height="24"></canvas></div>
-        <div class="balls"></div>
+      <div id="boss-bar" class="hidden">
+        <div class="boss-name"></div>
+        <div class="hpbar"><div class="ghost"></div><div class="fill"></div></div>
       </div>
-      <div id="timer">0:00</div>
+      <div id="floor-label"></div>
       <button id="btn-pause" aria-label="Pause">II</button>
     </div>
 
     <div id="callouts"></div>
     <div id="banner"></div>
+    <div id="fade"></div>
 
     <!-- Controls -->
     <div id="controls" class="hidden">
@@ -50,39 +44,13 @@
       <div id="move-buttons"></div>
     </div>
 
-    <!-- Player 2 controls (2-player mode). Rotated 180° on touch screens so player 2 can sit across the table. -->
-    <div id="controls2" class="hidden">
-      <div id="stick-zone2"><div id="stick2"><div id="knob2"></div></div></div>
-      <button id="btn-swap2"><span class="nm">SWAP</span><span class="key">P</span><div class="cd"></div></button>
-      <div id="move-buttons2"></div>
-    </div>
-
     <!-- Screens -->
     <div class="screen" id="screen-title">
       <div class="logo">
         <div class="logo-top">MONSTER</div>
         <div class="logo-mid">RUSH</div>
-  
       </div>
-      <div class="opt-group">
-        <div class="opt-label">Mode</div>
-        <div class="seg" id="opt-mode">
-          <button data-v="1p" class="on">1P vs CPU</button><button data-v="2p">2 Players</button><button data-v="online">Online</button>
-        </div>
-      </div>
-      <div class="opt-group" id="grp-diff">
-        <div class="opt-label">Difficulty</div>
-        <div class="seg" id="opt-diff">
-          <button data-v="easy">Easy</button><button data-v="normal" class="on">Normal</button><button data-v="hard">Hard</button>
-        </div>
-      </div>
-      <div class="opt-group">
-        <div class="opt-label">Stage</div>
-        <div class="seg" id="opt-stage">
-          <button data-v="summit" class="on">Summit</button><button data-v="crater">Crater</button><button data-v="meadow">Meadow</button><button data-v="random">?</button>
-        </div>
-      </div>
-      <button class="big-btn" id="btn-play">BATTLE!</button>
+      <button class="big-btn" id="btn-play">NEW RUN</button>
       <button class="small-btn" id="btn-help">How to play</button>
       <button class="small-btn" id="btn-mute">Sound: On</button>
       <div id="version"></div>
@@ -91,60 +59,73 @@
     <div class="screen hidden" id="screen-help">
       <h2>How to play</h2>
       <ul class="help">
-        <li><b>Move</b> anywhere in the arena &mdash; <kbd>WASD</kbd> / arrow keys, or the left thumb-stick on touch.</li>
-        <li><b>Attack</b> with 4 moves &mdash; <b>left click</b>, <b>right click</b>, <kbd>Shift</kbd> + left click and <kbd>Shift</kbd> + right click (the keys <kbd>J</kbd> <kbd>K</kbd> <kbd>L</kbd> <kbd>;</kbd> still work), or tap the move buttons. Moves auto-aim at your opponent.</li>
-        <li><b>Swap</b> monsters mid-fight with the SWAP button or <kbd>Q</kbd>. The battle keeps going while your next monster is thrown in, and swapping has an 8&nbsp;second cooldown.</li>
-        <li><b>Dodge!</b> White circles mark where an attack will land. Beams charge before they fire.</li>
-        <li><b>Types matter.</b> Super-effective hits deal double damage. Matching your monster's type adds a bonus.</li>
-        <li><b>Status:</b> PAR slows and may freeze you in place, BRN burns and weakens, PSN wears you down, FRZ locks you briefly.</li>
-        <li><b>Online:</b> one player hosts and gets a 5-letter code, the other joins with it. Each of you sees the arena from your own side.</li>
-        <li><b>2 Players</b> on one keyboard: Player 1 moves with <kbd>WASD</kbd>, attacks with <kbd>R</kbd> <kbd>T</kbd> <kbd>F</kbd> <kbd>G</kbd> and swaps with <kbd>Q</kbd>. Player 2 moves with the arrow keys, attacks with <kbd>I</kbd> <kbd>O</kbd> <kbd>K</kbd> <kbd>L</kbd> (or numpad <kbd>1</kbd>&ndash;<kbd>4</kbd>) and swaps with <kbd>P</kbd>. On a phone or tablet, Player 2 sits across the table and gets their own controls. Gamepads work too.</li> <kbd>Esc</kbd> pauses (also <kbd>P</kbd> in 1P), <kbd>M</kbd> mutes.</li>
+        <li><b>Explore</b> the floor room by room. Walk through a doorway to go to the next room. The map in the top corner shows where you've been; the red room is the boss.</li>
+        <li><b>Doors lock</b> when wild monsters appear. Beat them all to open the doors again. Coins and berries pop out of them: walk over them to pick them up. Berries heal.</li>
+        <li><b>Move</b> with <kbd>WASD</kbd> / arrow keys, or the thumb-stick on touch.</li>
+        <li><b>Attack</b> with 4 moves: <b>left click</b>, <b>right click</b>, <kbd>Shift</kbd> + left click and <kbd>Shift</kbd> + right click (or <kbd>J</kbd> <kbd>K</kbd> <kbd>L</kbd> <kbd>;</kbd>), or tap the move buttons. Moves auto-aim at the nearest wild monster.</li>
+        <li><b>Swap</b> monsters with the SWAP button or <kbd>Q</kbd>. In a fight the action keeps going while your next monster is thrown in, and swapping has an 8&nbsp;second cooldown.</li>
+        <li><b>HP carries over</b> between rooms. If your whole party faints, the run is over. Fainted monsters get back up with a bit of HP on each new floor.</li>
+        <li><b>Recruit rooms</b> (blue on the map) let you pick 1 of 3 monsters to join your party (up to 6). Release monsters from the Party screen in the pause menu.</li>
+        <li><b>Beat the boss</b> to open the stairs to the next floor. Clear 3 floors to win the run.</li>
+        <li><kbd>Esc</kbd> or <kbd>P</kbd> pauses, <kbd>M</kbd> mutes. Gamepads work too.</li>
       </ul>
       <button class="big-btn" id="btn-help-back">Got it</button>
     </div>
 
-    <div class="screen hidden" id="screen-online">
-      <h2>Online battle</h2>
-      <div id="online-actions">
-        <button class="big-btn" id="btn-host">HOST</button>
-        <div class="opt-label">or join with a code</div>
-        <div class="join-row"><input id="join-code" maxlength="5" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="CODE"><button class="small-btn" id="btn-join">Join</button></div>
+    <div class="screen hidden" id="screen-starter">
+      <h2>Choose your starter</h2>
+      <div id="starter-list"></div>
+      <div id="starter-detail" class="detail"></div>
+      <div class="row">
+        <button class="small-btn" id="btn-starter-back">Back</button>
+        <button class="big-btn" id="btn-starter-go" disabled>START RUN</button>
       </div>
-      <div id="online-code" class="hidden"></div>
-      <div id="online-status"></div>
-      <button class="small-btn" id="btn-online-back">Back</button>
     </div>
 
-    <div class="screen hidden" id="screen-team">
-      <h2><span id="team-title">Pick your team</span> <span id="team-count">0/6</span></h2>
-      <div id="team-detail"></div>
-      <div id="roster"></div>
-      <div class="team-bar">
-        <button class="small-btn" id="btn-team-back">Back</button>
-        <button class="small-btn" id="btn-team-random">Random</button>
-        <button class="big-btn" id="btn-team-go" disabled>FIGHT!</button>
+    <div class="screen hidden dim" id="screen-recruit">
+      <h2 id="recruit-title">Recruit?</h2>
+      <div id="recruit-detail" class="detail"></div>
+      <div id="recruit-full" class="hidden">
+        <div class="hint">Your party is full. Choose who to let go:</div>
+        <div id="recruit-party" class="party-list"></div>
+      </div>
+      <div class="row">
+        <button class="small-btn" id="btn-recruit-no">Leave it</button>
+        <button class="big-btn" id="btn-recruit-yes">RECRUIT</button>
+      </div>
+    </div>
+
+    <div class="screen hidden dim" id="screen-party">
+      <h2>Party <span id="party-count"></span></h2>
+      <div id="party-list" class="party-list"></div>
+      <div id="party-detail" class="detail"></div>
+      <div class="row">
+        <button class="small-btn" id="btn-release">Release</button>
+        <button class="big-btn" id="btn-party-back">Back</button>
       </div>
     </div>
 
     <div class="screen hidden dim" id="screen-pick">
       <h2>Choose your next monster</h2>
-      <div id="pick-list"></div>
+      <div id="pick-list" class="party-list"></div>
     </div>
 
     <div class="screen hidden dim" id="screen-pause">
       <h2>Paused</h2>
       <button class="big-btn" id="btn-resume">Resume</button>
-      <button class="small-btn" id="btn-quit">Quit battle</button>
+      <button class="small-btn" id="btn-party">Party</button>
+      <button class="small-btn" id="btn-quit">Give up run</button>
     </div>
 
     <div class="screen hidden dim" id="screen-result">
-      <h2 id="result-title">VICTORY!</h2>
+      <h2 id="result-title">RUN OVER</h2>
       <div id="result-stats"></div>
-      <button class="big-btn" id="btn-rematch">Rematch</button>
-      <button class="small-btn" id="btn-newteam">New team</button>
+      <button class="big-btn" id="btn-again">New run</button>
       <button class="small-btn" id="btn-title">Title</button>
     </div>
+
   </div>
+  <div id="rotate"><div>Turn your phone sideways to play</div></div>
 
   <script src="js/audio.js"></script>
   <script src="js/data.js"></script>
@@ -153,8 +134,8 @@
   <script src="js/arena.js"></script>
   <script src="js/input.js"></script>
   <script src="js/battle.js"></script>
+  <script src="js/dungeon.js"></script>
   <script src="js/ui.js"></script>
-  <script src="js/net.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

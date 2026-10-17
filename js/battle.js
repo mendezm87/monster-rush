@@ -1,13 +1,13 @@
-// Real-time battle simulation + rendering.
+// Real-time room simulation + rendering: your active monster against 0-3 wild monsters.
 
 const TAU = Math.PI * 2;
 const SPR_SCALE = 1.5;   // world units per sprite pixel (3 canvas px at 2x)
-const MIRROR_Y = FIELD.y0 + FIELD.y1;  // a flipped view mirrors y about the field's centre line
 const DMG_SCALE = 0.8;
 const rand = (a = 0, b = 1) => a + Math.random() * (b - a);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 let _uid = 1;
+const BERRY_HEAL = 0.25;   // a berry heals a quarter of your active monster's HP
 
 const BALL_IMG = gridFromMap([
   '.kkkk.',
@@ -16,6 +16,25 @@ const BALL_IMG = gridFromMap([
   'kwwwwk',
   '.kkkk.',
 ], { k: OUTLINE, r: '#e8433a', w: '#f6f2ee' }).toCanvas();
+
+const COIN_IMG = gridFromMap([
+  '.kkk.',
+  'kyyhk',
+  'kyowk',
+  'kyowk',
+  'kooyk',
+  '.kkk.',
+], { k: OUTLINE, y: '#ffd23f', o: '#d8902a', h: '#fff6c8', w: '#fff6c8' }).toCanvas();
+
+const BERRY_IMG = gridFromMap([
+  '..gg..',
+  '.kgk..',
+  'krrhrk',
+  'krrrhk',
+  'krrrrk',
+  '.kddk.',
+  '..kk..',
+], { k: OUTLINE, g: '#4fae2e', r: '#e8435a', h: '#ffb0c0', d: '#a82a40' }).toCanvas();
 
 // Lazily tinted sprite variants (freeze / burn / paralysis / buff glow).
 const _tint = {};
@@ -33,13 +52,18 @@ function tinted(id, color) {
 }
 
 // ------------------------------------------------------------------ Monster
+// opts (wild monsters): hpMul / atkMul scale the arena stats, scale draws it bigger, boss marks a boss.
 class Mon {
-  constructor(def, side) {
+  constructor(def, side, opts = {}) {
     this.def = def; this.id = def.id; this.side = side;
     this.item = ITEMS[def.item] || {};
-    this.maxHp = def.hp; this.hp = def.hp;
-    this.r = def.size === 'L' ? 17 : 12;
-    this.h = SPRITES[def.id].size * SPR_SCALE;
+    this.atkMul = opts.atkMul || 1;
+    this.scale = opts.scale || 1;
+    this.boss = !!opts.boss;
+    this.aiKind = opts.ai || null;
+    this.maxHp = Math.round(def.hp * (opts.hpMul || 1)); this.hp = this.maxHp;
+    this.r = (def.size === 'L' ? 17 : 12) * this.scale;
+    this.h = SPRITES[def.id].size * SPR_SCALE * this.scale;
     this.moves = def.moves.map(k => MOVES[k]);
     const melee = this.moves.filter(m => m.kind === 'dash' || m.kind === 'burst' || m.kind === 'vortex').length;
     const ranged = this.moves.filter(m => ['projectile', 'beam', 'zone'].includes(m.kind)).length;
@@ -56,11 +80,12 @@ class Mon {
     this.slowT = 0;          // status (PAR/BRN/FRZ) deliberately survives a swap
     this.buffs = []; this.action = null; this.stunT = 0;
     this.flash = 0; this.invuln = 0; this.visible = false; this.ghosts = []; this.ghostT = 0;
-    this.fadeT = 0;
+    this.fadeT = 0; this.spawnT = 0;
   }
   get cy() { return this.y - this.h * 0.4; }
+  get alive() { return this.visible && !this.fainted; }
   buffMul(stat) { return this.buffs.reduce((m, b) => (b.stat === stat ? m * b.mul : m), 1); }
-  atk() { return this.def.atk * (this.item.atk || 1) * this.buffMul('atk') * (this.status === 'brn' ? 0.75 : 1); }
+  atk() { return this.def.atk * this.atkMul * (this.item.atk || 1) * this.buffMul('atk') * (this.status === 'brn' ? 0.75 : 1); }
   defense() { return this.def.def * (this.item.def || 1) * this.buffMul('def'); }
   speed() {
     return this.def.spd * (this.item.spd || 1) * this.buffMul('spd') *
@@ -69,12 +94,15 @@ class Mon {
   canAct() { return this.visible && !this.fainted && !this.action && this.stunT <= 0 && this.status !== 'frz'; }
 }
 
-// ------------------------------------------------------------------ CPU trainer
+// ------------------------------------------------------------------ CPU brain
+// Drives one monster (each wild monster has its own; tests can drive the player with one).
 class AI {
   constructor(diff) { this.d = diff; this.reset(); }
-  reset() { this.dir = { x: 0, y: 0 }; this.want = -1; this.delay = 0; this.think = 0.4; this.strafe = Math.random() < 0.5 ? 1 : -1; }
+  reset() { this.dir = { x: 0, y: 0 }; this.want = -1; this.delay = 0; this.think = rand(0.2, 0.6); this.strafe = Math.random() < 0.5 ? 1 : -1; }
 
-  update(dt, me, foe, b) {
+  update(dt, me, b) {
+    const foe = b.foe(me);
+    if (!foe) { this.dir = { x: 0, y: 0 }; this.want = -1; return this.dir; }
     this.think -= dt;
     if (this.think <= 0) {
       this.think = this.d.think * rand(0.7, 1.3);
@@ -94,7 +122,7 @@ class AI {
     const d = Math.hypot(dx, dy) || 1;
     const ux = dx / d, uy = dy / d;
     let mx, my;
-    const threat = this.threat(me, foe, b);
+    const threat = this.threat(me, b);
     if (threat && Math.random() < this.d.dodge) {
       mx = threat.x; my = threat.y;
     } else {
@@ -103,23 +131,23 @@ class AI {
       mx = ux * radial - uy * this.strafe * 0.75;
       my = uy * radial + ux * this.strafe * 0.75;
     }
+    // wild monsters spread out instead of piling onto one spot
+    for (const o of b.e) {
+      if (o === me || !o.alive || me.side !== 'enemy') continue;
+      const ox = me.x - o.x, oy = me.y - o.y, od = Math.hypot(ox, oy);
+      if (od < 60 && od > 0.1) { mx += ox / od * 0.7; my += oy / od * 0.7; }
+    }
     // keep away from walls
-    const m = 30;
-    if (me.x < FIELD.x0 + m) mx += 0.8; if (me.x > FIELD.x1 - m) mx -= 0.8;
-    if (me.y < FIELD.y0 + m) my += 0.8; if (me.y > FIELD.y1 - m) my -= 0.8;
-    if ((me.x < FIELD.x0 + m || me.x > FIELD.x1 - m) && Math.random() < 0.3) this.strafe *= -1;
+    const m = 30, F = b.F;
+    if (me.x < F.x0 + m) mx += 0.8; if (me.x > F.x1 - m) mx -= 0.8;
+    if (me.y < F.y0 + m) my += 0.8; if (me.y > F.y1 - m) my -= 0.8;
+    if ((me.x < F.x0 + m || me.x > F.x1 - m) && Math.random() < 0.3) this.strafe *= -1;
     const mm = Math.hypot(mx, my);
     this.dir = mm > 0.05 ? { x: mx / mm, y: my / mm } : { x: 0, y: 0 };
 
-    if (this.d.swap && me.visible && b.swapCd.enemy <= 0 && Math.random() < this.d.swap * 0.04) {
-      const theirBest = Math.max(...foe.moves.map(mv => mv.power ? typeEffect(mv.type, me.def.types) : 0));
-      const myBest = Math.max(...me.moves.map(mv => mv.power ? typeEffect(mv.type, foe.def.types) : 0));
-      if (me.hp / me.maxHp < 0.25 || (theirBest >= 2 && myBest <= 1)) {
-        const next = b.chooseEnemyNext(b.ei);
-        if (next >= 0 && b.swap('enemy', next)) { this.reset(); return; }
-      }
-    }
-    if (this.want < 0 && me.canAct() && Math.random() < this.d.aggro) {
+    // wild monsters take turns, so three of them don't all fire on the same frame
+    const waiting = me.side === 'enemy' && b.enemyAtkT > 0;
+    if (this.want < 0 && !waiting && me.canAct() && Math.random() < this.d.aggro) {
       const i = this.pick(me, foe, d);
       if (i >= 0) { this.want = i; this.delay = this.d.react * Math.random(); }
     }
@@ -149,10 +177,10 @@ class AI {
   }
 
   // Returns a unit vector to dodge along, or null.
-  threat(me, foe, b) {
+  threat(me, b) {
     let best = null, bestT = Infinity;
     for (const p of b.projectiles) {
-      if (p.owner === me) continue;
+      if (p.owner.side === me.side) continue;
       const rx = me.x - p.x, ry = me.cy - p.y;
       const vv = p.vx * p.vx + p.vy * p.vy;
       const t = (rx * p.vx + ry * p.vy) / vv;
@@ -168,14 +196,17 @@ class AI {
     if (best) return best;
     for (const z of b.zones) {
       // incoming strikes, and lingering pools that are still active
-      if (z.owner === me || (z.done && !z.mv.linger)) continue;
+      if (z.owner.side === me.side || (z.done && !z.mv.linger)) continue;
       const dd = Math.hypot(me.x - z.x, me.y - z.y);
       if (dd < z.r + me.r + 8) return dd > 0.5 ? { x: (me.x - z.x) / dd, y: (me.y - z.y) / dd } : { x: 1, y: 0 };
     }
-    const a = foe.action;
-    if (a) {
+    for (const foe of b.foes(me)) {
+      const a = foe.action;
+      if (!a) continue;
       if (a.kind === 'beam' || a.kind === 'dash') {
         const cx = Math.cos(a.dir), cy = Math.sin(a.dir);
+        const along = (me.x - foe.x) * cx + (me.cy - foe.cy) * cy;
+        if (along < -10) continue;   // it's aimed away from me
         const side = Math.sign((me.x - foe.x) * cy - (me.cy - foe.cy) * cx) || 1;
         return { x: cy * side, y: -cx * side };
       }
@@ -188,183 +219,285 @@ class AI {
   }
 }
 
-// ------------------------------------------------------------------ Battle
+// ------------------------------------------------------------------ Room
+// One room of a floor. The player's party lives on the run; wild monsters are made
+// when an uncleared room is entered. hooks: exit(dir), stairs(), recruit(pedestal), end(result).
 class Battle {
-  // twoP: the top ('enemy') side is a second human. p2Input: where that human's
-  // input comes from (local keys/touch by default, the network when hosting online).
-  // flip: draw the arena turned 180° so the enemy side is at the bottom (the online guest's view).
-  // puppet: never simulate; state arrives from the host (see net.js).
-  constructor({ playerTeam, enemyTeam, difficulty, stage, ui, twoP = false, overheadBars = false,
-    seed = (Math.random() * 1e9) | 0, p2Input = null, flip = false, puppet = false, online = false }) {
-    this.ui = ui;
-    this.p = playerTeam.map(id => new Mon(ROSTER_BY_ID[id], 'player'));
-    this.e = enemyTeam.map(id => new Mon(ROSTER_BY_ID[id], 'enemy'));
-    this.pi = 0; this.ei = 0;
-    this.diff = DIFFICULTY[difficulty];
-    this.twoP = twoP; this.overheadBars = overheadBars;
-    this.ai = twoP ? null : new AI(this.diff);
-    this.p2Input = p2Input || { dir: () => Input.dir(1), moves: () => Input.moves(1) };
-    this.flip = flip; this.puppet = puppet; this.online = online;
-    this.seed = seed;
-    const built = buildStage(stage, seed);
+  constructor({ run, room, entry = null, ui, hooks = {} }) {
+    this.run = run; this.room = room; this.ui = ui; this.hooks = hooks;
+    this.F = roomField(room);
+    const built = roomCanvas(room, run.stageKey);
     this.ground = built.canvas; this.stage = built.stage;
-    this.decal = document.createElement('canvas'); this.decal.width = W; this.decal.height = H;
-    this.dctx = this.decal.getContext('2d');
-    // the bottom trainer is seen from behind, the top one from the front
-    this.trainers = flip
-      ? { player: trainerCanvas('player', false), enemy: trainerCanvas('rival', true) }
-      : { player: trainerCanvas('player', true), enemy: trainerCanvas('rival', false) };
+    if (!room.decal) { room.decal = document.createElement('canvas'); room.decal.width = room.w; room.decal.height = room.h; }
+    this.decal = room.decal; this.dctx = this.decal.getContext('2d');
+    this.trainerImg = { front: trainerCanvas('player', false), back: trainerCanvas('player', true) };
     this.projectiles = []; this.zones = []; this.particles = []; this.floats = []; this.texts = []; this.balls = [];
+    this.pickups = room.pickups;
     this.weather = Array.from({ length: 70 }, () => this.newFlake(true));
-    this.state = 'intro'; this.stateT = 0; this.time = 0; this.clock = 0;
-    this.shake = 0; this.hitstop = 0;
-    this.kos = { player: 0, enemy: 0 };
-    this.swapCd = { player: 0, enemy: 0 };
-    ui.banner('BATTLE!');
-    Sfx.play('ball');
+    this.state = 'explore'; this.stateT = 0; this.time = 0;
+    this.shake = 0; this.hitstop = 0; this.enemyAtkT = 0; this.winT = 0;
+    this.e = [];
+    this.pedestals = [];
+    this.stairs = null;
+    room.visited = true;
+
+    // walk in through the doorway we came from (or stand in the middle of the start room)
+    const P = this.P;
+    P.reset(); P.visible = true;
+    const F = this.F;
+    let px = (F.x0 + F.x1) / 2, py = (F.y0 + F.y1) / 2 + 20, tx = px, ty = py + 30;
+    if (entry) {
+      const d = doorPos(room, entry), [dx, dy] = DOOR_DIRS[entry];
+      px = d.x - dx * 26; py = d.y - dy * 26 + (dy === 0 ? 10 : 0) + (entry === 'n' ? P.r : 0);
+      tx = d.x - dx * 4; ty = d.y - dy * 4 + (dy === 0 ? 10 : 0) + (entry === 'n' ? P.r : 0);
+      P.face = dx !== 0 ? -dx : 1;
+    }
+    P.x = px; P.y = py;
+    this.trainer = { x: tx, y: ty, back: entry === 's', walkT: 0, moving: false };
+    this.cam = { x: 0, y: 0 };
+    this.updateCamera(1);
+
+    if (!room.cleared && room.enemies.length) this.startFight();
+    if (room.type === 'recruit' && !room.recruited) {
+      const cx = (F.x0 + F.x1) / 2, cy = (F.y0 + F.y1) / 2;
+      this.pedestals = room.offer.map((id, i) => ({ id, x: cx + (i - 1) * 120, y: cy - 6, cool: 0 }));
+    }
+    if (room.type === 'boss' && room.cleared) this.placeStairs();
   }
 
+  get p() { return this.run.party; }
+  get pi() { return this.run.pi; }
+  set pi(v) { this.run.pi = v; }
   get P() { return this.p[this.pi]; }
-  get E() { return this.e[this.ei]; }
-  foe(m) { return m.side === 'player' ? this.E : this.P; }
+  get mons() { return [this.P, ...this.e]; }
+  get fighting() { return this.state === 'fight'; }
+  get swapCd() { return { player: this.run.swapCd }; }
+  get boss() { return this.e.find(m => m.boss) || null; }
 
-  // ---------------------------------------------------------- view (perspective)
-  // When flipped, the arena is turned 180° about the field centre but sprites and
-  // text stay upright. A point drawn k units above its ground spot (x, y + k) lands
-  // at the mirrored ground spot, still k above it: screen y = MIRROR_Y - y - 2k.
-  sx(x) { return this.flip ? W - x : x; }
-  sy(y, k = 0) { return this.flip ? MIRROR_Y - y - 2 * k : y; }
-  sa(a) { return this.flip ? a + Math.PI : a; }
-  // particles, numbers and texts carry `g`, the ground y they are anchored to;
-  // their own drift (rising, spreading) is kept as-is on screen
-  gy(o) { return this.flip ? o.y + MIRROR_Y - 2 * (o.g ?? (o.kind === 'ring' || o.kind === 'bolt' ? o.y : o.y + 19)) : o.y; }
+  // Who a monster attacks: wild monsters go for you, your moves aim at the nearest wild monster.
+  foe(m) {
+    if (m.side === 'enemy') return this.P;
+    let best = null, bd = Infinity;
+    for (const e of this.e) {
+      if (!e.alive) continue;
+      const d = dist(m, e);
+      if (d < bd) { bd = d; best = e; }
+    }
+    return best;
+  }
+  // Everything a monster's attacks can hit.
+  foes(m) { return m.side === 'enemy' ? (this.P.alive ? [this.P] : []) : this.e.filter(e => e.alive); }
 
   // ---------------------------------------------------------- flow
-  sendOut(side, at) {
-    const m = side === 'player' ? this.P : this.E;
-    m.reset();
-    const pos = at || SPAWN_POS[side];
-    m.x = clamp(pos.x, FIELD.x0 + m.r, FIELD.x1 - m.r); m.y = clamp(pos.y, FIELD.y0 + m.r, FIELD.y1 - 2);
-    m.face = side === 'player' ? 1 : -1;
-    if (side === 'enemy' && this.ai) this.ai.reset();
-    this.balls.push({ side, from: TRAINER_POS[side], to: { x: m.x, y: m.y - 6 }, t: 0, dur: 0.55 });
-    this.ui.onSendOut(side, m);
-    Sfx.play('ball');
+  startFight() {
+    const F = this.F, P = this.P;
+    this.e = this.room.enemies.map((spec, i) => {
+      const m = new Mon(ROSTER_BY_ID[spec.id], 'enemy', spec);
+      m.ai = new AI(WILD_AI[spec.ai || 'wild']);
+      // appear somewhere away from the player (bosses at the far side of the room)
+      let x, y, tries = 0;
+      do {
+        x = rand(F.x0 + 50, F.x1 - 50); y = rand(F.y0 + 40, F.y1 - 30);
+        if (spec.boss) { x = (F.x0 + F.x1) / 2 + rand(-40, 40); y = P.y > (F.y0 + F.y1) / 2 ? F.y0 + 90 : F.y1 - 70; }
+      } while (tries++ < 40 && (Math.hypot(x - P.x, y - P.y) < 170 || this.e.some(o => Math.hypot(o.x - x, o.y - y) < 60)));
+      m.x = x; m.y = y; m.face = x < P.x ? 1 : -1;
+      m.spawnT = 0.7 + i * 0.35;
+      return m;
+    });
+    this.state = 'fight'; this.stateT = 0;
+    this.doorFx('close');
+    if (this.boss) this.ui.banner('BOSS!');
   }
 
-  startSendouts(pl, en) {
-    this.state = 'sendout'; this.stateT = 0;
-    if (pl) this.sendOut('player');
-    if (en) this.sendOut('enemy');
+  clearRoom() {
+    this.room.cleared = true;
+    this.run.stats.rooms++;
+    this.state = 'explore'; this.stateT = 0;
+    this.projectiles = this.projectiles.filter(p => p.owner.side === 'player');
+    this.zones = this.zones.filter(z => z.owner.side === 'player');
+    this.doorFx('open');
+    if (this.room.type === 'boss') {
+      if (this.run.floorN >= RUN_FLOORS) {
+        this.ui.banner('RUN CLEARED!');
+        this.winT = 2.6;   // a moment to enjoy it before the results
+      } else {
+        this.ui.banner('FLOOR CLEARED!');
+        this.placeStairs();
+      }
+    } else this.ui.banner('ROOM CLEAR!');
+  }
+
+  placeStairs() {
+    const F = this.F;
+    this.stairs = { x: (F.x0 + F.x1) / 2, y: (F.y0 + F.y1) / 2 };
+  }
+
+  doorFx(kind) {
+    Sfx.play(kind === 'close' ? 'doorShut' : 'doorOpen');
+    for (const dir of Object.keys(this.room.doors)) {
+      const d = doorPos(this.room, dir);
+      this.burst(d.x, d.y, [this.stage.wall[2], this.stage.wall[3], '#ffffff'], 12, 60, 0, 4);
+    }
+    if (kind === 'close') this.addShake(3);
+  }
+
+  // Throw the active monster out of the ball (after a faint), next to the trainer.
+  sendOut(at) {
+    const m = this.P;
+    m.reset();
+    const t = this.trainer, F = this.F;
+    const pos = at || { x: t.x + (t.x < (F.x0 + F.x1) / 2 ? 24 : -24), y: t.y + (t.y < (F.y0 + F.y1) / 2 ? 18 : -18) };
+    m.x = clamp(pos.x, F.x0 + m.r, F.x1 - m.r); m.y = clamp(pos.y, F.y0 + m.r, F.y1 - 2);
+    m.face = 1;
+    this.balls.push({ from: { x: t.x, y: t.y - 14 }, to: { x: m.x, y: m.y - 6 }, t: 0, dur: 0.55 });
+    this.ui.onSendOut('player', m);
+    Sfx.play('ball');
   }
 
   // Mid-fight swap: the fight keeps running while the new monster is thrown in,
-  // so the swapping side is briefly open to attack.
+  // so you are briefly open to attack.
   canSwap(side, idx) {
-    const team = side === 'player' ? this.p : this.e;
-    const cur = side === 'player' ? this.pi : this.ei;
-    return this.state === 'fight' && this.swapCd[side] <= 0 && idx !== cur && team[idx] && !team[idx].fainted &&
-      !this.balls.some(b => b.side === side);
+    return (this.state === 'fight' || this.state === 'explore') && this.run.swapCd <= 0 && idx !== this.pi &&
+      this.p[idx] && !this.p[idx].fainted && !this.balls.length && this.P.visible;
   }
 
   swap(side, idx) {
     if (!this.canSwap(side, idx)) return false;
-    const out = side === 'player' ? this.P : this.E;
+    const out = this.P;
     const at = { x: out.x, y: out.y };
     out.action = null; out.visible = false; out.ghosts = [];
-    const tp = TRAINER_POS[side];
+    const tp = this.trainer;
     this.particles.push({ x: tp.x, y: tp.y - 14, g: tp.y, x2: out.x, y2: out.cy, k2: out.y - out.cy, life: 0.3, max: 0.3, color: '#ff5a4a', kind: 'line' });
     this.particles.push({ x: out.x, y: out.y - 4, r0: 22, r1: 2, life: 0.3, max: 0.3, color: '#ffffff', kind: 'ring', w: 3 });
     this.burst(out.x, out.cy, ['#ff5a4a', '#ffffff'], 14, 60);
-    if (side === 'player') this.pi = idx; else this.ei = idx;
-    this.swapCd[side] = 8;
-    const inc = side === 'player' ? this.P : this.E;
-    this.ui.callout(side, `Go, ${inc.def.name}`, inc.def.types[0]);
-    this.sendOut(side, at);
+    this.pi = idx;
+    // out of a fight, swapping is free
+    this.run.swapCd = this.state === 'fight' ? 8 : 0.5;
+    const inc = this.P;
+    this.ui.callout('player', `Go, ${inc.def.name}`, inc.def.types[0]);
+    this.sendOut(at);
     return true;
+  }
+
+  // The active monster was changed from a menu (recruit swap-in, release): put the new one where the old one stood.
+  replaceActive(at) {
+    const m = this.P;
+    m.reset(); m.visible = true;
+    m.x = at.x; m.y = at.y;
+    this.burst(m.x, m.cy, ['#ffffff', '#ffe9a0'], 18, 80);
+    this.ui.onSendOut('player', m);
   }
 
   faint(m) {
     if (m.fainted) return;
     m.fainted = true; m.hp = 0; m.action = null; m.fadeT = 0;
-    this.kos[m.side === 'player' ? 'enemy' : 'player']++;
-    this.ui.banner(`${m.def.name} FAINTED!`);
     Sfx.play('faint');
     this.burst(m.x, m.cy, ['#ffffff', '#cfd6e6'], 26, 90);
-    const other = this.foe(m);
-    if (other) other.action = null;
+    if (m.side === 'enemy') {
+      this.run.stats.kos++;
+      this.dropLoot(m);
+      return;
+    }
+    this.ui.banner(`${m.def.name} FAINTED!`);
+    for (const e of this.e) e.action = null;
     this.projectiles = []; this.zones = [];
     this.state = 'faint'; this.stateT = 0;
   }
 
   resolveFaint() {
-    const pAlive = this.p.some(m => !m.fainted), eAlive = this.e.some(m => !m.fainted);
-    if (!pAlive || !eAlive) {
-      this.end(pAlive ? 'win' : eAlive ? 'lose' : 'draw');
-      return;
-    }
-    const needE = this.E.fainted, needP = this.P.fainted;
-    if (needE && this.ai) this.ei = this.chooseEnemyNext(-1);
-    // humans pick their own replacement, player 1 first
-    const queue = [];
-    if (needP) queue.push('player');
-    if (needE && !this.ai) queue.push('enemy');
-    const next = () => {
-      const side = queue.shift();
-      if (!side) { this.startSendouts(needP, needE); return; }
-      this.state = 'pick';
-      this.ui.pickNext(side === 'player' ? this.p : this.e, idx => {
-        if (side === 'player') this.pi = idx; else this.ei = idx;
-        next();
-      }, this.twoP ? side : null);
-    };
-    next();
-  }
-
-  chooseEnemyNext(exclude) {
-    const foe = this.P;
-    let best = -1, bestScore = -Infinity;
-    this.e.forEach((m, i) => {
-      if (m.fainted || i === exclude) return;
-      const off = Math.max(...m.moves.map(mv => mv.power ? typeEffect(mv.type, foe.def.types) : 0));
-      const def = Math.max(...foe.moves.map(mv => mv.power ? typeEffect(mv.type, m.def.types) : 0));
-      const s = off - def * 0.6 + Math.random() * 0.5;
-      if (s > bestScore) { bestScore = s; best = i; }
+    if (!this.p.some(m => !m.fainted)) { this.end('lose'); return; }
+    this.state = 'pick';
+    this.ui.pickNext(this.p, idx => {
+      this.pi = idx;
+      this.state = this.e.some(m => !m.fainted) ? 'fight' : 'explore';
+      this.stateT = 0;
+      this.sendOut();
     });
-    return best;
   }
 
   end(result) {
+    if (this.state === 'over') return;
     this.state = 'over';
     Sfx.music.stop(0.6);
-    setTimeout(() => Sfx.play(result === 'win' || (this.twoP && !this.online && result !== 'draw') ? 'win' : 'lose'), 500);
-    const dealt = this.p.reduce((s, m) => s + m.dmgDealt, 0);
-    const dealtE = this.e.reduce((s, m) => s + m.dmgDealt, 0);
-    this.ui.onEnd({ result, time: this.clock, kos: this.kos.player, lost: this.kos.enemy, dealt, dealtE, twoP: this.twoP });
+    setTimeout(() => Sfx.play(result === 'win' ? 'win' : 'lose'), 500);
+    if (this.hooks.end) this.hooks.end(result);
+  }
+
+  // ---------------------------------------------------------- loot
+  dropLoot(m) {
+    const coins = m.boss ? 8 + this.run.floorN * 2 : m.scale > 1 ? 3 : 1 + (Math.random() < 0.5 ? 1 : 0);
+    for (let i = 0; i < coins; i++) this.spawnPickup('coin', m.x, m.y);
+    if (m.boss || Math.random() < 0.3) this.spawnPickup('berry', m.x, m.y);
+  }
+
+  spawnPickup(kind, x, y) {
+    const a = rand(0, TAU), s = rand(30, 90);
+    this.pickups.push({ kind, x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s * 0.6, z: 4, vz: rand(90, 150), t: 0 });
+  }
+
+  updatePickups(dt) {
+    const P = this.P, F = this.F;
+    for (const k of this.pickups) {
+      k.t += dt;
+      if (k.z > 0 || k.vz > 0) {   // bouncing out of the fainted monster
+        k.vz -= 420 * dt; k.z += k.vz * dt;
+        if (k.z <= 0) { k.z = 0; k.vz = k.vz < -60 ? -k.vz * 0.4 : 0; k.vx *= 0.6; k.vy *= 0.6; }
+      } else { k.vx *= Math.exp(-dt * 6); k.vy *= Math.exp(-dt * 6); }
+      // it drifts to you when you walk close
+      const d = Math.hypot(P.x - k.x, P.y - k.y);
+      if (P.alive && k.t > 0.5 && d < 56) {
+        const pull = 260 * (1 - d / 70);
+        k.vx += (P.x - k.x) / (d || 1) * pull * dt * 8; k.vy += (P.y - k.y) / (d || 1) * pull * dt * 8;
+      }
+      k.x = clamp(k.x + k.vx * dt, F.x0 + 4, F.x1 - 4); k.y = clamp(k.y + k.vy * dt, F.y0 + 4, F.y1 - 2);
+      if (P.alive && k.t > 0.5 && d < 12 + P.r * 0.4) this.collect(k);
+    }
+    this.pickups.splice(0, this.pickups.length, ...this.pickups.filter(k => !k.got));
+  }
+
+  collect(k) {
+    k.got = true;
+    const P = this.P;
+    if (k.kind === 'coin') {
+      this.run.coins++;
+      this.sparks(k.x, k.y - 4, 4, '#ffe066');
+      Sfx.play('coin');
+    } else {
+      const heal = Math.round(Math.min(P.maxHp * BERRY_HEAL, P.maxHp - P.hp));
+      P.hp += heal;
+      this.number(P, heal, null, '#b6ff9a', '#4fae2e', '+');
+      this.burst(P.x, P.cy, ['#4fae2e', '#b6ff9a', '#ffffff'], 14, 50, -50);
+      Sfx.play('heal');
+    }
   }
 
   // ---------------------------------------------------------- moves
   tryMove(m, i) {
-    if (this.state !== 'fight' || !m.canAct() || m.cd[i] > 0 || m.gcd > 0) return false;
+    if (this.state !== 'fight' || !m.canAct() || m.cd[i] > 0 || m.gcd > 0 || !this.foe(m)) return false;
     this.execute(m, i);
     return true;
   }
 
   aim(m, foe, mv) {
     let tx = foe.x, ty = foe.cy;
-    if (m.side === 'enemy' && this.ai && this.diff.lead && mv.speed && mv.kind === 'projectile') {
+    const d = m.ai && m.side === 'enemy' ? m.ai.d : null;
+    if (d && d.lead && mv.speed && mv.kind === 'projectile') {
       const t = Math.hypot(tx - m.x, ty - m.cy) / mv.speed;
       tx += foe.vx * t * 0.8; ty += foe.vy * t * 0.8;
     }
     let a = Math.atan2(ty - m.cy, tx - m.x);
-    if (m.side === 'enemy' && this.ai) a += (Math.random() - 0.5) * 2 * this.diff.aimErr;
+    if (d) a += (Math.random() - 0.5) * 2 * d.aimErr;
     return a;
   }
 
   execute(m, i) {
-    const mv = m.moves[i], foe = this.foe(m);
+    const mv = m.moves[i], foe = this.foe(m), F = this.F;
     m.cd[i] = mv.cd * (m.item.cd || 1);
     m.gcd = 0.35;
+    if (m.side === 'enemy') {
+      const alive = this.e.filter(e => e.alive).length;
+      this.enemyAtkT = alive > 1 ? rand(0.5, 0.8) + 0.2 * (alive - 2) : 0;
+    }
     this.ui.callout(m.side, mv.name, mv.type);
     const dir = this.aim(m, foe, mv);
     if (Math.abs(Math.cos(dir)) > 0.2) m.face = Math.cos(dir) > 0 ? 1 : -1;
@@ -380,7 +513,7 @@ class Battle {
             vx: Math.cos(a) * mv.speed, vy: Math.sin(a) * mv.speed,
             r: mv.r || 4, mv, owner: m, life: 2.6, spin: rand(0, TAU), k: m.y - m.cy,
             // boomerangs fly out `range`, then home back to the thrower
-            out: mv.boomerang ? mv.range / mv.speed : 0, back: false, hitCd: 0,
+            out: mv.boomerang ? mv.range / mv.speed : 0, back: false, hitCd: 0, hitIds: null,
           });
         }
         m.action = { kind: 'cast', t: 0, dur: 0.18, lock: true };
@@ -392,7 +525,7 @@ class Battle {
         Sfx.beamCharge(mv.charge);
         break;
       case 'dash':
-        m.action = { kind: 'dash', t: 0, mv, dir, lock: true, hit: false, id: _uid++ };
+        m.action = { kind: 'dash', t: 0, mv, dir, lock: true, hit: false, tgt: foe, id: _uid++ };
         Sfx.play('dash');
         break;
       case 'vortex':
@@ -409,8 +542,8 @@ class Battle {
           const off = k === 0 ? 0 : (mv.scatter || 30);
           const a = rand(0, TAU), rr = rand(0.4, 1) * off;
           this.zones.push({
-            x: clamp(foe.x + Math.cos(a) * rr, FIELD.x0 + 8, FIELD.x1 - 8),
-            y: clamp(foe.y + Math.sin(a) * rr, FIELD.y0 + 8, FIELD.y1 - 8),
+            x: clamp(foe.x + Math.cos(a) * rr, F.x0 + 8, F.x1 - 8),
+            y: clamp(foe.y + Math.sin(a) * rr, F.y0 + 8, F.y1 - 8),
             r: mv.r, t: 0, delay: mv.delay + k * 0.18, mv, owner: m, done: false, tick: 0, id: _uid++,
           });
         }
@@ -457,9 +590,11 @@ class Battle {
     src.dmgDealt += dmg;
     tgt.flash = 0.12;
 
-    const fresh = this.number(tgt, dmg, opts.merge);
+    const merge = opts.merge ? opts.merge + ':' + (tgt.uid || (tgt.uid = _uid++)) : null;
+    const fresh = this.number(tgt, dmg, merge);
     const kb = opts.kb ?? Math.atan2(tgt.cy - src.cy, tgt.x - src.x);
-    const force = opts.force ?? (mult < 1 ? 22 : Math.min(260, 60 + dmg * 0.45));
+    // bosses barely budge
+    const force = (opts.force ?? (mult < 1 ? 22 : Math.min(260, 60 + dmg * 0.45))) * (tgt.boss ? 0.35 : 1);
     tgt.kx += Math.cos(kb) * force; tgt.ky += Math.sin(kb) * force;
 
     const fx = TYPES[mv.type].fx;
@@ -515,62 +650,160 @@ class Battle {
     this.updateBalls(dt);
 
     switch (this.state) {
-      case 'intro':
-        if (this.stateT > 0.8) this.startSendouts(true, true);
-        break;
-      case 'sendout':
-        if (this.balls.length === 0 && this.stateT > 1.0) { this.state = 'fight'; this.stateT = 0; }
-        this.idle(dt);
-        break;
+      case 'explore':
       case 'fight': {
-        this.clock += dt;
-        this.swapCd.player -= dt; this.swapCd.enemy -= dt;
-        const P = this.P, E = this.E;
-        const eDir = this.ai ? this.ai.update(dt, E, P, this) : this.p2Input.dir();
-        this.updateMon(P, dt, E, Input.dir(0));
-        const held = Input.moves(0);
-        for (let i = 0; i < 4; i++) if (held[i]) this.tryMove(P, i);
-        if (!this.ai) { const h2 = this.p2Input.moves(); for (let i = 0; i < 4; i++) if (h2[i]) this.tryMove(E, i); }
-        if (this.state === 'fight') this.updateMon(E, dt, P, eDir);
-        if (this.state === 'fight') this.separate(P, E);
+        this.run.stats.time += dt;
+        this.run.swapCd -= dt; this.enemyAtkT -= dt;
+        const P = this.P;
+        this.updateMon(P, dt, Input.dir(0));
+        if (this.state === 'fight') {
+          const held = Input.moves(0);
+          for (let i = 0; i < 4; i++) if (held[i]) this.tryMove(P, i);
+        }
+        for (const m of this.e) {
+          if (this.state === 'faint') break;
+          if (m.spawnT > 0) { this.updateSpawn(m, dt); continue; }
+          if (!m.alive) continue;
+          const dir = m.ai.update(dt, m, this);
+          if (this.state !== 'faint') this.updateMon(m, dt, dir);
+        }
+        if (this.state === 'faint') break;
+        const ms = this.mons.filter(m => m.alive);
+        for (let i = 0; i < ms.length; i++) for (let j = i + 1; j < ms.length; j++) this.separate(ms[i], ms[j]);
         this.updateProjectiles(dt);
         this.updateZones(dt);
+        if (this.state === 'faint') break;
+        this.updatePickups(dt);
+        if (this.state === 'fight' && this.e.length && this.e.every(m => m.fainted) && this.balls.length === 0) this.clearRoom();
+        if (this.state === 'explore') this.checkExplore(dt);
+        if (this.winT > 0 && (this.winT -= dt) <= 0) this.end('win');
         break;
       }
       case 'faint':
-        for (const m of [this.P, this.E]) if (m.fainted) m.fadeT += dt;
         this.idle(dt);
         if (this.stateT > 1.8) this.resolveFaint();
         break;
     }
-    for (const m of [this.P, this.E]) {
+    for (const m of this.mons) {
+      if (m.fainted) m.fadeT += dt;
       m.ghosts.forEach(g => (g.t -= dt));
       m.ghosts = m.ghosts.filter(g => g.t > 0);
     }
+    this.updateTrainer(dt);
+    this.updateCamera(dt);
+  }
+
+  updateSpawn(m, dt) {
+    m.spawnT -= dt;
+    if (m.spawnT > 0) return;
+    m.visible = true; m.flash = 0.35; m.invuln = 0.4;
+    this.particles.push({ x: m.x, y: m.y, r0: 2, r1: 30, life: 0.35, max: 0.35, color: '#ffffff', kind: 'ring', w: 3 });
+    this.burst(m.x, m.cy, ['#ffffff', '#d8d0e8', '#8a809a'], 22, 90);
+    Sfx.play('pop');
+  }
+
+  // Out of a fight: doorways, the recruit pedestals and the stairs.
+  checkExplore(dt) {
+    const P = this.P, F = this.F;
+    if (!P.alive) return;
+    const exit = P.y < F.y0 - 14 ? 'n' : P.y > F.y1 + 16 ? 's' : P.x < F.x0 - 14 ? 'w' : P.x > F.x1 + 14 ? 'e' : null;
+    if (exit && this.room.doors[exit] && this.hooks.exit) { this.state = 'leaving'; this.hooks.exit(exit); return; }
+    for (const ped of this.pedestals) {
+      ped.cool -= dt;
+      const d = Math.hypot(P.x - ped.x, P.y - ped.y);
+      if (d < 18 + P.r) {   // solid: push the player back out
+        const ux = (P.x - ped.x) / (d || 1), uy = (P.y - ped.y) / (d || 1);
+        P.x = ped.x + ux * (18 + P.r); P.y = ped.y + uy * (18 + P.r);
+        if (ped.cool <= 0 && this.hooks.recruit) {
+          ped.cool = 1.2;
+          this.state = 'pick'; Input.reset();
+          this.hooks.recruit(ped);
+          return;
+        }
+      }
+    }
+    if (this.stairs && Math.hypot(P.x - this.stairs.x, P.y - this.stairs.y) < 16 && this.hooks.stairs) {
+      this.state = 'leaving';
+      Sfx.play('stairs');
+      this.hooks.stairs();
+    }
+  }
+
+  // Called once the recruit menu closes. took: the monster's id, or null if the player walked away.
+  recruitDone(took) {
+    this.state = 'explore';
+    if (!took) return;
+    this.room.recruited = true;
+    for (const ped of this.pedestals) {
+      this.burst(ped.x, ped.y - 20, ped.id === took ? ['#ffe066', '#ffffff'] : ['#ffffff', '#cfd6e6'], 20, 80);
+    }
+    this.pedestals = [];
+    Sfx.play('ball');
+  }
+
+  // The trainer follows a step behind your monster.
+  updateTrainer(dt) {
+    const t = this.trainer, P = this.P, F = this.F;
+    const dx = P.x - t.x, dy = P.y - t.y, d = Math.hypot(dx, dy);
+    const gap = 34;
+    t.moving = false;
+    if (d > gap && this.state !== 'pick') {
+      const step = Math.min(d - gap, Math.max(70, (d - gap) * 5) * dt);
+      t.x += dx / d * step; t.y += dy / d * step;
+      t.walkT += step; t.moving = step > 0.2;
+      if (Math.abs(dy) > Math.abs(dx) * 0.6) t.back = dy < 0;
+    }
+    t.x = clamp(t.x, F.x0 - 30, F.x1 + 30); t.y = clamp(t.y, F.y0 - 20, F.y1 + 30);
+  }
+
+  updateCamera(dt) {
+    const P = this.P, room = this.room;
+    const tx = clamp(P.x - W / 2, 0, room.w - W), ty = clamp(P.cy - H / 2 - 10, 0, room.h - H);
+    const k = dt >= 1 ? 1 : Math.min(1, dt * 8);
+    this.cam.x += (tx - this.cam.x) * k; this.cam.y += (ty - this.cam.y) * k;
   }
 
   // keep monsters settling (knockback decay) while the fight is paused by a transition
   idle(dt) {
-    for (const m of [this.P, this.E]) {
+    for (const m of this.mons) {
+      if (!m.visible) continue;
+      const B = this.bounds(m);
       m.vx *= Math.exp(-dt * 10); m.vy *= Math.exp(-dt * 10);
       m.kx *= Math.exp(-dt * 7); m.ky *= Math.exp(-dt * 7);
-      m.x = clamp(m.x + (m.vx + m.kx) * dt, FIELD.x0 + m.r, FIELD.x1 - m.r);
-      m.y = clamp(m.y + (m.vy + m.ky) * dt, FIELD.y0 + m.r, FIELD.y1 - 2);
+      m.x = clamp(m.x + (m.vx + m.kx) * dt, B.x0, B.x1);
+      m.y = clamp(m.y + (m.vy + m.ky) * dt, B.y0, B.y1);
       m.flash = Math.max(0, m.flash - dt);
     }
   }
 
-  updateMon(m, dt, foe, ctrl) {
+  // Where a monster's feet may go: the room floor, plus open doorways for the player.
+  bounds(m) {
+    const F = this.F;
+    const B = { x0: F.x0 + m.r, x1: F.x1 - m.r, y0: F.y0 + m.r, y1: F.y1 - 2 };
+    if (m.side !== 'player' || this.state !== 'explore') return B;
+    const span = DOOR_W / 2 - m.r * 0.5 - 2;
+    for (const dir of Object.keys(this.room.doors)) {
+      const d = doorPos(this.room, dir);
+      if (dir === 'n' && Math.abs(m.x - d.x) < span) { B.y0 = F.y0 - 40; if (m.y < F.y0 + m.r) { B.x0 = d.x - span; B.x1 = d.x + span; } }
+      if (dir === 's' && Math.abs(m.x - d.x) < span) { B.y1 = F.y1 + 40; if (m.y > F.y1 - 2) { B.x0 = d.x - span; B.x1 = d.x + span; } }
+      const yspan = DOOR_W / 2 - 4, my = m.y - 8;   // side doors: the feet sit a bit below the doorway's middle
+      if (dir === 'w' && Math.abs(my - d.y) < yspan) { B.x0 = F.x0 - 40; if (m.x < F.x0 + m.r) { B.y0 = d.y - yspan + 8; B.y1 = d.y + yspan + 8; } }
+      if (dir === 'e' && Math.abs(my - d.y) < yspan) { B.x1 = F.x1 + 40; if (m.x > F.x1 - m.r) { B.y0 = d.y - yspan + 8; B.y1 = d.y + yspan + 8; } }
+    }
+    return B;
+  }
+
+  updateMon(m, dt, ctrl) {
     if (!m.visible || m.fainted) return;
     m.flash = Math.max(0, m.flash - dt);
     m.invuln -= dt; m.gcd -= dt; m.stunT -= dt; m.slowT -= dt;
     for (let i = 0; i < 4; i++) m.cd[i] = Math.max(0, m.cd[i] - dt);
     m.buffs.forEach(b => (b.t -= dt));
     m.buffs = m.buffs.filter(b => b.t > 0);
-    if (m.item.regen && m.hp > 0) m.hp = Math.min(m.maxHp, m.hp + m.maxHp * m.item.regen * dt);
+    if (m.item.regen && m.hp > 0 && this.state === 'fight') m.hp = Math.min(m.maxHp, m.hp + m.maxHp * m.item.regen * dt);
 
-    // status effects
-    if (m.status) {
+    // status effects tick only during fights
+    if (m.status && this.state === 'fight') {
       m.statusT -= dt; m.statusTick -= dt;
       if (m.status === 'par' && m.statusTick <= 0) {
         m.statusTick = 1.1;
@@ -601,10 +834,10 @@ class Battle {
         if (m.status === 'frz') this.text(m.x, m.y - m.h - 2, 'THAWED OUT!', '#bff0ff', m.y);
         m.status = null;
       }
-    }
+    } else if (m.status === 'frz') m.status = null;   // never stay frozen between fights
 
-    if (m.action) this.updateAction(m, dt, foe);
-    if (m.fainted || this.state !== 'fight') return;
+    if (m.action) this.updateAction(m, dt);
+    if (m.fainted || (this.state !== 'fight' && this.state !== 'explore')) return;
 
     const lock = (m.action && m.action.lock) || m.stunT > 0 || m.status === 'frz';
     const a = m.action;
@@ -617,17 +850,19 @@ class Battle {
       m.vx += (tx - m.vx) * k; m.vy += (ty - m.vy) * k;
     }
     m.kx *= Math.exp(-dt * 7); m.ky *= Math.exp(-dt * 7);
-    m.x = clamp(m.x + (m.vx + m.kx) * dt, FIELD.x0 + m.r, FIELD.x1 - m.r);
-    m.y = clamp(m.y + (m.vy + m.ky) * dt, FIELD.y0 + m.r, FIELD.y1 - 2);
+    const B = this.bounds(m);
+    m.x = clamp(m.x + (m.vx + m.kx) * dt, B.x0, B.x1);
+    m.y = clamp(m.y + (m.vy + m.ky) * dt, B.y0, B.y1);
     const sp = Math.hypot(m.vx, m.vy);
     m.walkT += sp * dt;
     if (!lock) {
+      const foe = this.foe(m);
       if (Math.abs(m.vx) > 12) m.face = Math.sign(m.vx);
-      else if (sp < 12 && Math.abs(foe.x - m.x) > 4) m.face = Math.sign(foe.x - m.x);
+      else if (foe && sp < 12 && Math.abs(foe.x - m.x) > 4) m.face = Math.sign(foe.x - m.x);
     }
   }
 
-  updateAction(m, dt, foe) {
+  updateAction(m, dt) {
     const a = m.action;
     a.t += dt;
     const fx = a.mv ? TYPES[a.mv.type].fx : null;
@@ -639,7 +874,8 @@ class Battle {
       case 'beam': {
         const mv = a.mv;
         if (a.phase === 'charge') {
-          if (a.t < mv.charge * 0.7) a.dir = this.aim(m, foe, mv);
+          const foe = this.foe(m);
+          if (foe && a.t < mv.charge * 0.7) a.dir = this.aim(m, foe, mv);
           if (Math.random() < 0.8) {
             const ang = rand(0, TAU), rr = rand(14, 26);
             const ox = m.x + Math.cos(a.dir) * 8, oy = m.cy + Math.sin(a.dir) * 8;
@@ -650,8 +886,11 @@ class Battle {
           a.tick -= dt;
           if (a.tick <= 0) {
             a.tick = 0.1;
-            if (this.beamHits(m, a, foe)) this.hit(m, foe, mv, 0.1 / mv.dur * 1.15, { merge: a.id, kb: a.dir });
-            if (m.fainted || !m.action) return;
+            // a beam hits everything in its line
+            for (const foe of this.foes(m)) {
+              if (this.beamHits(m, a, foe)) this.hit(m, foe, mv, 0.1 / mv.dur * 1.15, { merge: a.id, kb: a.dir });
+              if (m.fainted || !m.action || this.state === 'faint') return;
+            }
           }
           this.addShake(1.2);
           const L = mv.len * Math.random();
@@ -669,33 +908,39 @@ class Battle {
         const mv = a.mv;
         // combo: after connecting, stay on the target and land the rest of the hits
         if (a.phase === 'combo') {
+          const foe = a.tgt;
           const d = Math.hypot(foe.x - m.x, foe.y - m.y) || 1;
           if (d > m.r + foe.r) { m.x += (foe.x - m.x) / d * 90 * dt; m.y += (foe.y - m.y) / d * 90 * dt; }
           a.tick -= dt;
           if (a.tick <= 0) {
-            if (a.left <= 0 || d > m.r + foe.r + 16 || !foe.visible || foe.fainted) { m.action = null; break; }
+            if (a.left <= 0 || d > m.r + foe.r + 16 || !foe.alive) { m.action = null; break; }
             a.left--;
             const last = a.left === 0;
             // light jabs keep the target close; the last hit knocks it away
             this.hit(m, foe, mv, 1, { kb: Math.atan2(foe.y - m.y, foe.x - m.x), merge: a.id, force: last ? undefined : 35 });
-            if (m.fainted || !m.action) return;
+            if (m.fainted || !m.action || this.state === 'faint') return;
             a.tick = 0.13;
             if (last) { m.action = null; this.decalAt(foe.x, foe.y, 8); }
           }
           break;
         }
-        if (a.t <= 0.1) { if (a.t < 0.03) a.dir = this.aim(m, foe, mv); break; }
+        if (a.t <= 0.1) {
+          if (a.t < 0.03) { const f = this.foe(m); if (f) { a.tgt = f; a.dir = this.aim(m, f, mv); } }
+          break;
+        }
         m.ghostT -= dt;
         if (m.ghostT <= 0) { m.ghostT = 0.03; m.ghosts.push({ x: m.x, y: m.y, face: m.face, t: 0.22, color: fx[1] }); }
         if (Math.random() < 0.7) this.particles.push({ x: m.x + rand(-6, 6), y: m.cy + rand(-6, 6), vx: -m.vx * 0.2, vy: -m.vy * 0.2, life: 0.3, max: 0.3, size: 2, color: fx[rand() < 0.5 ? 0 : 1], kind: 'sq' });
-        if (!a.hit && Math.hypot(m.x - foe.x, m.cy - foe.cy) < m.r + foe.r + 4) {
-          a.hit = true;
+        const foe = !a.hit && this.foes(m).find(f => Math.hypot(m.x - f.x, m.cy - f.cy) < m.r + f.r + 4);
+        if (foe) {
+          a.hit = true; a.tgt = foe;
           if (mv.hits > 1) {   // a combo: stop here and start hitting
             a.phase = 'combo'; a.left = mv.hits; a.tick = 0;
             m.vx = m.vy = 0;
             break;
           }
           const dealt = this.hit(m, foe, mv, 1, { kb: a.dir });
+          if (this.state === 'faint') return;
           if (mv.recoil && dealt && !m.fainted) {
             const rc = Math.round(dealt * mv.recoil);
             m.hp = Math.max(0, m.hp - rc);
@@ -722,14 +967,16 @@ class Battle {
           this.decalAt(m.x, m.y, mv.r * 0.6);
           this.addShake(6);
           Sfx.play('boom');
-          if (Math.hypot(foe.x - m.x, foe.y - m.y) < mv.r + foe.r * 0.6) this.hit(m, foe, mv, 1);
-          if (m.fainted) return;
+          for (const foe of this.foes(m)) {
+            if (Math.hypot(foe.x - m.x, foe.y - m.y) < mv.r + foe.r * 0.6) this.hit(m, foe, mv, 1);
+            if (m.fainted || this.state === 'faint') return;
+          }
         }
         if (a.t >= mv.delay + 0.15) m.action = null;
         break;
       }
 
-      // vortex: the user stands still and drags the opponent in, grinding it while it's caught
+      // vortex: the user stands still and drags opponents in, grinding them while they're caught
       case 'vortex': {
         const mv = a.mv;
         if (Math.random() < 0.9) {   // debris spiralling inward
@@ -738,17 +985,20 @@ class Battle {
           this.particles.push({ x: px, y: py - 3, g: py, vx: (m.x - px) * 1.6 - Math.sin(ang) * 70, vy: (m.y - py) * 1.6 + Math.cos(ang) * 50,
             life: 0.45, max: 0.45, size: rand(1, 2.5), color: fx[rand() < 0.5 ? 1 : 2], kind: 'sq' });
         }
-        const dx = m.x - foe.x, dy = m.y - foe.y, d = Math.hypot(dx, dy) || 1;
-        if (foe.visible && !foe.fainted && d < mv.r + foe.r) {
+        a.tick -= dt;
+        const tick = a.tick <= 0;
+        if (tick) a.tick = 0.25;
+        for (const foe of this.foes(m)) {
+          const dx = m.x - foe.x, dy = m.y - foe.y, d = Math.hypot(dx, dy) || 1;
+          if (d >= mv.r + foe.r) continue;
           if (d > m.r + foe.r) {
-            foe.x = clamp(foe.x + dx / d * mv.pull * dt, FIELD.x0 + foe.r, FIELD.x1 - foe.r);
-            foe.y = clamp(foe.y + dy / d * mv.pull * dt, FIELD.y0 + foe.r, FIELD.y1 - 2);
+            const B = this.bounds(foe), pull = mv.pull * (foe.boss ? 0.4 : 1);
+            foe.x = clamp(foe.x + dx / d * pull * dt, B.x0, B.x1);
+            foe.y = clamp(foe.y + dy / d * pull * dt, B.y0, B.y1);
           }
-          a.tick -= dt;
-          if (a.tick <= 0) {
-            a.tick = 0.25;
+          if (tick) {
             this.hit(m, foe, mv, 0.25 / mv.dur, { merge: a.id, kb: Math.atan2(dy, dx), force: 0 });
-            if (m.fainted || !m.action) return;
+            if (m.fainted || !m.action || this.state === 'faint') return;
           }
         }
         if (a.t >= mv.dur) m.action = null;
@@ -767,26 +1017,29 @@ class Battle {
   }
 
   separate(a, b) {
-    if (!a.visible || !b.visible || a.fainted || b.fainted) return;
     const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || 0.01;
     const min = (a.r + b.r) * 0.85;
     if (d < min) {
-      const push = (min - d) / 2;
-      a.x -= dx / d * push; a.y -= dy / d * push;
-      b.x += dx / d * push; b.y += dy / d * push;
+      // a boss doesn't get shoved around
+      const wa = a.boss ? 0.1 : b.boss ? 0.9 : 0.5, push = min - d;
+      a.x -= dx / d * push * wa; a.y -= dy / d * push * wa;
+      b.x += dx / d * push * (1 - wa); b.y += dy / d * push * (1 - wa);
     }
   }
 
   updateProjectiles(dt) {
+    const F = this.F;
     for (const p of this.projectiles) {
       p.life -= dt; p.spin += dt * 12;
-      const foe = this.foe(p.owner);
-      if (p.mv.homing && foe && foe.visible) {
-        const cur = Math.atan2(p.vy, p.vx), want = Math.atan2(foe.cy - p.y, foe.x - p.x);
-        let diff = ((want - cur + Math.PI * 3) % TAU) - Math.PI;
-        const turn = clamp(diff, -p.mv.homing * dt, p.mv.homing * dt);
-        const sp = Math.hypot(p.vx, p.vy);
-        p.vx = Math.cos(cur + turn) * sp; p.vy = Math.sin(cur + turn) * sp;
+      if (p.mv.homing) {
+        const foe = this.foe(p.owner);
+        if (foe && foe.visible) {
+          const cur = Math.atan2(p.vy, p.vx), want = Math.atan2(foe.cy - p.y, foe.x - p.x);
+          let diff = ((want - cur + Math.PI * 3) % TAU) - Math.PI;
+          const turn = clamp(diff, -p.mv.homing * dt, p.mv.homing * dt);
+          const sp = Math.hypot(p.vx, p.vy);
+          p.vx = Math.cos(cur + turn) * sp; p.vy = Math.sin(cur + turn) * sp;
+        }
       }
       if (p.mv.boomerang) {
         p.hitCd -= dt;
@@ -800,7 +1053,8 @@ class Battle {
       p.x += p.vx * dt; p.y += p.vy * dt;
       const fx = TYPES[p.mv.type].fx;
       if (Math.random() < 0.9) this.particles.push({ x: p.x + rand(-1, 1) * p.r * 0.5, y: p.y + rand(-1, 1) * p.r * 0.5, vx: -p.vx * 0.1, vy: -p.vy * 0.1, life: 0.25, max: 0.25, size: Math.max(1, p.r * 0.6), color: fx[rand() < 0.5 ? 0 : 1], kind: 'sq' });
-      if (p.life > 0 && !(p.hitCd > 0) && foe && foe.visible && !foe.fainted && Math.hypot(p.x - foe.x, p.y - foe.cy) < p.r + foe.r) {
+      const foe = p.life > 0 && !(p.hitCd > 0) && this.foes(p.owner).find(f => Math.hypot(p.x - f.x, p.y - f.cy) < p.r + f.r);
+      if (foe) {
         // a boomerang cuts through and can hit again on the way back
         if (p.mv.boomerang) p.hitCd = 0.35; else p.life = -1;
         if (p.mv.explode) {
@@ -810,9 +1064,10 @@ class Battle {
           Sfx.play('boom');
         }
         this.hit(p.owner, foe, p.mv, 1, { kb: Math.atan2(p.vy, p.vx) });
-        if (this.state !== 'fight') return;
+        if (this.state === 'faint') return;
       }
-      if (p.x < -10 || p.x > W + 10 || p.y < FIELD.y0 - 30 || p.y > FIELD.y1 + 30) p.life = -1;
+      // the walls stop shots (the top wall a bit higher up, since shots fly at body height)
+      if (p.x < F.x0 - 6 || p.x > F.x1 + 6 || p.y < F.y0 - 34 || p.y > F.y1 + 4) p.life = -1;
       if (p.life <= 0 && !p.dead) { p.dead = true; this.burst(p.x, p.y, fx, 4, 40); }
     }
     this.projectiles = this.projectiles.filter(p => p.life > 0);
@@ -830,19 +1085,19 @@ class Battle {
         this.burst(z.x, z.y - 4, fx, 22, z.r * 4, 0, 4);
         this.decalAt(z.x, z.y, z.r * 0.7);
         this.addShake(4);
-        const foe = this.foe(z.owner);
-        if (foe && foe.visible && !foe.fainted && Math.hypot(foe.x - z.x, foe.y - z.y) < z.r + foe.r * 0.5) {
-          this.hit(z.owner, foe, z.mv, 1, { kb: Math.atan2(foe.y - z.y, foe.x - z.x) });
-          if (this.state !== 'fight') return;
+        for (const foe of this.foes(z.owner)) {
+          if (Math.hypot(foe.x - z.x, foe.y - z.y) < z.r + foe.r * 0.5) this.hit(z.owner, foe, z.mv, 1, { kb: Math.atan2(foe.y - z.y, foe.x - z.x) });
+          if (this.state === 'faint') return;
         }
       } else if (z.done && z.mv.linger) {
         // a lingering pool keeps hurting whoever stands in it
         z.tick -= dt;
-        const foe = this.foe(z.owner);
-        if (z.tick <= 0 && foe && foe.visible && !foe.fainted && Math.hypot(foe.x - z.x, foe.y - z.y) < z.r + foe.r * 0.5) {
+        if (z.tick <= 0) {
           z.tick = 0.5;
-          this.hit(z.owner, foe, z.mv, z.mv.tick, { merge: z.id, force: 0 });
-          if (this.state !== 'fight') return;
+          for (const foe of this.foes(z.owner)) {
+            if (Math.hypot(foe.x - z.x, foe.y - z.y) < z.r + foe.r * 0.5) this.hit(z.owner, foe, z.mv, z.mv.tick, { merge: z.id, force: 0 });
+            if (this.state === 'faint') return;
+          }
         }
       }
     }
@@ -854,7 +1109,7 @@ class Battle {
       b.t += dt;
       if (b.t >= b.dur && !b.done) {
         b.done = true;
-        const m = b.side === 'player' ? this.P : this.E;
+        const m = this.P;
         m.visible = true; m.flash = 0.35; m.invuln = 0.4;
         this.particles.push({ x: b.to.x, y: b.to.y, r0: 2, r1: 26, life: 0.35, max: 0.35, color: '#ffffff', kind: 'ring', w: 3 });
         this.burst(b.to.x, b.to.y, ['#ffffff', '#ffe9a0', '#ffffff'], 20, 90);
@@ -899,23 +1154,23 @@ class Battle {
     if (key) {
       const f = this.floats.find(f => f.key === key && f.t < 0.5);
       if (f) {
-        f.val += val; f.t = 0.05; f.x = m.x; f.y = m.y - m.h - 2; f.g = m.y;
+        f.val += val; f.t = 0.05; f.x = m.x; f.y = m.y - m.h - 2;
         f.img = numberCanvas(prefix + f.val, fill, shade);
         return false;
       }
     }
     const ox = rand(-8, 8);
-    this.floats.push({ key, val, x: m.x + ox, y: m.y - m.h - 2, g: m.y, t: 0, fill, shade, prefix, img: numberCanvas(prefix + val, fill, shade) });
+    this.floats.push({ key, val, x: m.x + ox, y: m.y - m.h - 2, t: 0, fill, shade, prefix, img: numberCanvas(prefix + val, fill, shade) });
     return true;
   }
 
-  text(x, y, str, color, g = y + 40) { this.texts.push({ x, y, g, str, color, t: 0 }); }
+  text(x, y, str, color) { this.texts.push({ x, y, str, color, t: 0 }); }
 
   newFlake(anywhere) {
     const kind = this.stage.weather;
     const y = anywhere ? rand(0, H) : -4;
     if (kind === 'ash') return { x: rand(0, W), y: anywhere ? rand(0, H) : H + 4, vx: rand(-6, 6), vy: rand(-26, -10), s: rand() < 0.3 ? 2 : 1, c: rand() < 0.5 ? '#ff8a3a' : '#5a4a48' };
-    if (kind === 'petals') return { x: rand(0, W), y, vx: rand(10, 24), vy: rand(10, 22), s: 2, c: rand() < 0.5 ? '#ffd0e0' : '#ffffff' };
+    if (kind === 'petals') return { x: anywhere ? rand(0, W) : rand(-40, W), y, vx: rand(10, 24), vy: rand(10, 22), s: 2, c: rand() < 0.5 ? '#ffd0e0' : '#ffffff' };
     return { x: rand(0, W), y, vx: rand(-8, 4), vy: rand(14, 34), s: rand() < 0.25 ? 2 : 1, c: '#ffffff' };
   }
 
@@ -923,7 +1178,7 @@ class Battle {
     for (let i = 0; i < this.weather.length; i++) {
       const f = this.weather[i];
       f.x += (f.vx + Math.sin(this.time * 1.5 + i) * 6) * dt; f.y += f.vy * dt;
-      if (f.y > H + 6 || f.y < -6 || f.x < -6 || f.x > W + 6) this.weather[i] = this.newFlake(false);
+      if (f.y > H + 6 || f.y < -6 || f.x < -50 || f.x > W + 6) this.weather[i] = this.newFlake(false);
     }
   }
 
@@ -950,95 +1205,152 @@ class Battle {
     const shx = this.shake > 0.3 ? Math.round(rand(-1, 1) * this.shake * 2) / 2 : 0;
     const shy = this.shake > 0.3 ? Math.round(rand(-1, 1) * this.shake * 2) / 2 : 0;
     ctx.fillStyle = this.stage.bg; ctx.fillRect(0, 0, W, H);
-    ctx.translate(shx, shy);
-    // ground and scorch marks live in world space: turn the whole layer when flipped
-    ctx.save();
-    if (this.flip) { ctx.translate(W, MIRROR_Y); ctx.scale(-1, -1); }
+    ctx.translate(-Math.round(this.cam.x) + shx, -Math.round(this.cam.y) + shy);
     ctx.drawImage(this.ground, 0, 0);
     ctx.drawImage(this.decal, 0, 0);
-    ctx.restore();
-
+    this.drawDoors(ctx);
+    if (this.stairs) this.drawStairs(ctx);
+    this.drawPickups(ctx);
     this.drawTelegraphs(ctx);
 
-    // trainers + monsters, depth sorted by where they stand on screen
-    const actors = [];
-    for (const side of ['enemy', 'player']) actors.push({ y: this.sy(TRAINER_POS[side].y), draw: () => this.drawTrainer(ctx, side) });
-    for (const m of [this.P, this.E]) if (m.visible) actors.push({ y: this.sy(m.y), draw: () => this.drawMon(ctx, m) });
+    // trainer, monsters and pedestals, depth sorted by where they stand
+    const actors = [{ y: this.trainer.y, draw: () => this.drawTrainer(ctx) }];
+    for (const m of this.mons) if (m.visible) actors.push({ y: m.y, draw: () => this.drawMon(ctx, m) });
+    for (const ped of this.pedestals) actors.push({ y: ped.y, draw: () => this.drawPedestal(ctx, ped) });
     actors.sort((a, b) => a.y - b.y).forEach(a => a.draw());
 
-    for (const m of [this.P, this.E]) if (m.action && m.action.kind === 'beam' && m.visible) this.drawBeam(ctx, m, m.action);
+    for (const m of this.mons) if (m.action && m.action.kind === 'beam' && m.visible) this.drawBeam(ctx, m, m.action);
     for (const p of this.projectiles) this.drawProjectile(ctx, p);
     this.drawZoneFalls(ctx);
     this.drawParticles(ctx);
     for (const b of this.balls) {
       const k = Math.min(1, b.t / b.dur);
-      const fx = this.sx(b.from.x), fy = this.sy(b.from.y), tx = this.sx(b.to.x), ty = this.sy(b.to.y, 6);
-      const x = fx + (tx - fx) * k;
-      const y = fy + (ty - fy) * k - Math.sin(Math.PI * k) * 46;
+      const x = b.from.x + (b.to.x - b.from.x) * k;
+      const y = b.from.y + (b.to.y - b.from.y) * k - Math.sin(Math.PI * k) * 46;
       ctx.save(); ctx.translate(Math.round(x), Math.round(y)); ctx.rotate(k * 10);
       ctx.drawImage(BALL_IMG, -4.5, -3.75, 9, 7.5); ctx.restore();
     }
-    if (this.overheadBars) this.drawBars(ctx);
+    this.drawBars(ctx);
     this.drawFloats(ctx);
+    ctx.setTransform(2, 0, 0, 2, 0, 0);
     this.drawWeather(ctx);
+    this.drawMinimap(ctx);
   }
 
-  // Tabletop 2-player hides the HUD under player 2's controls, so each monster
-  // carries a small HP bar, its status colour and a row of team pips instead.
+  // Locked doors get bars across the doorway.
+  drawDoors(ctx) {
+    if (this.state !== 'fight' && !(this.state === 'faint' && this.e.some(m => !m.fainted))) return;
+    const F = this.F, hw = DOOR_W / 2;
+    for (const dir of Object.keys(this.room.doors)) {
+      const d = doorPos(this.room, dir);
+      ctx.fillStyle = '#2a2230';
+      if (dir === 'n') ctx.fillRect(d.x - hw, F.y0 - 14, DOOR_W, 14);
+      if (dir === 's') ctx.fillRect(d.x - hw, F.y1, DOOR_W, 10);
+      if (dir === 'w') ctx.fillRect(F.x0 - 10, d.y - hw, 10, DOOR_W);
+      if (dir === 'e') ctx.fillRect(F.x1, d.y - hw, 10, DOOR_W);
+      ctx.fillStyle = '#9a8a7a';
+      for (let i = 0; i < 5; i++) {
+        const o = -hw + 4 + i * (DOOR_W - 8) / 4;
+        if (dir === 'n') ctx.fillRect(d.x + o - 1, F.y0 - 26, 3, 26);
+        if (dir === 's') ctx.fillRect(d.x + o - 1, F.y1, 3, 20);
+        if (dir === 'w') ctx.fillRect(F.x0 - 20, d.y + o - 1, 20, 3);
+        if (dir === 'e') ctx.fillRect(F.x1, d.y + o - 1, 20, 3);
+      }
+    }
+  }
+
+  drawStairs(ctx) {
+    const s = this.stairs, x = Math.round(s.x), y = Math.round(s.y);
+    ctx.fillStyle = OUTLINE; ctx.fillRect(x - 18, y - 13, 36, 26);
+    for (let i = 0; i < 4; i++) {
+      ctx.fillStyle = ['#6a6070', '#544a5c', '#3e3648', '#2a2432'][i];
+      ctx.fillRect(x - 16, y - 11 + i * 6, 32, 6);
+      ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fillRect(x - 16, y - 11 + i * 6, 32, 1);
+    }
+    const glow = 0.25 + Math.sin(this.time * 4) * 0.15;
+    ctx.globalAlpha = glow; ctx.strokeStyle = '#ffe066'; ctx.lineWidth = 2;
+    ctx.strokeRect(x - 19, y - 14, 38, 28); ctx.globalAlpha = 1;
+  }
+
+  drawPickups(ctx) {
+    for (const k of this.pickups) {
+      const img = k.kind === 'coin' ? COIN_IMG : BERRY_IMG;
+      const X = Math.round(k.x), Y = Math.round(k.y);
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
+      ctx.beginPath(); ctx.ellipse(X, Y, 4, 1.6, 0, 0, TAU); ctx.fill();
+      const bob = k.z > 0 ? k.z : Math.sin(this.time * 4 + k.x) > 0.5 ? 1 : 0;
+      // coins spin by squashing sideways
+      const sq = k.kind === 'coin' ? Math.max(0.3, Math.abs(Math.cos(this.time * 5 + k.x * 0.3))) : 1;
+      const w = img.width * 1.5 * sq, h = img.height * 1.5;
+      ctx.drawImage(img, Math.round(X - w / 2), Math.round(Y - h - bob), Math.max(1, Math.round(w)), h);
+    }
+  }
+
+  drawPedestal(ctx, ped) {
+    const def = ROSTER_BY_ID[ped.id], sp = SPRITES[ped.id], S = sp.size * SPR_SCALE;
+    const X = Math.round(ped.x), Y = Math.round(ped.y);
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.beginPath(); ctx.ellipse(X, Y + 4, 22, 7, 0, 0, TAU); ctx.fill();
+    ctx.fillStyle = OUTLINE; ctx.fillRect(X - 19, Y - 7, 38, 13);
+    ctx.fillStyle = '#b8b0c8'; ctx.fillRect(X - 18, Y - 6, 36, 5);
+    ctx.fillStyle = '#7a7090'; ctx.fillRect(X - 18, Y - 1, 36, 6);
+    const bob = Math.sin(this.time * 3 + ped.x) > 0.6 ? -1 : 0;
+    ctx.save(); ctx.translate(X, Y - 6 + bob); if (ped.x > this.P.x) ctx.scale(-1, 1);
+    ctx.drawImage(sp.img, -S / 2, -S + 3, S, S); ctx.restore();
+    ctx.font = 'italic 900 8px "Lilita One", "Arial Black", Arial, sans-serif';
+    ctx.textAlign = 'center'; ctx.lineJoin = 'round';
+    ctx.lineWidth = 3; ctx.strokeStyle = '#2a1405'; ctx.strokeText(def.name, X, Y + 16);
+    ctx.fillStyle = '#ffe066'; ctx.fillText(def.name, X, Y + 16);
+  }
+
+  // Each wild monster carries a small HP bar (the boss gets the big one in the HUD).
   drawBars(ctx) {
     const STATUS_COL = { par: '#d6b21e', brn: '#e0582a', frz: '#4fb6d8', psn: '#9a3ab8' };
-    for (const m of [this.P, this.E]) {
-      if (!m.visible || m.fainted) continue;
-      const w = 26, x = Math.round(this.sx(m.x) - w / 2), y = Math.round(this.sy(m.y) - m.h - 6);
+    for (const m of this.e) {
+      if (!m.alive || m.boss) continue;
+      const w = 26, x = Math.round(m.x - w / 2), y = Math.round(m.y - m.h - 6);
       const pct = m.hp / m.maxHp;
       ctx.fillStyle = OUTLINE; ctx.fillRect(x - 1, y - 1, w + 2, 5);
       ctx.fillStyle = '#2a2638'; ctx.fillRect(x, y, w, 3);
       ctx.fillStyle = pct > 0.5 ? '#3ccf4e' : pct > 0.2 ? '#f2c12e' : '#e8433a';
       ctx.fillRect(x, y, Math.max(1, Math.round(w * pct)), 3);
       if (m.status) { ctx.fillStyle = STATUS_COL[m.status]; ctx.fillRect(x + w + 2, y - 1, 4, 5); }
-      const team = m.side === 'player' ? this.p : this.e;
-      team.forEach((t, i) => {
-        ctx.fillStyle = t.fainted ? '#3a3646' : t === m ? '#ffd23f' : '#f6f2ee';
-        ctx.fillRect(x + i * 4, y + 5, 3, 2);
-      });
     }
   }
 
-  drawTrainer(ctx, side) {
-    const img = this.trainers[side], pos = TRAINER_POS[side];
-    const px = this.sx(pos.x), py = this.sy(pos.y);
+  drawTrainer(ctx) {
+    const t = this.trainer, img = t.back ? this.trainerImg.back : this.trainerImg.front;
+    const px = Math.round(t.x), py = Math.round(t.y);
     ctx.fillStyle = 'rgba(0,0,0,0.25)';
-    ctx.beginPath(); ctx.ellipse(px, py, 11, 4, 0, 0, TAU); ctx.fill();
-    const bob = Math.sin(this.time * 2 + (side === 'player' ? 0 : 1)) > 0.7 ? -1 : 0;
+    ctx.beginPath(); ctx.ellipse(px, py, 9, 3.5, 0, 0, TAU); ctx.fill();
+    const bob = t.moving ? -Math.round(Math.abs(Math.sin(t.walkT / 6 * Math.PI))) : (Math.sin(this.time * 2) > 0.7 ? -1 : 0);
     const w = img.width * SPR_SCALE, h = img.height * SPR_SCALE;
     ctx.drawImage(img, Math.round(px - w / 2), Math.round(py - h + 1 + bob), w, h);
   }
 
   drawMon(ctx, m) {
-    const sp = SPRITES[m.id], S = sp.size * SPR_SCALE;
+    const sp = SPRITES[m.id], S = sp.size * SPR_SCALE * m.scale;
     let alpha = 1, sink = 0;
     if (m.fainted) { alpha = Math.max(0, 1 - m.fadeT / 1.1); sink = m.fadeT * 6; }
     if (alpha <= 0) return;
     const moving = Math.hypot(m.vx, m.vy) > 12;
     let bob = moving ? -Math.round(Math.abs(Math.sin(m.walkT / 7 * Math.PI)) * 2) : (Math.sin(this.time * 3 + m.x) > 0.6 ? -1 : 0);
     if (m.status === 'frz' || m.stunT > 0 || m.fainted) bob = 0;
-    const X = Math.round(this.sx(m.x)), Y = Math.round(this.sy(m.y));
-    const face = this.flip ? -m.face : m.face;
-    // your own monster gets the blue ring
-    const mine = m.side === (this.flip ? 'enemy' : 'player');
+    const X = Math.round(m.x), Y = Math.round(m.y);
+    const mine = m.side === 'player';
 
     // ground marker + shadow
     ctx.globalAlpha = alpha;
     ctx.fillStyle = 'rgba(0,0,0,0.28)';
     ctx.beginPath(); ctx.ellipse(X, Y, m.r + 2, m.r * 0.42, 0, 0, TAU); ctx.fill();
-    ctx.strokeStyle = mine ? 'rgba(90,160,255,0.75)' : 'rgba(255,90,80,0.6)';
+    ctx.strokeStyle = mine ? 'rgba(90,160,255,0.75)' : m.boss ? 'rgba(255,200,60,0.8)' : 'rgba(255,90,80,0.6)';
     ctx.lineWidth = 1;
     ctx.beginPath(); ctx.ellipse(X, Y, m.r + 4, m.r * 0.5 + 1, 0, 0, TAU); ctx.stroke();
 
     // dash afterimages
     for (const g of m.ghosts) {
       ctx.globalAlpha = (g.t / 0.22) * 0.5 * alpha;
-      ctx.save(); ctx.translate(Math.round(this.sx(g.x)), Math.round(this.sy(g.y))); if ((this.flip ? -g.face : g.face) < 0) ctx.scale(-1, 1);
+      ctx.save(); ctx.translate(Math.round(g.x), Math.round(g.y)); if (g.face < 0) ctx.scale(-1, 1);
       ctx.drawImage(tinted(m.id, g.color), -S / 2, -S + 3, S, S); ctx.restore();
     }
     ctx.globalAlpha = alpha;
@@ -1053,7 +1365,7 @@ class Battle {
 
     ctx.save();
     ctx.translate(X, Math.round(Y + bob + sink));
-    if (face < 0) ctx.scale(-1, 1);
+    if (m.face < 0) ctx.scale(-1, 1);
     const dx = -S / 2, dy = -S + 3;
     ctx.drawImage(sp.img, dx, dy, S, S);
     let tint = null, ta = 0;
@@ -1078,13 +1390,24 @@ class Battle {
   drawTelegraphs(ctx) {
     const pulse = 0.55 + Math.sin(this.time * 14) * 0.2;
     ctx.lineWidth = 1.5;
+    // a wild monster about to appear: a shadow growing on the ground
+    for (const m of this.e) {
+      if (m.spawnT <= 0) continue;
+      const k = clamp(1 - m.spawnT / 0.7, 0, 1);
+      ctx.globalAlpha = 0.2 + k * 0.3; ctx.fillStyle = '#000000';
+      ctx.beginPath(); ctx.ellipse(m.x, m.y, (m.r + 2) * k, (m.r * 0.45) * k, 0, 0, TAU); ctx.fill();
+      ctx.globalAlpha = pulse; ctx.strokeStyle = m.boss ? '#ffd23f' : '#ff6a5a';
+      ctx.setLineDash([3, 3]);
+      ctx.beginPath(); ctx.ellipse(m.x, m.y, m.r + 6, m.r * 0.5 + 3, 0, 0, TAU); ctx.stroke();
+      ctx.setLineDash([]);
+    }
     for (const z of this.zones) {
       if (z.done) {
         if (!z.mv.linger) continue;
         // lingering pool: fades in and out, with bubbles popping across it
         const age = z.t - z.delay, left = z.mv.linger - age;
         const fade = clamp(Math.min(age / 0.15, left / 0.4), 0, 1);
-        const zx = this.sx(z.x), zy = this.sy(z.y), fx = TYPES[z.mv.type].fx;
+        const zx = z.x, zy = z.y, fx = TYPES[z.mv.type].fx;
         ctx.globalAlpha = 0.38 * fade; ctx.fillStyle = fx[0];
         ctx.beginPath(); ctx.ellipse(zx, zy, z.r, z.r * 0.7, 0, 0, TAU); ctx.fill();
         ctx.globalAlpha = 0.7 * fade; ctx.strokeStyle = fx[1]; ctx.lineWidth = 1.5;
@@ -1097,7 +1420,7 @@ class Battle {
         }
         continue;
       }
-      const k = clamp(z.t / z.delay, 0, 1), zx = this.sx(z.x), zy = this.sy(z.y);
+      const k = clamp(z.t / z.delay, 0, 1), zx = z.x, zy = z.y;
       ctx.fillStyle = TYPES[z.mv.type].fx[0];
       ctx.globalAlpha = 0.18 + k * 0.2;
       ctx.beginPath(); ctx.ellipse(zx, zy, z.r * k, z.r * k * 0.7, 0, 0, TAU); ctx.fill();
@@ -1107,10 +1430,10 @@ class Battle {
       ctx.beginPath(); ctx.ellipse(zx, zy, z.r, z.r * 0.7, 0, 0, TAU); ctx.stroke();
       ctx.setLineDash([]);
     }
-    for (const m of [this.P, this.E]) {
+    for (const m of this.mons) {
       const a = m.action;
       if (!a || !m.visible) continue;
-      const X = this.sx(m.x), Y = this.sy(m.y), dir = this.sa(a.dir);
+      const X = m.x, Y = m.y, dir = a.dir;
       if (a.kind === 'burst' && !a.done) {
         const k = clamp(a.t / a.mv.delay, 0, 1);
         ctx.fillStyle = TYPES[a.mv.type].fx[0];
@@ -1122,7 +1445,7 @@ class Battle {
         ctx.setLineDash([]);
       }
       if (a.kind === 'beam' && a.phase === 'charge') {
-        const cy = this.sy(m.cy, m.y - m.cy);
+        const cy = m.cy;
         ctx.globalAlpha = 0.3 + (a.t / a.mv.charge) * 0.4;
         ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1;
         ctx.setLineDash([3, 4]);
@@ -1157,7 +1480,7 @@ class Battle {
       if (z.done) continue;
       const left = z.delay - z.t;
       const fx = TYPES[z.mv.type].fx;
-      const zx = this.sx(z.x), zy = this.sy(z.y);   // things still fall down the screen
+      const zx = z.x, zy = z.y;
       if (z.mv.fx === 'meteor' && left < 0.45) {
         const k = 1 - left / 0.45;
         const x = zx - 70 * (1 - k), y = zy - 170 * (1 - k);
@@ -1179,7 +1502,7 @@ class Battle {
   drawBeam(ctx, m, a) {
     const mv = a.mv, fx = TYPES[mv.type].fx;
     // the muzzle sits at body height, 6 units out along the aim
-    const ox = this.sx(m.x + Math.cos(a.dir) * 6), oy = this.sy(m.cy + Math.sin(a.dir) * 6, m.y - m.cy);
+    const ox = m.x + Math.cos(a.dir) * 6, oy = m.cy + Math.sin(a.dir) * 6;
     if (a.phase === 'charge') {
       const k = a.t / mv.charge;
       ctx.globalAlpha = 0.5; ctx.fillStyle = fx[0];
@@ -1192,7 +1515,7 @@ class Battle {
     const fade = Math.min(1, (mv.dur - a.t) / 0.15);
     const len = mv.len * grow, w = mv.width * Math.max(0.2, fade);
     ctx.save();
-    ctx.translate(ox, oy); ctx.rotate(this.sa(a.dir));
+    ctx.translate(ox, oy); ctx.rotate(a.dir);
     const layers = [[fx[0], 0.35, 1.7], [fx[0], 0.9, 1.15], [fx[1], 1, 0.8], [fx[2], 1, 0.38]];
     for (const [col, al, sc] of layers) {
       ctx.globalAlpha = al; ctx.fillStyle = col;
@@ -1223,7 +1546,7 @@ class Battle {
 
   drawProjectile(ctx, p) {
     const fx = TYPES[p.mv.type].fx, t = p.mv.type;
-    const px = this.sx(p.x), py = this.sy(p.y, p.k ?? 19);
+    const px = p.x, py = p.y;
     if (p.mv.boomerang) {   // a spinning crescent blade
       ctx.save(); ctx.translate(px, py); ctx.rotate(p.spin * 1.7);
       ctx.fillStyle = fx[1];
@@ -1247,7 +1570,7 @@ class Battle {
       return;
     }
     if (t === 'ice' || t === 'bug' || t === 'flying') {
-      const a = this.sa(Math.atan2(p.vy, p.vx));
+      const a = Math.atan2(p.vy, p.vx);
       ctx.save(); ctx.translate(px, py); ctx.rotate(a);
       ctx.fillStyle = fx[1]; ctx.beginPath(); ctx.moveTo(p.r * 3, 0); ctx.lineTo(-p.r * 2, -p.r); ctx.lineTo(-p.r * 2, p.r); ctx.closePath(); ctx.fill();
       ctx.fillStyle = fx[2]; ctx.fillRect(-p.r, -0.5, p.r * 3, 1);
@@ -1263,10 +1586,9 @@ class Battle {
   }
 
   drawParticles(ctx) {
-    const dxs = this.flip ? -1 : 1;
     for (const p of this.particles) {
       const k = clamp(p.life / p.max, 0, 1);
-      const X = this.sx(p.x), Y = this.gy(p);
+      const X = p.x, Y = p.y;
       ctx.globalAlpha = k;
       switch (p.kind) {
         case 'sq': {
@@ -1276,7 +1598,7 @@ class Battle {
         }
         case 'spark':
           ctx.strokeStyle = p.color; ctx.lineWidth = 1.2;
-          ctx.beginPath(); ctx.moveTo(X, Y); ctx.lineTo(X - dxs * p.vx * 0.06, Y - p.vy * 0.06); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(X, Y); ctx.lineTo(X - p.vx * 0.06, Y - p.vy * 0.06); ctx.stroke();
           break;
         case 'ring': {
           const r = p.r1 + (p.r0 - p.r1) * k;
@@ -1286,7 +1608,7 @@ class Battle {
         }
         case 'line':
           ctx.strokeStyle = p.color; ctx.lineWidth = 3 * k + 0.5;
-          ctx.beginPath(); ctx.moveTo(X, Y); ctx.lineTo(this.sx(p.x2), this.sy(p.y2, p.k2 ?? 19)); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(X, Y); ctx.lineTo(p.x2, p.y2); ctx.stroke();
           break;
         case 'bolt': {
           ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3;
@@ -1306,14 +1628,14 @@ class Battle {
       const pop = f.t < 0.1 ? 3 - f.t * 10 : 2;
       ctx.globalAlpha = f.t > 0.7 ? 1 - (f.t - 0.7) / 0.25 : 1;
       const w = f.img.width * pop, h = f.img.height * pop;
-      ctx.drawImage(f.img, Math.round(this.sx(f.x) - w / 2), Math.round(this.gy(f) - h), w, h);
+      ctx.drawImage(f.img, Math.round(f.x - w / 2), Math.round(f.y - h), w, h);
     }
     ctx.globalAlpha = 1;
     ctx.font = 'italic 900 10px "Lilita One", "Arial Black", "Segoe UI Black", Arial, sans-serif';
     ctx.textAlign = 'center'; ctx.lineJoin = 'round';
     for (const t of this.texts) {
       ctx.globalAlpha = t.t > 0.9 ? 1 - (t.t - 0.9) / 0.3 : 1;
-      const x = clamp(this.sx(t.x), 50, W - 50), y = this.gy(t);
+      const x = clamp(t.x, this.cam.x + 50, this.cam.x + W - 50), y = t.y;
       ctx.lineWidth = 3; ctx.strokeStyle = '#2a1405'; ctx.strokeText(t.str, x, y);
       ctx.fillStyle = t.color; ctx.fillText(t.str, x, y);
     }
@@ -1323,5 +1645,30 @@ class Battle {
   drawWeather(ctx) {
     for (const f of this.weather) { ctx.fillStyle = f.c; ctx.globalAlpha = 0.85; ctx.fillRect(Math.round(f.x), Math.round(f.y), f.s, f.s); }
     ctx.globalAlpha = 1;
+  }
+
+  // Top-right: the rooms you've seen on this floor, and your coins.
+  drawMinimap(ctx) {
+    const rooms = this.run.floor.rooms;
+    const seen = r => r.visited || Object.values(r.doors).some(o => o.visited);
+    const shown = rooms.filter(seen);
+    const cw = 13, ch = 9, gap = 2;
+    const gxs = shown.map(r => r.gx), gys = shown.map(r => r.gy);
+    const minX = Math.min(...gxs), maxX = Math.max(...gxs), minY = Math.min(...gys), maxY = Math.max(...gys);
+    const mw = (maxX - minX + 1) * (cw + gap) + 3, mh = (maxY - minY + 1) * (ch + gap) + 3;
+    const x0 = W - mw - 6, y0 = 6;
+    ctx.globalAlpha = 0.7; ctx.fillStyle = '#0e0b18'; ctx.fillRect(x0 - 2, y0 - 2, mw + 4, mh + 4); ctx.globalAlpha = 1;
+    for (const r of shown) {
+      const x = x0 + 2 + (r.gx - minX) * (cw + gap), y = y0 + 2 + (r.gy - minY) * (ch + gap);
+      ctx.fillStyle = r === this.room ? '#ffffff' : r.visited ? '#8a84a0' : '#3a3450';
+      ctx.fillRect(x, y, cw, ch);
+      const icon = r.type === 'boss' ? '#e8433a' : r.type === 'recruit' && !r.recruited ? '#5aa0ff' : null;
+      if (icon) { ctx.fillStyle = icon; ctx.fillRect(x + 4, y + 3, 5, 3); }
+    }
+    // coins
+    const img = numberCanvas(this.run.coins, '#fff6c8', '#e0b040');
+    const cy = y0 + mh + 6;
+    ctx.drawImage(COIN_IMG, W - 8 - img.width * 2 - 12, cy + 1, COIN_IMG.width * 2, COIN_IMG.height * 2);
+    ctx.drawImage(img, W - 6 - img.width * 2, cy, img.width * 2, img.height * 2);
   }
 }

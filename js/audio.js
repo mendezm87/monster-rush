@@ -119,6 +119,11 @@ const Sfx = (() => {
     },
     win() { [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.22, 'square', 0.1, 0, i * 0.13)); },
     lose() { [392, 330, 262, 196].forEach((f, i) => tone(f, 0.28, 'triangle', 0.14, 0, i * 0.18)); },
+    // dungeon sounds
+    coin() { tone(988, 0.05, 'square', 0.07); tone(1319, 0.12, 'square', 0.07, 0, 0.05); },
+    doorShut() { noise(0.25, 0.4, 500); tone(80, 0.25, 'square', 0.16, -30); },
+    doorOpen() { noise(0.2, 0.2, 900); tone(220, 0.15, 'triangle', 0.12, 220); },
+    stairs() { [392, 330, 262, 196, 165].forEach((f, i) => tone(f, 0.12, 'square', 0.08, 0, i * 0.07)); },
   };
 
   // ---------- beams: a rising charge-up, then a blast and a sustained roar ----------
