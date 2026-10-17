@@ -24,10 +24,10 @@
   </style>
 </head>
 <body>
-  <h1>Art style test: Smugshi</h1>
+  <h1>Art style test: Smugshi (Toshi)</h1>
   <div class="hint">The same monster drawn three ways. The big box shows each one close up (front and side); the strip under it shows it at the size it would really be in a room, next to the trainer. They gently idle-bounce so you can see how each style moves. Nothing in the game has changed. <a href="./">Back to the game</a> · <a href="gallery.html">Gallery</a></div>
   <div class="grid">
-    <div class="col"><h2>Now: 32-pixel art</h2><p>What's in the game today. Chunky and readable; every monster is drawn this way.</p>
+    <div class="col"><h2>Now: 32-pixel art</h2><p>What's in the game today, redrawn from Toshi's photos: ginger coat, big white bib and legs, white cheeks, smug half-shut eyes.</p>
       <canvas id="a-big" width="300" height="200"></canvas><div class="label">in-game size</div><canvas id="a-game" width="300" height="110"></canvas></div>
     <div class="col"><h2>HD pixel art (64 pixels)</h2><p>Same style, twice the detail: fur strands, eye shine, softer shading, a fluffier tail and chest. Closest to the current game.</p>
       <canvas id="b-big" width="300" height="200"></canvas><div class="label">in-game size</div><canvas id="b-game" width="300" height="110"></canvas></div>
@@ -41,64 +41,68 @@
   <script src="js/arena.js"></script>
   <script>
     buildSprites();
-    const O = P('#d9792e', '#a8521c', '#f0a050'), C = P('#fbf0dc', '#e4cfae', '#ffffff');
-    const FUR = '#b8642a', FUR_HI = '#f4b068', CREAM_SH = '#e4cfae';
+    const O = TOSHI.coat, C = TOSHI.white, EAR = P('#f1dcc4', '#e0c4a8', '#fbeee0');
+    const FUR = '#b56a34', FUR_HI = '#eab27a', WSH = '#e2d4bf', WSH2 = '#cbbba4';
 
-    // ---------- B: 64-pixel Smugshi ----------
+    // ---------- B: 64-pixel Toshi ----------
     function hdFront(g) {
-      g.ellipse(52, 38, 9, 9, O, { edge: true });                                   // curled tail
-      g.ellipse(52.5, 37, 5, 5, C, { edge: true });
-      g.ellipse(52, 37.5, 2.2, 2.2, O); g.px(52, 37, FUR);
-      g.ellipseM(22, 58, 5, 3.4, C, { edge: true });                                // white socks
-      g.pxM(20, 59, CREAM_SH); g.pxM(23, 59, CREAM_SH);
-      g.ellipse(32, 46, 16, 13, O, { edge: true });                                 // body
-      for (const [x, y] of [[19, 44], [21, 50], [44, 45], [42, 51], [24, 39], [40, 39]]) { g.px(x, y, FUR); g.px(x + 1, y + 1, FUR); }
-      g.ellipse(32, 49, 9, 10, C);                                                  // cream chest
-      g.polyM([[23, 41], [26, 45], [28, 41], [30, 45], [32, 41]], C);               // chest fluff
-      g.pxM(27, 52, CREAM_SH); g.pxM(29, 55, CREAM_SH); g.px(32, 53, CREAM_SH);
-      g.polyM([[18, 18], [16, 0], [28, 12]], O, { edge: true });                    // ears
-      g.polyM([[20, 15], [18, 5], [25, 12]], P('#fbf0dc', '#e4b8a0', '#ffffff'));
+      g.ellipse(52, 36, 9, 9, O, { edge: true });                                   // curled tail
+      g.ellipse(53, 35, 5.5, 5.5, C, { edge: true });                               // white fluff in the curl
+      g.ellipse(52.5, 35.5, 2.2, 2.2, O); g.px(52, 35, FUR);
+      g.ellipseM(23, 54, 5, 7, C, { edge: true });                                  // white legs
+      g.ellipseM(23, 60, 5.5, 2.6, C, { edge: true });                              // paws
+      g.pxM(21, 61, WSH); g.pxM(24, 61, WSH);
+      g.ellipse(32, 45, 15, 12, O, { edge: true });                                 // body
+      for (const [x, y] of [[19, 43], [20, 48], [44, 43], [43, 48]]) { g.px(x, y, FUR); g.px(x + 1, y + 1, FUR); }
+      g.ellipse(32, 47, 10, 11, C);                                                 // big white bib and belly
+      g.polyM([[22, 38], [25, 42], [27, 37], [30, 42], [32, 37]], C);               // fluffy throat
+      g.pxM(27, 50, WSH); g.pxM(29, 54, WSH); g.px(32, 52, WSH); g.pxM(25, 46, WSH);
+      g.polyM([[18, 18], [17, 1], [28, 11]], O, { edge: true });                    // upright ears
+      g.polyM([[20, 15], [19, 5], [25.5, 11]], EAR);                                // pale insides
+      g.pxM(21, 9, '#ffffff'); g.pxM(21, 11, '#ffffff');
       g.ellipse(32, 24, 16, 13, O, { edge: true });                                 // head
-      g.polyM([[17, 27], [12, 31], [19, 33]], O);                                   // cheek fluff
-      for (const [x, y] of [[27, 13], [31, 12], [35, 13], [22, 17], [41, 17]]) g.px(x, y, FUR_HI);
-      g.ellipse(32, 30, 11, 7, C);                                                  // cream mask
-      g.ellipseM(19, 28, 3.4, 3, C);
-      g.ellipseM(23, 18, 2.2, 1.5, '#fbf0dc');                                      // eyebrow spots
+      for (const [x, y] of [[27, 13], [31, 12], [36, 13], [22, 16]]) g.px(x, y, FUR_HI);
+      g.ellipse(32, 31, 12, 7.5, C);                                                // white muzzle
+      g.ellipseM(19.5, 27.5, 5, 4.5, C);                                            // white cheeks up to the eyes
+      g.polyM([[14, 29], [11, 33], [17, 34]], C);                                   // cheek fluff
+      g.ellipseM(23, 18, 2.4, 1.6, '#ffffff');                                      // eyebrow spots
       g.rectM(20, 22, 8, 2, OUTLINE);                                               // smug lids
       g.rectM(21, 21, 6, 1, FUR);
       g.rectM(22, 24, 5, 2, DARK_EYE); g.pxM(23, 24, '#ffffff');                    // half-shut eyes with shine
-      g.ellipse(32, 28, 3.2, 2.2, OUTLINE); g.px(31, 27, '#6a5a6a');                // nose
-      g.px(32, 30, OUTLINE); g.px(32, 31, OUTLINE);
-      for (const [x, y] of [[27, 33], [28, 34], [29, 34], [30, 34], [31, 34], [32, 34], [33, 34], [34, 33], [35, 32], [36, 32]]) g.px(x, y, OUTLINE);   // smirk
-      g.pxM(25, 31, CREAM_SH); g.pxM(26, 30, CREAM_SH);                             // whisker dots
+      g.ellipse(32, 28, 3.6, 2.6, OUTLINE); g.px(31, 27, '#5a5060'); g.px(30, 28, '#3a3040');   // big black nose
+      g.px(32, 31, OUTLINE); g.px(32, 32, OUTLINE);
+      for (let x = 27; x <= 36; x++) g.px(x, 34, OUTLINE);                          // flat, unimpressed mouth
+      g.px(37, 33, OUTLINE);                                                        // with a smug corner
+      g.pxM(26, 31, WSH); g.pxM(27, 30, WSH);                                       // whisker dots
     }
     function hdSide(g) {
-      g.ellipse(13, 34, 9, 9, O, { edge: true });                                   // curled tail
-      g.ellipse(12.5, 33, 5, 5, C, { edge: true }); g.ellipse(12, 33.5, 2.2, 2.2, O);
-      g.ellipse(22, 58, 5, 3.2, C, { edge: true });
-      g.ellipse(28, 46, 17, 13, O, { edge: true });                                 // body
-      for (const [x, y] of [[16, 44], [20, 50], [26, 40], [32, 41], [24, 47]]) { g.px(x, y, FUR); g.px(x + 1, y + 1, FUR); }
-      g.ellipse(39, 50, 7, 9, C);                                                   // chest
-      g.poly([[35, 42], [38, 46], [40, 42], [43, 46]], C);
-      g.ellipse(40, 58, 5, 3.2, C, { edge: true });
-      g.poly([[28, 18], [26, 2], [36, 12]], O);                                     // far ear
-      g.ellipse(38, 26, 15, 13, O, { edge: true });                                 // head
-      g.poly([[36, 16], [40, 0], [46, 14]], O, { edge: true });                     // near ear
-      g.poly([[38.5, 14], [40.5, 5], [44, 13]], P('#fbf0dc', '#e4b8a0', '#ffffff'));
-      for (const [x, y] of [[33, 15], [37, 14], [30, 19]]) g.px(x, y, FUR_HI);
-      g.ellipse(50, 32, 9, 6, C);                                                   // muzzle
-      g.ellipse(40, 32, 5, 3.6, C);                                                 // cheek
-      g.ellipse(42, 20, 2.2, 1.5, '#fbf0dc');                                       // eyebrow spot
-      g.rect(40, 24, 8, 2, OUTLINE); g.rect(41, 23, 6, 1, FUR);                     // smug lid
-      g.rect(42, 26, 5, 2, DARK_EYE); g.px(43, 26, '#ffffff');
-      g.ellipse(57, 28.5, 3, 2.2, OUTLINE); g.px(56, 27, '#6a5a6a');                // nose
-      for (const [x, y] of [[49, 36], [50, 36], [51, 36], [52, 36], [53, 35], [54, 34]]) g.px(x, y, OUTLINE);
-      g.px(47, 32, CREAM_SH); g.px(48, 31, CREAM_SH);
+      g.ellipse(14, 30, 9, 9, O, { edge: true });                                   // curled tail
+      g.ellipse(13, 29, 5.5, 5.5, C, { edge: true }); g.ellipse(13, 29.5, 2.2, 2.2, O);
+      g.ellipse(20, 54, 3.6, 6, P(WSH, WSH2, C.b)); g.ellipse(38, 54, 3.6, 6, P(WSH, WSH2, C.b));   // far legs
+      g.ellipse(28, 44, 17, 11, O, { edge: true });                                 // slim body
+      for (const [x, y] of [[16, 41], [22, 38], [30, 37], [36, 39]]) { g.px(x, y, FUR); g.px(x + 1, y + 1, FUR); }
+      g.ellipse(28, 51, 14, 4, C);                                                  // white belly
+      g.ellipse(39, 44, 7, 9, C);                                                   // white chest
+      g.ellipse(23, 56, 3.8, 6, C, { edge: true }); g.ellipse(41, 56, 3.8, 6, C, { edge: true });   // white legs
+      g.ellipse(24, 61.5, 4, 1.8, C); g.ellipse(42, 61.5, 4, 1.8, C);
+      g.poly([[28, 16], [26, 2], [35, 10]], O);                                     // far ear
+      g.ellipse(38, 24, 13, 11, O, { edge: true });                                 // head
+      g.poly([[35, 14], [39, 0], [45, 12]], O, { edge: true });                     // near ear
+      g.poly([[37.5, 12], [39.5, 4], [43, 11]], EAR);
+      for (const [x, y] of [[33, 14], [37, 13], [30, 19]]) g.px(x, y, FUR_HI);
+      g.poly([[42, 23], [57, 26], [56, 33], [40, 35]], C, { edge: true });          // white fox-like muzzle
+      g.ellipse(39, 31, 6, 4, C);                                                   // white cheek
+      g.ellipse(42, 18, 2.4, 1.6, '#ffffff');                                       // eyebrow spot
+      g.rect(41, 22, 7, 2, OUTLINE); g.rect(42, 21, 5, 1, FUR);                     // smug lid
+      g.rect(43, 24, 4, 2, DARK_EYE); g.px(44, 24, '#ffffff');
+      g.ellipse(56, 26.5, 3, 2.4, OUTLINE); g.px(55, 25, '#5a5060');                // nose
+      for (const [x, y] of [[48, 34], [49, 34], [50, 34], [51, 34], [52, 33], [53, 33]]) g.px(x, y, OUTLINE);
+      g.px(47, 30, WSH); g.px(48, 29, WSH);
     }
     function hdSprite(fn) { const g = new PixGrid(64, 64); fn(g); g.outline(); return g.toCanvas(); }
     const HD = { front: hdSprite(hdFront), side: hdSprite(hdSide) };
 
-    // ---------- C: smooth cartoon Smugshi (vector paths, drawn at any size) ----------
+    // ---------- C: smooth cartoon Toshi (vector paths, drawn at any size) ----------
     const INK = '#1c1428';
     function blob(c, path, fill, lw = 5) {
       c.beginPath(); path(c); c.closePath();
@@ -107,70 +111,85 @@
     }
     function grad(c, x0, y0, x1, y1, a, b) { const g = c.createLinearGradient(x0, y0, x1, y1); g.addColorStop(0, a); g.addColorStop(1, b); return g; }
     const ell = (x, y, rx, ry, rot = 0) => c => c.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2);
-    // draws Toshi facing the viewer, centred on (0, 0) = his feet; s = scale, blink 0..1
+    const COAT_A = '#eab071', COAT_B = '#c27234', WH_A = '#ffffff', WH_B = '#e8dccb', EAR_IN = '#f3dcc6';
+    function eye(c, ex, ey, sx, blinkK) {
+      const open = 4.5 * (1 - blinkK);
+      c.fillStyle = '#ffffff'; c.beginPath(); c.ellipse(ex, ey, 11, Math.max(0.5, open + 1.5), sx * 0.12, 0, Math.PI); c.fill();
+      c.fillStyle = '#2a1a14'; c.beginPath(); c.ellipse(ex + sx * 2, ey + 0.5, 6.5, Math.max(0.5, open), 0, 0, Math.PI); c.fill();
+      if (open > 2) { c.fillStyle = '#ffffff'; c.beginPath(); c.arc(ex + sx * 4, ey + 2, 1.7, 0, Math.PI * 2); c.fill(); }
+      c.strokeStyle = INK; c.lineWidth = 4.5; c.lineCap = 'round';   // heavy smug lid
+      c.beginPath(); c.moveTo(ex - 13, ey + sx * 1.5); c.quadraticCurveTo(ex, ey - 3.5, ex + 13, ey - sx * 1.5); c.stroke();
+    }
+    // Toshi facing the viewer; (0, 0) = his feet
     function toonFront(c, blinkK) {
-      const coat = grad(c, -40, -150, 40, 0, '#f2a052', '#c8642a'), cream = grad(c, 0, -120, 0, 0, '#ffffff', '#efe0c4');
-      // curled tail
-      blob(c, ell(58, -70, 26, 26), grad(c, 40, -96, 80, -44, '#f2a052', '#c8642a'));
-      blob(c, ell(60, -72, 14, 14), cream, 4);
-      c.strokeStyle = '#c8642a'; c.lineWidth = 4; c.beginPath(); c.arc(60, -72, 6, 0.5, 4.5); c.stroke();
-      // body and socks
-      blob(c, ell(-22, -6, 14, 9), cream); blob(c, ell(22, -6, 14, 9), cream);
-      blob(c, ell(0, -42, 46, 38), coat);
-      blob(c, c => { c.moveTo(-26, -66); c.quadraticCurveTo(0, -48, 26, -66); c.quadraticCurveTo(30, -20, 0, -10); c.quadraticCurveTo(-30, -20, -26, -66); }, cream, 4);
-      // ears
+      const coat = grad(c, -30, -160, 30, -10, COAT_A, COAT_B), white = grad(c, 0, -130, 0, 0, WH_A, WH_B);
+      // curled tail: ginger on top, a big white fluff inside
+      blob(c, ell(60, -78, 26, 25), grad(c, 40, -104, 80, -52, COAT_A, COAT_B));
+      blob(c, ell(62, -80, 16, 15), white, 4);
+      c.strokeStyle = WH_B; c.lineWidth = 3; c.beginPath(); c.arc(62, -80, 7, 0.6, 4.4); c.stroke();
+      // white legs and paws
       for (const sx of [-1, 1]) {
-        blob(c, c => { c.moveTo(sx * 22, -128); c.quadraticCurveTo(sx * 38, -186, sx * 44, -172); c.quadraticCurveTo(sx * 52, -140, sx * 46, -116); }, coat);
-        blob(c, c => { c.moveTo(sx * 28, -128); c.quadraticCurveTo(sx * 38, -168, sx * 42, -160); c.quadraticCurveTo(sx * 46, -140, sx * 42, -124); }, '#f6d8c4', 3);
+        blob(c, c => { c.moveTo(sx * 10, -50); c.lineTo(sx * 32, -50); c.quadraticCurveTo(sx * 33, -14, sx * 30, -6); c.quadraticCurveTo(sx * 21, 2, sx * 11, -5); c.quadraticCurveTo(sx * 9, -20, sx * 10, -50); }, white);
+        c.strokeStyle = WH_B; c.lineWidth = 2.5; c.beginPath(); c.moveTo(sx * 18, -7); c.lineTo(sx * 18, -2); c.moveTo(sx * 24, -7); c.lineTo(sx * 24, -2); c.stroke();
+      }
+      // body and the big white bib down to the belly
+      blob(c, ell(0, -54, 44, 32), coat);
+      blob(c, c => { c.moveTo(-30, -78); c.quadraticCurveTo(0, -64, 30, -78); c.quadraticCurveTo(36, -30, 0, -22); c.quadraticCurveTo(-36, -30, -30, -78); }, white, 4);
+      // upright ears with pale insides
+      for (const sx of [-1, 1]) {
+        blob(c, c => { c.moveTo(sx * 20, -132); c.quadraticCurveTo(sx * 30, -190, sx * 40, -184); c.quadraticCurveTo(sx * 54, -150, sx * 48, -122); }, coat);
+        blob(c, c => { c.moveTo(sx * 27, -134); c.quadraticCurveTo(sx * 33, -174, sx * 39, -170); c.quadraticCurveTo(sx * 47, -148, sx * 43, -128); }, EAR_IN, 3);
       }
       // head
-      blob(c, ell(0, -110, 52, 42), coat);
-      // cream mask: muzzle and cheeks
-      blob(c, c => { c.moveTo(-46, -100); c.quadraticCurveTo(-30, -108, -14, -100); c.quadraticCurveTo(0, -112, 14, -100); c.quadraticCurveTo(30, -108, 46, -100); c.quadraticCurveTo(44, -70, 0, -68); c.quadraticCurveTo(-44, -70, -46, -100); }, cream, 4);
-      // eyebrow spots
-      c.fillStyle = '#fff4e0'; for (const sx of [-1, 1]) { c.beginPath(); c.ellipse(sx * 20, -132, 7, 4.5, 0, 0, Math.PI * 2); c.fill(); }
-      // smug half-shut eyes (they blink now and then)
-      for (const sx of [-1, 1]) {
-        const ex = sx * 21, ey = -114, open = 5 * (1 - blinkK);
-        c.fillStyle = '#ffffff'; c.beginPath(); c.ellipse(ex, ey, 12, Math.max(0.5, open + 2), 0, 0, Math.PI); c.fill();
-        c.fillStyle = INK; c.beginPath(); c.ellipse(ex + sx * 2, ey + 1, 6, Math.max(0.5, open), 0, 0, Math.PI); c.fill();
-        c.fillStyle = '#ffffff'; if (open > 2) { c.beginPath(); c.arc(ex + sx * 4, ey + 2, 1.8, 0, Math.PI * 2); c.fill(); }
-        c.strokeStyle = INK; c.lineWidth = 4.5; c.lineCap = 'round';
-        c.beginPath(); c.moveTo(ex - 13, ey + (sx < 0 ? 1 : -1)); c.quadraticCurveTo(ex, ey - 3, ex + 13, ey + (sx < 0 ? -1 : 1)); c.stroke();   // heavy lid
-      }
-      // nose and smirk
-      blob(c, c => { c.moveTo(-9, -98); c.quadraticCurveTo(0, -104, 9, -98); c.quadraticCurveTo(0, -86, -9, -98); }, grad(c, 0, -104, 0, -88, '#4a3a4a', INK), 3);
-      c.fillStyle = 'rgba(255,255,255,.6)'; c.beginPath(); c.ellipse(-3, -99, 3, 1.6, 0, 0, Math.PI * 2); c.fill();
+      blob(c, ell(0, -114, 52, 42), coat);
+      // white cheeks and muzzle, rising right up under the eyes, with fluff at the sides
+      blob(c, c => {
+        c.moveTo(-52, -104); c.quadraticCurveTo(-38, -112, -26, -106); c.quadraticCurveTo(-12, -100, 0, -108);
+        c.quadraticCurveTo(12, -100, 26, -106); c.quadraticCurveTo(38, -112, 52, -104);
+        c.lineTo(58, -94); c.lineTo(50, -92); c.lineTo(54, -84); c.quadraticCurveTo(30, -66, 0, -68);
+        c.quadraticCurveTo(-30, -66, -54, -84); c.lineTo(-50, -92); c.lineTo(-58, -94);
+      }, white, 4);
+      // pale eyebrow spots
+      c.fillStyle = '#fff6ea'; for (const sx of [-1, 1]) { c.beginPath(); c.ellipse(sx * 21, -134, 7, 4.5, 0, 0, Math.PI * 2); c.fill(); }
+      eye(c, -21, -118, -1, blinkK); eye(c, 21, -118, 1, blinkK);
+      // big black nose
+      blob(c, c => { c.moveTo(-11, -100); c.quadraticCurveTo(0, -107, 11, -100); c.quadraticCurveTo(10, -90, 0, -88); c.quadraticCurveTo(-10, -90, -11, -100); }, grad(c, 0, -106, 0, -88, '#3a3040', '#14101a'), 3);
+      c.fillStyle = 'rgba(255,255,255,.55)'; c.beginPath(); c.ellipse(-4, -101, 3.5, 1.8, -0.2, 0, Math.PI * 2); c.fill();
+      // flat, unimpressed mouth with a smug corner
       c.strokeStyle = INK; c.lineWidth = 4; c.lineCap = 'round';
-      c.beginPath(); c.moveTo(0, -89); c.lineTo(0, -84); c.stroke();
-      c.beginPath(); c.moveTo(-14, -80); c.quadraticCurveTo(0, -78, 10, -82); c.quadraticCurveTo(15, -85, 18, -90); c.stroke();
-      // soft shine on the head
-      c.fillStyle = 'rgba(255,240,210,.35)'; c.beginPath(); c.ellipse(-18, -136, 16, 8, -0.3, 0, Math.PI * 2); c.fill();
+      c.beginPath(); c.moveTo(0, -88); c.lineTo(0, -82); c.stroke();
+      c.beginPath(); c.moveTo(-15, -79); c.quadraticCurveTo(-4, -81, 8, -79); c.quadraticCurveTo(14, -80, 17, -84); c.stroke();
+      // soft sheen on the head
+      c.fillStyle = 'rgba(255,240,215,.3)'; c.beginPath(); c.ellipse(-16, -140, 16, 7, -0.3, 0, Math.PI * 2); c.fill();
     }
+    // Toshi in profile, facing right: slim and fox-like
     function toonSide(c, blinkK) {
-      const coat = grad(c, -40, -150, 40, 0, '#f2a052', '#c8642a'), cream = grad(c, 0, -120, 0, 0, '#ffffff', '#efe0c4');
-      blob(c, ell(-50, -84, 24, 24), grad(c, -70, -108, -30, -60, '#f2a052', '#c8642a'));
-      blob(c, ell(-52, -86, 13, 13), cream, 4);
-      c.strokeStyle = '#c8642a'; c.lineWidth = 4; c.beginPath(); c.arc(-52, -86, 5, 0.5, 4.5); c.stroke();
-      blob(c, ell(-26, -6, 13, 8), cream);
-      blob(c, ell(-4, -44, 52, 36), coat);
-      blob(c, ell(30, -38, 20, 28), cream, 4);
-      blob(c, ell(34, -6, 13, 8), cream);
-      blob(c, c => { c.moveTo(-4, -128); c.quadraticCurveTo(4, -184, 14, -170); c.quadraticCurveTo(24, -146, 20, -122); }, coat);   // far ear
-      blob(c, ell(26, -112, 46, 40), coat);
-      blob(c, c => { c.moveTo(20, -130); c.quadraticCurveTo(34, -192, 46, -176); c.quadraticCurveTo(56, -150, 50, -124); }, coat);  // near ear
-      blob(c, c => { c.moveTo(27, -132); c.quadraticCurveTo(36, -172, 43, -164); c.quadraticCurveTo(48, -148, 45, -130); }, '#f6d8c4', 3);
-      blob(c, c => { c.moveTo(34, -104); c.quadraticCurveTo(60, -112, 82, -102); c.quadraticCurveTo(92, -86, 76, -76); c.quadraticCurveTo(46, -70, 30, -84); c.quadraticCurveTo(26, -96, 34, -104); }, cream, 4);   // muzzle
-      c.fillStyle = '#fff4e0'; c.beginPath(); c.ellipse(40, -136, 7, 4.5, 0, 0, Math.PI * 2); c.fill();
-      const ex = 44, ey = -116, open = 5 * (1 - blinkK);
-      c.fillStyle = '#ffffff'; c.beginPath(); c.ellipse(ex, ey, 11, Math.max(0.5, open + 2), 0, 0, Math.PI); c.fill();
-      c.fillStyle = INK; c.beginPath(); c.ellipse(ex + 3, ey + 1, 5.5, Math.max(0.5, open), 0, 0, Math.PI); c.fill();
-      if (open > 2) { c.fillStyle = '#ffffff'; c.beginPath(); c.arc(ex + 5, ey + 2, 1.6, 0, Math.PI * 2); c.fill(); }
-      c.strokeStyle = INK; c.lineWidth = 4.5; c.lineCap = 'round';
-      c.beginPath(); c.moveTo(ex - 12, ey - 1); c.quadraticCurveTo(ex, ey - 3, ex + 12, ey + 1); c.stroke();
-      blob(c, ell(86, -104, 8, 6), grad(c, 86, -110, 86, -98, '#4a3a4a', INK), 3);
-      c.strokeStyle = INK; c.lineWidth = 4; c.beginPath(); c.moveTo(58, -82); c.quadraticCurveTo(70, -78, 80, -86); c.stroke();
-      c.fillStyle = 'rgba(255,240,210,.35)'; c.beginPath(); c.ellipse(12, -138, 16, 8, -0.3, 0, Math.PI * 2); c.fill();
+      const coat = grad(c, -40, -150, 40, -10, COAT_A, COAT_B), white = grad(c, 0, -120, 0, 0, WH_A, WH_B), whiteFar = grad(c, 0, -60, 0, 0, '#e8dccb', '#d4c6b2');
+      // far legs
+      const leg = (x, fill) => blob(c, c => { c.moveTo(x - 9, -48); c.lineTo(x + 8, -48); c.quadraticCurveTo(x + 9, -12, x + 11, -6); c.quadraticCurveTo(x + 2, 2, x - 9, -4); c.quadraticCurveTo(x - 10, -22, x - 9, -48); }, fill);
+      leg(-18, whiteFar); leg(46, whiteFar);
+      // curled tail over the back
+      blob(c, ell(-46, -96, 24, 23), grad(c, -70, -120, -24, -72, COAT_A, COAT_B));
+      blob(c, ell(-48, -98, 15, 14), white, 4);
+      c.strokeStyle = WH_B; c.lineWidth = 3; c.beginPath(); c.arc(-48, -98, 6, 0.6, 4.4); c.stroke();
+      // slim body with white belly and chest
+      blob(c, ell(-4, -56, 54, 26), coat);
+      blob(c, c => { c.moveTo(-40, -40); c.quadraticCurveTo(0, -24, 30, -34); c.quadraticCurveTo(52, -52, 46, -82); c.quadraticCurveTo(30, -60, 0, -42); c.quadraticCurveTo(-24, -36, -40, -40); }, white, 4);
+      // near legs
+      leg(-32, white); leg(32, white);
+      // ears, head, muzzle
+      blob(c, c => { c.moveTo(4, -124); c.quadraticCurveTo(10, -176, 20, -166); c.quadraticCurveTo(28, -144, 24, -120); }, coat);
+      blob(c, ell(32, -112, 40, 36), coat);
+      blob(c, c => { c.moveTo(24, -134); c.quadraticCurveTo(34, -190, 46, -178); c.quadraticCurveTo(58, -150, 52, -126); }, coat);
+      blob(c, c => { c.moveTo(31, -136); c.quadraticCurveTo(38, -172, 45, -166); c.quadraticCurveTo(52, -148, 48, -132); }, EAR_IN, 3);
+      blob(c, c => { c.moveTo(40, -112); c.quadraticCurveTo(70, -114, 98, -104); c.quadraticCurveTo(104, -92, 94, -84); c.quadraticCurveTo(60, -74, 30, -80); c.quadraticCurveTo(22, -96, 40, -112); }, white, 4);   // long white muzzle
+      c.fillStyle = '#fff6ea'; c.beginPath(); c.ellipse(46, -136, 7, 4.5, 0, 0, Math.PI * 2); c.fill();
+      eye(c, 50, -118, 1, blinkK);
+      blob(c, ell(98, -104, 8, 6.5), grad(c, 98, -110, 98, -98, '#3a3040', '#14101a'), 3);
+      c.fillStyle = 'rgba(255,255,255,.55)'; c.beginPath(); c.ellipse(96, -107, 3, 1.6, 0, 0, Math.PI * 2); c.fill();
+      c.strokeStyle = INK; c.lineWidth = 4; c.lineCap = 'round';
+      c.beginPath(); c.moveTo(66, -84); c.quadraticCurveTo(78, -84, 90, -88); c.stroke();
+      c.fillStyle = 'rgba(255,240,215,.3)'; c.beginPath(); c.ellipse(18, -136, 15, 7, -0.3, 0, Math.PI * 2); c.fill();
     }
 
     // ---------- scenes ----------

@@ -3,6 +3,8 @@
 
 const P = (b, s, l) => ({ b, s, l });
 const DARK_EYE = '#1a1222';
+// Toshi's colours (from photos of the real dog), shared by Smugshi and Smugshogun
+const TOSHI = { coat: P('#d08548', '#a85e2c', '#e8a868'), white: P('#f7f1e6', '#e2d4bf', '#ffffff'), ear: '#f1dcc4' };
 
 const MONSTER_ART = {
   // ---- evolved starters (44px, their own designs) ----
@@ -10,11 +12,11 @@ const MONSTER_ART = {
   // Toshi all grown up: the same red Shiba with the cream mask, white socks, eyebrow
   // spots and smug half-shut eyes, now with a ruff, a samurai headband and a red cape.
   smugshogun(g, v = 'front') {
-    const O = P('#d9792e', '#a8521c', '#f0a050'), C = P('#fbf0dc', '#e4cfae', '#ffffff');
+    const O = TOSHI.coat, C = TOSHI.white;
     const R = P('#c8303a', '#8a1a24', '#ff6a6a'), Wb = P('#f6f2ee', '#cfc8d8', '#ffffff'), Gd = '#ffd23f';
     if (v === 'side') {
       g.ellipse(8, 22, 6, 6, O, { edge: true });                                                // curled tail
-      g.ellipse(7.5, 21.5, 3, 3, C); g.px(7, 21, '#a8521c');
+      g.ellipse(7.5, 21.5, 3, 3, C); g.px(7, 21, O.s);
       g.poly([[15, 22], [27, 22], [24, 40], [3, 38]], R, { edge: true });                       // cape streaming back
       g.rect(4, 37, 20, 1, Gd);
       g.ellipse(13, 40, 3, 2, C, { edge: true });
@@ -25,13 +27,13 @@ const MONSTER_ART = {
       g.poly([[20, 11], [19, 2], [24, 8]], O);                                                  // far ear
       g.ellipse(27, 16, 9.5, 8, O, { edge: true });                                             // head
       g.poly([[25, 10], [28, 0], [31, 9]], O, { edge: true });                                  // near ear
-      g.poly([[27, 8.5], [28, 3], [30, 8]], '#fbf0dc');
+      g.poly([[27, 8.5], [28, 3], [30, 8]], C.b);
       g.ellipse(35, 20, 5.5, 3.6, C);                                                           // muzzle
       g.ellipse(29, 20, 3, 2, C);
       g.rect(18, 9, 17, 2, Wb.b); g.rect(18, 10, 17, 1, Wb.s);                                   // headband
       g.poly([[19, 9], [9, 6], [11, 13]], Wb, { edge: true });                                   // its tails, flying back
       g.ellipse(32, 10, 1.5, 1.1, '#c8303a');
-      g.px(29, 12, '#fbf0dc'); g.px(30, 12, '#fbf0dc');                                         // eyebrow spot
+      g.px(29, 12, C.b); g.px(30, 12, C.b);                                         // eyebrow spot
       g.rect(29, 14, 5, 1, OUTLINE); g.rect(30, 15, 3, 1, DARK_EYE);                             // smug lid
       g.rect(39, 18, 3, 2, OUTLINE);                                                            // nose
       g.px(35, 23, OUTLINE).px(36, 23, OUTLINE).px(37, 23, OUTLINE).px(38, 22, OUTLINE);        // smirk
@@ -49,11 +51,11 @@ const MONSTER_ART = {
       g.rect(20, 9, 4, 3, Wb.l);                                                                // headband knot
       g.poly([[21, 11], [17, 21], [20, 20]], Wb, { edge: true }); g.poly([[23, 11], [27, 21], [24, 20]], Wb, { edge: true });
       g.ellipse(22, 30, 6, 5.5, O, { edge: true });                                             // the famous curled tail
-      g.ellipse(22, 29.5, 3.2, 2.8, C); g.px(22, 29, '#a8521c'); g.px(23, 29, '#a8521c');
+      g.ellipse(22, 29.5, 3.2, 2.8, C); g.px(22, 29, O.s); g.px(23, 29, O.s);
       return;
     }
     g.ellipse(36, 25, 6.5, 6.5, O, { edge: true });                                             // tail
-    g.ellipse(36.5, 24.5, 3.5, 3.5, C); g.px(36, 24, '#a8521c');
+    g.ellipse(36.5, 24.5, 3.5, 3.5, C); g.px(36, 24, O.s);
     g.poly([[11, 23], [33, 23], [38, 40], [6, 40]], R, { edge: true });                         // cape behind
     g.rect(6, 39, 4, 1, Gd); g.rect(34, 39, 4, 1, Gd);
     g.ellipseM(15, 40, 3.5, 2.2, C, { edge: true });                                            // white socks
@@ -62,14 +64,14 @@ const MONSTER_ART = {
     g.ellipse(22, 24, 10, 4, C, { edge: true });                                                // neck ruff
     g.ellipse(22, 24.5, 2, 2, Gd); g.px(22, 24, '#a87a1a');                                     // gold clasp
     g.polyM([[12, 12], [11, 1], [19, 8]], O, { edge: true });
-    g.polyM([[13.5, 10], [12.5, 4], [17, 8]], '#fbf0dc');
+    g.polyM([[13.5, 10], [12.5, 4], [17, 8]], C.b);
     g.ellipse(22, 15, 11, 8.5, O, { edge: true });
     g.ellipse(22, 19.5, 7, 4.5, C);                                                             // muzzle
     g.ellipseM(13, 18, 2.2, 1.8, C);
     g.rect(11, 9, 22, 2, Wb.b); g.rect(11, 10, 22, 1, Wb.s);                                     // headband
     g.ellipse(22, 9.5, 1.8, 1.4, '#c8303a');
     g.poly([[32, 9], [41, 5], [40, 12]], Wb, { edge: true });
-    g.pxM(15, 12, '#fbf0dc'); g.pxM(16, 12, '#fbf0dc');                                         // eyebrow spots
+    g.pxM(15, 12, C.b); g.pxM(16, 12, C.b);                                         // eyebrow spots
     g.rectM(14, 14, 5, 1, OUTLINE);                                                             // smug lids
     g.rectM(15, 15, 3, 1, DARK_EYE);
     g.rect(21, 17, 3, 2, OUTLINE);                                                              // nose
@@ -864,57 +866,59 @@ const MONSTER_ART = {
     g.rect(18, 9, 2, 2, '#5affff'); g.rect(24, 9, 2, 2, '#5affff');
   },
 
-  // Toshi, the owner's real-life Shiba Inu: red coat, cream mask and socks,
-  // white eyebrow spots, a big curled tail and his trademark smug half-closed eyes.
+  // Toshi, the owner's real-life Shiba Inu (drawn from photos): a soft ginger coat; a big
+  // white bib, belly and legs; white cheeks up to his eyes; pale eyebrow spots; upright
+  // ears with pale insides; a big black nose; and his trademark smug half-shut stare.
+  // The curled tail is ginger on top with lots of white fluff.
   smugshi(g, v = 'front') {
+    const O = TOSHI.coat, C = TOSHI.white, Ei = TOSHI.ear;
     if (v === 'side') {
-      const O = P('#d9792e', '#a8521c', '#f0a050'), C = P('#fbf0dc', '#e4cfae', '#ffffff');
-      g.ellipse(7, 17, 4.5, 4.5, O, { edge: true });                                              // curled tail
-      g.ellipse(6.5, 16.5, 2.2, 2.2, C); g.px(6, 16, '#a8521c');
-      g.ellipse(11, 29, 2.5, 1.6, C, { edge: true });
-      g.ellipse(14, 23, 8.5, 6.5, O, { edge: true });                                             // body
-      g.ellipse(19.5, 25, 3.5, 4.5, C);                                                           // cream chest
-      g.ellipse(20, 29, 2.5, 1.6, C, { edge: true });
-      g.poly([[14, 9], [13, 1], [18, 6]], O);                                                     // far ear
-      g.ellipse(19, 13, 7.5, 6.5, O, { edge: true });                                             // head
-      g.poly([[18, 8], [20, 0], [23, 7]], O, { edge: true });                                     // near ear
-      g.poly([[19.5, 7], [20.5, 3], [22, 6.5]], '#fbf0dc');
-      g.ellipse(25, 16, 4, 2.8, C);                                                               // muzzle
-      g.ellipse(20.5, 16, 2.5, 1.8, C);                                                           // cheek
-      g.px(21, 9, '#fbf0dc'); g.px(22, 9, '#fbf0dc');                                             // eyebrow spot
-      g.rect(20, 11, 4, 1, OUTLINE); g.rect(21, 12, 2, 1, DARK_EYE);                              // smug lid
-      g.rect(28, 14, 2, 2, OUTLINE);                                                              // nose
-      g.px(25, 18, OUTLINE).px(26, 18, OUTLINE).px(27, 17, OUTLINE);                              // smirk
+      g.ellipse(8, 15, 4.5, 4.5, O, { edge: true });                                             // curled tail
+      g.ellipse(7.5, 14.5, 2.7, 2.7, C); g.px(7, 14, O.s);
+      g.ellipse(10, 27, 1.8, 3, P(C.s, '#cbbba4', C.b)); g.ellipse(19, 27, 1.8, 3, P(C.s, '#cbbba4', C.b));   // far legs
+      g.ellipse(14, 22, 8.5, 5.5, O, { edge: true });                                            // body
+      g.ellipse(14, 25.5, 7, 2, C);                                                              // white belly
+      g.ellipse(20, 22, 3.5, 4.5, C);                                                            // white chest
+      g.ellipse(11, 27.5, 1.9, 3, C, { edge: true }); g.ellipse(21, 27.5, 1.9, 3, C, { edge: true });   // white legs
+      g.poly([[14, 8], [13, 1], [17, 5]], O);                                                    // far ear
+      g.ellipse(19, 12, 6.5, 5.5, O, { edge: true });                                            // head
+      g.poly([[17, 7], [19, 0], [22, 6]], O, { edge: true });                                    // near ear
+      g.poly([[18.5, 6], [19.3, 2.5], [21, 5.5]], Ei);
+      g.poly([[21, 12], [28, 13.5], [27.5, 16.5], [20, 17.5]], C, { edge: true });               // white muzzle
+      g.ellipse(19.5, 15.5, 3, 2, C);                                                            // white cheek
+      g.px(21, 9, C.b); g.px(22, 9, C.b);                                                        // eyebrow spot
+      g.rect(21, 11, 3, 1, OUTLINE); g.px(22, 12, DARK_EYE); g.px(23, 12, DARK_EYE);              // smug half-shut eye
+      g.rect(27, 13, 2, 2, OUTLINE);                                                             // nose
+      g.px(24, 17, OUTLINE).px(25, 17, OUTLINE).px(26, 16, OUTLINE);                             // flat little mouth
       return;
     }
     if (v === 'back') {
-      const O = P('#d9792e', '#a8521c', '#f0a050'), C = P('#fbf0dc', '#e4cfae', '#ffffff');
-      g.ellipseM(11, 29, 2.5, 1.6, C, { edge: true });
-      g.ellipse(16, 23, 8, 6.5, O, { edge: true });
-      g.polyM([[9, 9], [8, 0], [14, 6]], O, { edge: true });
+      g.ellipseM(12, 27.5, 2.2, 3, C, { edge: true });                                           // white hind legs
+      g.ellipse(16, 22, 7.5, 6, O, { edge: true });
+      g.ellipse(16, 26, 4, 2.2, C);                                                              // white rear
+      g.polyM([[9, 9], [8.5, 1], [14, 6]], O, { edge: true });
       g.ellipse(16, 12, 8, 6.5, O, { edge: true });
-      g.ellipse(16, 20, 5, 4.5, O, { edge: true });                                               // the famous curled tail
-      g.ellipse(16, 19.5, 2.6, 2.3, C); g.px(16, 19, '#a8521c'); g.px(17, 19, '#a8521c');
+      g.ellipseM(9, 15, 1.6, 1.6, C);                                                            // cheek fluff peeking out
+      g.ellipse(16, 19, 5, 4.5, O, { edge: true });                                              // the famous curled tail
+      g.ellipse(16, 18.5, 3, 2.6, C); g.px(16, 18, O.s); g.px(17, 18, O.s);
       return;
     }
-    const O = P('#d9792e', '#a8521c', '#f0a050');
-    const C = P('#fbf0dc', '#e4cfae', '#ffffff');
-    g.ellipse(26, 19, 4.5, 4.5, O, { edge: true });                                             // curled tail
-    g.ellipse(26.5, 18.5, 2.2, 2.2, C);                                                          // fluffy white curl
-    g.px(26, 18, '#a8521c');
-    g.ellipseM(11, 29, 2.5, 1.6, C, { edge: true });                                            // white socks
-    g.ellipse(16, 23, 8, 6.5, O, { edge: true });                                               // body
-    g.ellipse(16, 24.5, 4.5, 5, C);                                                             // cream chest
-    g.polyM([[9, 9], [8, 0], [14, 6]], O, { edge: true });                                      // pointy ears
-    g.polyM([[10, 7], [9, 3], [12, 6]], '#fbf0dc');                                             // cream inner ears
-    g.ellipse(16, 12, 8, 6.5, O, { edge: true });                                               // head
-    g.ellipse(16, 15, 5.5, 3.6, C);                                                             // cream muzzle and cheeks
-    g.ellipseM(9.5, 14, 1.6, 1.4, C);
-    g.pxM(11, 9, '#fbf0dc'); g.pxM(12, 9, '#fbf0dc');                                           // eyebrow spots
-    g.rectM(10, 11, 4, 1, OUTLINE);                                                             // smug half-closed lids
+    g.ellipse(26, 18, 4.5, 4.5, O, { edge: true });                                              // curled tail
+    g.ellipse(26.5, 17.5, 2.7, 2.7, C); g.px(26, 17, O.s);
+    g.ellipseM(12, 27, 2.4, 3.4, C, { edge: true });                                             // white legs
+    g.ellipse(16, 22, 7.5, 6, O, { edge: true });                                                // body
+    g.ellipse(16, 23.5, 5, 5.5, C);                                                              // big white bib
+    g.polyM([[9, 9], [8.5, 1], [14, 6]], O, { edge: true });                                     // upright ears
+    g.polyM([[10, 7.5], [9.5, 3], [12.5, 6]], Ei);                                               // pale insides
+    g.ellipse(16, 12, 8, 6.5, O, { edge: true });                                                // head
+    g.ellipse(16, 15.5, 6, 3.6, C);                                                              // white muzzle
+    g.ellipseM(10.2, 14, 2.2, 2, C);                                                             // white cheeks up to the eyes
+    g.pxM(11, 9, C.b); g.pxM(12, 9, C.b);                                                        // eyebrow spots
+    g.rectM(10, 11, 4, 1, OUTLINE);                                                              // smug half-shut lids
     g.rectM(11, 12, 2, 1, DARK_EYE);
-    g.rect(15, 13, 2, 2, OUTLINE);                                                              // nose
-    g.px(14, 17, OUTLINE).px(15, 17, OUTLINE).px(16, 17, OUTLINE).px(17, 16, OUTLINE);          // smirk
+    g.rect(15, 13, 2, 2, OUTLINE); g.px(15, 13, '#5a5060');                                      // big black nose
+    g.px(14, 17, OUTLINE).px(15, 17, OUTLINE).px(16, 17, OUTLINE).px(17, 17, OUTLINE);          // flat, unimpressed mouth
+    g.px(18, 16, OUTLINE);                                                                       // ...with a smug corner
   },
 
   // An exhausted sloth clinging to its coffee: dark eye bands that double as
