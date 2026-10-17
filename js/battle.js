@@ -383,7 +383,7 @@ class Battle {
     this.zones = this.zones.filter(z => z.owner.side === 'player');
     this.doorFx('open');
     if (this.room.type === 'boss') {
-      if (this.run.floorN >= RUN_FLOORS) {
+      if (!this.run.endless && this.run.floorN >= RUN_FLOORS) {
         this.ui.banner('RUN CLEARED!');
         this.winT = 2.6;   // a moment to enjoy it before the results
       } else {
@@ -1306,6 +1306,8 @@ class Battle {
     const y = anywhere ? rand(0, H) : -4;
     if (kind === 'ash') return { x: rand(0, W), y: anywhere ? rand(0, H) : H + 4, vx: rand(-6, 6), vy: rand(-26, -10), s: rand() < 0.3 ? 2 : 1, c: rand() < 0.5 ? '#ff8a3a' : '#5a4a48' };
     if (kind === 'petals') return { x: anywhere ? rand(0, W) : rand(-40, W), y, vx: rand(10, 24), vy: rand(10, 22), s: 2, c: rand() < 0.5 ? '#ffd0e0' : '#ffffff' };
+    if (kind === 'motes') return { x: rand(0, W), y: anywhere ? rand(0, H) : H + 4, vx: rand(-4, 4), vy: rand(-14, -5), s: rand() < 0.3 ? 2 : 1, c: rand() < 0.5 ? '#7af0e0' : '#c8a8ff' };
+    if (kind === 'sand') return { x: anywhere ? rand(0, W) : -4, y: rand(0, H), vx: rand(40, 70), vy: rand(-4, 6), s: 1, c: rand() < 0.5 ? '#e8d8a8' : '#cdbc88' };
     return { x: rand(0, W), y, vx: rand(-8, 4), vy: rand(14, 34), s: rand() < 0.25 ? 2 : 1, c: '#ffffff' };
   }
 
@@ -1826,5 +1828,9 @@ class Battle {
     const cy = y0 + mh + 6;
     ctx.drawImage(COIN_IMG, W - 8 - img.width * 2 - 12, cy + 1, COIN_IMG.width * 2, COIN_IMG.height * 2);
     ctx.drawImage(img, W - 6 - img.width * 2, cy, img.width * 2, img.height * 2);
+    ctx.font = 'italic 900 9px "Lilita One", "Arial Black", Arial, sans-serif';
+    ctx.textAlign = 'right'; ctx.lineJoin = 'round'; ctx.lineWidth = 3; ctx.strokeStyle = '#15111f';
+    const label = (this.run.endless ? 'ENDLESS ' : '') + 'FLOOR ' + this.run.floorN;
+    ctx.strokeText(label, W - 6, cy + 26); ctx.fillStyle = '#ffffff'; ctx.fillText(label, W - 6, cy + 26);
   }
 }

@@ -4,80 +4,184 @@
 const P = (b, s, l) => ({ b, s, l });
 const DARK_EYE = '#1a1222';
 
-// Draws 32px art onto a bigger grid (used to grow a starter into its evolved form).
-class ScaledGrid {
-  constructor(g, k) { this.g = g; this.k = k; this.w = 32; this.h = 32; }
-  ellipse(cx, cy, rx, ry, pal, opt) { this.g.ellipse(cx * this.k, cy * this.k, rx * this.k, ry * this.k, pal, opt); return this; }
-  ellipseM(cx, cy, rx, ry, pal, opt) { this.ellipse(cx, cy, rx, ry, pal, opt); return this.ellipse(this.w - cx, cy, rx, ry, pal, opt); }
-  poly(pts, pal, opt) { this.g.poly(pts.map(([x, y]) => [x * this.k, y * this.k]), pal, opt); return this; }
-  polyM(pts, pal, opt) { this.poly(pts, pal, opt); return this.poly(pts.map(([x, y]) => [this.w - x, y]), pal, opt); }
-  rect(x, y, w, h, col) {
-    const k = this.k, x0 = Math.round(x * k), y0 = Math.round(y * k);
-    this.g.rect(x0, y0, Math.max(1, Math.round((x + w) * k) - x0), Math.max(1, Math.round((y + h) * k) - y0), col);
-    return this;
-  }
-  rectM(x, y, w, h, col) { this.rect(x, y, w, h, col); return this.rect(this.w - x - w, y, w, h, col); }
-  px(x, y, col) { return this.rect(x, y, 1, 1, col); }
-  pxM(x, y, col) { this.px(x, y, col); return this.px(this.w - 1 - x, y, col); }
-  eyes(...a) { return PixGrid.prototype.eyes.apply(this, a); }
-}
-const EVO_K = 44 / 32;
-
 const MONSTER_ART = {
-  // ---- evolved starters: the base design grown to 44px, plus new gear ----
+  // ---- evolved starters (44px, their own designs) ----
+
+  // Toshi all grown up: the same red Shiba with the cream mask, white socks, eyebrow
+  // spots and smug half-shut eyes, now with a ruff, a samurai headband and a red cape.
   smugshogun(g, v = 'front') {
-    MONSTER_ART.smugshi(new ScaledGrid(g, EVO_K), v);
-    const R = P('#c8303a', '#8a1a24', '#ff6a6a'), Gd = '#ffd23f';
-    if (v === 'front') {
-      g.poly([[27, 26], [35, 34], [31, 35], [26, 29]], R, { edge: true });           // scarf tail
-      g.ellipse(22, 25, 9, 2.6, R, { edge: true });                                  // samurai scarf
-      g.rect(14, 26, 16, 1, Gd);
-      g.poly([[22, 9], [24, 11], [22, 13], [20, 11]], Gd);                           // gold forehead mark
-    } else if (v === 'side') {
-      g.poly([[22, 25], [9, 22], [11, 27], [21, 29]], R, { edge: true });            // scarf streaming back
-      g.ellipse(26, 26, 6, 2.6, R, { edge: true });
-      g.rect(21, 27, 10, 1, Gd);
-      g.poly([[30, 11], [32, 13], [30, 15], [28, 13]], Gd);
-    } else {
-      g.ellipse(22, 22, 9, 2.6, R, { edge: true });
-      g.poly([[20, 23], [17, 34], [21, 33]], R, { edge: true }); g.poly([[24, 23], [27, 34], [23, 33]], R, { edge: true });
-      g.rect(14, 23, 16, 1, Gd);
+    const O = P('#d9792e', '#a8521c', '#f0a050'), C = P('#fbf0dc', '#e4cfae', '#ffffff');
+    const R = P('#c8303a', '#8a1a24', '#ff6a6a'), Wb = P('#f6f2ee', '#cfc8d8', '#ffffff'), Gd = '#ffd23f';
+    if (v === 'side') {
+      g.ellipse(8, 22, 6, 6, O, { edge: true });                                                // curled tail
+      g.ellipse(7.5, 21.5, 3, 3, C); g.px(7, 21, '#a8521c');
+      g.poly([[15, 22], [27, 22], [24, 40], [3, 38]], R, { edge: true });                       // cape streaming back
+      g.rect(4, 37, 20, 1, Gd);
+      g.ellipse(13, 40, 3, 2, C, { edge: true });
+      g.ellipse(19, 31, 11, 8, O, { edge: true });                                              // body
+      g.ellipse(27, 33, 4.5, 6, C);                                                             // cream chest
+      g.ellipse(26, 40, 3, 2, C, { edge: true });
+      g.ellipse(26, 24, 6, 4, C, { edge: true });                                               // neck ruff
+      g.poly([[20, 11], [19, 2], [24, 8]], O);                                                  // far ear
+      g.ellipse(27, 16, 9.5, 8, O, { edge: true });                                             // head
+      g.poly([[25, 10], [28, 0], [31, 9]], O, { edge: true });                                  // near ear
+      g.poly([[27, 8.5], [28, 3], [30, 8]], '#fbf0dc');
+      g.ellipse(35, 20, 5.5, 3.6, C);                                                           // muzzle
+      g.ellipse(29, 20, 3, 2, C);
+      g.rect(18, 9, 17, 2, Wb.b); g.rect(18, 10, 17, 1, Wb.s);                                   // headband
+      g.poly([[19, 9], [9, 6], [11, 13]], Wb, { edge: true });                                   // its tails, flying back
+      g.ellipse(32, 10, 1.5, 1.1, '#c8303a');
+      g.px(29, 12, '#fbf0dc'); g.px(30, 12, '#fbf0dc');                                         // eyebrow spot
+      g.rect(29, 14, 5, 1, OUTLINE); g.rect(30, 15, 3, 1, DARK_EYE);                             // smug lid
+      g.rect(39, 18, 3, 2, OUTLINE);                                                            // nose
+      g.px(35, 23, OUTLINE).px(36, 23, OUTLINE).px(37, 23, OUTLINE).px(38, 22, OUTLINE);        // smirk
+      return;
     }
-  },
-  infernox(g, v = 'front') {
-    MONSTER_ART.cinderox(new ScaledGrid(g, EVO_K), v);
-    const H = P('#f3dd9a', '#b89a5a', '#fffbe6'), Rk = P('#4a3a34', '#2a201c', '#6a564c'), L = '#ff7a1c';
-    if (v === 'front') {
-      g.polyM([[14, 17], [5, 9], [7, 15], [11, 20]], H, { edge: true });             // horns
-      g.ellipseM(9, 27, 5, 4, Rk, { edge: true });                                   // rock shoulders
-      g.pxM(8, 26, L); g.pxM(9, 27, L); g.pxM(10, 28, L);                            // lava cracks
-    } else if (v === 'side') {
-      g.poly([[27, 15], [35, 7], [34, 13], [30, 18]], H, { edge: true });
-      g.ellipse(21, 27, 5.5, 4, Rk, { edge: true });
-      g.px(20, 26, L); g.px(21, 27, L); g.px(22, 28, L);
-    } else {
-      g.polyM([[14, 17], [5, 9], [7, 15], [11, 20]], H, { edge: true });
-      g.ellipseM(9, 27, 5, 4, Rk, { edge: true });
-      g.pxM(8, 26, L); g.pxM(10, 28, L);
-      for (const y of [21, 25, 29]) g.rect(21, y, 2, 2, L);                          // glowing ridge
+    if (v === 'back') {
+      g.ellipseM(15, 40, 3.5, 2.2, C, { edge: true });
+      g.ellipse(22, 31, 10, 8.5, O, { edge: true });
+      g.poly([[12, 23], [32, 23], [36, 40], [8, 40]], R, { edge: true });                       // the cape
+      g.rect(9, 39, 26, 1, Gd);
+      g.ellipseM(12, 23, 3, 2, C);                                                              // ruff peeking out
+      g.polyM([[12, 12], [11, 1], [19, 8]], O, { edge: true });
+      g.ellipse(22, 15, 11, 8.5, O, { edge: true });
+      g.rect(11, 9, 22, 2, Wb.b); g.rect(11, 10, 22, 1, Wb.s);
+      g.rect(20, 9, 4, 3, Wb.l);                                                                // headband knot
+      g.poly([[21, 11], [17, 21], [20, 20]], Wb, { edge: true }); g.poly([[23, 11], [27, 21], [24, 20]], Wb, { edge: true });
+      g.ellipse(22, 30, 6, 5.5, O, { edge: true });                                             // the famous curled tail
+      g.ellipse(22, 29.5, 3.2, 2.8, C); g.px(22, 29, '#a8521c'); g.px(23, 29, '#a8521c');
+      return;
     }
-  },
-  maelstrisk(g, v = 'front') {
-    MONSTER_ART.tidalisk(new ScaledGrid(g, EVO_K), v);
-    const H = P('#ffd23f', '#d89a1a', '#fff3a0'), Wh = '#e8fbff';
-    if (v === 'front') {
-      g.polyM([[17, 10], [12, 1], [19, 8]], H, { edge: true });                      // dragon horns
-      g.polyM([[16, 18], [10, 22], [11, 23], [17, 19]], Wh);                         // whiskers
-      g.rect(21, 22, 2, 14, '#7ab4ff');                                              // belly scales
-    } else if (v === 'side') {
-      g.poly([[24, 9], [22, 0], [29, 7]], H, { edge: true });
-      g.poly([[34, 17], [40, 20], [39, 21], [33, 18]], Wh);
-    } else {
-      g.polyM([[17, 10], [12, 1], [19, 8]], H, { edge: true });
-      for (const y of [16, 21, 26, 31]) g.poly([[20, y], [22, y - 3], [24, y]], H);  // golden spines
-    }
+    g.ellipse(36, 25, 6.5, 6.5, O, { edge: true });                                             // tail
+    g.ellipse(36.5, 24.5, 3.5, 3.5, C); g.px(36, 24, '#a8521c');
+    g.poly([[11, 23], [33, 23], [38, 40], [6, 40]], R, { edge: true });                         // cape behind
+    g.rect(6, 39, 4, 1, Gd); g.rect(34, 39, 4, 1, Gd);
+    g.ellipseM(15, 40, 3.5, 2.2, C, { edge: true });                                            // white socks
+    g.ellipse(22, 31, 10, 8.5, O, { edge: true });
+    g.ellipse(22, 33, 6, 6.5, C);                                                               // cream chest
+    g.ellipse(22, 24, 10, 4, C, { edge: true });                                                // neck ruff
+    g.ellipse(22, 24.5, 2, 2, Gd); g.px(22, 24, '#a87a1a');                                     // gold clasp
+    g.polyM([[12, 12], [11, 1], [19, 8]], O, { edge: true });
+    g.polyM([[13.5, 10], [12.5, 4], [17, 8]], '#fbf0dc');
+    g.ellipse(22, 15, 11, 8.5, O, { edge: true });
+    g.ellipse(22, 19.5, 7, 4.5, C);                                                             // muzzle
+    g.ellipseM(13, 18, 2.2, 1.8, C);
+    g.rect(11, 9, 22, 2, Wb.b); g.rect(11, 10, 22, 1, Wb.s);                                     // headband
+    g.ellipse(22, 9.5, 1.8, 1.4, '#c8303a');
+    g.poly([[32, 9], [41, 5], [40, 12]], Wb, { edge: true });
+    g.pxM(15, 12, '#fbf0dc'); g.pxM(16, 12, '#fbf0dc');                                         // eyebrow spots
+    g.rectM(14, 14, 5, 1, OUTLINE);                                                             // smug lids
+    g.rectM(15, 15, 3, 1, DARK_EYE);
+    g.rect(21, 17, 3, 2, OUTLINE);                                                              // nose
+    g.px(20, 22, OUTLINE).px(21, 22, OUTLINE).px(22, 22, OUTLINE).px(23, 21, OUTLINE);          // smirk
   },
 
+  // Cinderox grown into a magma bull: a blazing mane, curved horns, lava-cracked rock
+  // armour on the shoulders and a gold nose ring.
+  infernox(g, v = 'front') {
+    const B = P('#26386a', '#16224a', '#3e5694'), C = P('#f3dd9a', '#d4b56a', '#fff2c4');
+    const F = P('#ff7a1c', '#e2401a', '#ffd34a'), Rk = P('#4a3a34', '#2a201c', '#6a564c');
+    const H = P('#f3e8d0', '#b8a68a', '#ffffff'), L = '#ff7a1c', Gl = '#ffd34a';
+    const cracks = pts => { for (const [x, y] of pts) { g.px(x, y, L); g.px(x + 1, y + 1, Gl); } };
+    if (v === 'side') {
+      g.poly([[7, 30], [1, 25], [3, 32]], B); g.ellipse(2, 24, 2, 2.4, F);                       // tail, flame tip
+      g.ellipse(12, 39, 3.5, 3, Rk, { edge: true }); g.ellipse(25, 39, 3.5, 3, Rk, { edge: true });
+      g.poly([[7, 26], [9, 11], [14, 22]], F); g.poly([[12, 21], [16, 5], [20, 18]], F); g.poly([[18, 17], [23, 3], [26, 16]], F);
+      g.poly([[11, 22], [16, 12], [22, 15], [17, 24]], Gl);
+      g.ellipse(19, 30, 14, 8.5, B, { edge: true });                                            // body
+      g.ellipse(22, 34, 9, 4, C);
+      g.ellipse(15, 40, 3.5, 3, Rk, { edge: true }); g.ellipse(29, 40, 3.5, 3, Rk, { edge: true });
+      g.px(14, 42, L); g.px(29, 42, L);                                                         // glowing hooves
+      cracks([[10, 28], [15, 25], [20, 29]]);
+      g.ellipse(27, 25, 6, 5, Rk, { edge: true }); cracks([[25, 24], [28, 26]]);                // shoulder armour
+      g.poly([[28, 14], [32, 6], [33, 13]], P('#b8a68a', '#8a7a62', '#d8ccb0'));                 // far horn
+      g.ellipse(32, 19, 8, 7, B, { edge: true });                                               // head
+      g.poly([[30, 15], [38, 5], [41, 7], [35, 16]], H, { edge: true });                        // horn
+      g.ellipse(38, 22, 4.5, 3.2, C);                                                           // muzzle
+      g.px(41, 21, OUTLINE);
+      g.ellipse(40, 25, 1.6, 1.3, '#ffd23f');                                                   // nose ring
+      g.rect(33, 16, 5, 1, OUTLINE); g.rect(34, 17, 3, 2, Gl); g.px(36, 17, '#ffffff');          // glowing eye
+      return;
+    }
+    if (v === 'back') {
+      g.ellipseM(13, 39, 4, 3, Rk, { edge: true });
+      g.ellipse(22, 30, 13, 9, B, { edge: true });
+      cracks([[14, 30], [28, 28], [18, 34], [26, 34]]);
+      g.ellipseM(9, 25, 6, 5, Rk, { edge: true }); cracks([[8, 24], [35, 25]]);
+      g.ellipse(22, 18, 9, 7.5, B, { edge: true });
+      g.polyM([[15, 16], [6, 13], [2, 5], [5, 4], [8, 10], [16, 12]], H, { edge: true });       // horns
+      g.poly([[8, 20], [10, 4], [16, 14]], F); g.poly([[14, 13], [18, 1], [22, 11]], F);        // blazing mane
+      g.poly([[22, 11], [26, 1], [30, 13]], F); g.poly([[28, 14], [34, 4], [36, 20]], F);
+      g.poly([[15, 13], [22, 6], [29, 13], [22, 17]], Gl);
+      g.poly([[18, 34], [22, 21], [26, 34]], F); g.poly([[20, 32], [22, 25], [24, 32]], Gl);    // flames down the spine
+      g.rect(21, 37, 2, 4, '#16224a'); g.ellipse(22, 41, 1.8, 1.8, F);                          // tail
+      return;
+    }
+    g.poly([[8, 20], [10, 4], [16, 14]], F); g.poly([[14, 13], [18, 1], [22, 11]], F);          // blazing mane
+    g.poly([[22, 11], [26, 1], [30, 13]], F); g.poly([[28, 14], [34, 4], [36, 20]], F);
+    g.poly([[15, 12], [22, 5], [29, 12], [22, 16]], Gl);
+    g.ellipseM(13, 39, 4, 3, Rk, { edge: true }); g.pxM(12, 41, L); g.pxM(14, 41, L);           // hooves
+    g.ellipse(22, 30, 13, 9, B, { edge: true });                                                // body
+    g.ellipse(22, 33, 8, 5.5, C);                                                               // belly
+    cracks([[11, 32], [31, 31], [13, 35]]);
+    g.ellipseM(9, 25, 6, 5, Rk, { edge: true }); cracks([[7, 24], [35, 24], [9, 27]]);          // shoulder armour
+    g.polyM([[15, 16], [6, 13], [2, 5], [5, 4], [8, 10], [16, 12]], H, { edge: true });         // horns
+    g.ellipse(22, 18, 10, 8, B, { edge: true });                                                // head
+    g.ellipse(22, 23, 7, 3.5, C, { edge: true });                                               // broad muzzle
+    g.rect(19, 23, 2, 1, OUTLINE); g.rect(24, 23, 2, 1, OUTLINE);                               // nostrils
+    g.ellipse(22, 27, 2.2, 1.4, '#ffd23f'); g.px(22, 26, '#a87a1a');                            // nose ring
+    g.rectM(14, 15, 6, 1, OUTLINE);                                                             // heavy brows
+    g.rectM(15, 16, 4, 2, Gl); g.rectM(17, 16, 2, 2, '#ffffff');                                // glowing eyes
+  },
+
+  // Tidalisk grown into a sea dragon: a coiled body, teal fin-wings, gold horns,
+  // long whiskers and a belly of cream scales.
+  maelstrisk(g, v = 'front') {
+    const B = P('#2a5ac8', '#1a3a8a', '#5a8cf0'), Fn = P('#5ae0d0', '#2aa8a0', '#c0fff8');
+    const C = P('#f2e6c0', '#cdbb88', '#fffbe6'), H = P('#ffd23f', '#d89a1a', '#fff3a0'), Wh = '#e8fbff';
+    if (v === 'side') {
+      g.poly([[5, 36], [0, 29], [1, 43]], Fn, { edge: true });                                  // tail fin
+      g.ellipse(20, 37, 18, 6, B, { edge: true });                                              // coil
+      for (const x of [10, 16, 22, 28]) g.rect(x, 39, 3, 1, '#1a3a8a');
+      g.poly([[19, 18], [13, 25], [19, 33]], Fn, { edge: true });                               // dorsal fin
+      g.ellipse(24, 27, 6.5, 10, B, { edge: true });                                            // neck
+      g.ellipse(28, 29, 3, 8, C);
+      for (const y of [24, 28, 32]) g.rect(27, y, 3, 1, '#cdbb88');
+      g.poly([[22, 8], [20, 0], [27, 6]], Fn);                                                  // crest
+      g.ellipse(28, 13, 8.5, 6.5, B, { edge: true });                                           // head
+      g.poly([[27, 8], [31, 0], [32, 7]], H, { edge: true });                                   // horn
+      g.ellipse(35, 16, 5, 3, C);                                                               // snout
+      g.poly([[35, 18], [43, 23], [42, 24], [34, 19]], Wh);                                     // whisker
+      g.rect(30, 11, 2, 3, DARK_EYE); g.px(30, 11, '#ffffff'); g.px(29, 9, OUTLINE); g.px(30, 9, OUTLINE); g.px(31, 10, OUTLINE);
+      g.px(39, 15, OUTLINE);
+      return;
+    }
+    if (v === 'back') {
+      g.poly([[38, 36], [43, 29], [43, 43]], Fn, { edge: true });
+      g.ellipse(22, 37, 18, 6, B, { edge: true });
+      g.polyM([[12, 22], [1, 14], [3, 24], [9, 28]], Fn, { edge: true });                       // fin-wings
+      g.ellipse(22, 27, 7.5, 10, B, { edge: true });
+      g.ellipse(22, 13, 9, 7, B, { edge: true });
+      g.polyM([[16, 16], [7, 20], [8, 21], [17, 17]], Wh);                                      // whiskers from behind
+      g.polyM([[15, 8], [10, 0], [17, 5]], H, { edge: true });
+      g.poly([[19, 7], [22, 0], [25, 7]], Fn);
+      for (const y of [19, 24, 29, 34]) g.poly([[20, y], [22, y - 4], [24, y]], Fn, { edge: true }); // spines
+      return;
+    }
+    g.ellipse(22, 37, 18, 6, B, { edge: true });                                                // coil
+    for (const x of [8, 14, 27, 33]) g.rect(x, 39, 3, 1, '#1a3a8a');
+    g.polyM([[12, 22], [1, 14], [3, 24], [9, 28]], Fn, { edge: true });                         // fin-wings
+    g.ellipse(22, 27, 7.5, 10, B, { edge: true });                                              // neck
+    g.ellipse(22, 29, 4, 8, C);                                                                 // belly scales
+    for (const y of [23, 26, 29, 32, 35]) g.rect(19, y, 6, 1, '#cdbb88');
+    g.poly([[19, 7], [22, 0], [25, 7]], Fn);                                                    // crest
+    g.polyM([[15, 8], [10, 0], [17, 5]], H, { edge: true });                                    // gold horns
+    g.ellipse(22, 13, 9, 7, B, { edge: true });                                                 // head
+    g.ellipse(22, 17, 5.5, 3.5, C);                                                             // snout
+    g.polyM([[17, 17], [8, 21], [9, 22], [18, 18]], Wh);                                        // whiskers
+    g.eyes(16, 11, DARK_EYE, { brow: true });
+    g.px(20, 17, OUTLINE); g.px(23, 17, OUTLINE);
+  },
 
   sparkit(g, v = 'front') {
     if (v === 'side') {

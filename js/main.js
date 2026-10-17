@@ -2,9 +2,10 @@
 
 // Shown on the title screen so players can tell whether their browser has the latest
 // build (GitHub Pages lets browsers cache files for up to 10 minutes). Bump on every release.
-const VERSION = '2026.10.17-r5';
+const VERSION = '2026.10.17-r6';
 
 const App = {
+  endless: false,   // the mode picked on the title screen
   run: null,        // the current RunState
   battle: null,     // the current room
   paused: false,
@@ -46,7 +47,8 @@ const Backdrop = {
 Backdrop.init();
 
 // ---------- title ----------
-$('#btn-play').onclick = () => { Sfx.init(); Sfx.play('select'); openStarter(); };
+$('#btn-play').onclick = () => { Sfx.init(); Sfx.play('select'); App.endless = false; openStarter(); };
+$('#btn-endless').onclick = () => { Sfx.init(); Sfx.play('select'); App.endless = true; openStarter(); };
 $('#btn-help').onclick = () => { Sfx.init(); Sfx.play('select'); UI.show('help'); };
 $('#btn-help-back').onclick = () => { Sfx.play('back'); UI.show('title'); };
 const muteBtn = $('#btn-mute');
@@ -57,6 +59,7 @@ Input.onMute = toggleMute;
 // ---------- starter pick ----------
 function openStarter() {
   App.starter = null;
+  $('#starter-title').textContent = App.endless ? 'Endless: choose your starter' : 'Choose your starter';
   const list = $('#starter-list');
   list.innerHTML = '';
   for (const id of Save.data.starters) {
@@ -88,7 +91,7 @@ $('#btn-starter-go').onclick = () => { if (App.starter) { Sfx.play('select'); st
 Input.bindStick($('#stick-zone'), $('#stick'), $('#knob'), 0);
 
 function startRun(starterId) {
-  App.run = new RunState(starterId);
+  App.run = new RunState(starterId, App.endless);
   UI.hideScreens();
   UI.setRunChrome(true);
   Input.mouse = true;
@@ -112,7 +115,7 @@ const roomHooks = {
   },
   offer(ped) { openOffer(ped); },
   bossBeaten(id) { if (Save.unlockStarter(id)) setTimeout(() => UI.banner(`NEW STARTER: ${ROSTER_BY_ID[id].name}!`), 2000); },
-  end(result) { Save.endRun(App.run.floorN, result === 'win'); showResult(result); },
+  end(result) { const record = Save.endRun(App.run.floorN, result === 'win', App.run.endless); showResult(result, record); },
 };
 
 function enterRoom(room, entry) {
@@ -133,7 +136,7 @@ function transition(fn) {
 
 function titleStats() {
   const d = Save.data;
-  $('#title-stats').textContent = d.runs ? `Runs ${d.runs} · Wins ${d.wins} · Best floor ${d.bestFloor} · Starters ${d.starters.length}/${ROSTER.length}` : '';
+  $('#title-stats').textContent = d.runs ? `Runs ${d.runs} · Wins ${d.wins}${d.bestEndless ? ` · Endless best floor ${d.bestEndless}` : ''} · Starters ${d.starters.length}/${ROSTER.length}` : '';
 }
 
 function leaveRun(to) {
@@ -145,13 +148,13 @@ function leaveRun(to) {
   if (to === 'title') UI.show('title'); else if (to === 'starter') openStarter();
 }
 
-function showResult(result) {
+function showResult(result, record = false) {
   const run = App.run;
   setTimeout(() => {
     if (App.run !== run) return;
-    $('#result-title').textContent = result === 'win' ? 'RUN CLEARED!' : 'RUN OVER';
+    $('#result-title').textContent = result === 'win' ? 'RUN CLEARED!' : run.endless ? (record ? 'NEW RECORD!' : 'ENDLESS OVER') : 'RUN OVER';
     const t = Math.floor(run.stats.time), ts = `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
-    $('#result-stats').innerHTML = `Reached floor ${run.floorN} &nbsp;·&nbsp; Time ${ts}<br>
+    $('#result-stats').innerHTML = `Reached floor ${run.floorN}${run.endless ? ` (best ${Save.data.bestEndless})` : ''} &nbsp;·&nbsp; Time ${ts}<br>
       Rooms cleared ${run.stats.rooms} &nbsp;·&nbsp; Wild monsters beaten ${run.stats.kos}<br>
       Coins ${run.coins} &nbsp;·&nbsp; Relics ${run.relics.length}<br>
       Party ${run.party.map(m => `${m.def.name} Lv ${m.level}`).join(', ')}`;

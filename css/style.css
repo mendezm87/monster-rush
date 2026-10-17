@@ -191,6 +191,7 @@ body.no-touch #swap-tray { bottom: 27cqh; }
   background: linear-gradient(#ff7a3a, #e2401a); color: #fff; cursor: pointer; -webkit-text-stroke: 0.5cqh var(--ink);
   paint-order: stroke fill; box-shadow: 0 1.2cqh 0 var(--ink); }
 .big-btn:active { transform: translateY(0.8cqh); box-shadow: 0 0.4cqh 0 var(--ink); }
+.big-btn.alt { background: linear-gradient(#7a5aff, #4a2ad8); }
 .big-btn:disabled { filter: grayscale(1) brightness(.6); }
 .small-btn { font: 900 3.8cqh var(--font); padding: 1.6cqh 5cqh; border-radius: 2.4cqh; border: 0.6cqh solid var(--ink);
   background: #3a3358; color: #fff; cursor: pointer; }

@@ -25,6 +25,19 @@ const STAGES = {
     wall: ['#4a4e58', '#5e626c', '#8a8e98', '#c4c8d0'], wallTop: '#e8ecf2',
     weather: 'snow', decal: 'rgba(40,30,30,', bg: '#2a2e38',
   },
+  // deeper floors (endless mode)
+  grotto: {
+    name: 'Crystal Grotto',
+    ground: ['#2a2444', '#342c54', '#3e3462', '#4a3e72', '#584a86'],
+    wall: ['#1c1830', '#2c2648', '#463c6a', '#6a5a9a'], wallTop: '#7af0e0',
+    weather: 'motes', decal: 'rgba(10,8,20,', bg: '#120e20',
+  },
+  ruins: {
+    name: 'Sunken Ruins',
+    ground: ['#8a7a52', '#9a8a5e', '#ab9a6a', '#bcab78', '#cdbc88'],
+    wall: ['#5a4e36', '#6e6044', '#8a7a58', '#b0a07a'], wallTop: '#e8d8a8',
+    weather: 'sand', decal: 'rgba(50,35,15,', bg: '#3a3222',
+  },
 };
 
 // The walkable floor of a room (monsters' feet stay inside it).

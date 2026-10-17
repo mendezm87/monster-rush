@@ -52,7 +52,10 @@
         <div class="logo-top">MONSTER</div>
         <div class="logo-mid">RUSH</div>
       </div>
-      <button class="big-btn" id="btn-play">NEW RUN</button>
+      <div class="row">
+        <button class="big-btn" id="btn-play">NEW RUN</button>
+        <button class="big-btn alt" id="btn-endless">ENDLESS</button>
+      </div>
       <button class="small-btn" id="btn-help">How to play</button>
       <button class="small-btn" id="btn-mute">Sound: On</button>
       <div id="title-stats"></div>
@@ -73,13 +76,14 @@
         <li><b>The shop</b> (yellow on the map) sells healing and relics for coins. <b>Treasure rooms</b> (white) hold a free relic. Relics last the whole run and change how your moves work.</li>
         <li><b>Beat a monster as a boss</b> to unlock it as a starter for future runs.</li>
         <li><b>Beat the boss</b> to open the stairs to the next floor. Clear 3 floors to win the run.</li>
+        <li><b>Endless</b> runs never stop: the floors keep coming and keep getting tougher. See how deep you can go.</li>
         <li><kbd>Esc</kbd> or <kbd>P</kbd> pauses, <kbd>M</kbd> mutes. Gamepads work too.</li>
       </ul>
       <button class="big-btn" id="btn-help-back">Got it</button>
     </div>
 
     <div class="screen hidden" id="screen-starter">
-      <h2>Choose your starter</h2>
+      <h2 id="starter-title">Choose your starter</h2>
       <div id="starter-list"></div>
       <div id="starter-detail" class="detail"></div>
       <div class="row">

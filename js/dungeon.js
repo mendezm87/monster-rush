@@ -1,7 +1,7 @@
 // Floors (a grid of rooms joined by doors, Isaac-style) and the state of a run.
 
 const RUN_FLOORS = 3;                                    // floors in a normal run (endless mode comes later)
-const FLOOR_STAGES = ['meadow', 'crater', 'summit'];
+const FLOOR_STAGES = ['meadow', 'crater', 'summit', 'grotto', 'ruins'];   // endless mode loops through them
 const STARTERS = ['smugshi', 'cinderox', 'tidalisk'];
 const ROOM_SIZES = { s: [576, 324], wide: [864, 324], tall: [576, 486], big: [864, 486], boss: [864, 540] };
 const REVIVE_HP = 0.3;                                   // fainted party members come back at 30% on a new floor
@@ -57,9 +57,9 @@ function shuffle(a) {
 // Who lives in a fight room: 1-3 wild monsters, or sometimes one tougher one.
 function makeWave(floorN, sizeKey) {
   const ids = ROSTER.map(m => m.id);
-  if (Math.random() < 0.18) return [wildSpec(pickRand(ids), floorN, 'tough')];
+  if (Math.random() < (floorN > 3 ? 0.25 : 0.18)) return [wildSpec(pickRand(ids), floorN, 'tough')];
   const roomy = sizeKey === 'big' || sizeKey === 'wide' || sizeKey === 'tall';
-  const table = floorN === 1 ? [1, 2, 2, 3] : [2, 2, 3, 3];
+  const table = floorN === 1 ? [1, 2, 2, 3] : floorN <= 3 ? [2, 2, 3, 3] : [2, 3, 3, 3];
   let n = pickRand(table);
   if (roomy && n < 3 && Math.random() < 0.5) n++;
   return shuffle(ids.slice()).slice(0, n).map(id => wildSpec(id, floorN, 'wild'));
@@ -130,19 +130,21 @@ function tryFloor(floorN, partyIds, relics) {
   }
   // a relic in the treasure room, two more (and two goods) in the shop
   const free = shuffle(Object.keys(RELICS).filter(id => !relics.includes(id)));
-  treasure.relic = free[0];
+  treasure.relic = free[0] || 'picnic';   // once every relic is owned, treasure is a free picnic
+  const goods = shuffle(['picnic', 'revive']);
   shop.stock = [
     { id: 'bigBerry', price: GOODS.bigBerry.price },
-    ...shuffle(['picnic', 'revive']).slice(0, 1).map(id => ({ id, price: GOODS[id].price })),
+    ...goods.slice(0, 1).map(id => ({ id, price: GOODS[id].price })),
     ...free.slice(1, 3).map(id => ({ id, price: relicPrice(floorN), relic: true })),
   ];
+  while (shop.stock.length < 4 && goods.length > 1) { const id = goods.pop(); shop.stock.push({ id, price: GOODS[id].price }); }
   return { n: floorN, rooms, start, boss, stage: FLOOR_STAGES[(floorN - 1) % FLOOR_STAGES.length] };
 }
 
 // Progress kept between runs (in this browser). Beating a boss unlocks its species as a starter.
 const SAVE_KEY = 'monsterRush.save.v1';
 const Save = {
-  data: { starters: [...STARTERS], runs: 0, wins: 0, bestFloor: 0, recruited: [] },
+  data: { starters: [...STARTERS], runs: 0, wins: 0, bestFloor: 0, bestEndless: 0, recruited: [] },
   load() {
     try { const d = JSON.parse(localStorage.getItem(SAVE_KEY)); if (d) Object.assign(this.data, d); } catch (e) { /* storage blocked: play without saving */ }
     for (const id of STARTERS) if (!this.data.starters.includes(id)) this.data.starters.push(id);
@@ -154,17 +156,23 @@ const Save = {
     this.data.starters.push(id); this.write(); return true;
   },
   noteRecruit(id) { if (!this.data.recruited.includes(id)) { this.data.recruited.push(id); this.write(); } },
-  endRun(floorN, win) {
+  // returns true if it's a new endless record
+  endRun(floorN, win, endless) {
     this.data.runs++; if (win) this.data.wins++;
-    this.data.bestFloor = Math.max(this.data.bestFloor, floorN);
+    const record = endless && floorN > (this.data.bestEndless || 0);
+    if (endless) this.data.bestEndless = Math.max(this.data.bestEndless || 0, floorN);
+    else this.data.bestFloor = Math.max(this.data.bestFloor, floorN);
     this.write();
+    return record;
   },
 };
 Save.load();
 
 // Everything that lasts for one run.
 class RunState {
-  constructor(starterId) {
+  // endless: floors never stop (the boss always opens stairs); the run ends when the party faints
+  constructor(starterId, endless = false) {
+    this.endless = endless;
     this.party = [new Mon(ROSTER_BY_ID[starterId], 'player')];
     this.pi = 0;
     this.coins = 0;
