@@ -912,11 +912,11 @@ const MONSTER_ART = {
     g.ellipseM(12, 27, 2.4, 3.4, C, { edge: true });                                             // white legs
     g.ellipse(16, 22, 7.5, 6, O, { edge: true });                                                // body
     g.ellipse(16, 23.5, 5, 5.5, C);                                                              // big white bib
-    g.ellipse(16, 17.5, 8.5, 2.6, C, { edge: true });                                            // white ruff round the neck
+    g.ellipseM(9, 17.5, 2.6, 2.2, C);                                                            // white ruff at the sides of the neck
     g.polyM([[9, 9], [8.5, 1], [14, 6]], O, { edge: true });                                     // upright ears
     g.polyM([[10, 7.5], [9.5, 3], [12.5, 6]], Ei);                                               // pale insides
     g.ellipse(16, 12, 8, 6.5, O, { edge: true });                                                // head
-    g.ellipse(16, 15.5, 6, 3.6, C);                                                              // white muzzle
+    g.ellipse(16, 15.3, 6, 3.2, C);                                                              // white muzzle (kept inside the chin line)
     g.ellipseM(10.2, 14, 2.2, 2, C);                                                             // white cheeks up to the eyes
     g.pxM(11, 9, C.b); g.pxM(12, 9, C.b);                                                        // eyebrow spots
     g.rectM(10, 11, 4, 1, OUTLINE);                                                              // smug half-shut lids
