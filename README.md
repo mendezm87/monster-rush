@@ -13,6 +13,8 @@ A real-time pixel-art monster roguelike: pick a starter, rush down through floor
 Open `index.html` in a browser, or serve the folder:
 
 ```sh
-python3 -m http.server 8000
-# then visit http://localhost:8000
+python serve.py
+# then visit http://localhost:8137
 ```
+
+Tests: with the server running, open http://localhost:8137/test.html. Bots play full runs and it shows PASS or FAIL.

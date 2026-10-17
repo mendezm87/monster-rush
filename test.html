@@ -32,7 +32,7 @@
     <a href="gallery.html">Gallery</a> · <a href="./">Game</a></p>
   <div id="verdict" class="run">Running…</div>
   <div class="wrap">
-    <iframe id="game" src="index.html?test"></iframe>
+    <iframe id="game"></iframe>
     <div id="log"></div>
   </div>
   <h2>Checks</h2>
@@ -57,7 +57,17 @@ function check(name, ok, details = '') {
 $('#again').onclick = () => location.reload();
 const tick = () => new Promise(r => setTimeout(r, 0));
 
+// Refresh the browser's copies of the game's files first, so the tests never run an
+// old cached build, then load the game.
+(async () => {
+  const html = await (await fetch('index.html', { cache: 'reload' })).text();
+  const files = [...html.matchAll(/(?:src|href)="((?:js|css)\/[^"]+)"/g)].map(m => m[1]);
+  await Promise.all(files.map(f => fetch(f, { cache: 'reload' })));
+  $('#game').src = 'index.html?test=' + Date.now();
+})();
+
 $('#game').addEventListener('load', async () => {
+  if (!$('#game').getAttribute('src')) return;
   const w = $('#game').contentWindow;
   const G = name => w.eval(name);     // the game's globals (const/let ones aren't on window)
   const errors = [];

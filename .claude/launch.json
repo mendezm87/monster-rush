@@ -4,7 +4,7 @@
     {
       "name": "monster-rush",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "http.server", "8137"],
+      "runtimeArgs": ["serve.py", "8137"],
       "port": 8137
     }
   ]
