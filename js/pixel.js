@@ -174,7 +174,8 @@ function numberCanvas(text, fill = '#fff6c8', shade = '#e0b040') {
 // ---------- the trainer ----------
 // An original design: a cap pulled low over shadowed eyes with spiky hair poking out,
 // a popped-collar jacket with short sleeves over a dark tee, fingerless gloves and
-// wristbands, jeans and sneakers. 16x24, in front, back and side (facing right) views.
+// wristbands, jeans and sneakers. 16x24, in front, back, side (facing right) and the two
+// diagonals (fside, bside, also facing right) views.
 // Keys: c cap, C cap's front panel, e emblem, b brim, h hair, s skin, S shaded skin,
 // x deep shade under the brim, r eye, K mouth, w collar and sleeves, j jacket, J seam,
 // t tee, W wristband, g glove, p jeans, P jeans shade, f shoe, F sole.
@@ -257,6 +258,61 @@ const TRAINER_SIDE = [   // facing right
   '...kFFk.kFFFk...',
 ];
 
+const TRAINER_FSIDE = [  // three-quarter front, heading down-right
+  '....kkkkkk......',
+  '...kcccCCCk.....',
+  '..kccccCeCCk....',
+  '..kcccccCCCck...',
+  '.kccccccccccbk..',
+  '.khhkbbbbbbbbbk.',
+  '.khhhxxxxxxxxk..',
+  '..khhSrSSSSrSk..',
+  '..khssssssssk...',
+  '...khsssssKsk...',
+  '..kwwksssskwk...',
+  '.kwjjwttttwjk...',
+  'kwwjjjjtttjjwk..',
+  'kwwjjjjtttjjwk..',
+  'ksjjjjjtttjjsk..',
+  'ksjjJjjtttjJsk..',
+  'kWjjjjjkkkjjWk..',
+  'kgjjjjjpppjjgk..',
+  '.kkkkkpppppkk...',
+  '....kpppPPpk....',
+  '....kpppkpppk...',
+  '....kppk.kpppk..',
+  '...kffk..kfffk..',
+  '...kFFk..kFFFk..',
+];
+const TRAINER_BSIDE = [  // three-quarter back, heading up-right
+  '.....kkkkkk.....',
+  '....kcccccck....',
+  '...kcccccccck...',
+  '...kccccccccbk..',
+  '..kcccckkcccbbk.',
+  '..khhhhhhhhhkk..',
+  '.khhhhhhhhhhsk..',
+  '..khhhhhhhhhSk..',
+  '...khhhhhhhsk...',
+  '...kssssssssk...',
+  '..kwwwwwwwwwwk..',
+  '.kjjjjjjjjjjjjk.',
+  'kwwjjjjjjjjjjwwk',
+  'kwwjjjjjjjjjjwwk',
+  'ksjjjJJJJJJjjjsk',
+  'ksjjjjjjjjjjjjsk',
+  'kWjjjjjjjjjjjjWk',
+  'kgjjjjjjjjjjjjgk',
+  '.kkkkppppppkkkk.',
+  '....kppPPppk....',
+  '....kpppkpppk...',
+  '....kppk.kpppk..',
+  '...kffk..kfffk..',
+  '...kFFk..kFFFk..',
+];
+const TRAINER_MAPS = { front: TRAINER_FRONT, side: TRAINER_SIDE, back: TRAINER_BACK, fside: TRAINER_FSIDE, bside: TRAINER_BSIDE };
+const TRAINER_VIEWS = Object.keys(TRAINER_MAPS);
+
 // Outfit colours. Skin, hair, face and gloves are shared; the rest is the outfit.
 const TRAINER_BASE = { k: OUTLINE, h: '#1c1a24', s: '#f2c49a', S: '#d8a27a', x: '#9a6e56', r: '#1a1222', K: '#8a4a3a',
   t: '#26232c', W: '#f6f2ee', g: '#2a2830', e: '#ffd23f' };
@@ -269,8 +325,8 @@ const TRAINER_OUTFITS = {
 };
 const TRAINER_OUTFIT = 'crimson';    // the one used in the game for now
 
-// outfit: a TRAINER_OUTFITS key; view: 'front' | 'side' | 'back'
+// outfit: a TRAINER_OUTFITS key; view: one of TRAINER_VIEWS
 function trainerCanvas(outfit = TRAINER_OUTFIT, view = 'front') {
-  const map = view === 'side' ? TRAINER_SIDE : view === 'back' ? TRAINER_BACK : TRAINER_FRONT;
+  const map = TRAINER_MAPS[view] || TRAINER_FRONT;
   return gridFromMap(map, { ...TRAINER_BASE, ...(TRAINER_OUTFITS[outfit] || TRAINER_OUTFITS[TRAINER_OUTFIT]) }).toCanvas();
 }

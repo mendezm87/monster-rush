@@ -2,7 +2,7 @@
 
 // Shown on the title screen so players can tell whether their browser has the latest
 // build (GitHub Pages lets browsers cache files for up to 10 minutes). Bump on every release.
-const VERSION = '2026.10.17-r18';
+const VERSION = '2026.10.17-r19';
 
 const App = {
   endless: false,   // the mode picked on the title screen
@@ -104,7 +104,7 @@ function startRun(starterId) {
   UI.setRunChrome(true);
   Input.mouse = true;
   Input.reset();
-  Sfx.init(); Sfx.resume(); Sfx.music.start();
+  Sfx.init(); Sfx.resume();
   App.paused = false;
   enterRoom(App.run.room, null);
   UI.banner('FLOOR 1');
@@ -128,6 +128,7 @@ const roomHooks = {
 
 function enterRoom(room, entry) {
   App.run.room = room;
+  Sfx.music.play(roomSong(App.run, room));
   App.battle = new Battle({ run: App.run, room, entry, ui: UI, hooks: roomHooks });
   UI.hudCache = {};
   UI.closeSwap();

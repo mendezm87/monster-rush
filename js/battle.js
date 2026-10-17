@@ -148,13 +148,12 @@ class Mon {
   }
   canAct() { return this.visible && !this.fainted && !this.action && this.stunT <= 0 && this.status !== 'frz'; }
   // Turn to look along (dx, dy): the back when heading up the screen, the front when
-  // heading down, the side (flipped by face) otherwise. A little hysteresis stops flicker.
+  // heading down, the side or a diagonal (flipped by face) otherwise. See viewFor.
   look(dx, dy) {
-    const ax = Math.abs(dx), ay = Math.abs(dy);
-    if (ax < 0.001 && ay < 0.001) return;
-    const k = this.view === 'side' ? 1.6 : 0.8;
-    if (ay > ax * k) this.view = dy < 0 ? 'back' : 'front';
-    else { this.view = 'side'; if (ax > 0.001) this.face = Math.sign(dx); }
+    const v = viewFor(dx, dy, this.view, SPRITES[this.id].diag);
+    if (!v) return;
+    this.view = v;
+    if (isSideView(v) && Math.abs(dx) > 0.001) this.face = Math.sign(dx);
   }
 }
 
@@ -294,7 +293,7 @@ class Battle {
     this.ground = built.canvas; this.stage = built.stage;
     if (!room.decal) { room.decal = document.createElement('canvas'); room.decal.width = room.w; room.decal.height = room.h; }
     this.decal = room.decal; this.dctx = this.decal.getContext('2d');
-    this.trainerImg = { front: trainerCanvas(TRAINER_OUTFIT, 'front'), back: trainerCanvas(TRAINER_OUTFIT, 'back'), side: trainerCanvas(TRAINER_OUTFIT, 'side') };
+    this.trainerImg = Object.fromEntries(TRAINER_VIEWS.map(v => [v, trainerCanvas(TRAINER_OUTFIT, v)]));
     this.projectiles = []; this.zones = []; this.particles = []; this.floats = []; this.texts = []; this.balls = [];
     this.pickups = room.pickups;
     this.weather = Array.from({ length: 70 }, () => this.newFlake(true));
@@ -389,6 +388,7 @@ class Battle {
       } else {
         this.ui.banner('FLOOR CLEARED!');
         this.placeStairs();
+        Sfx.music.play(floorSong(this.run));
       }
     } else this.ui.banner('ROOM CLEAR!');
   }
@@ -879,9 +879,8 @@ class Battle {
       const step = Math.min(d - gap, Math.max(70, (d - gap) * 5) * dt);
       t.x += dx / d * step; t.y += dy / d * step;
       t.walkT += step; t.moving = step > 0.2;
-      const ax = Math.abs(dx), ay = Math.abs(dy), k = t.view === 'side' ? 1.6 : 0.8;
-      if (ay > ax * k) t.view = dy < 0 ? 'back' : 'front';
-      else { t.view = 'side'; t.face = Math.sign(dx) || 1; }
+      t.view = viewFor(dx, dy, t.view, true) || t.view;
+      if (isSideView(t.view)) t.face = Math.sign(dx) || t.face;
     }
     t.x = clamp(t.x, F.x0 - 30, F.x1 + 30); t.y = clamp(t.y, F.y0 - 20, F.y1 + 30);
   }
@@ -1483,7 +1482,7 @@ class Battle {
     Lighting.shadow(ctx, px, py, 9, 3.5, 0.9);
     const bob = t.moving ? -Math.round(Math.abs(Math.sin(t.walkT / 6 * Math.PI))) : (Math.sin(this.time * 2) > 0.7 ? -1 : 0);
     const w = img.width * SPR_SCALE, h = img.height * SPR_SCALE;
-    ctx.save(); ctx.translate(px, 0); if (t.view === 'side' && t.face < 0) ctx.scale(-1, 1);
+    ctx.save(); ctx.translate(px, 0); if (isSideView(t.view) && t.face < 0) ctx.scale(-1, 1);
     ctx.drawImage(img, Math.round(-w / 2), Math.round(py - h + 1 + bob), w, h);
     ctx.restore();
   }

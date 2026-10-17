@@ -2,6 +2,10 @@
 
 const RUN_FLOORS = 3;                                    // floors in a normal run (endless mode comes later)
 const FLOOR_STAGES = ['meadow', 'crater', 'summit', 'grotto', 'ruins'];   // endless mode loops through them
+// Each floor theme's song (Sfx.music.SONGS); boss rooms and the shop have their own.
+const STAGE_SONGS = { meadow: 'rush', crater: 'magma', summit: 'summit', grotto: 'deep', ruins: 'deep' };
+const floorSong = run => STAGE_SONGS[run.floor.stage] || 'rush';
+const roomSong = (run, room) => room.type === 'boss' && !room.cleared ? 'boss' : room.type === 'shop' ? 'shop' : floorSong(run);
 const STARTERS = ['smugshi', 'cinderox', 'tidalisk'];
 const ROOM_SIZES = { s: [576, 324], wide: [864, 324], tall: [576, 486], big: [864, 486], boss: [864, 540] };
 const REVIVE_HP = 0.3;                                   // fainted party members come back at 30% on a new floor

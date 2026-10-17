@@ -1028,23 +1028,138 @@ const MONSTER_ART = {
   },
 };
 
+// Diagonal views, facing right like 'side' (flipped by face for left):
+// 'fside' = three-quarter front (heading down-right), 'bside' = three-quarter back
+// (heading up-right). A monster without an entry here turns in 4 directions only.
+const MONSTER_ART_DIAG = {
+  smugshi(g, v) {
+    const O = TOSHI.coat, C = TOSHI.white, PINK = '#e8b4a4';
+    if (v === 'bside') {
+      g.ellipse(11, 27.5, 2.2, 3, C, { edge: true }); g.ellipse(19, 28, 2, 2.8, C, { edge: true });   // white hind legs
+      g.ellipse(15, 22, 7.5, 6, O, { edge: true });
+      g.ellipse(13, 26, 4, 2.2, C);                                                              // white rear
+      g.poly([[10, 9], [10, 0], [16, 5]], O, { edge: true });                                    // big upright ears
+      g.poly([[19, 6], [23, 0], [25, 7]], O, { edge: true });
+      g.ellipse(17, 18, 6.5, 2.3, C);                                                            // white crescent across the shoulders
+      g.ellipse(18, 11.5, 8, 6.2, O, { edge: true });
+      g.ellipse(24.5, 14, 1.8, 1.8, C); g.ellipse(25.5, 12.5, 1.4, 1.4, C);                      // cheek and muzzle peeking out
+      g.ellipse(13, 19, 5, 4.5, O, { edge: true });                                              // the famous curled tail
+      g.ellipse(13, 18.5, 3, 2.6, C); g.px(13, 18, O.s); g.px(14, 18, O.s);
+      return;
+    }
+    g.ellipse(8, 17, 4.5, 4.5, O, { edge: true });                                               // curled tail behind him
+    g.ellipse(7.5, 16.5, 3.2, 3.2, C); g.px(7, 16, O.l); g.px(8, 17, O.s);
+    g.ellipse(9, 26.5, 1.8, 2.8, P(C.s, '#cbbba4', C.b));                                        // hind leg
+    g.ellipse(14, 22, 8, 6, O, { edge: true });                                                  // body
+    g.ellipse(18.5, 23, 4.5, 5.5, C);                                                            // white chest
+    g.ellipse(15, 27.5, 2.2, 3.2, C, { edge: true }); g.ellipse(21, 27.5, 2.2, 3.2, C, { edge: true });   // white front legs
+    g.px(14, 30, C.s); g.px(20, 30, C.s);
+    g.poly([[9, 10], [9, 0], [15, 5]], O, { edge: true });                                       // near ear
+    g.poly([[10.3, 8], [10.3, 2.5], [13.5, 5.3]], PINK); g.px(11, 4, C.b);
+    g.poly([[20, 7], [24, 0], [26, 7]], O, { edge: true });                                      // far ear
+    g.poly([[21.5, 6], [23.6, 2.5], [24.6, 6]], PINK);
+    g.ellipse(17.5, 12, 8, 6.5, O, { edge: true });                                              // head
+    g.ellipse(12.5, 14.8, 2.6, 2.4, C); g.ellipse(23, 14.5, 1.6, 2, C);                          // white cheeks
+    g.ellipse(20, 15.6, 4.4, 3, C);                                                              // white muzzle, turned his way
+    g.rect(16, 17, 7, 3, C.b); g.rect(15, 18, 8, 2, C.b);                                        // white throat into the chest
+    g.rect(13, 9, 2, 1, C.b); g.rect(21, 9, 2, 1, C.b);                                          // pale eyebrow spots
+    g.rect(12, 11, 4, 1, OUTLINE); g.rect(13, 12, 2, 1, DARK_EYE);                               // smug lids
+    g.rect(20, 11, 3, 1, OUTLINE); g.rect(21, 12, 2, 1, DARK_EYE);
+    g.rect(21, 13, 2, 2, OUTLINE); g.px(21, 13, '#5a5060');                                      // big black nose
+    g.px(19, 17, OUTLINE).px(20, 17, OUTLINE).px(21, 17, OUTLINE).px(22, 17, OUTLINE).px(23, 16, OUTLINE);   // flat mouth, smug corner
+  },
+
+  cinderox(g, v) {
+    const F = P('#ff7a1c', '#e2401a', '#ffd34a'), B = P('#2f4a7a', '#1f3054', '#4a6aa0'), C = P('#f3dd9a', '#d4b56a', '#fff2c4');
+    const mane = () => {
+      g.poly([[9, 15], [11, 2], [16, 11]], F); g.poly([[14, 11], [18, 0], [22, 11]], F); g.poly([[20, 11], [25, 2], [26, 15]], F);
+      g.poly([[13, 8], [18, 3], [23, 8], [18, 11]], '#ffd34a');
+    };
+    if (v === 'bside') {
+      g.poly([[6, 20], [2, 18], [6, 23]], F);                                                    // flank flame
+      g.ellipse(15, 21, 10, 7, B, { edge: true });
+      g.ellipse(10, 28, 3, 2, B, { edge: true }); g.ellipse(20, 28.5, 3, 2, B, { edge: true });
+      g.ellipse(18, 14, 7, 6, B, { edge: true });
+      g.ellipse(24.5, 16.5, 1.6, 1.4, C);                                                        // muzzle peeking out
+      mane();
+      g.rect(12, 22, 2, 5, '#1f3054'); g.ellipse(12.5, 27.5, 1.6, 1.6, '#ff7a1c');               // tail
+      return;
+    }
+    mane();
+    g.poly([[6, 20], [1, 18], [6, 23]], F);                                                      // flank flame
+    g.ellipse(14, 21, 10, 7, B, { edge: true });
+    g.ellipse(17, 24, 6.5, 4.5, C);                                                              // belly
+    g.ellipse(18, 14, 7, 6, B, { edge: true });
+    g.ellipse(20.5, 17, 4, 2.5, C);                                                              // muzzle, turned his way
+    g.ellipse(11, 28, 3, 2, C, { edge: true }); g.ellipse(20, 28.5, 3, 2, C, { edge: true });
+    g.rect(13, 13, 3, 1, OUTLINE); g.px(15, 14, '#ff5a2a');                                      // narrow eyes
+    g.rect(21, 13, 2, 1, OUTLINE); g.px(22, 14, '#ff5a2a');
+    g.px(20, 16, OUTLINE).px(22, 16, OUTLINE);
+  },
+
+  tidalisk(g, v) {
+    const B = P('#3d7fe0', '#2a58a8', '#7ab4ff'), C = P('#f2e6c0', '#cdbb88', '#fffbe6'), Fn = P('#bfe6ff', '#7ab4e8', '#ffffff');
+    if (v === 'bside') {
+      g.poly([[6, 25], [1, 20], [2, 29]], Fn);                                                   // tail fin
+      g.ellipse(16, 26, 12, 4.5, B, { edge: true });
+      g.ellipse(17, 19, 6, 8, B, { edge: true });
+      g.ellipse(18, 10, 7, 5.5, B, { edge: true });
+      g.ellipse(24, 12, 1.6, 1.4, C);                                                            // snout peeking out
+      g.poly([[12, 9], [4, 4], [10, 13]], Fn); g.poly([[23, 8], [30, 3], [25, 12]], Fn);         // head fins
+      g.poly([[16, 6], [18, 0], [21, 6]], Fn);
+      for (const y of [13, 16, 19, 22]) g.rect(16, y, 2, 2, '#7ab4ff');                          // spine spots
+      return;
+    }
+    g.poly([[6, 25], [1, 20], [2, 29]], Fn);                                                     // tail fin
+    g.poly([[16, 6], [18, 0], [21, 6]], Fn);                                                     // crest
+    g.poly([[11, 9], [3, 4], [8, 13]], Fn); g.poly([[23, 8], [29, 4], [25, 12]], Fn);           // head fins
+    g.ellipse(15, 26, 12, 4.5, B, { edge: true });                                               // coil
+    g.ellipse(17, 19, 6, 8, B, { edge: true });                                                  // neck
+    g.ellipse(18.5, 21, 3, 6, C);                                                                // belly
+    g.ellipse(18, 10, 7, 5.5, B, { edge: true });                                                // head
+    g.ellipse(20.5, 13, 4, 2, C);                                                                // snout, turned its way
+    g.rect(14, 9, 2, 3, DARK_EYE); g.px(14, 9, '#ffffff');
+    g.rect(21, 9, 2, 3, DARK_EYE); g.px(21, 9, '#ffffff');
+    g.px(9, 26, '#7ab4ff'); g.px(6, 25, '#7ab4ff');
+  },
+};
+
 const SPRITES = {};
 
-// Build every monster's views once: front (img), side (facing right) and back.
+// Build every monster's views once: front (img), side (facing right), back, and the
+// diagonals (fside, bside) for monsters that have them (sp.diag).
 const VIEWS = ['front', 'side', 'back'];
 function buildSprites() {
   for (const mon of ALL_MONS()) {
     const size = mon.size === 'L' ? 44 : 32;
+    const diag = !!MONSTER_ART_DIAG[mon.id];
     const views = {};
-    for (const v of VIEWS) {
+    for (const v of diag ? [...VIEWS, 'fside', 'bside'] : VIEWS) {
       const g = new PixGrid(size, size);
-      MONSTER_ART[mon.id](g, v);
+      (v === 'fside' || v === 'bside' ? MONSTER_ART_DIAG : MONSTER_ART)[mon.id](g, v);
       g.outline();
       views[v] = g.toCanvas();
     }
-    SPRITES[mon.id] = { img: views.front, views, size };
+    SPRITES[mon.id] = { img: views.front, views, size, diag };
   }
 }
+
+// Which view to show when heading along (dx, dy); null if not moving. With diagonal art
+// it picks from 8 directions (front, fside, side, bside, back, mirrored by face), else 4.
+// Each view holds on a little past its sector so it doesn't flicker at the edges.
+const VIEW_ANGLE = { front: 0, fside: 45, side: 90, bside: 135, back: 180 };
+function viewFor(dx, dy, cur, diag) {
+  const ax = Math.abs(dx), ay = Math.abs(dy);
+  if (ax < 0.001 && ay < 0.001) return null;
+  if (!diag) {
+    const k = cur === 'side' ? 1.6 : 0.8;
+    return ay > ax * k ? (dy < 0 ? 'back' : 'front') : 'side';
+  }
+  const deg = Math.atan2(ax, dy) * 180 / Math.PI;   // 0 = heading down, 180 = heading up
+  if (cur in VIEW_ANGLE && Math.abs(deg - VIEW_ANGLE[cur]) < 30) return cur;
+  return ['front', 'fside', 'side', 'bside', 'back'][Math.round(deg / 45)];
+}
+const isSideView = v => v === 'side' || v === 'fside' || v === 'bside';
 
 // Draw a monster into an arbitrary canvas, scaled to fit with integer pixels where possible.
 function drawPortrait(canvas, monId, opts = {}) {

@@ -346,43 +346,172 @@ const Sfx = (() => {
     },
   };
 
-  // ---------- battle music: original Game Boy-style chiptune ----------
-  // 172 BPM, E minor. Pulse lead, 12.5% pulse arpeggios, triangle bass, noise drums.
+  // ---------- music: original Game Boy-style chiptunes ----------
+  // Pulse lead, 12.5% pulse arpeggios, triangle bass, noise drums. Every song is
+  // original; never transcribe real game melodies. Sfx.music.play(name) switches songs
+  // with a short crossfade (and does nothing if that song is already playing).
   const Music = (() => {
-    const BPM = 172, STEP = 60 / BPM / 4;
     const mid = n => 440 * Math.pow(2, (n - 69) / 12);
     const CH = { // arpeggio chord tones and bass root (MIDI)
       Em: [[64, 67, 71, 76], 40], C: [[60, 64, 67, 72], 36], D: [[62, 66, 69, 74], 38],
       B: [[59, 63, 66, 71], 35], Am: [[57, 60, 64, 69], 33], G: [[55, 59, 62, 67], 43],
+      Dm: [[62, 65, 69, 74], 38], Bb: [[58, 62, 65, 70], 34], A: [[57, 61, 64, 69], 33],
+      Gm: [[55, 58, 62, 67], 43], F: [[53, 57, 60, 65], 41], E: [[59, 64, 68, 71], 40],
+      Bm: [[59, 62, 66, 71], 35], Fs: [[61, 66, 70, 73], 42], Cm: [[60, 63, 67, 72], 36],
+      Ab: [[56, 60, 63, 68], 44], Fm: [[53, 56, 60, 65], 41],
     };
-    // [step, note, length] in 16th steps; 16 steps per bar
-    const N = { B4: 71, Cs5: 73, C5: 72, D5: 74, Ds5: 75, E5: 76, Fs5: 78, G5: 79, A5: 81, B5: 83, C6: 84, D6: 86, E6: 88, Fs4: 66, G4: 67, A4: 69, E4: 64 };
-    const BARS = {
-      intro1: { ch: 'Em', lead: [] , fill: false },
-      intro2: { ch: 'B', lead: [[8, N.B4, 2], [10, N.Ds5, 2], [12, N.Fs5, 2], [14, N.B5, 2]], fill: true },
-      a1: { ch: 'Em', lead: [[0, N.B4, 3], [3, N.E5, 3], [6, N.G5, 2], [8, N.Fs5, 2], [10, N.E5, 2], [12, N.D5, 2], [14, N.E5, 2]] },
-      a2: { ch: 'C',  lead: [[0, N.C5, 3], [3, N.E5, 3], [6, N.G5, 4], [10, N.A5, 2], [12, N.G5, 2], [14, N.E5, 2]] },
-      a3: { ch: 'D',  lead: [[0, N.D5, 3], [3, N.Fs5, 3], [6, N.A5, 2], [8, N.B5, 4], [12, N.A5, 2], [14, N.Fs5, 2]] },
-      a4: { ch: 'B',  lead: [[0, N.Ds5, 4], [4, N.Fs5, 4], [8, N.B5, 6]], fill: true },
-      b1: { ch: 'Em', lead: [[0, N.E5, 2], [2, N.G5, 2], [4, N.B5, 4], [8, N.A5, 2], [10, N.G5, 2], [12, N.Fs5, 4]] },
-      b2: { ch: 'C',  lead: [[0, N.G5, 2], [2, N.E5, 2], [4, N.C5, 4], [8, N.D5, 2], [10, N.E5, 2], [12, N.G5, 4]] },
-      b3: { ch: 'Am', lead: [[0, N.A5, 4], [4, N.C6, 4], [8, N.B5, 2], [10, N.A5, 2], [12, N.E5, 4]] },
-      b4: { ch: 'B',  lead: [[0, N.Fs5, 2], [2, N.Ds5, 2], [4, N.B4, 4], [8, N.Ds5, 2], [10, N.Fs5, 2], [12, N.A5, 2], [14, N.B5, 2]], fill: true },
-      c1: { ch: 'C',  lead: [[0, N.E6, 6], [6, N.D6, 2], [8, N.C6, 4], [12, N.B5, 4]] },
-      c2: { ch: 'D',  lead: [[0, N.D6, 6], [6, N.C6, 2], [8, N.B5, 4], [12, N.A5, 4]] },
-      c3: { ch: 'G',  lead: [[0, N.B5, 3], [3, N.D6, 3], [6, N.G5, 2], [8, N.A5, 2], [10, N.B5, 2], [12, N.D6, 4]] },
-      c4: { ch: 'B',  lead: [[0, N.Ds5, 2], [2, N.Fs5, 2], [4, N.B5, 2], [6, N.Ds5, 2], [8, N.Fs5, 2], [10, N.B5, 2], [12, N.Ds5, 2], [14, N.Fs5, 2]], fill: true },
-    };
-    const INTRO = ['intro1', 'intro2'];
-    const LOOP = ['a1', 'a2', 'a3', 'a4', 'b1', 'b2', 'b3', 'b4', 'a1', 'a2', 'a3', 'a4', 'c1', 'c2', 'c3', 'c4'];
+    // A melody as note names with lengths in 16th steps, e.g. 'E5.2 G5.4 r.2'
+    // ('r' is a rest; 's' = sharp, 'b' = flat). Each bar adds up to 16.
+    const SEMI = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
+    function mel(str) {
+      const out = []; let at = 0;
+      for (const tok of str.trim().split(/\s+/).filter(Boolean)) {
+        const [name, len] = tok.split('.');
+        if (name !== 'r') {
+          const m = name.match(/^([A-G])(s|b)?(\d)$/);
+          out.push([at, 12 * (+m[3] + 1) + SEMI[m[1]] + (m[2] === 's' ? 1 : m[2] === 'b' ? -1 : 0), +len]);
+        }
+        at += +len;
+      }
+      return out;
+    }
+    const bar = (ch, lead = '', fill = false) => ({ ch, lead: mel(lead), fill });
 
-    let out = null, waves = null, timer = null, nextT = 0, bar = 0, step = 0, playing = false;
+    // bass: 'octave' = pumping octaves on 8ths, 'walk' = root, fifth, octave, fifth on quarters
+    // drums: steps (of 16) for kick and snare; hat on 'odd' 16ths, 'even' 16ths or 'all'
+    const SONGS = {
+      // Rush: the original battle song. 172 BPM, E minor. Floor 1 (meadow).
+      rush: {
+        bpm: 172, arp: [0, 1, 2, 3, 2, 1], bass: 'octave', duty: 0.25,
+        drums: { kick: [0, 6, 8, 10], snare: [4, 12], hat: 'odd' },
+        bars: {
+          intro1: bar('Em'),
+          intro2: bar('B', 'r.8 B4.2 Ds5.2 Fs5.2 B5.2', true),
+          a1: bar('Em', 'B4.3 E5.3 G5.2 Fs5.2 E5.2 D5.2 E5.2'),
+          a2: bar('C', 'C5.3 E5.3 G5.4 A5.2 G5.2 E5.2'),
+          a3: bar('D', 'D5.3 Fs5.3 A5.2 B5.4 A5.2 Fs5.2'),
+          a4: bar('B', 'Ds5.4 Fs5.4 B5.6 r.2', true),
+          b1: bar('Em', 'E5.2 G5.2 B5.4 A5.2 G5.2 Fs5.4'),
+          b2: bar('C', 'G5.2 E5.2 C5.4 D5.2 E5.2 G5.4'),
+          b3: bar('Am', 'A5.4 C6.4 B5.2 A5.2 E5.4'),
+          b4: bar('B', 'Fs5.2 Ds5.2 B4.4 Ds5.2 Fs5.2 A5.2 B5.2', true),
+          c1: bar('C', 'E6.6 D6.2 C6.4 B5.4'),
+          c2: bar('D', 'D6.6 C6.2 B5.4 A5.4'),
+          c3: bar('G', 'B5.3 D6.3 G5.2 A5.2 B5.2 D6.4'),
+          c4: bar('B', 'Ds5.2 Fs5.2 B5.2 Ds5.2 Fs5.2 B5.2 Ds5.2 Fs5.2', true),
+        },
+        intro: ['intro1', 'intro2'],
+        loop: ['a1', 'a2', 'a3', 'a4', 'b1', 'b2', 'b3', 'b4', 'a1', 'a2', 'a3', 'a4', 'c1', 'c2', 'c3', 'c4'],
+      },
+      // Magma March: floor 2 (crater). 160 BPM, D minor, heavy and stomping.
+      magma: {
+        bpm: 160, arp: [0, 2, 1, 3], bass: 'octave', duty: 0.25,
+        drums: { kick: [0, 3, 8, 11], snare: [4, 12], hat: 'odd' },
+        bars: {
+          i1: bar('Dm'),
+          i2: bar('A', 'r.8 A4.2 Cs5.2 E5.2 A5.2', true),
+          a1: bar('Dm', 'D5.2 F5.2 A5.4 G5.2 F5.2 E5.2 F5.2'),
+          a2: bar('Bb', 'D5.2 F5.2 Bb5.4 A5.2 G5.2 F5.4'),
+          a3: bar('C', 'E5.2 G5.2 C6.4 Bb5.2 A5.2 G5.2 E5.2'),
+          a4: bar('A', 'Cs5.4 E5.4 A5.6 r.2', true),
+          b1: bar('Gm', 'G5.3 Bb5.3 D6.2 C6.2 Bb5.2 A5.4'),
+          b2: bar('Dm', 'F5.3 A5.3 D6.4 C6.2 A5.4'),
+          b3: bar('Bb', 'Bb5.2 A5.2 G5.2 F5.2 G5.4 D5.4'),
+          b4: bar('A', 'E5.2 Cs5.2 E5.2 A5.2 G5.2 F5.2 E5.2 Cs5.2', true),
+        },
+        intro: ['i1', 'i2'],
+        loop: ['a1', 'a2', 'a3', 'a4', 'b1', 'b2', 'b3', 'b4'],
+      },
+      // Summit Wind: floor 3 (summit). 150 BPM, A minor lifting to C major, a brighter
+      // square-wave lead.
+      summit: {
+        bpm: 150, arp: [0, 1, 2, 3, 2, 1], bass: 'octave', duty: 0.5,
+        drums: { kick: [0, 8, 10], snare: [4, 12], hat: 'even' },
+        bars: {
+          i1: bar('Am'),
+          i2: bar('E', 'r.8 E5.2 Gs5.2 B5.2 E6.2', true),
+          a1: bar('Am', 'A4.4 C5.2 E5.2 A5.6 G5.2'),
+          a2: bar('F', 'F5.4 E5.2 D5.2 C5.4 D5.4'),
+          a3: bar('C', 'E5.4 G5.2 C6.2 B5.4 G5.4'),
+          a4: bar('G', 'D5.6 B4.2 D5.2 G5.6'),
+          a6: bar('F', 'A5.4 G5.2 F5.2 E5.4 F5.4'),
+          a7: bar('Dm', 'D5.2 E5.2 F5.2 A5.2 D6.6 C6.2'),
+          a8: bar('E', 'B5.4 Gs5.4 E5.4 Gs5.4', true),
+          b1: bar('F', 'C6.6 A5.2 F5.4 A5.4'),
+          b2: bar('G', 'B5.6 G5.2 D5.4 G5.4'),
+          b3: bar('C', 'C6.4 E6.4 D6.4 C6.4'),
+          b4: bar('E', 'B5.8 Gs5.4 B5.4', true),
+        },
+        intro: ['i1', 'i2'],
+        loop: ['a1', 'a2', 'a3', 'a4', 'a1', 'a6', 'a7', 'a8', 'b1', 'b2', 'b3', 'b4'],
+      },
+      // Deep Echoes: endless floors 4-5 (grotto, ruins). 138 BPM, B minor, half-time
+      // drums and a walking bass, more mysterious.
+      deep: {
+        bpm: 138, arp: [0, 1, 2, 3, 3, 2, 1, 0], bass: 'walk', duty: 0.25,
+        drums: { kick: [0, 10], snare: [8], hat: 'odd' },
+        bars: {
+          i1: bar('Bm'),
+          i2: bar('Fs', 'r.8 Cs5.4 Fs5.4', true),
+          a1: bar('Bm', 'Fs5.6 E5.2 D5.4 Cs5.4'),
+          a2: bar('G', 'D5.6 E5.2 B4.8'),
+          a3: bar('D', 'A5.6 G5.2 Fs5.4 E5.4'),
+          a4: bar('Fs', 'Fs5.6 As5.2 Cs6.8', true),
+          b1: bar('Em', 'G5.4 B5.4 E6.6 D6.2'),
+          b2: bar('Bm', 'D6.4 B5.4 Fs5.8'),
+          b3: bar('G', 'G5.2 A5.2 B5.2 D6.2 Cs6.4 B5.4'),
+          b4: bar('Fs', 'As5.4 Cs6.4 Fs6.8', true),
+        },
+        intro: ['i1', 'i2'],
+        loop: ['a1', 'a2', 'a3', 'a4', 'b1', 'b2', 'b3', 'b4'],
+      },
+      // Boss Rush: boss rooms until the boss falls. 184 BPM, C minor, four on the floor.
+      boss: {
+        bpm: 184, arp: [0, 1, 2, 3], bass: 'octave', duty: 0.25,
+        drums: { kick: [0, 4, 8, 12], snare: [4, 12], hat: 'odd' },
+        bars: {
+          i1: bar('Cm'),
+          i2: bar('G', 'r.8 G4.2 B4.2 D5.2 G5.2', true),
+          a1: bar('Cm', 'C5.2 C5.2 Eb5.2 G5.2 C6.4 Bb5.2 G5.2'),
+          a2: bar('Ab', 'Ab5.4 G5.2 F5.2 Eb5.4 F5.4'),
+          a3: bar('Bb', 'D5.2 F5.2 Bb5.4 Ab5.2 G5.2 F5.4'),
+          a4: bar('G', 'G5.2 B5.2 D6.2 B5.2 G5.2 F5.2 D5.2 B4.2', true),
+          b1: bar('Fm', 'F5.4 Ab5.4 C6.6 Bb5.2'),
+          b2: bar('Cm', 'G5.4 Eb5.4 C5.8'),
+          b3: bar('Ab', 'Eb6.4 D6.2 C6.2 Bb5.4 Ab5.4'),
+          b4: bar('G', 'B5.4 D6.4 G6.4 F6.2 D6.2', true),
+        },
+        intro: ['i1', 'i2'],
+        loop: ['a1', 'a2', 'a3', 'a4', 'b1', 'b2', 'b3', 'b4'],
+      },
+      // Coin Corner: the shop. 112 BPM, F major, relaxed: soft square lead, walking bass.
+      shop: {
+        bpm: 112, arp: [0, 1, 2, 1], bass: 'walk', duty: 0.5, leadVol: 0.1,
+        drums: { kick: [0], snare: [8], hat: 'even' },
+        bars: {
+          i1: bar('F'),
+          a1: bar('F', 'A5.4 C6.4 A5.2 G5.2 F5.4'),
+          a2: bar('Dm', 'F5.4 A5.4 D6.8'),
+          a3: bar('Gm', 'Bb5.4 A5.2 G5.2 D5.8'),
+          a4: bar('C', 'E5.4 G5.4 C6.4 Bb5.4'),
+          b1: bar('Bb', 'D6.6 C6.2 Bb5.4 A5.4'),
+          b2: bar('Am', 'C6.6 A5.2 E5.8'),
+          b3: bar('Gm', 'G5.4 Bb5.4 D6.4 C6.4'),
+          b4: bar('C', 'E5.4 G5.4 Bb5.4 C6.4'),
+        },
+        intro: ['i1'],
+        loop: ['a1', 'a2', 'a3', 'a4', 'b1', 'b2', 'b3', 'b4'],
+      },
+    };
+
+    let out = null, waves = {}, timer = null, nextT = 0, barN = 0, step = 0, playing = false, song = null, songName = null;
 
     function pulse(duty) {
       const n = 32, re = new Float32Array(n), im = new Float32Array(n);
       for (let k = 1; k < n; k++) re[k] = (2 / (k * Math.PI)) * Math.sin(k * Math.PI * duty);
       return ctx.createPeriodicWave(re, im);
     }
+    const wave = duty => waves[duty] || (waves[duty] = pulse(duty));
 
     function note(t, freq, len, wave, vol, vib) {
       const o = ctx.createOscillator(), g = ctx.createGain();
@@ -421,47 +550,49 @@ const Sfx = (() => {
     }
 
     function scheduleStep(t) {
-      const name = bar < INTRO.length ? INTRO[bar] : LOOP[(bar - INTRO.length) % LOOP.length];
-      const b = BARS[name];
+      const S = song, STEP = 60 / S.bpm / 4;
+      const name = barN < S.intro.length ? S.intro[barN] : S.loop[(barN - S.intro.length) % S.loop.length];
+      const b = S.bars[name];
       const [arp, root] = CH[b.ch];
-      // arpeggio: 16ths up and back down
-      const seq = [0, 1, 2, 3, 2, 1];
-      note(t, mid(arp[seq[step % 6]]), STEP, waves.thin, 0.045);
-      // bass: pumping octaves on 8ths
-      if (step % 2 === 0) note(t, mid(step % 4 === 0 ? root : root + 12), STEP * 1.8, 'triangle', 0.32);
-      // lead (rests during intro bar 1)
-      for (const [s, n, l] of b.lead) if (s === step) note(t, mid(n), l * STEP, waves.lead, 0.13, true);
-      // drums
-      const intro = bar === 0;
+      note(t, mid(arp[S.arp[step % S.arp.length]]), STEP, wave(0.125), 0.045);
+      if (S.bass === 'walk') {
+        if (step % 4 === 0) note(t, mid(root + [0, 7, 12, 7][step / 4]), STEP * 3.5, 'triangle', 0.32);
+      } else if (step % 2 === 0) note(t, mid(step % 4 === 0 ? root : root + 12), STEP * 1.8, 'triangle', 0.32);
+      for (const [s, n, l] of b.lead) if (s === step) note(t, mid(n), l * STEP, wave(S.duty), S.leadVol || 0.13, true);
+      // drums (only hats in the very first bar)
+      const first = barN === 0, D = S.drums;
       if (b.fill && step >= 12) drum(t, 'snare');
       else {
-        if (!intro && (step === 0 || step === 6 || step === 8 || step === 10)) drum(t, 'kick');
-        if (!intro && (step === 4 || step === 12)) drum(t, 'snare');
-        if (step % 2 === 1 || intro) drum(t, 'hat');
+        if (!first && D.kick.includes(step)) drum(t, 'kick');
+        if (!first && D.snare.includes(step)) drum(t, 'snare');
+        if (first || D.hat === 'all' || (D.hat === 'odd') === (step % 2 === 1)) drum(t, 'hat');
       }
+    }
+    function advance() {
+      nextT += 60 / song.bpm / 4;
+      if (++step === 16) { step = 0; barN++; }
     }
 
     function tick() {
-      while (nextT < ctx.currentTime + 0.15) {
-        scheduleStep(nextT);
-        nextT += STEP;
-        if (++step === 16) { step = 0; bar++; }
-      }
+      while (nextT < ctx.currentTime + 0.15) { scheduleStep(nextT); advance(); }
     }
 
     return {
-      start() {
+      SONGS,
+      start(name = 'rush') {
         if (!ctx) return;
         this.stop();
-        if (!waves) waves = { lead: pulse(0.25), thin: pulse(0.125) };
+        song = SONGS[name] || SONGS.rush; songName = name;
         out = ctx.createGain(); out.gain.value = 0.8; out.connect(master);
-        bar = 0; step = 0; nextT = ctx.currentTime + 0.1; playing = true;
+        barN = 0; step = 0; nextT = ctx.currentTime + 0.1; playing = true;
         tick();
         timer = setInterval(tick, 25);
       },
+      // switch to a song unless it's already the one playing
+      play(name) { if (!(playing && songName === name)) this.start(name); },
       stop(fade = 0.3) {
         if (timer) clearInterval(timer);
-        timer = null; playing = false;
+        timer = null; playing = false; songName = null;
         if (out) {
           const o = out;
           o.gain.setValueAtTime(o.gain.value, ctx.currentTime);
@@ -471,12 +602,13 @@ const Sfx = (() => {
         }
       },
       get playing() { return playing; },
-      _scheduleAll(seconds) {
-        waves = { lead: pulse(0.25), thin: pulse(0.125) };
+      get song() { return songName; },
+      _scheduleAll(seconds, name = 'rush') {
+        waves = {}; song = SONGS[name];
         out = ctx.createGain(); out.gain.value = 0.8; out.connect(master);
-        bar = 0; step = 0; nextT = 0.05;
-        while (nextT < seconds) { scheduleStep(nextT); nextT += STEP; if (++step === 16) { step = 0; bar++; } }
-        out = null; waves = null;
+        barN = 0; step = 0; nextT = 0.05;
+        while (nextT < seconds) { scheduleStep(nextT); advance(); }
+        out = null; waves = {};
       },
     };
   })();

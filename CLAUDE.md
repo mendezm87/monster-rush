@@ -42,7 +42,7 @@ A real-time, top-down pixel-art **roguelike** in the style of *The Binding of Is
 
 ### Decided in the second pass (2026-10-17)
 
-- **Monsters and the trainer turn to face where they go:** every design has `front`, `side` (facing right, flipped for left) and `back` views (`MONSTER_ART[id](grid, view)`). A new monster needs all three.
+- **Monsters and the trainer turn to face where they go:** every design has `front`, `side` (facing right, flipped for left) and `back` views (`MONSTER_ART[id](grid, view)`). A new monster needs all three, plus the two diagonals in `MONSTER_ART_DIAG` (see the third pass).
 - **Leveling:** XP per wild monster beaten (`XP_WILD`/`XP_TOUGH`/`XP_BOSS`), full for the active monster, half for the rest; each level +3.5% HP, +2% attack/defence, heals 5%. Recruits join a level below the party's average.
 - **Evolution:** the three starters evolve at level 6 (`EVOLVE_LEVEL`) once a room is cleared: Smugshi -> **Smugshogun** (grown-up Toshi: neck ruff, samurai headband, red cape, still smug), Cinderox -> **Infernox** (fire/ground magma bull: blazing mane, curved horns, lava-cracked rock shoulders, nose ring, glowing eyes), Tidalisk -> **Maelstrisk** (water/dragon sea dragon: coil, teal fin-wings, gold horns, whiskers). Each has its own hand-drawn 44px art in all three views (the owner asked for all-new art, not scaled-up starters). So far only the starters evolve. **More monsters can evolve, but not every monster needs to** (the owner's words); designs get worked out with the owner as we go.
 - **Every floor has a shop and a treasure room** (dead ends, like the boss and recruit rooms). The shop sells a Big Berry, a Picnic Basket or Revive Seed, and two relics; the treasure room has one free relic.
@@ -53,9 +53,14 @@ A real-time, top-down pixel-art **roguelike** in the style of *The Binding of Is
 - Floors have 11-15 rooms (`target` in `tryFloor`), 4 of them special (recruit, shop, treasure, boss). Level n needs `18 + 11n` XP.
 - Balance at this point: the hard bot nearly always clears floor 1 and wins a bit over half its runs (Smugshi most, Cinderox least); most losses come on floor 2.
 
+### Decided in the third pass (2026-10-17, now developed on the owner's Windows PC)
+
+- **Diagonal views (8-way turning)**, asked for by the owner: `fside` (three-quarter front, heading down-right) and `bside` (three-quarter back, heading up-right), both flipped by `face` for the left. They live in `MONSTER_ART_DIAG` in `js/sprites.js` (sets `SPRITES[id].diag`) and `TRAINER_FSIDE`/`TRAINER_BSIDE` in `js/pixel.js`; `viewFor()` picks the view from 8 directions with a little hysteresis, or 4 for monsters without diagonals yet. **Done so far: the trainer, Smugshi, Cinderox, Tidalisk** (a first batch shown to the owner); the other 20 monsters still turn in 4 directions until theirs are drawn. The gallery shows the diagonals and spins through all 8.
+- **More music** (the owner: "we only have one song"): `Sfx.music` holds several original songs (`SONGS` in `js/audio.js`; melodies written as note names, `mel('E5.2 G5.4 r.2')`). Rush (floor 1 meadow, the original), Magma March (floor 2 crater, D minor 160), Summit Wind (floor 3 summit, A minor 150, square lead), Deep Echoes (endless grotto and ruins, B minor 138, half-time), Boss Rush (boss rooms until the boss falls, C minor 184), Coin Corner (the shop, F major 112). `roomSong()` in `js/dungeon.js` picks one per room; `Sfx.music.play(name)` crossfades and ignores the song already playing. Levels were checked with `_scheduleAll(seconds, name)`: peaks 0.16-0.20, similar RMS.
+
 ### Not decided yet (ask the owner when it matters)
 
-Which other monsters evolve and into what (to design together); more relics and unlock types; whether the evolved starters' designs are what the owner wants.
+Which other monsters evolve and into what (to design together); more relics and unlock types; whether the evolved starters' designs are what the owner wants; whether the first diagonal views look right before the other 20 monsters (and the three evolved starters) get theirs; a title-screen song.
 
 ## Rules carried over from the arena game (keep these)
 

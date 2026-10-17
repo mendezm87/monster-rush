@@ -26,7 +26,7 @@
     .name { font-size: 20px; }
     .tags { display: flex; gap: 4px; }
     .tag { font-size: 11px; padding: 2px 7px; border-radius: 6px; color: #fff; -webkit-text-stroke: 1px rgba(0,0,0,.5); paint-order: stroke fill; border: 1px solid rgba(0,0,0,.45); }
-    .views { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 8px 0 4px; }
+    .views { display: grid; grid-template-columns: repeat(var(--n, 4), 1fr); gap: 6px; margin: 8px 0 4px; }
     .views figure { margin: 0; text-align: center; }
     .views canvas { width: 100%; aspect-ratio: 1; image-rendering: pixelated; border-radius: 8px; display: block; }
     figcaption { font: 700 11px system-ui, sans-serif; opacity: .7; margin-top: 3px; }
@@ -40,7 +40,7 @@
     <div class="chips" id="bg"></div>
     <a href="./">Back to the game</a>
   </header>
-  <div class="hint">Every monster in front, side and back view, at 3 pixels per sprite pixel (the size they are in the game, doubled). The last box spins through the views the way the monster turns while it moves. Pick a floor theme above to see them on different ground.</div>
+  <div class="hint">Every monster in front, side and back view (plus the diagonals, for the ones drawn so far), at 3 pixels per sprite pixel (the size they are in the game, doubled). The last box spins through the views the way the monster turns while it moves. Pick a floor theme above to see them on different ground.</div>
   <div id="sections"></div>
 
   <script src="js/data.js"></script>
@@ -49,8 +49,10 @@
   <script src="js/arena.js"></script>
   <script>
     buildSprites();
-    const VIEW_NAMES = { front: 'front', side: 'side', back: 'back' };
-    const SPIN = [['front', 1], ['side', 1], ['back', 1], ['side', -1]];
+    const SPIN4 = [['front', 1], ['side', 1], ['back', 1], ['side', -1]];
+    const SPIN8 = [['front', 1], ['fside', 1], ['side', 1], ['bside', 1], ['back', 1], ['bside', -1], ['side', -1], ['fside', -1]];
+    const VIEWS4 = ['front', 'side', 'back', 'turning'], VIEWS6 = ['front', 'fside', 'side', 'bside', 'back', 'turning'];
+    const viewBoxes = vs => `<div class="views" style="--n:${vs.length}">${vs.map(v => `<figure><canvas width="150" height="150" data-v="${v}"></canvas><figcaption>${v}</figcaption></figure>`).join('')}</div>`;
     const tag = t => `<span class="tag" style="background:${TYPES[t].color}">${TYPES[t].name}</span>`;
     const canvases = [];   // [canvas, id, view, flip]
     let stage = 'meadow';
@@ -63,7 +65,7 @@
       if (def.from) note = `Evolved form of <b>${ROSTER_BY_ID[def.from].name}</b>.`;
       if (def.id === 'smugshi') note = 'Toshi, the real dog. ' + note;
       el.innerHTML = `<div class="top"><span class="name">${def.name}</span><span class="tags">${def.types.map(tag).join('')}</span></div>
-        <div class="views">${['front', 'side', 'back', 'turning'].map(v => `<figure><canvas width="150" height="150" data-v="${v}"></canvas><figcaption>${v}</figcaption></figure>`).join('')}</div>
+        ${viewBoxes(SPRITES[def.id].diag ? VIEWS6 : VIEWS4)}
         <div class="note">${note || '&nbsp;'}</div>`;
       el.querySelectorAll('canvas').forEach(cv => canvases.push({ cv, id: def.id, v: cv.dataset.v }));
       return el;
@@ -85,9 +87,9 @@
     const h = document.createElement('h2'); h.textContent = 'Trainer outfits';
     const g = document.createElement('div'); g.className = 'grid';
     for (const [key, o] of Object.entries(TRAINER_OUTFITS)) {
-      trImgs[key] = { front: trainerCanvas(key, 'front'), side: trainerCanvas(key, 'side'), back: trainerCanvas(key, 'back') };
+      trImgs[key] = Object.fromEntries(TRAINER_VIEWS.map(v => [v, trainerCanvas(key, v)]));
       const tr = document.createElement('div'); tr.className = 'card' + (key === TRAINER_OUTFIT ? ' evo' : '');
-      tr.innerHTML = `<div class="top"><span class="name">TRAINER: ${o.name.toUpperCase()}</span></div><div class="views">${['front', 'side', 'back', 'turning'].map(v => `<figure><canvas width="150" height="150" data-v="${v}"></canvas><figcaption>${v}</figcaption></figure>`).join('')}</div><div class="note">${key === TRAINER_OUTFIT ? 'The outfit used in the game right now.' : 'Another colour option.'}</div>`;
+      tr.innerHTML = `<div class="top"><span class="name">TRAINER: ${o.name.toUpperCase()}</span></div>${viewBoxes(VIEWS6)}<div class="note">${key === TRAINER_OUTFIT ? 'The outfit used in the game right now.' : 'Another colour option.'}</div>`;
       tr.querySelectorAll('canvas').forEach(cv => canvases.push({ cv, trainer: key, v: cv.dataset.v }));
       g.appendChild(tr);
     }
@@ -111,13 +113,13 @@
       c.imageSmoothingEnabled = false;
       c.drawImage(ground(stage), 200, 110, 150, 150, 0, 0, 150, 150);
       let v = o.v, flip = 1;
-      if (v === 'turning') { [v, flip] = SPIN[Math.floor(t / 0.6) % SPIN.length]; }
+      if (v === 'turning') { const spin = o.trainer || SPRITES[o.id].diag ? SPIN8 : SPIN4; [v, flip] = spin[Math.floor(t / 0.4) % spin.length]; }
       const img = o.trainer ? trImgs[o.trainer][v] : SPRITES[o.id].views[v];
       const s = o.trainer ? 4 : 3, w = img.width * s, hgt = img.height * s;
       // shadow, then the sprite standing on it
       c.fillStyle = 'rgba(0,0,0,0.28)';
       c.beginPath(); c.ellipse(75, 143, w * 0.32, w * 0.1, 0, 0, Math.PI * 2); c.fill();
-      c.save(); c.translate(75, 0); c.scale(flip, 1);
+      c.save(); c.translate(75, 0); c.scale(o.v === 'turning' ? flip : 1, 1);
       c.drawImage(img, -w / 2, 148 - hgt, w, hgt); c.restore();
     }
     function drawAll(t) { for (const o of canvases) if (o.v !== 'turning' || t === 0) draw(o, t); }
