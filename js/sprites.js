@@ -871,7 +871,7 @@ const MONSTER_ART = {
   // ears with pale insides; a big black nose; a ring of white ruff round the neck; and his smug half-shut stare.
   // The curled tail is ginger on top with lots of white fluff.
   smugshi(g, v = 'front') {
-    const O = TOSHI.coat, C = TOSHI.white, Ei = TOSHI.ear;
+    const O = TOSHI.coat, C = TOSHI.white, Ei = TOSHI.ear, PINK = '#e8b4a4';
     if (v === 'side') {
       g.ellipse(8, 15, 4.5, 4.5, O, { edge: true });                                             // curled tail
       g.ellipse(7.5, 14.5, 2.7, 2.7, C); g.px(7, 14, O.s);
@@ -880,12 +880,12 @@ const MONSTER_ART = {
       g.ellipse(14, 25.5, 7, 2, C);                                                              // white belly
       g.ellipse(20, 22, 3.5, 4.5, C);                                                            // white chest
       g.ellipse(11, 27.5, 1.9, 3, C, { edge: true }); g.ellipse(21, 27.5, 1.9, 3, C, { edge: true });   // white legs
-      g.ellipse(17, 17, 4.5, 3.2, C, { edge: true });                                            // white ruff round the neck
+      g.ellipse(17, 17, 4.5, 3.2, C);                                                            // white ruff from the throat round the neck
       g.poly([[14, 8], [13, 1], [17, 5]], O);                                                    // far ear
       g.ellipse(19, 12, 6.5, 5.5, O, { edge: true });                                            // head
       g.px(13, 15, C.b); g.px(13, 16, C.b); g.px(14, 17, C.b);                                   // the ruff showing behind the head
       g.poly([[17, 7], [19, 0], [22, 6]], O, { edge: true });                                    // near ear
-      g.poly([[18.5, 6], [19.3, 2.5], [21, 5.5]], Ei);
+      g.poly([[18.5, 6], [19.3, 2.5], [21, 5.5]], PINK);
       g.poly([[21, 12], [28, 13.5], [27.5, 16.5], [20, 17.5]], C, { edge: true });               // white muzzle
       g.ellipse(19.5, 15.5, 3, 2, C);                                                            // white cheek
       g.px(21, 9, C.b); g.px(22, 9, C.b);                                                        // eyebrow spot
@@ -898,26 +898,28 @@ const MONSTER_ART = {
       g.ellipseM(12, 27.5, 2.2, 3, C, { edge: true });                                           // white hind legs
       g.ellipse(16, 22, 7.5, 6, O, { edge: true });
       g.ellipse(16, 26, 4, 2.2, C);                                                              // white rear
-      g.polyM([[9, 9], [8.5, 1], [14, 6]], O, { edge: true });
-      g.ellipse(16, 17.5, 7.5, 2.4, C, { edge: true });                                          // white ruff round the neck
+      g.polyM([[7, 10], [6.5, 0], [13.5, 5.5]], O, { edge: true });                             // big upright ears
+      g.ellipse(16, 18.2, 7, 2.3, C);                                                            // white crescent across the shoulders
       g.ellipse(16, 12, 8, 6.2, O, { edge: true });
       g.ellipseM(9, 15, 1.6, 1.6, C);                                                            // cheek fluff peeking out
-      g.rect(11, 18, 10, 1, C.b);                                                                // the ruff under the nape
       g.ellipse(16, 19, 5, 4.5, O, { edge: true });                                              // the famous curled tail
       g.ellipse(16, 18.5, 3, 2.6, C); g.px(16, 18, O.s); g.px(17, 18, O.s);
       return;
     }
-    g.ellipse(26, 18, 4.5, 4.5, O, { edge: true });                                              // curled tail
-    g.ellipse(26.5, 17.5, 2.7, 2.7, C); g.px(26, 17, O.s);
-    g.ellipseM(12, 27, 2.4, 3.4, C, { edge: true });                                             // white legs
+    g.ellipse(25.5, 17.5, 4.5, 4.5, O, { edge: true });                                          // curled tail behind him
+    g.ellipse(26, 17, 3.2, 3.2, C); g.px(25, 17, O.l); g.px(26, 17, O.s);                        // lots of cream fluff in the curl
+    g.ellipseM(12, 27, 2.4, 3.4, C, { edge: true });                                             // white front legs
+    g.pxM(11, 30, C.s); g.pxM(13, 30, C.s);                                                      // toes
     g.ellipse(16, 22, 7.5, 6, O, { edge: true });                                                // body
-    g.ellipse(16, 23.5, 5, 5.5, C);                                                              // big white bib
-    g.polyM([[9, 9], [8.5, 1], [14, 6]], O, { edge: true });                                     // upright ears
-    g.polyM([[10, 7.5], [9.5, 3], [12.5, 6]], Ei);                                               // pale insides
-    g.ellipse(16, 12, 8, 6.5, O, { edge: true });                                                // head
-    g.ellipse(16, 15.5, 6, 3.6, C);                                                              // white muzzle
-    g.ellipseM(10.2, 14, 2.2, 2, C);                                                             // white cheeks up to the eyes
-    g.pxM(11, 9, C.b); g.pxM(12, 9, C.b);                                                        // eyebrow spots
+    g.ellipse(16, 23, 5.2, 6, C);                                                                // white chest
+    g.polyM([[7, 10], [6.5, 0], [13.5, 5.5]], O, { edge: true });                                // big upright ears, set wide
+    g.polyM([[8.3, 8], [7.8, 2.5], [11.8, 5.8]], PINK);                                          // pink insides
+    g.pxM(9, 4, C.b); g.pxM(10, 6, C.b);                                                         // white fur at the inner edge
+    g.ellipse(16, 12, 8.5, 6.5, O, { edge: true });                                              // head
+    g.ellipseM(10.5, 14.6, 2.8, 2.6, C);                                                         // white cheeks, up under the eyes
+    g.ellipse(16, 15.6, 4.6, 3, C);                                                              // white muzzle
+    g.rect(13, 17, 6, 3, C.b); g.rect(12, 18, 8, 2, C.b);                                        // white throat running into the chest (no chin line)
+    g.rectM(11, 9, 2, 1, C.b);                                                                   // pale eyebrow spots
     g.rectM(10, 11, 4, 1, OUTLINE);                                                              // smug half-shut lids
     g.rectM(11, 12, 2, 1, DARK_EYE);
     g.rect(15, 13, 2, 2, OUTLINE); g.px(15, 13, '#5a5060');                                      // big black nose
