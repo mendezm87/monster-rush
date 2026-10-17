@@ -2,7 +2,7 @@
 
 // Shown on the title screen so players can tell whether their browser has the latest
 // build (GitHub Pages lets browsers cache files for up to 10 minutes). Bump on every release.
-const VERSION = '2026.10.17-r17';
+const VERSION = '2026.10.17-r18';
 
 const App = {
   endless: false,   // the mode picked on the title screen
@@ -55,6 +55,14 @@ const muteBtn = $('#btn-mute');
 function toggleMute() { Sfx.init(); const m = Sfx.toggle(); muteBtn.textContent = 'Sound: ' + (m ? 'Off' : 'On'); }
 muteBtn.onclick = toggleMute;
 Input.onMute = toggleMute;
+
+// Room lighting can be switched off on slow devices (remembered in this browser).
+Lighting.on = Save.data.lighting !== false;
+function showLighting() { for (const id of ['#btn-light', '#btn-light2']) $(id).textContent = 'Lighting: ' + (Lighting.on ? 'On' : 'Off'); }
+function toggleLighting() { Sfx.init(); Sfx.play('select'); Lighting.on = !Lighting.on; Save.data.lighting = Lighting.on; Save.write(); showLighting(); }
+$('#btn-light').onclick = toggleLighting;
+$('#btn-light2').onclick = toggleLighting;
+showLighting();
 
 // ---------- starter pick ----------
 function openStarter() {

@@ -12,18 +12,21 @@ const STAGES = {
     ground: ['#3f7a3a', '#4b8a40', '#5a9a48', '#6aaa52', '#7fbb60'],
     wall: ['#4a4a3e', '#5e5e50', '#76766a', '#8a8a7a'], wallTop: '#2c4a26',
     weather: 'petals', decal: 'rgba(40,30,15,', bg: '#1c2e1a',
+    light: { amb: 'rgb(185,180,190)', torch: [255, 200, 120], tint: 'rgba(255,220,170,0.06)' },
   },
   crater: {
     name: 'Ember Crater',
     ground: ['#3a2a2a', '#4a3430', '#5a3e36', '#6c4a3c', '#80583f'],
     wall: ['#2a1c1a', '#3a2a28', '#5a4640', '#7e6458'], wallTop: '#ff7a3a',
     weather: 'ash', decal: 'rgba(15,8,8,', bg: '#140c0c',
+    light: { amb: 'rgb(130,95,90)', torch: [255, 140, 60], tint: 'rgba(255,120,40,0.08)' },
   },
   summit: {
     name: 'Snowy Summit',
     ground: ['#7f8796', '#959dab', '#a9b0bd', '#bfc5cf', '#d4d8df'],
     wall: ['#4a4e58', '#5e626c', '#8a8e98', '#c4c8d0'], wallTop: '#e8ecf2',
     weather: 'snow', decal: 'rgba(40,30,30,', bg: '#2a2e38',
+    light: { amb: 'rgb(160,170,195)', torch: [200, 220, 255], tint: 'rgba(180,200,255,0.06)' },
   },
   // deeper floors (endless mode)
   grotto: {
@@ -31,12 +34,14 @@ const STAGES = {
     ground: ['#2a2444', '#342c54', '#3e3462', '#4a3e72', '#584a86'],
     wall: ['#1c1830', '#2c2648', '#463c6a', '#6a5a9a'], wallTop: '#7af0e0',
     weather: 'motes', decal: 'rgba(10,8,20,', bg: '#120e20',
+    light: { amb: 'rgb(105,100,150)', torch: [120, 240, 230], tint: 'rgba(120,200,255,0.06)' },
   },
   ruins: {
     name: 'Sunken Ruins',
     ground: ['#8a7a52', '#9a8a5e', '#ab9a6a', '#bcab78', '#cdbc88'],
     wall: ['#5a4e36', '#6e6044', '#8a7a58', '#b0a07a'], wallTop: '#e8d8a8',
     weather: 'sand', decal: 'rgba(50,35,15,', bg: '#3a3222',
+    light: { amb: 'rgb(175,155,125)', torch: [255, 190, 110], tint: 'rgba(255,200,130,0.07)' },
   },
 };
 

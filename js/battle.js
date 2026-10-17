@@ -1345,6 +1345,7 @@ class Battle {
     ctx.translate(-Math.round(this.cam.x) + shx, -Math.round(this.cam.y) + shy);
     ctx.drawImage(this.ground, 0, 0);
     ctx.drawImage(this.decal, 0, 0);
+    Lighting.drawTorches(ctx, this.room, this.time);
     this.drawDoors(ctx);
     if (this.stairs) this.drawStairs(ctx);
     this.drawPickups(ctx);
@@ -1355,6 +1356,9 @@ class Battle {
     for (const m of this.mons) if (m.visible) actors.push({ y: m.y, draw: () => this.drawMon(ctx, m) });
     for (const ped of this.pedestals) actors.push({ y: ped.y, draw: () => this.drawPedestal(ctx, ped) });
     actors.sort((a, b) => a.y - b.y).forEach(a => a.draw());
+    // the room and everyone in it get lit; attacks and effects below stay crisp and unlit
+    Lighting.apply(ctx, this);
+    if (Lighting.on) this.drawTelegraphs(ctx, true);
 
     for (const m of this.mons) if (m.action && m.action.kind === 'beam' && m.visible) this.drawBeam(ctx, m, m.action);
     for (const p of this.projectiles) this.drawProjectile(ctx, p);
@@ -1371,6 +1375,8 @@ class Battle {
     this.drawFloats(ctx);
     ctx.setTransform(2, 0, 0, 2, 0, 0);
     this.drawWeather(ctx);
+    Lighting.overlay(ctx, this);
+    ctx.setTransform(2, 0, 0, 2, 0, 0);
     this.drawMinimap(ctx);
   }
 
@@ -1413,8 +1419,7 @@ class Battle {
     for (const k of this.pickups) {
       const img = k.kind === 'coin' ? COIN_IMG : BERRY_IMG;
       const X = Math.round(k.x), Y = Math.round(k.y);
-      ctx.fillStyle = 'rgba(0,0,0,0.3)';
-      ctx.beginPath(); ctx.ellipse(X, Y, 4, 1.6, 0, 0, TAU); ctx.fill();
+      Lighting.shadow(ctx, X, Y, 4, 1.6, 1.1);
       const bob = k.z > 0 ? k.z : Math.sin(this.time * 4 + k.x) > 0.5 ? 1 : 0;
       // coins spin by squashing sideways
       const sq = k.kind === 'coin' ? Math.max(0.3, Math.abs(Math.cos(this.time * 5 + k.x * 0.3))) : 1;
@@ -1425,8 +1430,7 @@ class Battle {
 
   drawPedestal(ctx, ped) {
     const X = Math.round(ped.x), Y = Math.round(ped.y);
-    ctx.fillStyle = 'rgba(0,0,0,0.3)';
-    ctx.beginPath(); ctx.ellipse(X, Y + 4, 22, 7, 0, 0, TAU); ctx.fill();
+    Lighting.shadow(ctx, X, Y + 4, 22, 7, 1.1);
     ctx.fillStyle = OUTLINE; ctx.fillRect(X - 19, Y - 7, 38, 13);
     ctx.fillStyle = ped.kind === 'relic' ? '#e0c060' : '#b8b0c8'; ctx.fillRect(X - 18, Y - 6, 36, 5);
     ctx.fillStyle = ped.kind === 'relic' ? '#a8862a' : '#7a7090'; ctx.fillRect(X - 18, Y - 1, 36, 6);
@@ -1476,8 +1480,7 @@ class Battle {
   drawTrainer(ctx) {
     const t = this.trainer, img = this.trainerImg[t.view];
     const px = Math.round(t.x), py = Math.round(t.y);
-    ctx.fillStyle = 'rgba(0,0,0,0.25)';
-    ctx.beginPath(); ctx.ellipse(px, py, 9, 3.5, 0, 0, TAU); ctx.fill();
+    Lighting.shadow(ctx, px, py, 9, 3.5, 0.9);
     const bob = t.moving ? -Math.round(Math.abs(Math.sin(t.walkT / 6 * Math.PI))) : (Math.sin(this.time * 2) > 0.7 ? -1 : 0);
     const w = img.width * SPR_SCALE, h = img.height * SPR_SCALE;
     ctx.save(); ctx.translate(px, 0); if (t.view === 'side' && t.face < 0) ctx.scale(-1, 1);
@@ -1498,8 +1501,7 @@ class Battle {
 
     // ground marker + shadow
     ctx.globalAlpha = alpha;
-    ctx.fillStyle = 'rgba(0,0,0,0.28)';
-    ctx.beginPath(); ctx.ellipse(X, Y, m.r + 2, m.r * 0.42, 0, 0, TAU); ctx.fill();
+    Lighting.shadow(ctx, X, Y, m.r + 2, m.r * 0.42);
     ctx.strokeStyle = mine ? 'rgba(90,160,255,0.75)' : m.boss ? 'rgba(255,200,60,0.8)' : 'rgba(255,90,80,0.6)';
     ctx.lineWidth = 1;
     ctx.beginPath(); ctx.ellipse(X, Y, m.r + 4, m.r * 0.5 + 1, 0, 0, TAU); ctx.stroke();
@@ -1544,7 +1546,9 @@ class Battle {
     }
   }
 
-  drawTelegraphs(ctx) {
+  // outlines: true redraws only the outlines (after the room lighting, so warnings stay bright)
+  drawTelegraphs(ctx, outlines = false) {
+    const fill = () => { if (!outlines) ctx.fill(); };
     const pulse = 0.55 + Math.sin(this.time * 14) * 0.2;
     ctx.lineWidth = 1.5;
     // a wild monster about to appear: a shadow growing on the ground
@@ -1552,7 +1556,7 @@ class Battle {
       if (m.spawnT <= 0) continue;
       const k = clamp(1 - m.spawnT / 0.7, 0, 1);
       ctx.globalAlpha = 0.2 + k * 0.3; ctx.fillStyle = '#000000';
-      ctx.beginPath(); ctx.ellipse(m.x, m.y, (m.r + 2) * k, (m.r * 0.45) * k, 0, 0, TAU); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(m.x, m.y, (m.r + 2) * k, (m.r * 0.45) * k, 0, 0, TAU); fill();
       ctx.globalAlpha = pulse; ctx.strokeStyle = m.boss ? '#ffd23f' : '#ff6a5a';
       ctx.setLineDash([3, 3]);
       ctx.beginPath(); ctx.ellipse(m.x, m.y, m.r + 6, m.r * 0.5 + 3, 0, 0, TAU); ctx.stroke();
@@ -1566,7 +1570,7 @@ class Battle {
         const fade = clamp(Math.min(age / 0.15, left / 0.4), 0, 1);
         const zx = z.x, zy = z.y, fx = TYPES[z.mv.type].fx;
         ctx.globalAlpha = 0.38 * fade; ctx.fillStyle = fx[0];
-        ctx.beginPath(); ctx.ellipse(zx, zy, z.r, z.r * 0.7, 0, 0, TAU); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(zx, zy, z.r, z.r * 0.7, 0, 0, TAU); fill();
         ctx.globalAlpha = 0.7 * fade; ctx.strokeStyle = fx[1]; ctx.lineWidth = 1.5;
         ctx.beginPath(); ctx.ellipse(zx, zy, z.r * (0.95 + Math.sin(this.time * 6) * 0.03), z.r * 0.68, 0, 0, TAU); ctx.stroke();
         for (let i = 0; i < 5; i++) {
@@ -1580,7 +1584,7 @@ class Battle {
       const k = clamp(z.t / z.delay, 0, 1), zx = z.x, zy = z.y;
       ctx.fillStyle = TYPES[z.mv.type].fx[0];
       ctx.globalAlpha = 0.18 + k * 0.2;
-      ctx.beginPath(); ctx.ellipse(zx, zy, z.r * k, z.r * k * 0.7, 0, 0, TAU); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(zx, zy, z.r * k, z.r * k * 0.7, 0, 0, TAU); fill();
       ctx.globalAlpha = pulse;
       ctx.strokeStyle = '#ffffff';
       ctx.setLineDash([4, 3]);
@@ -1595,7 +1599,7 @@ class Battle {
         const k = clamp(a.t / a.mv.delay, 0, 1);
         ctx.fillStyle = TYPES[a.mv.type].fx[0];
         ctx.globalAlpha = 0.15 + k * 0.2;
-        ctx.beginPath(); ctx.ellipse(X, Y, a.r * k, a.r * k * 0.7, 0, 0, TAU); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(X, Y, a.r * k, a.r * k * 0.7, 0, 0, TAU); fill();
         ctx.globalAlpha = pulse; ctx.strokeStyle = '#ffffff';
         ctx.setLineDash([4, 3]);
         ctx.beginPath(); ctx.ellipse(X, Y, a.r, a.r * 0.7, 0, 0, TAU); ctx.stroke();
@@ -1614,7 +1618,7 @@ class Battle {
         // swirling dashed rings marking the pull radius
         const fx = TYPES[a.mv.type].fx, fade = clamp(Math.min(a.t / 0.12, (a.mv.dur - a.t) / 0.2), 0, 1);
         ctx.globalAlpha = 0.16 * fade; ctx.fillStyle = fx[0];
-        ctx.beginPath(); ctx.ellipse(X, Y, a.mv.r, a.mv.r * 0.7, 0, 0, TAU); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(X, Y, a.mv.r, a.mv.r * 0.7, 0, 0, TAU); fill();
         ctx.lineWidth = 1.5;
         for (const [sc, spd, col] of [[1, 1, fx[2]], [0.66, -1.6, fx[1]], [0.33, 2.4, fx[2]]]) {
           ctx.globalAlpha = 0.75 * fade; ctx.strokeStyle = col;
