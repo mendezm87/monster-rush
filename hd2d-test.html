@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0d0b14">
+  <title>Monster Rush HD-2D Test</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap">
+  <style>
+    :root { --ink: #15111f; --font: "Lilita One", "Arial Black", "Segoe UI Black", Arial, system-ui, sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #0d0b14; color: #fff; font-family: var(--font); padding: 14px; }
+    h1 { margin: 0 0 6px; font-size: 30px; color: #ffe066; -webkit-text-stroke: 3px #3a1d05; paint-order: stroke fill; }
+    a { color: #7fd4ff; }
+    .hint { font: 600 14px/1.45 system-ui, sans-serif; opacity: .8; max-width: 1000px; margin-bottom: 10px; }
+    .bar { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin-bottom: 10px; }
+    .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+    .chips button { font: 900 15px var(--font); padding: 7px 14px; border-radius: 10px; border: 2px solid var(--ink); background: #2b2540; color: #ccc; cursor: pointer; }
+    .chips button.on { background: #ffd23f; color: var(--ink); }
+    #view { width: 100%; max-width: 1152px; aspect-ratio: 16 / 9; display: block; border-radius: 12px; background: #000; }
+    .label { font: 700 13px system-ui, sans-serif; opacity: .7; }
+  </style>
+</head>
+<body>
+  <h1>Look test: HD-2D</h1>
+  <div class="hint">The same room and the same 32-pixel monsters, drawn two ways. <b>Now</b> is how the game looks today. <b>HD-2D</b> keeps the pixel monsters but adds lighting (torches, glowing attacks that light up the room), soft shadows, a blur on the near and far edges like a camera lens, glow on beams and shots, and floating light motes. Flip between them and try each floor theme. Nothing in the game has changed. <a href="./">Back to the game</a> · <a href="gallery.html">Gallery</a></div>
+  <div class="bar">
+    <div class="chips" id="look"><button data-v="now">Now</button><button data-v="hd" class="on">HD-2D</button></div>
+    <div class="chips" id="stage"></div>
+  </div>
+  <canvas id="view" width="1152" height="648"></canvas>
+
+  <script src="js/data.js"></script>
+  <script src="js/pixel.js"></script>
+  <script src="js/sprites.js"></script>
+  <script src="js/arena.js"></script>
+  <script>
+    buildSprites();
+    const S = 2, SPR_SCALE = 1.5;      // canvas pixels per world unit, world units per sprite pixel (same as the game)
+    const view = document.getElementById('view'), ctx = view.getContext('2d');
+    const CW = view.width, CH = view.height;
+    const off = () => { const c = document.createElement('canvas'); c.width = CW; c.height = CH; return c; };
+    const sceneCv = off(), lightCv = off(), glowCv = off(), blurCv = off();
+    let look = 'hd', stageKey = 'grotto';
+    const rooms = {};
+    function room(key) {
+      if (!rooms[key]) {
+        const r = { w: W, h: H, doors: { n: 1, s: 1, w: 1 }, seed: 4242 };
+        rooms[key] = roomCanvas(r, key).canvas;
+      }
+      return rooms[key];
+    }
+    // lighting per theme: ambient darkness and the torch colour
+    const MOOD = {
+      meadow: { amb: 'rgb(185,180,190)', torch: [255, 200, 120], tint: 'rgba(255,220,170,0.06)' },
+      crater: { amb: 'rgb(130,95,90)', torch: [255, 140, 60], tint: 'rgba(255,120,40,0.08)' },
+      summit: { amb: 'rgb(160,170,195)', torch: [200, 220, 255], tint: 'rgba(180,200,255,0.06)' },
+      grotto: { amb: 'rgb(105,100,150)', torch: [120, 240, 230], tint: 'rgba(120,200,255,0.06)' },
+      ruins:  { amb: 'rgb(175,155,125)', torch: [255, 190, 110], tint: 'rgba(255,200,130,0.07)' },
+    };
+    const chips = document.getElementById('stage');
+    for (const key of Object.keys(STAGES)) {
+      const b = document.createElement('button'); b.textContent = STAGES[key].name; b.dataset.v = key;
+      if (key === stageKey) b.className = 'on';
+      b.onclick = () => { stageKey = key; chips.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); };
+      chips.appendChild(b);
+    }
+    document.getElementById('look').onclick = e => {
+      const b = e.target.closest('button'); if (!b) return;
+      look = b.dataset.v; document.querySelectorAll('#look button').forEach(x => x.classList.toggle('on', x === b));
+    };
+
+    // ---------- a tiny scripted fight ----------
+    const F = roomField({ w: W, h: H });
+    const toshi = { id: 'smugshi', x: 210, y: 220, face: 1, view: 'side' };
+    const wild = [{ id: 'sparkit', x: 400, y: 170, face: -1, view: 'front' }, { id: 'wispurr', x: 440, y: 260, face: -1, view: 'side' }];
+    const trainerImgs = { front: trainerCanvas(TRAINER_OUTFIT, 'front'), side: trainerCanvas(TRAINER_OUTFIT, 'side') };
+    const trainer = { x: 170, y: 232 };
+    const torches = [{ x: 120, y: 26 }, { x: 456, y: 26 }, { x: 13, y: 250 }];
+    const shots = [];
+    let beam = null, beamT = 0, shotT = 1.2;
+    const motes = Array.from({ length: 40 }, () => ({ x: Math.random() * W, y: Math.random() * H, vy: -4 - Math.random() * 8, ph: Math.random() * 6 }));
+
+    function step(t, dt) {
+      toshi.x = 200 + Math.sin(t * 0.7) * 40; toshi.y = 220 + Math.sin(t * 1.1) * 18;
+      toshi.face = Math.cos(t * 0.7) >= 0 ? 1 : 1;
+      trainer.x = toshi.x - 38; trainer.y = toshi.y + 10;
+      wild[0].y = 170 + Math.sin(t * 1.3) * 20; wild[1].x = 440 + Math.sin(t * 0.9) * 26;
+      beamT -= dt; shotT -= dt;
+      if (beamT <= 0 && !beam) { beam = { t: 0, tgt: wild[(Math.random() * 2) | 0] }; }
+      if (beam) { beam.t += dt; if (beam.t > 1.3) { beam = null; beamT = 2.2; } }
+      if (shotT <= 0) { shotT = 1.6; const w = wild[0]; const a = Math.atan2(toshi.y - 14 - (w.y - 14), toshi.x - w.x); shots.push({ x: w.x, y: w.y - 14, vx: Math.cos(a) * 160, vy: Math.sin(a) * 160, life: 1.6 }); }
+      for (const s of shots) { s.x += s.vx * dt; s.y += s.vy * dt; s.life -= dt; }
+      for (let i = shots.length - 1; i >= 0; i--) if (shots[i].life <= 0) shots.splice(i, 1);
+      for (const m of motes) { m.y += m.vy * dt; m.x += Math.sin(t + m.ph) * 4 * dt; if (m.y < -4) { m.y = H + 4; m.x = Math.random() * W; } }
+    }
+
+    // ---------- drawing ----------
+    function sprite(c, img, x, y, face = 1, scale = SPR_SCALE) {
+      const w = img.width * scale * S, h = img.height * scale * S;
+      c.save(); c.translate(Math.round(x * S), 0); if (face < 0) c.scale(-1, 1);
+      c.drawImage(img, Math.round(-w / 2), Math.round(y * S - h + 3 * S), w, h); c.restore();
+    }
+    const bob = (t, k) => (Math.sin(t * 3 + k) > 0.6 ? -1 : 0);
+    function drawScene(c, t, hd) {
+      c.imageSmoothingEnabled = false;
+      c.setTransform(1, 0, 0, 1, 0, 0);
+      c.drawImage(room(stageKey), 0, 0, W * S, H * S);
+      // torches on the walls
+      for (const tc of torches) {
+        const fl = Math.sin(t * 13 + tc.x) * 0.5 + 0.5;
+        c.fillStyle = '#3a2a22'; c.fillRect((tc.x - 2) * S, (tc.y - 2) * S, 4 * S, 10 * S);
+        c.fillStyle = '#ff7a1c'; c.fillRect((tc.x - 3) * S, (tc.y - 8 - fl) * S, 6 * S, 6 * S);
+        c.fillStyle = '#ffe066'; c.fillRect((tc.x - 1.5) * S, (tc.y - 6 - fl) * S, 3 * S, 3 * S);
+      }
+      // shadows: hard ellipses now, soft blurred ones in HD-2D
+      const actors = [{ ...toshi, r: 13 }, ...wild.map(w => ({ ...w, r: 13 })), { x: trainer.x, y: trainer.y, r: 9 }];
+      c.save();
+      if (hd) c.filter = 'blur(5px)';
+      for (const a of actors) {
+        c.fillStyle = hd ? 'rgba(0,0,0,0.45)' : 'rgba(0,0,0,0.28)';
+        c.beginPath(); c.ellipse(a.x * S + (hd ? 10 : 0), a.y * S + (hd ? 2 : 0), (a.r + (hd ? 6 : 2)) * S, a.r * 0.42 * S, 0, 0, Math.PI * 2); c.fill();
+      }
+      c.restore();
+      // actors, back to front
+      const list = [
+        { y: trainer.y, d: () => sprite(c, trainerImgs.side, trainer.x, trainer.y + bob(t, 2) * 0, 1) },
+        { y: toshi.y, d: () => sprite(c, SPRITES.smugshi.views.side, toshi.x, toshi.y + bob(t, 0), 1) },
+        ...wild.map((w, i) => ({ y: w.y, d: () => sprite(c, SPRITES[w.id].views[w.view], w.x, w.y + bob(t, i + 1), w.face) })),
+      ].sort((a, b) => a.y - b.y);
+      list.forEach(a => a.d());
+      // shots and the beam
+      for (const s of shots) {
+        c.fillStyle = '#ffd84a'; c.beginPath(); c.arc(s.x * S, s.y * S, 6 * S / 2 + 2, 0, Math.PI * 2); c.fill();
+        c.fillStyle = '#fff6c8'; c.beginPath(); c.arc(s.x * S, s.y * S, 3, 0, Math.PI * 2); c.fill();
+      }
+      if (beam) drawBeam(c, t, 1);
+    }
+    function beamGeom() {
+      const ox = toshi.x + 8, oy = toshi.y - 16, tx = beam.tgt.x, ty = beam.tgt.y - 14;
+      return { ox, oy, a: Math.atan2(ty - oy, tx - ox), len: Math.hypot(tx - ox, ty - oy) + 20 };
+    }
+    function drawBeam(c, t, k) {
+      const { ox, oy, a, len } = beamGeom(), on = beam.t > 0.35, w = on ? 11 * Math.min(1, (1.3 - beam.t) / 0.2) : 4 * (beam.t / 0.35);
+      c.save(); c.translate(ox * S, oy * S); c.rotate(a);
+      const L = on ? len * S : 0;
+      for (const [col, sc] of [['#ff8ac0', 1.6], ['#ffb4dc', 1], ['#ffffff', 0.45]]) {
+        c.fillStyle = col; c.beginPath(); c.roundRect(0, -w * sc * k, Math.max(4, L), w * 2 * sc * k, w * sc * k); c.fill();
+      }
+      c.fillStyle = '#ffffff'; c.beginPath(); c.arc(0, 0, (w + 3) * k, 0, Math.PI * 2); c.fill();
+      c.restore();
+    }
+    // light map: dark ambient, bright where the torches, beam and shots are
+    function drawLights(c, t) {
+      const m = MOOD[stageKey];
+      c.setTransform(1, 0, 0, 1, 0, 0); c.globalCompositeOperation = 'source-over';
+      c.fillStyle = m.amb; c.fillRect(0, 0, CW, CH);
+      c.globalCompositeOperation = 'lighter';
+      const light = (x, y, r, [R, G, B], a) => {
+        const g = c.createRadialGradient(x * S, y * S, 0, x * S, y * S, r * S);
+        g.addColorStop(0, `rgba(${R},${G},${B},${a})`); g.addColorStop(1, `rgba(${R},${G},${B},0)`);
+        c.fillStyle = g; c.fillRect(x * S - r * S, y * S - r * S, r * 2 * S, r * 2 * S);
+      };
+      for (const tc of torches) light(tc.x, tc.y + 14, 200 + Math.sin(t * 9 + tc.x) * 10, m.torch, 0.85);
+      light(toshi.x, toshi.y - 10, 110, [255, 235, 210], 0.35);
+      for (const w of wild) light(w.x, w.y - 10, 70, [255, 235, 210], 0.18);         // a soft light that follows your monster
+      for (const s of shots) light(s.x, s.y, 70, [255, 220, 90], 0.7);
+      if (beam) {
+        const { ox, oy, a, len } = beamGeom(), on = beam.t > 0.35;
+        for (let d = 0; d <= (on ? len : 0); d += 30) light(ox + Math.cos(a) * d, oy + Math.sin(a) * d, 80, [255, 150, 210], 0.35);
+        light(ox, oy, 70, [255, 180, 220], 0.6);
+      }
+      c.globalCompositeOperation = 'source-over';
+    }
+    // bloom: the bright things, blurred and added on top
+    function drawGlow(c, t) {
+      c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, CW, CH);
+      for (const s of shots) { c.fillStyle = '#ffd84a'; c.beginPath(); c.arc(s.x * S, s.y * S, 10, 0, Math.PI * 2); c.fill(); }
+      for (const tc of torches) { c.fillStyle = '#ff9a3a'; c.fillRect((tc.x - 4) * S, (tc.y - 10) * S, 8 * S, 8 * S); }
+      if (beam) drawBeam(c, t, 1.1);
+    }
+
+    let last = performance.now(), T = 0;
+    function frame(now) {
+      const dt = Math.min(0.05, (now - last) / 1000); last = now; T += dt;
+      step(T, dt);
+      const hd = look === 'hd';
+      const sc = sceneCv.getContext('2d');
+      sc.setTransform(1, 0, 0, 1, 0, 0); sc.clearRect(0, 0, CW, CH);
+      drawScene(sc, T, hd);
+      ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalCompositeOperation = 'source-over'; ctx.filter = 'none';
+      if (!hd) { ctx.drawImage(sceneCv, 0, 0); requestAnimationFrame(frame); return; }
+
+      // 1. lit scene = scene x light map
+      const lc = lightCv.getContext('2d'); drawLights(lc, T);
+      ctx.drawImage(sceneCv, 0, 0);
+      ctx.globalCompositeOperation = 'multiply'; ctx.drawImage(lightCv, 0, 0);
+      // 2. a little extra brightness where the light is strong
+      ctx.globalCompositeOperation = 'soft-light'; ctx.globalAlpha = 0.5; ctx.drawImage(lightCv, 0, 0); ctx.globalAlpha = 1;
+      // 3. bloom
+      const gc = glowCv.getContext('2d'); drawGlow(gc, T);
+      ctx.globalCompositeOperation = 'lighter'; ctx.filter = 'blur(14px)'; ctx.globalAlpha = 0.5; ctx.drawImage(glowCv, 0, 0);
+      ctx.filter = 'blur(4px)'; ctx.globalAlpha = 0.3; ctx.drawImage(glowCv, 0, 0);
+      ctx.filter = 'none'; ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+      // 4. depth blur: the far wall and the near edge go soft, like a camera lens
+      const bc = blurCv.getContext('2d');
+      bc.setTransform(1, 0, 0, 1, 0, 0); bc.globalCompositeOperation = 'source-over'; bc.clearRect(0, 0, CW, CH);
+      bc.filter = 'blur(5px)'; bc.drawImage(view, 0, 0); bc.filter = 'none';
+      const mask = bc.createLinearGradient(0, 0, 0, CH);
+      mask.addColorStop(0, 'rgba(0,0,0,1)'); mask.addColorStop(0.16, 'rgba(0,0,0,0)'); mask.addColorStop(0.84, 'rgba(0,0,0,0)'); mask.addColorStop(1, 'rgba(0,0,0,1)');
+      bc.globalCompositeOperation = 'destination-in'; bc.fillStyle = mask; bc.fillRect(0, 0, CW, CH);
+      ctx.drawImage(blurCv, 0, 0);
+      // 5. floating light motes
+      ctx.globalCompositeOperation = 'lighter';
+      const m = MOOD[stageKey];
+      for (const mo of motes) {
+        const a = 0.35 + Math.sin(T * 2 + mo.ph) * 0.25;
+        const g = ctx.createRadialGradient(mo.x * S, mo.y * S, 0, mo.x * S, mo.y * S, 7);
+        g.addColorStop(0, `rgba(${m.torch[0]},${m.torch[1]},${m.torch[2]},${a})`); g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = g; ctx.fillRect(mo.x * S - 7, mo.y * S - 7, 14, 14);
+      }
+      // 6. colour grade and vignette
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.fillStyle = m.tint; ctx.fillRect(0, 0, CW, CH);
+      const v = ctx.createRadialGradient(CW / 2, CH / 2, CH * 0.35, CW / 2, CH / 2, CH * 0.95);
+      v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,0.55)');
+      ctx.fillStyle = v; ctx.fillRect(0, 0, CW, CH);
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  </script>
+</body>
+</html>
