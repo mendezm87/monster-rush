@@ -196,6 +196,7 @@ body.no-touch #swap-tray { bottom: 27cqh; }
 .small-btn { font: 900 3.8cqh var(--font); padding: 1.6cqh 5cqh; border-radius: 2.4cqh; border: 0.6cqh solid var(--ink);
   background: #3a3358; color: #fff; cursor: pointer; }
 .small-btn:disabled { opacity: .4; }
+a.small-btn { text-decoration: none; display: inline-block; }
 
 .help { text-align: left; font: 700 3.3cqh/1.45 system-ui, sans-serif; padding-left: 5cqh; margin: 0; max-width: 150cqh; }
 .help li { margin-bottom: 1.2cqh; }

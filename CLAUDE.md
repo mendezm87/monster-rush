@@ -43,7 +43,7 @@ A real-time, top-down pixel-art **roguelike** in the style of *The Binding of Is
 
 - **Monsters and the trainer turn to face where they go:** every design has `front`, `side` (facing right, flipped for left) and `back` views (`MONSTER_ART[id](grid, view)`). A new monster needs all three.
 - **Leveling:** XP per wild monster beaten (`XP_WILD`/`XP_TOUGH`/`XP_BOSS`), full for the active monster, half for the rest; each level +3.5% HP, +2% attack/defence, heals 5%. Recruits join a level below the party's average.
-- **Evolution:** the three starters evolve at level 6 (`EVOLVE_LEVEL`) once a room is cleared: Smugshi -> **Smugshogun** (grown-up Toshi: neck ruff, samurai headband, red cape, still smug), Cinderox -> **Infernox** (fire/ground magma bull: blazing mane, curved horns, lava-cracked rock shoulders, nose ring, glowing eyes), Tidalisk -> **Maelstrisk** (water/dragon sea dragon: coil, teal fin-wings, gold horns, whiskers). Each has its own hand-drawn 44px art in all three views (the owner asked for all-new art, not scaled-up starters). **Not every monster needs to evolve** (owner's call); only the starters do for now.
+- **Evolution:** the three starters evolve at level 6 (`EVOLVE_LEVEL`) once a room is cleared: Smugshi -> **Smugshogun** (grown-up Toshi: neck ruff, samurai headband, red cape, still smug), Cinderox -> **Infernox** (fire/ground magma bull: blazing mane, curved horns, lava-cracked rock shoulders, nose ring, glowing eyes), Tidalisk -> **Maelstrisk** (water/dragon sea dragon: coil, teal fin-wings, gold horns, whiskers). Each has its own hand-drawn 44px art in all three views (the owner asked for all-new art, not scaled-up starters). So far only the starters evolve. **More monsters can evolve, but not every monster needs to** (the owner's words); designs get worked out with the owner as we go.
 - **Every floor has a shop and a treasure room** (dead ends, like the boss and recruit rooms). The shop sells a Big Berry, a Picnic Basket or Revive Seed, and two relics; the treasure room has one free relic.
 - **Relics** (`RELICS` in `js/dungeon.js`) last the run and help the whole party: Leech Lens (beams drain), Ember Tracks (dashes leave fire), Muscle Charm, Iron Shell, Swift Boots, Hourglass, Lucky Coin, Berry Basket, Split Shot, Static Charm, Blast Core.
 - **Saved unlocks** (`Save`, localStorage key `monsterRush.save.v1`): beating a monster as a boss unlocks it as a starter; runs, wins and best floor show on the title screen.
@@ -54,7 +54,7 @@ A real-time, top-down pixel-art **roguelike** in the style of *The Binding of Is
 
 ### Not decided yet (ask the owner when it matters)
 
-Whether more monsters evolve (and into what); more relics and unlock types; whether the evolved starters' designs are what the owner wants.
+Which other monsters evolve and into what (to design together); more relics and unlock types; whether the evolved starters' designs are what the owner wants.
 
 ## Rules carried over from the arena game (keep these)
 
@@ -81,6 +81,7 @@ Whether more monsters evolve (and into what); more relics and unlock types; whet
 | `js/battle.js` | `Mon` (levels, `look()` for facing, `setDef` for evolving), `AI` (one brain per wild monster), `Battle` = one room: exploring, doors, pedestals (recruits, shop, treasure), multi-enemy fights (`foe(m)` = nearest target, `foes(m)` = everything an attack can hit), relic effects (`relic(m, id)`), loot, XP, evolution, trainer follow, camera, rendering, minimap; `ICON_ART`/`itemIcon` for relic and shop icons |
 | `js/audio.js` | `Sfx`: synthesized SFX (incl. `coin`, `doorShut`, `doorOpen`, `stairs`), `beamCharge`/`beamFire` + per-type layers, `Sfx.music` sequencer, `_offline` render hook for level checks |
 | `js/ui.js`, `js/main.js` | HUD (active monster, boss bar), callouts, swap tray, starter / recruit / party / pick / result screens, room-to-room flow (`enterRoom`, `roomHooks`), game loop, `VERSION` |
+| `gallery.html` | Sprite gallery (linked from the title screen): every monster and the trainer in front/side/back plus a turning preview, on any floor theme. New monsters appear in it automatically |
 | `js/input.js` | Keyboard, mouse, touch and gamepad input (`Input.dir(p)`, `Input.moves(p)`, `Input.mouse`) |
 
 ## Testing

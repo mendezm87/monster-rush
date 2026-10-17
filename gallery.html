@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0d0b14">
+  <title>Monster Rush Gallery</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap">
+  <style>
+    :root { --ink: #15111f; --font: "Lilita One", "Arial Black", "Segoe UI Black", Arial, system-ui, sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #0d0b14; color: #fff; font-family: var(--font); padding: 16px; }
+    header { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; margin-bottom: 16px; }
+    h1 { margin: 0; font-size: 34px; color: #ffe066; -webkit-text-stroke: 3px #3a1d05; paint-order: stroke fill; }
+    h2 { font-size: 22px; margin: 24px 0 10px; color: #ffe066; }
+    a { color: #7fd4ff; }
+    .hint { font: 600 14px/1.4 system-ui, sans-serif; opacity: .75; max-width: 900px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chips button { font: 900 14px var(--font); padding: 6px 12px; border-radius: 10px; border: 2px solid var(--ink); background: #2b2540; color: #ccc; cursor: pointer; }
+    .chips button.on { background: #ffd23f; color: var(--ink); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 12px; }
+    .card { background: #1c1730; border: 2px solid #3a3358; border-radius: 14px; padding: 10px 12px; }
+    .card.evo { border-color: #d8a23a; }
+    .top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+    .name { font-size: 20px; }
+    .tags { display: flex; gap: 4px; }
+    .tag { font-size: 11px; padding: 2px 7px; border-radius: 6px; color: #fff; -webkit-text-stroke: 1px rgba(0,0,0,.5); paint-order: stroke fill; border: 1px solid rgba(0,0,0,.45); }
+    .views { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 8px 0 4px; }
+    .views figure { margin: 0; text-align: center; }
+    .views canvas { width: 100%; aspect-ratio: 1; image-rendering: pixelated; border-radius: 8px; display: block; }
+    figcaption { font: 700 11px system-ui, sans-serif; opacity: .7; margin-top: 3px; }
+    .note { font: 600 12px/1.4 system-ui, sans-serif; opacity: .8; }
+    .note b { color: #ffe066; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Monster Gallery</h1>
+    <div class="chips" id="bg"></div>
+    <a href="./">Back to the game</a>
+  </header>
+  <div class="hint">Every monster in front, side and back view, at 3 pixels per sprite pixel (the size they are in the game, doubled). The last box spins through the views the way the monster turns while it moves. Pick a floor theme above to see them on different ground.</div>
+  <div id="sections"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/pixel.js"></script>
+  <script src="js/sprites.js"></script>
+  <script src="js/arena.js"></script>
+  <script>
+    buildSprites();
+    const VIEW_NAMES = { front: 'front', side: 'side', back: 'back' };
+    const SPIN = [['front', 1], ['side', 1], ['back', 1], ['side', -1]];
+    const tag = t => `<span class="tag" style="background:${TYPES[t].color}">${TYPES[t].name}</span>`;
+    const canvases = [];   // [canvas, id, view, flip]
+    let stage = 'meadow';
+
+    function card(def) {
+      const el = document.createElement('div');
+      el.className = 'card' + (def.from ? ' evo' : '');
+      let note = '';
+      if (def.evolve) note = `Evolves into <b>${ROSTER_BY_ID[def.evolve.to].name}</b> at level ${def.evolve.level}.`;
+      if (def.from) note = `Evolved form of <b>${ROSTER_BY_ID[def.from].name}</b>.`;
+      if (def.id === 'smugshi') note = 'Toshi, the real dog. ' + note;
+      el.innerHTML = `<div class="top"><span class="name">${def.name}</span><span class="tags">${def.types.map(tag).join('')}</span></div>
+        <div class="views">${['front', 'side', 'back', 'turning'].map(v => `<figure><canvas width="150" height="150" data-v="${v}"></canvas><figcaption>${v}</figcaption></figure>`).join('')}</div>
+        <div class="note">${note || '&nbsp;'}</div>`;
+      el.querySelectorAll('canvas').forEach(cv => canvases.push({ cv, id: def.id, v: cv.dataset.v }));
+      return el;
+    }
+
+    function section(title, defs) {
+      const h = document.createElement('h2'); h.textContent = title;
+      const g = document.createElement('div'); g.className = 'grid';
+      defs.forEach(d => g.appendChild(card(d)));
+      $sections.append(h, g);
+    }
+    const $sections = document.getElementById('sections');
+    const starters = ['smugshi', 'cinderox', 'tidalisk'];
+    section('Starters and their evolutions', starters.flatMap(id => [ROSTER_BY_ID[id], ROSTER_BY_ID[ROSTER_BY_ID[id].evolve.to]]));
+    section('Everyone else', ROSTER.filter(m => !starters.includes(m.id)));
+
+    // the trainer too
+    const tr = document.createElement('div'); tr.className = 'card';
+    tr.innerHTML = `<div class="top"><span class="name">TRAINER</span></div><div class="views">${['front', 'side', 'back', 'turning'].map(v => `<figure><canvas width="150" height="150" data-v="${v}"></canvas><figcaption>${v}</figcaption></figure>`).join('')}</div><div class="note">Follows your monster around.</div>`;
+    const trImg = { front: trainerCanvas('player', false), side: trainerCanvas('player', 'side'), back: trainerCanvas('player', true) };
+    tr.querySelectorAll('canvas').forEach(cv => canvases.push({ cv, trainer: true, v: cv.dataset.v }));
+    const h = document.createElement('h2'); h.textContent = 'People';
+    const g = document.createElement('div'); g.className = 'grid'; g.appendChild(tr);
+    $sections.append(h, g);
+
+    // floor theme picker: each box sits on a patch of that floor's ground
+    const grounds = {};
+    function ground(key) {
+      return grounds[key] || (grounds[key] = buildBackdrop(key, 99).canvas);
+    }
+    const bg = document.getElementById('bg');
+    for (const key of Object.keys(STAGES)) {
+      const b = document.createElement('button');
+      b.textContent = STAGES[key].name; b.className = key === stage ? 'on' : '';
+      b.onclick = () => { stage = key; bg.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); drawAll(0); };
+      bg.appendChild(b);
+    }
+
+    function draw(o, t) {
+      const c = o.cv.getContext('2d');
+      c.imageSmoothingEnabled = false;
+      c.drawImage(ground(stage), 200, 110, 150, 150, 0, 0, 150, 150);
+      let v = o.v, flip = 1;
+      if (v === 'turning') { [v, flip] = SPIN[Math.floor(t / 0.6) % SPIN.length]; }
+      const img = o.trainer ? trImg[v] : SPRITES[o.id].views[v];
+      const s = o.trainer ? 4 : 3, w = img.width * s, hgt = img.height * s;
+      // shadow, then the sprite standing on it
+      c.fillStyle = 'rgba(0,0,0,0.28)';
+      c.beginPath(); c.ellipse(75, 143, w * 0.32, w * 0.1, 0, 0, Math.PI * 2); c.fill();
+      c.save(); c.translate(75, 0); c.scale(flip, 1);
+      c.drawImage(img, -w / 2, 148 - hgt, w, hgt); c.restore();
+    }
+    function drawAll(t) { for (const o of canvases) if (o.v !== 'turning' || t === 0) draw(o, t); }
+    drawAll(0);
+    let start = performance.now();
+    (function loop(now) {
+      const t = Math.max(0, (now - start) / 1000);
+      for (const o of canvases) if (o.v === 'turning') draw(o, t);
+      requestAnimationFrame(loop);
+    })(start);
+  </script>
+</body>
+</html>
