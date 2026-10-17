@@ -38,10 +38,10 @@ const BERRY_IMG = gridFromMap([
 
 // Lazily tinted sprite variants (freeze / burn / paralysis / buff glow).
 const _tint = {};
-function tinted(id, color) {
-  const key = id + color;
+function tinted(id, color, view = 'front') {
+  const key = id + color + view;
   if (_tint[key]) return _tint[key];
-  const src = SPRITES[id].img;
+  const src = SPRITES[id].views[view];
   const cv = document.createElement('canvas');
   cv.width = src.width; cv.height = src.height;
   const c = cv.getContext('2d');
@@ -75,7 +75,7 @@ class Mon {
   }
   reset() {
     this.x = 0; this.y = 0; this.vx = 0; this.vy = 0; this.kx = 0; this.ky = 0;
-    this.face = 1; this.walkT = 0;
+    this.face = 1; this.walkT = 0; this.view = 'front';
     this.cd = [0, 0, 0, 0]; this.gcd = 0;
     this.slowT = 0;          // status (PAR/BRN/FRZ) deliberately survives a swap
     this.buffs = []; this.action = null; this.stunT = 0;
@@ -92,6 +92,15 @@ class Mon {
       (this.status === 'par' ? 0.55 : 1) * (this.slowT > 0 ? 0.55 : 1);
   }
   canAct() { return this.visible && !this.fainted && !this.action && this.stunT <= 0 && this.status !== 'frz'; }
+  // Turn to look along (dx, dy): the back when heading up the screen, the front when
+  // heading down, the side (flipped by face) otherwise. A little hysteresis stops flicker.
+  look(dx, dy) {
+    const ax = Math.abs(dx), ay = Math.abs(dy);
+    if (ax < 0.001 && ay < 0.001) return;
+    const k = this.view === 'side' ? 1.6 : 0.8;
+    if (ay > ax * k) this.view = dy < 0 ? 'back' : 'front';
+    else { this.view = 'side'; if (ax > 0.001) this.face = Math.sign(dx); }
+  }
 }
 
 // ------------------------------------------------------------------ CPU brain
@@ -230,7 +239,7 @@ class Battle {
     this.ground = built.canvas; this.stage = built.stage;
     if (!room.decal) { room.decal = document.createElement('canvas'); room.decal.width = room.w; room.decal.height = room.h; }
     this.decal = room.decal; this.dctx = this.decal.getContext('2d');
-    this.trainerImg = { front: trainerCanvas('player', false), back: trainerCanvas('player', true) };
+    this.trainerImg = { front: trainerCanvas('player', false), back: trainerCanvas('player', true), side: trainerCanvas('player', 'side') };
     this.projectiles = []; this.zones = []; this.particles = []; this.floats = []; this.texts = []; this.balls = [];
     this.pickups = room.pickups;
     this.weather = Array.from({ length: 70 }, () => this.newFlake(true));
@@ -251,9 +260,10 @@ class Battle {
       px = d.x - dx * 26; py = d.y - dy * 26 + (dy === 0 ? 10 : 0) + (entry === 'n' ? P.r : 0);
       tx = d.x - dx * 4; ty = d.y - dy * 4 + (dy === 0 ? 10 : 0) + (entry === 'n' ? P.r : 0);
       P.face = dx !== 0 ? -dx : 1;
+      P.look(-dx, -dy);
     }
     P.x = px; P.y = py;
-    this.trainer = { x: tx, y: ty, back: entry === 's', walkT: 0, moving: false };
+    this.trainer = { x: tx, y: ty, view: entry === 's' ? 'back' : entry === 'w' || entry === 'e' ? 'side' : 'front', face: entry === 'e' ? -1 : 1, walkT: 0, moving: false };
     this.cam = { x: 0, y: 0 };
     this.updateCamera(1);
 
@@ -501,6 +511,7 @@ class Battle {
     this.ui.callout(m.side, mv.name, mv.type);
     const dir = this.aim(m, foe, mv);
     if (Math.abs(Math.cos(dir)) > 0.2) m.face = Math.cos(dir) > 0 ? 1 : -1;
+    m.look(Math.cos(dir), Math.sin(dir));
     const fx = TYPES[mv.type].fx;
 
     switch (mv.kind) {
@@ -751,7 +762,9 @@ class Battle {
       const step = Math.min(d - gap, Math.max(70, (d - gap) * 5) * dt);
       t.x += dx / d * step; t.y += dy / d * step;
       t.walkT += step; t.moving = step > 0.2;
-      if (Math.abs(dy) > Math.abs(dx) * 0.6) t.back = dy < 0;
+      const ax = Math.abs(dx), ay = Math.abs(dy), k = t.view === 'side' ? 1.6 : 0.8;
+      if (ay > ax * k) t.view = dy < 0 ? 'back' : 'front';
+      else { t.view = 'side'; t.face = Math.sign(dx) || 1; }
     }
     t.x = clamp(t.x, F.x0 - 30, F.x1 + 30); t.y = clamp(t.y, F.y0 - 20, F.y1 + 30);
   }
@@ -855,10 +868,11 @@ class Battle {
     m.y = clamp(m.y + (m.vy + m.ky) * dt, B.y0, B.y1);
     const sp = Math.hypot(m.vx, m.vy);
     m.walkT += sp * dt;
-    if (!lock) {
+    if (a && a.dir !== undefined && a.kind !== 'cast') m.look(Math.cos(a.dir), Math.sin(a.dir));
+    else if (!lock) {
       const foe = this.foe(m);
-      if (Math.abs(m.vx) > 12) m.face = Math.sign(m.vx);
-      else if (foe && sp < 12 && Math.abs(foe.x - m.x) > 4) m.face = Math.sign(foe.x - m.x);
+      if (sp > 12) m.look(m.vx, m.vy);
+      else if (foe && this.state === 'fight' && dist(foe, m) > 6) m.look(foe.x - m.x, foe.y - m.y);
     }
   }
 
@@ -929,7 +943,7 @@ class Battle {
           break;
         }
         m.ghostT -= dt;
-        if (m.ghostT <= 0) { m.ghostT = 0.03; m.ghosts.push({ x: m.x, y: m.y, face: m.face, t: 0.22, color: fx[1] }); }
+        if (m.ghostT <= 0) { m.ghostT = 0.03; m.ghosts.push({ x: m.x, y: m.y, face: m.face, view: m.view, t: 0.22, color: fx[1] }); }
         if (Math.random() < 0.7) this.particles.push({ x: m.x + rand(-6, 6), y: m.cy + rand(-6, 6), vx: -m.vx * 0.2, vy: -m.vy * 0.2, life: 0.3, max: 0.3, size: 2, color: fx[rand() < 0.5 ? 0 : 1], kind: 'sq' });
         const foe = !a.hit && this.foes(m).find(f => Math.hypot(m.x - f.x, m.cy - f.cy) < m.r + f.r + 4);
         if (foe) {
@@ -1319,13 +1333,15 @@ class Battle {
   }
 
   drawTrainer(ctx) {
-    const t = this.trainer, img = t.back ? this.trainerImg.back : this.trainerImg.front;
+    const t = this.trainer, img = this.trainerImg[t.view];
     const px = Math.round(t.x), py = Math.round(t.y);
     ctx.fillStyle = 'rgba(0,0,0,0.25)';
     ctx.beginPath(); ctx.ellipse(px, py, 9, 3.5, 0, 0, TAU); ctx.fill();
     const bob = t.moving ? -Math.round(Math.abs(Math.sin(t.walkT / 6 * Math.PI))) : (Math.sin(this.time * 2) > 0.7 ? -1 : 0);
     const w = img.width * SPR_SCALE, h = img.height * SPR_SCALE;
-    ctx.drawImage(img, Math.round(px - w / 2), Math.round(py - h + 1 + bob), w, h);
+    ctx.save(); ctx.translate(px, 0); if (t.view === 'side' && t.face < 0) ctx.scale(-1, 1);
+    ctx.drawImage(img, Math.round(-w / 2), Math.round(py - h + 1 + bob), w, h);
+    ctx.restore();
   }
 
   drawMon(ctx, m) {
@@ -1351,7 +1367,7 @@ class Battle {
     for (const g of m.ghosts) {
       ctx.globalAlpha = (g.t / 0.22) * 0.5 * alpha;
       ctx.save(); ctx.translate(Math.round(g.x), Math.round(g.y)); if (g.face < 0) ctx.scale(-1, 1);
-      ctx.drawImage(tinted(m.id, g.color), -S / 2, -S + 3, S, S); ctx.restore();
+      ctx.drawImage(tinted(m.id, g.color, g.view), -S / 2, -S + 3, S, S); ctx.restore();
     }
     ctx.globalAlpha = alpha;
 
@@ -1367,7 +1383,7 @@ class Battle {
     ctx.translate(X, Math.round(Y + bob + sink));
     if (m.face < 0) ctx.scale(-1, 1);
     const dx = -S / 2, dy = -S + 3;
-    ctx.drawImage(sp.img, dx, dy, S, S);
+    ctx.drawImage(sp.views[m.view], dx, dy, S, S);
     let tint = null, ta = 0;
     if (m.flash > 0) { tint = '#ffffff'; ta = Math.min(1, m.flash * 8); }
     else if (m.fainted) { tint = '#ffffff'; ta = Math.min(0.8, m.fadeT); }
@@ -1376,7 +1392,7 @@ class Battle {
     else if (m.status === 'brn' && Math.sin(this.time * 10) > 0.5) { tint = '#ff5a2a'; ta = 0.35; }
     else if (m.status === 'psn' && Math.sin(this.time * 7) > 0.4) { tint = '#b04ae0'; ta = 0.4; }
     else if (m.stunT > 0 && Math.sin(this.time * 20) > 0) { tint = '#ffffff'; ta = 0.25; }
-    if (tint) { ctx.globalAlpha = ta * alpha; ctx.drawImage(tinted(m.id, tint), dx, dy, S, S); }
+    if (tint) { ctx.globalAlpha = ta * alpha; ctx.drawImage(tinted(m.id, tint, m.view), dx, dy, S, S); }
     ctx.restore();
     ctx.globalAlpha = 1;
 

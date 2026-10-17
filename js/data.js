@@ -234,6 +234,9 @@ const ROSTER = [
     moves: ['deadlineDash', 'heavySigh', 'blankStare', 'coffeeBreak'] },
 ];
 
+// Evolved forms (filled in below) aren't part of the wild / recruit pool.
+const EVOLVED = [];
+const ALL_MONS = () => [...ROSTER, ...EVOLVED];
 const ROSTER_BY_ID = Object.fromEntries(ROSTER.map(m => [m.id, m]));
 
 const DIFFICULTY = {

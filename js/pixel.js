@@ -213,11 +213,34 @@ const TRAINER_BACK = [
   '..kkk..kkk..',
 ];
 
+const TRAINER_SIDE = [   // facing right
+  '...kkkkk....',
+  '..khhhhhk...',
+  '.khhhhhhhk..',
+  '.khhhhhhhhkk',
+  '.kHHHHHHHHHk',
+  '.krrsssssk..',
+  '.krrssksk...',
+  '..krsssssk..',
+  '..kjjjjjk...',
+  '.kjjjjjjjk..',
+  '.kjjjJjjjsk.',
+  '.kjjjjjjjsk.',
+  '.kkjjjjjjkk.',
+  '..kppppppk..',
+  '..kppkppk...',
+  '..kpk.kpk...',
+  '..kbk.kbk...',
+  '..kkk.kkk...',
+];
+
 const TRAINER_PALS = {
   player: { k: OUTLINE, h: '#e2363c', H: '#a01f2a', w: '#ffffff', s: '#f6c79a', r: '#3a2418', j: '#2f62c8', J: '#244c9c', p: '#2a2a3a', b: '#5a3a2a' },
   rival:  { k: OUTLINE, h: '#f2c12e', H: '#2a2a3a', w: '#2a2a3a', s: '#f6c79a', r: '#1c1c2a', j: '#d8402e', J: '#a8301e', p: '#e6dcc6', b: '#c0402e' },
 };
 
+// back: true for the back view, or 'side' for the profile facing right
 function trainerCanvas(side, back) {
-  return gridFromMap(back ? TRAINER_BACK : TRAINER_FRONT, TRAINER_PALS[side]).toCanvas();
+  const map = back === 'side' ? TRAINER_SIDE : back ? TRAINER_BACK : TRAINER_FRONT;
+  return gridFromMap(map, TRAINER_PALS[side]).toCanvas();
 }
