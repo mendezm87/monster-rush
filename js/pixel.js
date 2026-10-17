@@ -261,11 +261,13 @@ const TRAINER_SIDE = [   // facing right
 const TRAINER_BASE = { k: OUTLINE, h: '#1c1a24', s: '#f2c49a', S: '#d8a27a', x: '#9a6e56', r: '#1a1222', K: '#8a4a3a',
   t: '#26232c', W: '#f6f2ee', g: '#2a2830', e: '#ffd23f' };
 const TRAINER_OUTFITS = {
+  crimson:  { name: 'Crimson', c: '#d8343a', C: '#d8343a', b: '#2a2630', w: '#2a2630', j: '#c8303a', J: '#8a1a24', t: '#f2ead8', p: '#3a5a9a', P: '#2c4878', f: '#2a2630', F: '#d8343a' },
+  scarlet:  { name: 'Scarlet', c: '#2a2630', C: '#2a2630', b: '#d8343a', w: '#d8343a', j: '#2a2630', J: '#1a1820', t: '#c8303a', p: '#6a6e7a', P: '#55596a', f: '#f6f2ee', F: '#d8343a' },
   midnight: { name: 'Midnight', c: '#24305e', C: '#f2ead8', b: '#1a2246', w: '#f2ead8', j: '#2c3a78', J: '#1e2856', p: '#5a6a8a', P: '#46546e', f: '#e8e4dc', F: '#8a3a3a' },
   ember:    { name: 'Ember', c: '#e8622a', C: '#2a2630', b: '#2a2630', w: '#e8622a', j: '#2a2630', J: '#1a1820', t: '#f2ead8', p: '#3a5a9a', P: '#2c4878', f: '#f6f2ee', F: '#e8622a' },
   forest:   { name: 'Forest', c: '#2e6a3a', C: '#f2ead8', b: '#1e4a28', w: '#f2ead8', j: '#3a7a46', J: '#285a32', p: '#4a5a7a', P: '#3a4862', f: '#6a4a32', F: '#3a2a1e' },
 };
-const TRAINER_OUTFIT = 'midnight';   // the one used in the game for now
+const TRAINER_OUTFIT = 'crimson';    // the one used in the game for now
 
 // outfit: a TRAINER_OUTFITS key; view: 'front' | 'side' | 'back'
 function trainerCanvas(outfit = TRAINER_OUTFIT, view = 'front') {
