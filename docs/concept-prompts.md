@@ -97,29 +97,37 @@ The shared style, already in every prompt:
 
 ## A cannon turtle (new monster; the owner loves Blastoise's design, so an original take on "a turtle with cannons")
 
-Kept away from Blastoise's signature look on purpose: these are four-legged, not blue-skinned with a
-brown shell, and don't have two cannons on the shoulders.
+Round 2: the first prompts came out as ordinary turtles, so these ask for a monster: a
+character with a personality, chunky game-creature proportions and a weapon built into its body.
+Kept away from Blastoise's signature look on purpose: no blue skin with a brown shell, and no two
+cannons poking out over the shoulders. If one still looks too much like a real animal, add
+"stylised fantasy monster, not a real animal" to the end.
 
-**A · Broadside**
-> A huge, scarred sea turtle whose shell is built like the hull of an old wooden warship, a row of
-> brass cannon ports along each side of the shell with smoking barrels poking out, barnacles and
-> rope on the shell, a grizzled captain's scowl and a hooked beak, four flippers braced on a rocky
-> shore. 1990s TV anime cel art, hand-inked line art with varying line weight, flat cel colours with
-> one hard-edged shadow tone, soft airbrushed highlights, hand-painted watercolour background of a
-> stormy sea at dawn, slight film grain, 4:3 screenshot framing, original creature design, no text
+**A · Siege brute**
+> A hulking monster turtle standing upright on two thick legs like a heavyweight brawler, deep
+> moss-green scaly skin, a gunmetal shell built like a fortress turret with rivets and gold trim,
+> each huge forearm ending in a cannon barrel instead of a fist, smoke curling from the barrels,
+> a scarred beaked face with a heavy brow and fierce glowing amber eyes, chunky exaggerated
+> proportions, a monster from a monster-battling game, dynamic battle stance. 1990s TV anime cel
+> art, hand-inked line art with varying line weight, flat cel colours with one hard-edged shadow
+> tone, soft airbrushed highlights, hand-painted watercolour background of a harbour fortress in a
+> storm, slight film grain, 4:3 screenshot framing, original creature design, no text
 
-**B · Mortar tortoise**
-> A heavy armoured tortoise with a riveted iron-plated dome shell and one huge mortar barrel rising
-> from the top of its shell like a siege weapon, steam venting from the seams, thick elephant-like
-> legs, small fierce eyes under a heavy brow, muzzle-flash smoke drifting from the barrel. 1990s TV
-> anime cel art, hand-inked line art with varying line weight, flat cel colours with one hard-edged
-> shadow tone, soft airbrushed highlights, hand-painted watercolour background of a ruined fortress
-> wall, slight film grain, 4:3 screenshot framing, original creature design, no text
+**B · Dreadnought**
+> A massive four-legged monster turtle like a living battleship, charcoal-black armoured shell
+> covered in jagged spikes, with a ring of short cannon barrels around the top of its shell like a
+> crown, a crocodile-like snout with tusks, glowing teal eyes and teal lights in the cannon mouths,
+> water pouring off it as it rises from the sea, menacing and heavy, a monster from a
+> monster-battling game. 1990s TV anime cel art, hand-inked line art with varying line weight, flat
+> cel colours with one hard-edged shadow tone, soft airbrushed highlights, hand-painted watercolour
+> background of a dark ocean at night, slight film grain, 4:3 screenshot framing, original creature
+> design, no text
 
-**C · Geyser snapper**
-> A snapping turtle with a jagged shell of dark volcanic rock, pressure vents along the shell that
-> blast jets of scalding water like cannons, a hooked beak and a spiked tail, crouched low and
-> aggressive in a steaming hot spring. 1990s TV anime cel art, hand-inked line art with varying line
-> weight, flat cel colours with one hard-edged shadow tone, soft airbrushed highlights, hand-painted
-> watercolour background of volcanic hot springs at night, slight film grain, 4:3 screenshot
-> framing, original creature design, no text
+**C · Powder keg**
+> A small, scrappy monster turtle with a round shell shaped like an old iron cannonball bomb, a
+> lit fuse sparking on its tail, a stubby cannon snout it fires water from, cocky grin with one
+> fang, a bandana tied round its head, orange-and-cream skin, standing on its hind legs ready to
+> fight, chunky exaggerated proportions, a monster from a monster-battling game. 1990s TV anime cel
+> art, hand-inked line art with varying line weight, flat cel colours with one hard-edged shadow
+> tone, soft airbrushed highlights, hand-painted watercolour background of a pirate cove at sunset,
+> slight film grain, 4:3 screenshot framing, original creature design, no text
