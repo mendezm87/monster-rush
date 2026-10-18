@@ -152,7 +152,7 @@ mixInto(Battle, class {
     if (drain && !src.fainted && src.hp > 0) {
       const heal = Math.round(Math.min(dmg * drain, src.maxHp - src.hp));
       if (heal > 0) {
-        src.hp += heal;
+        src.hp = Math.min(src.maxHp, src.hp + heal);   // (HP can be fractional, so the rounded heal could overshoot)
         this.number(src, heal, opts.merge ? 'drain' + opts.merge : null, '#b6ff9a', '#4fae2e', '+');
         this.particles.push({ x: tgt.x, y: tgt.cy, x2: src.x, y2: src.cy, k2: src.y - src.cy, life: 0.25, max: 0.25, color: '#b6ff9a', kind: 'line' });
         this.burst(src.x, src.cy, ['#4fae2e', '#b6ff9a'], 8, 40, -40);

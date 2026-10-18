@@ -314,7 +314,7 @@ class Battle {
       Sfx.play('coin');
     } else {
       const heal = Math.round(Math.min(P.maxHp * (this.run.relics.includes('berryBasket') ? 0.4 : BERRY_HEAL), P.maxHp - P.hp));
-      P.hp += heal;
+      P.hp = Math.min(P.maxHp, P.hp + heal);
       this.number(P, heal, null, '#b6ff9a', '#4fae2e', '+');
       this.burst(P.x, P.cy, ['#4fae2e', '#b6ff9a', '#ffffff'], 14, 50, -50);
       Sfx.play('heal');
