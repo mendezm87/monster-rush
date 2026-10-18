@@ -62,6 +62,15 @@ A real-time, top-down pixel-art **roguelike** in the style of *The Binding of Is
 
 - The owner wants this to become a **full-fledged roguelike**, with **Steam and phones** as the release targets (browser stays for now). Plan: wrap with Electron or Tauri for Steam and Capacitor for phones; consoles only much later. Port-readiness basics done in r23 (below); still to do: gamepad button remapping, and an installable web app (manifest + offline cache).
 
+### Develop in the browser, wrap for stores later (decided 2026-10-17)
+
+The owner wants to keep developing and testing in the browser (local server, plus the GitHub Pages link on their phone, which updates a few minutes after each push) and only make Capacitor (phones) and Electron/Tauri (Steam) builds near the end. They have Apple and Google developer accounts and a Mac for iPhone builds; development stays on the Windows PC. No installable web app for now. To keep the later wrap easy:
+- **No network dependencies**: no CDNs, web fonts or online APIs in the game pages; everything ships in the repo.
+- **All storage goes through `Save`** (never `localStorage` directly elsewhere), so the apps can switch it to native storage in one place.
+- **No browser-only assumptions**: don't rely on the URL, back button, or browser UI; the game must run from `file://` or an app's own scheme.
+- **Phone-safe layout**: keep important HUD away from screen edges (notches, rounded corners); test on a real phone through the Pages link after big UI changes.
+- **Watch phone performance**: after heavy visual changes (lighting, particles), check the game on the owner's phone.
+
 ### Port-readiness basics (r23)
 
 - **No internet needed:** the Lilita One font is bundled (`fonts/`, `css/fonts.css`, SIL OFL in `fonts/OFL.txt`). Don't add CDN or Google Fonts links to the game pages.
