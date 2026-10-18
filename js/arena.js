@@ -32,7 +32,7 @@ const STAGES = {
     weather: 'snow', decal: 'rgba(40,30,30,', bg: '#2a2e38',
     light: { amb: 'rgb(160,170,195)', torch: [200, 220, 255], tint: 'rgba(180,200,255,0.06)' },
   },
-  // deeper floors (endless mode)
+  // deeper floors (4-6, and endless mode)
   grotto: {
     name: 'Crystal Grotto',
     ground: ['#2a2444', '#342c54', '#3e3462', '#4a3e72', '#584a86'],
@@ -46,6 +46,14 @@ const STAGES = {
     wall: ['#5a4e36', '#6e6044', '#8a7a58', '#b0a07a'], wallTop: '#e8d8a8',
     weather: 'sand', decal: 'rgba(50,35,15,', bg: '#3a3222',
     light: { amb: 'rgb(175,155,125)', torch: [255, 190, 110], tint: 'rgba(255,200,130,0.07)' },
+  },
+  // the last floor of a run: the top of a tower at night, gold trim, falling stars
+  spire: {
+    name: 'Starlit Spire',
+    ground: ['#262a48', '#2e3356', '#373d64', '#424a74', '#505a88'],
+    wall: ['#14162c', '#1e2140', '#2e3258', '#4a5080'], wallTop: '#ffd36a',
+    weather: 'stars', decal: 'rgba(8,8,20,', bg: '#0a0a1c',
+    light: { amb: 'rgb(120,125,175)', torch: [255, 210, 120], tint: 'rgba(150,160,255,0.07)' },
   },
 };
 

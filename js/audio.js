@@ -704,6 +704,30 @@ const Sfx = (() => {
         intro: ['i1', 'i2'],
         loop: ['a1', 'a2', 'a3', 'a4', 'b1', 'b2', 'b3', 'b4'],
       },
+      // Last Ascent: the final floor (spire). 168 BPM, E minor, driving 16th hats and a
+      // high, heroic square lead that keeps climbing.
+      spire: {
+        bpm: 168, arp: [0, 2, 1, 3, 2, 1], bass: 'octave', duty: 0.5,
+        drums: { kick: [0, 6, 8, 14], snare: [4, 12], hat: 'all' },
+        bars: {
+          i1: bar('Em'),
+          i2: bar('B', 'r.4 E5.2 Fs5.2 G5.2 A5.2 B5.4', true),
+          a1: bar('Em', 'E5.4 B5.4 A5.2 G5.2 Fs5.2 G5.2'),
+          a2: bar('C', 'E5.4 C6.4 B5.2 A5.2 G5.4'),
+          a3: bar('D', 'Fs5.4 D6.4 C6.2 B5.2 A5.4'),
+          a4: bar('B', 'B5.6 A5.2 Fs5.2 Ds5.2 B4.4', true),
+          b1: bar('Am', 'C6.4 B5.2 A5.2 E6.6 D6.2'),
+          b2: bar('G', 'B5.4 D6.2 B5.2 G5.8'),
+          b3: bar('C', 'G5.2 A5.2 B5.2 C6.2 E6.4 D6.4'),
+          b4: bar('B', 'Ds6.4 B5.4 Fs5.8', true),
+          c1: bar('Em', 'G5.6 Fs5.2 E5.4 B5.4'),
+          c2: bar('C', 'E6.6 D6.2 C6.4 G5.4'),
+          c3: bar('D', 'D6.4 Fs6.4 E6.2 D6.2 A5.4'),
+          c4: bar('B', 'B4.2 Ds5.2 Fs5.2 A5.2 B5.4 Ds6.4', true),
+        },
+        intro: ['i1', 'i2'],
+        loop: ['a1', 'a2', 'a3', 'a4', 'b1', 'b2', 'b3', 'b4', 'a1', 'a2', 'a3', 'a4', 'c1', 'c2', 'c3', 'c4'],
+      },
       // Boss Rush: boss rooms until the boss falls. 184 BPM, C minor, four on the floor.
       boss: {
         bpm: 184, arp: [0, 1, 2, 3], bass: 'octave', duty: 0.25,

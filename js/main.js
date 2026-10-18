@@ -2,7 +2,7 @@
 
 // Shown on the title screen so players can tell whether their browser has the latest
 // build (GitHub Pages lets browsers cache files for up to 10 minutes). Bump on every release.
-const VERSION = '2026.10.17-r32';
+const VERSION = '2026.10.17-r33';
 
 const App = {
   endless: false,   // the mode picked on the title screen
@@ -196,7 +196,7 @@ function startRun(starterId) {
   Sfx.init(); Sfx.resume();
   App.paused = false;
   enterRoom(App.run.room, null);
-  UI.banner('FLOOR 1');
+  UI.banner(...floorBanner(App.run));
 }
 
 const roomHooks = {
@@ -207,7 +207,7 @@ const roomHooks = {
       run.stats.floors++;
       run.newFloor(run.floorN + 1);
       enterRoom(run.room, null);
-      UI.banner(`FLOOR ${run.floorN}`);
+      UI.banner(...floorBanner(run));
     });
   },
   offer(ped) { openOffer(ped); },
@@ -234,7 +234,7 @@ function transition(fn) {
 
 function titleStats() {
   const d = Save.data;
-  $('#title-stats').textContent = d.runs ? `Runs ${d.runs} · Wins ${d.wins}${d.bestEndless ? ` · Endless best floor ${d.bestEndless}` : ''} · Starters ${d.starters.length}/${ROSTER.length}` : '';
+  $('#title-stats').textContent = d.runs ? `Runs ${d.runs} · Wins ${d.wins} · Best floor ${d.bestFloor}/${RUN_FLOORS}${d.bestEndless ? ` · Endless best floor ${d.bestEndless}` : ''} · Starters ${d.starters.length}/${ROSTER.length}` : '';
 }
 
 function leaveRun(to) {
@@ -252,7 +252,7 @@ function showResult(result, record = false) {
     if (App.run !== run) return;
     $('#result-title').textContent = result === 'win' ? 'RUN CLEARED!' : run.endless ? (record ? 'NEW RECORD!' : 'ENDLESS OVER') : 'RUN OVER';
     const t = Math.floor(run.stats.time), ts = `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
-    $('#result-stats').innerHTML = `Reached floor ${run.floorN}${run.endless ? ` (best ${Save.data.bestEndless})` : ''} &nbsp;·&nbsp; Time ${ts}<br>
+    $('#result-stats').innerHTML = `Reached floor ${run.floorN}${run.endless ? ` (best ${Save.data.bestEndless})` : ` of ${RUN_FLOORS}, ${STAGES[run.floor.stage].name}`} &nbsp;·&nbsp; Time ${ts}<br>
       Rooms cleared ${run.stats.rooms} &nbsp;·&nbsp; Wild monsters beaten ${run.stats.kos}<br>
       Coins ${run.coins} &nbsp;·&nbsp; Relics ${run.relics.length}<br>
       Party ${run.party.map(m => `${m.def.name} Lv ${m.level}`).join(', ')}`;
@@ -454,6 +454,7 @@ function drawLearn() {
     <div class="mv-slots">${m.moves.map((x, i) => moveBtn(x.id, `data-slot="${i}"`, '', slotLabel(i))).join('')}</div></div>`;
 }
 function closeLearn(kept) {
+  if (!Learn.cur) return;
   const { mon: m, id } = Learn.cur;
   if (kept) m.newMoves = [...(m.newMoves || []), id];   // marked NEW in the party screen
   Learn.cur = null;

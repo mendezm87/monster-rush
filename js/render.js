@@ -130,6 +130,7 @@ mixInto(Battle, class {
     if (kind === 'ash') return { x: rand(0, W), y: anywhere ? rand(0, H) : H + 4, vx: rand(-6, 6), vy: rand(-26, -10), s: rand() < 0.3 ? 2 : 1, c: rand() < 0.5 ? '#ff8a3a' : '#5a4a48' };
     if (kind === 'petals') return { x: anywhere ? rand(0, W) : rand(-40, W), y, vx: rand(10, 24), vy: rand(10, 22), s: 2, c: rand() < 0.5 ? '#ffd0e0' : '#ffffff' };
     if (kind === 'motes') return { x: rand(0, W), y: anywhere ? rand(0, H) : H + 4, vx: rand(-4, 4), vy: rand(-14, -5), s: rand() < 0.3 ? 2 : 1, c: rand() < 0.5 ? '#7af0e0' : '#c8a8ff' };
+    if (kind === 'stars') return { x: anywhere ? rand(0, W) : rand(0, W + 60), y, vx: rand(-14, -6), vy: rand(8, 18), s: rand() < 0.25 ? 2 : 1, c: rand() < 0.45 ? '#ffe28a' : rand() < 0.6 ? '#ffffff' : '#a8b8ff' };
     if (kind === 'sand') return { x: anywhere ? rand(0, W) : -4, y: rand(0, H), vx: rand(40, 70), vy: rand(-4, 6), s: 1, c: rand() < 0.5 ? '#e8d8a8' : '#cdbc88' };
     return { x: rand(0, W), y, vx: rand(-8, 4), vy: rand(14, 34), s: rand() < 0.25 ? 2 : 1, c: '#ffffff' };
   }
@@ -521,7 +522,7 @@ mixInto(Battle, class {
     ctx.drawImage(img, W - 6 - img.width * 2, cy, img.width * 2, img.height * 2);
     ctx.font = 'italic 900 9px "Lilita One", "Arial Black", Arial, sans-serif';
     ctx.textAlign = 'right'; ctx.lineJoin = 'round'; ctx.lineWidth = 3; ctx.strokeStyle = '#15111f';
-    const label = (this.run.endless ? 'ENDLESS ' : '') + 'FLOOR ' + this.run.floorN;
+    const label = floorLabel(this.run);
     ctx.strokeText(label, W - 6, cy + 26); ctx.fillStyle = '#ffffff'; ctx.fillText(label, W - 6, cy + 26);
   }
 });

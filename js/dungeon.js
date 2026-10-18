@@ -1,9 +1,13 @@
 // Floors (a grid of rooms joined by doors, Isaac-style) and the state of a run.
 
-const RUN_FLOORS = 3;                                    // floors in a normal run (endless mode comes later)
-const FLOOR_STAGES = ['meadow', 'crater', 'summit', 'grotto', 'ruins'];   // endless mode loops through them
+const RUN_FLOORS = 6;                                    // floors in a normal run; the last one has the final boss
+const FLOOR_STAGES = ['meadow', 'crater', 'summit', 'grotto', 'ruins', 'spire'];   // one per floor; endless mode loops through them
 // Each floor theme's song (Sfx.music.SONGS); boss rooms and the shop have their own.
-const STAGE_SONGS = { meadow: 'rush', crater: 'magma', summit: 'summit', grotto: 'deep', ruins: 'deep' };
+const STAGE_SONGS = { meadow: 'rush', crater: 'magma', summit: 'summit', grotto: 'deep', ruins: 'deep', spire: 'spire' };
+// 'FLOOR 2/6' in a normal run, 'ENDLESS FLOOR 9' in endless
+const floorLabel = run => run.endless ? `ENDLESS FLOOR ${run.floorN}` : `FLOOR ${run.floorN}/${RUN_FLOORS}`;
+// the big banner when a floor starts, with the area's name under it
+const floorBanner = run => [run.floor.last ? 'FINAL FLOOR' : floorLabel(run), STAGES[run.floor.stage].name.toUpperCase()];
 const floorSong = run => STAGE_SONGS[run.floor.stage] || 'rush';
 const roomSong = (run, room) => room.type === 'boss' && !room.cleared ? 'boss' : room.type === 'shop' ? 'shop' : floorSong(run);
 const STARTERS = ['smugshi', 'cinderox', 'tidalisk'];
@@ -24,10 +28,12 @@ const WILD_AI = {
   boss: { think: 0.22, dodge: 0.55, aggro: 0.7, react: 0.3, aimErr: 0.1, lead: false },
 };
 function wildSpec(id, floorN, kind) {
-  const f = floorN - 1;
-  if (kind === 'boss') return { id, hpMul: 1.3 + 0.7 * f, atkMul: 0.7 + 0.2 * f, scale: 1.35, boss: true, ai: 'boss' };
-  if (kind === 'tough') return { id, hpMul: 0.65 + 0.4 * f, atkMul: 0.5 + 0.2 * f, scale: 1.15, ai: 'wild' };
-  return { id, hpMul: 0.3 + 0.25 * f, atkMul: 0.36 + 0.2 * f, ai: 'wild' };
+  const f = floorN - 1;   // the climb is spread over the 6 floors of a run (endless keeps climbing)
+  // the final boss: an evolved starter, bigger and tougher than any other boss
+  if (kind === 'final') return { id, hpMul: 1.6 + 0.5 * f, atkMul: 0.75 + 0.13 * f, scale: 1.45, boss: true, final: true, ai: 'boss' };
+  if (kind === 'boss') return { id, hpMul: 1.3 + 0.45 * f, atkMul: 0.7 + 0.12 * f, scale: 1.35, boss: true, ai: 'boss' };
+  if (kind === 'tough') return { id, hpMul: 0.65 + 0.25 * f, atkMul: 0.5 + 0.12 * f, scale: 1.15, ai: 'wild' };
+  return { id, hpMul: 0.3 + 0.15 * f, atkMul: 0.36 + 0.11 * f, ai: 'wild' };
 }
 
 // Relics last for the whole run and help the whole party. bonus multiplies stats.
@@ -70,15 +76,16 @@ function makeWave(floorN, sizeKey) {
   return shuffle(ids.slice()).slice(0, n).map(id => wildSpec(id, floorN, 'wild'));
 }
 
-function genFloor(floorN, partyIds, relics = []) {
+// last: the last floor of a normal run (its boss is the final boss)
+function genFloor(floorN, partyIds, relics = [], last = false) {
   for (let tries = 0; tries < 2000; tries++) {
-    const f = tryFloor(floorN, partyIds, relics);
+    const f = tryFloor(floorN, partyIds, relics, last);
     if (f) return f;
   }
   throw new Error('could not build a floor');
 }
 
-function tryFloor(floorN, partyIds, relics) {
+function tryFloor(floorN, partyIds, relics, last) {
   const G = 9, target = 10 + Math.min(floorN, 4) + ((Math.random() * 2) | 0);
   const grid = new Map(), key = (x, y) => x + ',' + y;
   const rooms = [];
@@ -130,6 +137,9 @@ function tryFloor(floorN, partyIds, relics) {
     if (r.type === 'boss') {
       const big = ROSTER.filter(m => m.size === 'L').map(m => m.id);
       r.enemies = [wildSpec(pickRand(Math.random() < 0.6 ? big : ids), floorN, 'boss')];
+      // the final boss is an evolved starter you didn't start with
+      const rivals = EVOLVED.filter(e => !partyIds.includes(e.from));
+      if (last) r.enemies = [wildSpec(pickRand(rivals.length ? rivals : EVOLVED).id, floorN, 'final')];
     }
     if (r.type === 'recruit') r.offer = shuffle(ids.filter(id => !partyIds.includes(id))).slice(0, 3);
   }
@@ -143,7 +153,7 @@ function tryFloor(floorN, partyIds, relics) {
     ...free.slice(1, 3).map(id => ({ id, price: relicPrice(floorN), relic: true })),
   ];
   while (shop.stock.length < 4 && goods.length > 1) { const id = goods.pop(); shop.stock.push({ id, price: GOODS[id].price }); }
-  return { n: floorN, rooms, start, boss, stage: FLOOR_STAGES[(floorN - 1) % FLOOR_STAGES.length] };
+  return { n: floorN, last, rooms, start, boss, stage: FLOOR_STAGES[(floorN - 1) % FLOOR_STAGES.length] };
 }
 
 // Progress kept between runs (in this browser). Beating a boss unlocks its species as a starter.
@@ -216,7 +226,7 @@ class RunState {
   }
   newFloor(n) {
     this.floorN = n;
-    this.floor = genFloor(n, this.party.map(m => m.def.from || m.id), this.relics);
+    this.floor = genFloor(n, this.party.map(m => m.def.from || m.id), this.relics, !this.endless && n === RUN_FLOORS);
     // fainted monsters get back up at 30% for the new floor
     for (const m of this.party) if (m.fainted) { m.fainted = false; m.hp = Math.round(m.maxHp * REVIVE_HP); m.status = null; }
     if (this.party[this.pi].fainted) this.pi = this.party.findIndex(m => !m.fainted);

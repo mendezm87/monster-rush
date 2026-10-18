@@ -19,6 +19,7 @@ class Mon {
     this.hpMul = opts.hpMul || 1;
     this.scale = opts.scale || 1;
     this.boss = !!opts.boss;
+    this.final = !!opts.final;   // the run's final boss
     this.aiKind = opts.ai || null;
     this.level = 1; this.xp = 0;
     this.bonus = { atk: 1, def: 1, spd: 1, cd: 1 };   // from relics (player side)

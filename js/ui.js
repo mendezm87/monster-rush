@@ -79,9 +79,11 @@ const UI = {
     setTimeout(() => el.remove(), 1400);
   },
 
-  banner(text) {
+  // sub: an optional smaller second line (the floor's area name)
+  banner(text, sub) {
     const b = $('#banner');
     b.textContent = text;
+    if (sub) { const s = document.createElement('small'); s.textContent = sub; b.append(s); }
     b.className = '';
     void b.offsetWidth; // restart animation
     b.className = 'show';
@@ -161,7 +163,7 @@ const UI = {
   updateHud(battle) {
     this.updateSide('#hud-p', battle.P, battle.p, battle.pi);
     this.drawRelics(battle.run);
-    const floor = `FLOOR ${battle.run.floorN}`;
+    const floor = floorLabel(battle.run);
     if (this.hudCache.floor !== floor) { $('#floor-label').textContent = floor; this.hudCache.floor = floor; }
     // the boss gets a big bar along the top
     const boss = battle.boss, bb = $('#boss-bar');
@@ -169,7 +171,7 @@ const UI = {
     bb.classList.toggle('hidden', !showBoss);
     if (showBoss) {
       const c = this.hudCache.boss || (this.hudCache.boss = { ghost: boss.hp });
-      if (c.id !== boss.id) { c.id = boss.id; bb.querySelector('.boss-name').textContent = boss.def.name; c.ghost = boss.hp; }
+      if (c.id !== boss.id) { c.id = boss.id; bb.querySelector('.boss-name').textContent = (boss.final ? 'FINAL BOSS · ' : '') + boss.def.name; c.ghost = boss.hp; }
       c.ghost = c.ghost > boss.hp ? Math.max(boss.hp, c.ghost - boss.maxHp * 0.4 / 60) : boss.hp;
       bb.querySelector('.fill').style.width = (boss.hp / boss.maxHp * 100) + '%';
       bb.querySelector('.ghost').style.width = (c.ghost / boss.maxHp * 100) + '%';

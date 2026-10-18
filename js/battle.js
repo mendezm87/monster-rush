@@ -101,7 +101,7 @@ class Battle {
     });
     this.state = 'fight'; this.stateT = 0;
     this.doorFx('close');
-    if (this.boss) this.ui.banner('BOSS!');
+    if (this.boss) this.ui.banner(this.boss.final ? 'FINAL BOSS!' : 'BOSS!', this.boss.final ? this.boss.def.name : '');
   }
 
   clearRoom() {

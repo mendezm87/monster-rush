@@ -110,6 +110,7 @@ html, body {
 #banner { position: absolute; left: 0; right: 0; top: 36cqh; text-align: center; pointer-events: none;
   font-size: 11cqh; font-style: italic; color: #ffe066; -webkit-text-stroke: 1.2cqh #3a1d05; paint-order: stroke fill;
   text-shadow: 0 1.2cqh 0 #3a1d05; white-space: nowrap; opacity: 0; }
+#banner small { display: block; font-size: 5cqh; margin-top: 1cqh; -webkit-text-stroke: 0.8cqh #3a1d05; text-shadow: 0 0.6cqh 0 #3a1d05; color: #fff6d8; }
 #banner.show { animation: bannerIn 1.8s ease forwards; }
 @keyframes bannerIn { 0% { transform: translateX(100%) skewX(-8deg); opacity: 1; }
   15% { transform: translateX(0) skewX(-8deg); opacity: 1; }
