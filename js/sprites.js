@@ -27,11 +27,13 @@ const wingEllipseM = (g, cx, cy, rx, ry, pal, opt) => { const [x, r] = flapEll(c
 // A rigged monster draws each part of itself through part(g, dx, dy), so the parts can move
 // separately: RIG (set while its animation frames are built, null for the plain drawing) says
 // where. body: the torso's y; head: [x, y] for the head and everything on it (x is "forward",
-// used in side views); tail: [x, y]; legs: [a, b] how far each diagonal pair of legs is lifted
-// (a = the near front and far back leg); eyes: null, 'blink' or 'hurt'; mouth: null or 'open'.
-// RIG_FRAMES is the cycle every rigged four-legged monster uses; buildSprites draws them all.
+// used in side views); tail: [x, y] (also anything that trails, like a headband's tails);
+// legs: [a, b] how far each leg (or diagonal pair of legs) is lifted; arms: [a, b] how far each
+// arm swings forward; ears: [a, b] how far each ear drops (2 = pinned back); eyes: null, 'blink',
+// 'hurt', 'sleep' or 'faint'; mouth: null, 'open' or 'roar'. With no pose set it draws exactly
+// as before. Which frames exist comes from the monster's body type (RIG_FRAMES), picked in RIGGED.
 let RIG = null;
-const REST = { body: 0, head: [0, 0], tail: [0, 0], legs: [0, 0], eyes: null, mouth: null };
+const REST = { body: 0, head: [0, 0], tail: [0, 0], legs: [0, 0], arms: [0, 0], ears: [0, 0], eyes: null, mouth: null };
 const rig = () => RIG || REST;
 function part(g, dx = 0, dy = 0) {
   if (!dx && !dy) return g;
@@ -47,30 +49,88 @@ function part(g, dx = 0, dy = 0) {
   p.pxM = (x, y, col) => (g.px(x + dx, y + dy, col), g.px(W - 1 - x + dx, y + dy, col), p);
   return p;
 }
-// The animation frames: a 4-frame walk (a diagonal pair of legs lifts while the body rises; the
-// head follows the body a frame late; the tail swings), a slow 4-frame idle (breathing head bob,
-// tail wag), a blink, a crouched wind-up, the attack (head forward, mouth open) and a hurt flinch.
+// A walk where the head and tail follow the body a frame late (follow-through); swing = the tail's sideways swing.
+const lagged = frames => frames.map((f, i, a) => {
+  const prev = a[(i + a.length - 1) % a.length].body || 0;
+  return { ...f, head: [f.head ? f.head[0] : 0, prev + (f.head ? f.head[1] : 0)], tail: [f.swing || 0, prev] };
+});
+// Frames every body type has: blink, an ear flick, chewing (Snack Time).
+const RIG_COMMON = { blink: { eyes: 'blink' }, flick: { ears: [2, 0] }, chew: [{ mouth: 'open' }, { head: [0, 1] }] };
+// The animation frames for each body type. walk and idle loop; run is a dash; roar fires a
+// beam; throw is a shot or a strike from above; proud is a buff (and some heals); sleep is
+// Blanket Nap; faint is drawn and then laid on its side (lying()).
 const RIG_FRAMES = {
-  walk: [
-    { body: 0, tail: [1, 0], legs: [0, 0] },
-    { body: -1, tail: [0, -1], legs: [2, 0] },
-    { body: 0, tail: [-1, 0], legs: [0, 0] },
-    { body: -1, tail: [0, -1], legs: [0, 2] },
-  ].map((f, i, a) => ({ ...f, head: [0, a[(i + 3) % 4].body] })),
-  idle: [
-    { head: [0, 0], tail: [0, 0] }, { head: [0, 0], tail: [1, 0] },
-    { head: [0, -1], tail: [0, 0] }, { head: [0, -1], tail: [-1, 0] },
-  ],
-  blink: { eyes: 'blink' },
-  windup: { body: 1, head: [-1, 1], tail: [0, 1] },
-  attack: { head: [1, 0], tail: [0, -1], mouth: 'open' },
-  hurt: { head: [-1, -1], eyes: 'hurt', mouth: 'open' },
+  quad: {   // four legs, stepping in diagonal pairs (Toshi)
+    walk: lagged([{ body: 0, swing: 1 }, { body: -1, legs: [2, 0] }, { body: 0, swing: -1 }, { body: -1, legs: [0, 2] }]),
+    idle: [{}, { tail: [1, 0] }, { head: [0, -1] }, { head: [0, -1], tail: [-1, 0] }],
+    windup: { body: 1, head: [-1, 1], tail: [0, 1], ears: [1, 1] },
+    attack: { head: [1, 0], tail: [0, -1], mouth: 'open' },
+    hurt: { head: [-1, -1], eyes: 'hurt', mouth: 'open', ears: [2, 2] },
+    run: [{ body: -1, head: [1, -1], legs: [2, 0], ears: [2, 2], tail: [-1, -1] }, { head: [1, 0], legs: [0, 2], ears: [2, 2], tail: [-1, 0] }],
+    roar: { head: [1, -1], mouth: 'roar', ears: [1, 1], tail: [0, -1] },
+    throw: { head: [1, -1], mouth: 'open', tail: [0, -1] },
+    proud: { body: -1, head: [0, -2], eyes: 'blink', tail: [0, -1] },
+    sleep: { body: 1, head: [0, 2], eyes: 'sleep', ears: [1, 1], tail: [0, 1] },
+    faint: { eyes: 'faint', mouth: 'open', ears: [2, 2] },
+  },
+  biped: {  // two legs and swinging arms (Brawlix; later Slumbear, Mondaze, Gearhulk, the trainer)
+    walk: lagged([{ body: 0 }, { body: -1, legs: [2, 0], arms: [-1, 1] }, { body: 0 }, { body: -1, legs: [0, 2], arms: [1, -1] }]),
+    idle: [{}, {}, { head: [0, -1] }, { head: [0, -1], tail: [1, 0] }],
+    windup: { body: 1, head: [-1, 1], arms: [-2, -2] },
+    attack: { head: [1, 0], arms: [2, 2], mouth: 'open', tail: [-1, 0] },
+    hurt: { head: [-1, -1], arms: [-1, -1], eyes: 'hurt', mouth: 'open' },
+    run: [{ body: -1, head: [1, -1], legs: [2, 0], arms: [-2, 2], tail: [-1, -1] }, { head: [1, 0], legs: [0, 2], arms: [2, -2], tail: [-1, 0] }],
+    roar: { head: [0, -1], arms: [-1, -1], mouth: 'roar' },
+    throw: { head: [1, 0], arms: [2, -1], mouth: 'open' },
+    proud: { body: -1, head: [0, -1], arms: [2, 2], eyes: 'blink' },
+    sleep: { body: 1, head: [0, 2], arms: [-1, -1], eyes: 'sleep' },
+    faint: { eyes: 'faint', mouth: 'open' },
+  },
+  floater: {   // no legs: it drifts and its tail sways (Wispurr; later Mindra)
+    walk: lagged([{ body: 0, swing: 1 }, { body: -1 }, { body: -1, swing: -1 }, { body: 0 }]),
+    idle: [{}, { tail: [1, 0] }, { tail: [0, -1] }, { tail: [-1, 0] }],
+    windup: { body: 1, head: [-1, 1], ears: [1, 1] },
+    attack: { head: [1, 0], mouth: 'open', tail: [-1, 0] },
+    hurt: { head: [-1, -1], eyes: 'hurt', mouth: 'open', ears: [2, 2] },
+    run: [{ body: -1, head: [1, 0], tail: [-2, 0], ears: [2, 2] }, { head: [1, 0], tail: [-2, 1], ears: [2, 2] }],
+    roar: { head: [1, -1], mouth: 'roar', ears: [1, 1] },
+    throw: { head: [1, -1], mouth: 'open' },
+    proud: { body: -1, head: [0, -1], eyes: 'blink' },
+    sleep: { body: 1, head: [0, 1], eyes: 'sleep', ears: [1, 1] },
+    faint: { eyes: 'faint', mouth: 'open' },
+  },
 };
+// Heals that show a pose of their own for as long as their effect plays (Blanket Nap sleeps).
+const HEAL_POSE = { blanketNap: ['sleep', 1.6], snack: ['chew', 0.95], photosynth: ['proud', 1.1], wish: ['proud', 1.2] };
+// A fainted monster lies on its side: the faint frame turned a quarter (exact, so the pixels
+// stay crisp) and trimmed to what's drawn, so it rests on the ground.
+function lying(src) {
+  const w = src.width, h = src.height, r = document.createElement('canvas');
+  r.width = h; r.height = w;
+  const c = r.getContext('2d');
+  c.translate(0, w); c.rotate(-Math.PI / 2); c.drawImage(src, 0, 0);
+  const d = c.getImageData(0, 0, r.width, r.height).data;
+  let x0 = r.width, y0 = r.height, x1 = -1, y1 = -1;
+  for (let y = 0; y < r.height; y++) for (let x = 0; x < r.width; x++) if (d[(y * r.width + x) * 4 + 3]) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); }
+  if (x1 < 0) return src;
+  const cw = x1 - x0 + 1, ch = y1 - y0 + 1, out = document.createElement('canvas');
+  out.width = cw + (cw % 2); out.height = ch + 1;
+  out.getContext('2d').drawImage(r, x0, y0, cw, ch, 0, 0, cw, ch);
+  return out;
+}
+// Faces shared by rigged monsters: draws a pair of eyes (or one, in a side view) in the pose's
+// state. at(x, y) for each eye's top-left; normal() draws the usual open eye.
+function rigEye(h, R, x, y, normal, w = 2) {
+  if (R.eyes === 'blink' || R.eyes === 'sleep') { h.rect(x, y + 1, w, 1, OUTLINE); if (R.eyes === 'sleep') { h.px(x - 1, y, OUTLINE); h.px(x + w, y, OUTLINE); } }
+  else if (R.eyes === 'hurt') { h.px(x, y, OUTLINE); h.px(x + 1, y + 1, OUTLINE); h.px(x, y + 2, OUTLINE); }
+  else if (R.eyes === 'faint') { h.px(x - 1, y, OUTLINE); h.px(x + 1, y, OUTLINE); h.px(x, y + 1, OUTLINE); h.px(x - 1, y + 2, OUTLINE); h.px(x + 1, y + 2, OUTLINE); }
+  else normal();
+}
 
 // Flying monsters: how high they hover and how fast they flap (beats a second; 0 = they just
 // float). drawMon lifts them off their shadow and swaps in the flap frame (SPRITES[id].flap).
-// Monsters whose art is rigged (draws its parts through part() and reads rig()).
-const RIGGED = new Set(['smugshi']);
+// Monsters whose art is rigged (draws its parts through part() and reads rig()), and their body type (RIG_FRAMES).
+const RIGGED = { smugshi: 'quad', brawlix: 'biped', wispurr: 'floater' };
 const FLYERS = { galewing: { hover: 8, flap: 4 }, pixibelle: { hover: 7, flap: 6 }, drakorn: { hover: 6, flap: 3 }, wispurr: { hover: 6, flap: 0 } };
 
 const MONSTER_ART = {
@@ -686,48 +746,53 @@ const MONSTER_ART = {
   },
 
   brawlix(g, v = 'front') {
-    if (v === 'side') {
-      const T = P('#d9a066', '#a8703e', '#f2c896'), R = P('#d23a3a', '#9a2222', '#ff7a6a');
-      g.poly([[11, 8], [4, 5], [5, 10]], '#d23a3a');
-      g.ellipse(12, 29, 2.2, 2, T, { edge: true }); g.ellipse(19, 29, 2.2, 2, T, { edge: true });
-      g.ellipse(11, 20, 3.2, 3.2, R, { edge: true });
-      g.ellipse(16, 21, 6, 6, T, { edge: true });
-      g.ellipse(16, 26, 5.5, 2.6, '#3a5ab8', { edge: true });
-      g.ellipse(17, 11, 6, 5.5, T, { edge: true });
-      g.rect(11, 8, 12, 2, '#d23a3a');
-      g.ellipse(19, 18, 2.5, 3.5, T, { edge: true });
-      g.ellipse(23, 20, 3.5, 3.5, R, { edge: true });
-      g.rect(20, 11, 2, 2, DARK_EYE); g.px(20, 11, '#ffffff'); g.px(19, 10, OUTLINE); g.px(20, 10, OUTLINE); g.px(21, 10, OUTLINE);
-      g.px(22, 14, OUTLINE);
+    const T = P('#d9a066', '#a8703e', '#f2c896'), R = P('#d23a3a', '#9a2222', '#ff7a6a'), Q = rig(), TONGUE = '#e8607a';
+    const side = v === 'side', fwd = side ? Q.head[0] : 0;
+    const b = part(g, 0, Q.body), h = part(g, fwd, Q.head[1]), tails = part(g, fwd + Q.tail[0], Q.head[1] + Q.tail[1]);
+    const leg = i => part(g, side && Q.legs[i] ? 1 : 0, -Q.legs[i]), legA = leg(0), legB = leg(1);
+    const arm = i => part(g, side ? Q.arms[i] : 0, Q.body - (side ? 0 : Q.arms[i])), armA = arm(0), armB = arm(1);
+    const mouth = (x, y) => { if (Q.mouth === 'roar') { h.rect(x - 1, y, 4, 2, OUTLINE); h.px(x, y + 1, TONGUE); } else if (Q.mouth === 'open') h.rect(x, y, 2, 2, OUTLINE); else h.rect(x, y, 2, 1, OUTLINE); };
+    if (side) {
+      tails.poly([[11, 8], [4, 5], [5, 10]], '#d23a3a');
+      legB.ellipse(12, 29, 2.2, 2, T, { edge: true }); legA.ellipse(19, 29, 2.2, 2, T, { edge: true });
+      armB.ellipse(11, 20, 3.2, 3.2, R, { edge: true });
+      b.ellipse(16, 21, 6, 6, T, { edge: true });
+      b.ellipse(16, 26, 5.5, 2.6, '#3a5ab8', { edge: true });
+      h.ellipse(17, 11, 6, 5.5, T, { edge: true });
+      h.rect(11, 8, 12, 2, '#d23a3a');
+      armA.ellipse(19, 18, 2.5, 3.5, T, { edge: true });
+      armA.ellipse(23, 20, 3.5, 3.5, R, { edge: true });
+      rigEye(h, Q, 20, 11, () => { h.rect(20, 11, 2, 2, DARK_EYE); h.px(20, 11, '#ffffff'); });
+      h.px(19, 10, OUTLINE); h.px(20, 10, OUTLINE); h.px(21, 10, OUTLINE);
+      if (Q.mouth) mouth(21, 14); else h.px(22, 14, OUTLINE);
       return;
     }
     if (v === 'back') {
-      const T = P('#d9a066', '#a8703e', '#f2c896'), R = P('#d23a3a', '#9a2222', '#ff7a6a');
-      g.ellipseM(12, 29, 2.2, 2, T, { edge: true });
-      g.ellipse(16, 21, 6.5, 6, T, { edge: true });
-      g.ellipse(16, 26, 6, 2.6, '#3a5ab8', { edge: true });
-      g.ellipseM(10, 18, 2.5, 3.5, T, { edge: true });
-      g.ellipseM(6.5, 21, 3.5, 3.5, R, { edge: true });
-      g.ellipse(16, 11, 6, 5.5, T, { edge: true });
-      g.rect(10, 8, 12, 2, '#d23a3a');
-      g.rect(15, 8, 2, 3, '#9a2222');
-      g.poly([[15, 10], [12, 16], [15, 15]], '#d23a3a'); g.poly([[17, 10], [20, 16], [17, 15]], '#d23a3a');
-      g.rect(14, 19, 4, 1, '#a8703e');
+      legA.ellipse(12, 29, 2.2, 2, T, { edge: true }); legB.ellipse(20, 29, 2.2, 2, T, { edge: true });
+      b.ellipse(16, 21, 6.5, 6, T, { edge: true });
+      b.ellipse(16, 26, 6, 2.6, '#3a5ab8', { edge: true });
+      armA.ellipse(10, 18, 2.5, 3.5, T, { edge: true }); armB.ellipse(22, 18, 2.5, 3.5, T, { edge: true });
+      armA.ellipse(6.5, 21, 3.5, 3.5, R, { edge: true }); armB.ellipse(25.5, 21, 3.5, 3.5, R, { edge: true });
+      h.ellipse(16, 11, 6, 5.5, T, { edge: true });
+      h.rect(10, 8, 12, 2, '#d23a3a');
+      h.rect(15, 8, 2, 3, '#9a2222');
+      tails.poly([[15, 10], [12, 16], [15, 15]], '#d23a3a'); tails.poly([[17, 10], [20, 16], [17, 15]], '#d23a3a');
+      b.rect(14, 19, 4, 1, '#a8703e');
       return;
     }
-    const T = P('#d9a066', '#a8703e', '#f2c896');
-    const R = P('#d23a3a', '#9a2222', '#ff7a6a');
-    g.poly([[21, 8], [28, 5], [27, 10]], '#d23a3a');                                              // headband tails
-    g.ellipseM(12, 29, 2.2, 2, T, { edge: true });
-    g.ellipse(16, 21, 6.5, 6, T, { edge: true });
-    g.ellipse(16, 26, 6, 2.6, '#3a5ab8', { edge: true });
-    g.ellipseM(10, 18, 2.5, 3.5, T, { edge: true });
-    g.ellipseM(6.5, 21, 3.5, 3.5, R, { edge: true });
-    g.ellipse(16, 11, 6, 5.5, T, { edge: true });
-    g.rect(10, 8, 12, 2, '#d23a3a');
-    g.eyes(13, 11, DARK_EYE, { brow: true, h: 2 });
-    g.rect(15, 14, 2, 1, OUTLINE);
-    g.rect(14, 19, 4, 1, '#a8703e');
+    tails.poly([[21, 8], [28, 5], [27, 10]], '#d23a3a');                                         // headband tails
+    legA.ellipse(12, 29, 2.2, 2, T, { edge: true }); legB.ellipse(20, 29, 2.2, 2, T, { edge: true });
+    b.ellipse(16, 21, 6.5, 6, T, { edge: true });
+    b.ellipse(16, 26, 6, 2.6, '#3a5ab8', { edge: true });
+    armA.ellipse(10, 18, 2.5, 3.5, T, { edge: true }); armB.ellipse(22, 18, 2.5, 3.5, T, { edge: true });
+    armA.ellipse(6.5, 21, 3.5, 3.5, R, { edge: true }); armB.ellipse(25.5, 21, 3.5, 3.5, R, { edge: true });
+    h.ellipse(16, 11, 6, 5.5, T, { edge: true });
+    h.rect(10, 8, 12, 2, '#d23a3a');
+    for (const x of [13, 17]) rigEye(h, Q, x, 11, () => { h.rect(x, 11, 2, 2, DARK_EYE); h.px(x, 11, '#ffffff'); });
+    h.px(12, 9, OUTLINE).px(13, 9, OUTLINE).px(14, 10, OUTLINE).px(15, 10, OUTLINE);            // angry brows
+    h.px(19, 9, OUTLINE).px(18, 9, OUTLINE).px(17, 10, OUTLINE).px(16, 10, OUTLINE);
+    mouth(15, 14);
+    b.rect(14, 19, 4, 1, '#a8703e');
   },
 
   galewing(g, v = 'front') {
@@ -850,41 +915,43 @@ const MONSTER_ART = {
   },
 
   wispurr(g, v = 'front') {
-    if (v === 'side') {
-      const B = P('#8a74c8', '#5a4494', '#bcaaf0'), F = P('#7af0e0', '#3ab8b0', '#e0fffa');
-      g.poly([[14, 23], [5, 29], [7, 23], [2, 18], [10, 19]], B);
-      g.ellipse(3, 16, 2.5, 3.5, F);
-      g.poly([[13, 9], [10, 1], [16, 6]], B);
-      g.ellipse(16, 21, 7, 6, B, { edge: true });
-      g.poly([[9, 21], [10, 29], [13, 25], [16, 30], [19, 25], [22, 29], [23, 21]], B);
-      g.poly([[17, 8], [19, 0], [22, 6]], B, { edge: true }); g.px(19, 3, '#3ab8b0');
-      g.ellipse(19, 12, 7.5, 6.5, B, { edge: true });
-      g.rect(22, 11, 2, 3, '#2ad8c0'); g.px(22, 11, '#ffffff');
-      g.px(25, 15, OUTLINE).px(26, 14, '#bcaaf0').px(27, 13, '#bcaaf0');
+    const B = P('#8a74c8', '#5a4494', '#bcaaf0'), F = P('#7af0e0', '#3ab8b0', '#e0fffa'), Q = rig(), TONGUE = '#e8607a';
+    const side = v === 'side', fwd = side ? Q.head[0] : 0;
+    const b = part(g, 0, Q.body), t = part(g, Q.tail[0], Q.body + Q.tail[1]), h = part(g, fwd, Q.head[1]);
+    const ear = i => part(g, fwd - (side && Q.ears[i] > 1 ? 1 : 0), Q.head[1] + Q.ears[i]), earA = ear(0), earB = ear(1);
+    const mouth = (x, y) => { if (Q.mouth === 'roar') { h.rect(x - 1, y, 5, 3, OUTLINE); h.px(x + 1, y + 2, TONGUE); } else { h.rect(x, y, 3, 2, OUTLINE); h.px(x + 1, y + 1, TONGUE); } };
+    if (side) {
+      t.poly([[14, 23], [5, 29], [7, 23], [2, 18], [10, 19]], B);
+      t.ellipse(3, 16, 2.5, 3.5, F);
+      earB.poly([[13, 9], [10, 1], [16, 6]], B);
+      b.ellipse(16, 21, 7, 6, B, { edge: true });
+      b.poly([[9, 21], [10, 29], [13, 25], [16, 30], [19, 25], [22, 29], [23, 21]], B);
+      earA.poly([[17, 8], [19, 0], [22, 6]], B, { edge: true }); earA.px(19, 3, '#3ab8b0');
+      h.ellipse(19, 12, 7.5, 6.5, B, { edge: true });
+      rigEye(h, Q, 22, 11, () => { h.rect(22, 11, 2, 3, '#2ad8c0'); h.px(22, 11, '#ffffff'); });
+      if (Q.mouth) mouth(23, 15); else h.px(25, 15, OUTLINE);
+      h.px(26, 14, '#bcaaf0').px(27, 13, '#bcaaf0');
       return;
     }
     if (v === 'back') {
-      const B = P('#8a74c8', '#5a4494', '#bcaaf0'), F = P('#7af0e0', '#3ab8b0', '#e0fffa');
-      g.polyM([[10, 9], [7, 1], [14, 6]], B, { edge: true });
-      g.ellipse(16, 21, 7, 6, B, { edge: true });
-      g.poly([[9, 21], [10, 29], [13, 25], [16, 30], [19, 25], [22, 29], [23, 21]], B);
-      g.ellipse(16, 12, 7.5, 6.5, B, { edge: true });
-      g.poly([[15, 25], [20, 17], [17, 11], [24, 13], [19, 23]], B, { edge: true });
-      g.ellipse(22, 10, 2.5, 3.5, F);
+      earA.poly([[10, 9], [7, 1], [14, 6]], B, { edge: true }); earB.poly([[22, 9], [25, 1], [18, 6]], B, { edge: true });
+      b.ellipse(16, 21, 7, 6, B, { edge: true });
+      b.poly([[9, 21], [10, 29], [13, 25], [16, 30], [19, 25], [22, 29], [23, 21]], B);
+      h.ellipse(16, 12, 7.5, 6.5, B, { edge: true });
+      t.poly([[15, 25], [20, 17], [17, 11], [24, 13], [19, 23]], B, { edge: true });
+      t.ellipse(22, 10, 2.5, 3.5, F);
       return;
     }
-    const B = P('#8a74c8', '#5a4494', '#bcaaf0');
-    const F = P('#7af0e0', '#3ab8b0', '#e0fffa');
-    g.poly([[18, 23], [27, 29], [25, 23], [30, 18], [22, 19]], B);                              // wispy tail
-    g.ellipse(29, 16, 2.5, 3.5, F);                                                             // tail wisp-flame
-    g.polyM([[10, 9], [7, 1], [14, 6]], B, { edge: true });                                     // ears
-    g.pxM(8, 3, '#3ab8b0'); g.pxM(9, 5, '#3ab8b0');
-    g.ellipse(16, 21, 7, 6, B, { edge: true });                                                 // body
-    g.poly([[9, 21], [10, 29], [13, 25], [16, 30], [19, 25], [22, 29], [23, 21]], B);           // ragged hem
-    g.ellipse(16, 12, 7.5, 6.5, B, { edge: true });                                             // head
-    g.eyes(11, 11, '#2ad8c0');
-    g.px(15, 15, OUTLINE).px(17, 15, OUTLINE).px(16, 16, OUTLINE);                              // cat mouth
-    g.pxM(6, 14, '#bcaaf0'); g.pxM(5, 15, '#bcaaf0');                                           // whiskers
+    t.poly([[18, 23], [27, 29], [25, 23], [30, 18], [22, 19]], B);                              // wispy tail
+    t.ellipse(29, 16, 2.5, 3.5, F);                                                             // tail wisp-flame
+    earA.poly([[10, 9], [7, 1], [14, 6]], B, { edge: true }); earB.poly([[22, 9], [25, 1], [18, 6]], B, { edge: true });   // ears
+    earA.px(8, 3, '#3ab8b0').px(9, 5, '#3ab8b0'); earB.px(23, 3, '#3ab8b0').px(22, 5, '#3ab8b0');
+    b.ellipse(16, 21, 7, 6, B, { edge: true });                                                 // body
+    b.poly([[9, 21], [10, 29], [13, 25], [16, 30], [19, 25], [22, 29], [23, 21]], B);           // ragged hem
+    h.ellipse(16, 12, 7.5, 6.5, B, { edge: true });                                             // head
+    for (const x of [11, 19]) rigEye(h, Q, x, 11, () => { h.rect(x, 11, 2, 3, '#2ad8c0'); h.px(x, 11, '#ffffff'); });
+    if (Q.mouth) mouth(15, 15); else h.px(15, 15, OUTLINE).px(17, 15, OUTLINE).px(16, 16, OUTLINE);   // cat mouth
+    h.pxM(6, 14, '#bcaaf0'); h.pxM(5, 15, '#bcaaf0');                                           // whiskers
   },
 
   gearhulk(g, v = 'front') { // 44x44
@@ -941,7 +1008,9 @@ const MONSTER_ART = {
     const O = TOSHI.coat, C = TOSHI.white, Ei = TOSHI.ear, PINK = '#e8b4a4', TONGUE = '#e8607a';
     const R = rig(), side = v === 'side';
     const b = part(g, 0, R.body), t = part(g, R.tail[0], R.body + R.tail[1]);
-    const h = part(g, side ? R.head[0] : 0, R.head[1]);
+    const hx = side ? R.head[0] : 0, h = part(g, hx, R.head[1]);
+    const ear = i => part(g, hx - (side && R.ears[i] > 1 ? 1 : 0), R.head[1] + R.ears[i]);   // ears drop (and fold back) when pinned
+    const earA = ear(0), earB = ear(1);
     const legA = part(g, side && R.legs[0] ? 1 : 0, -R.legs[0]), legB = part(g, side && R.legs[1] ? 1 : 0, -R.legs[1]);
     if (side) {
       t.ellipse(8, 15, 4.5, 4.5, O, { edge: true });                                             // curled tail, very fluffy
@@ -953,19 +1022,18 @@ const MONSTER_ART = {
       b.ellipse(20, 22, 3.5, 4.5, C);                                                            // white chest
       legB.ellipse(11, 27.5, 1.9, 3, C, { edge: true }); legA.ellipse(21, 27.5, 1.9, 3, C, { edge: true });   // white legs
       b.poly([[13, 15], [16, 13.5], [19, 17], [22, 22], [18, 23], [15.5, 18.5]], C);             // white sash from the chest up over the neck
-      h.poly([[14, 8], [13, 1], [17, 5]], O);                                                    // far ear
+      earB.poly([[14, 8], [13, 1], [17, 5]], O);                                                 // far ear
       h.ellipse(19, 12, 6.5, 5.5, O, { edge: true });                                            // head
       b.px(13, 15, C.b); b.px(13, 16, C.b); b.px(14, 17, C.b);                                   // the ruff showing behind the head
-      h.poly([[17, 7], [19, 0], [22, 6]], O, { edge: true });                                    // near ear
-      h.poly([[18.5, 6], [19.3, 2.5], [21, 5.5]], PINK);
+      earA.poly([[17, 7], [19, 0], [22, 6]], O, { edge: true });                                 // near ear
+      earA.poly([[18.5, 6], [19.3, 2.5], [21, 5.5]], PINK);
       h.poly([[21, 12], [28, 13.5], [27.5, 16.5], [20, 17.5]], C, { edge: true });               // white muzzle
       h.ellipse(19.5, 15.5, 3, 2, C);                                                            // white cheek
       h.px(21, 9, C.b); h.px(22, 9, C.b);                                                        // eyebrow spot
-      if (R.eyes === 'blink') h.rect(21, 12, 3, 1, OUTLINE);
-      else if (R.eyes === 'hurt') { h.rect(21, 12, 3, 1, OUTLINE); h.px(21, 11, OUTLINE); h.px(23, 11, OUTLINE); }
-      else { h.rect(21, 11, 3, 1, OUTLINE); h.px(22, 12, DARK_EYE); h.px(23, 12, DARK_EYE); }    // smug half-shut eye
+      rigEye(h, R, 21, 11, () => { h.rect(21, 11, 3, 1, OUTLINE); h.px(22, 12, DARK_EYE); h.px(23, 12, DARK_EYE); }, 3);   // smug half-shut eye
       h.rect(27, 13, 2, 2, OUTLINE);                                                             // nose
-      if (R.mouth === 'open') { h.rect(23, 16, 4, 2, OUTLINE); h.px(24, 17, TONGUE); h.px(25, 17, TONGUE); }
+      if (R.mouth === 'roar') { h.rect(22, 15, 5, 3, OUTLINE); h.px(23, 17, TONGUE).px(24, 17, TONGUE); }
+      else if (R.mouth === 'open') { h.rect(23, 16, 4, 2, OUTLINE); h.px(24, 17, TONGUE); h.px(25, 17, TONGUE); }
       else h.px(24, 17, OUTLINE).px(25, 17, OUTLINE).px(26, 16, OUTLINE);                       // flat little mouth
       return;
     }
@@ -973,7 +1041,7 @@ const MONSTER_ART = {
       legA.ellipse(12, 27.5, 2.2, 3, C, { edge: true }); legB.ellipse(20, 27.5, 2.2, 3, C, { edge: true });   // white hind legs
       b.ellipse(16, 22, 7.5, 6, O, { edge: true });
       b.ellipse(16, 26, 4, 2.2, C);                                                              // white rear
-      h.polyM([[7, 10], [6.5, 0], [13.5, 5.5]], O, { edge: true });                             // big upright ears
+      earA.poly([[7, 10], [6.5, 0], [13.5, 5.5]], O, { edge: true }); earB.poly([[25, 10], [25.5, 0], [18.5, 5.5]], O, { edge: true });   // big upright ears
       b.ellipse(16, 18.2, 7, 2.3, C);                                                            // white crescent across the shoulders
       h.ellipse(16, 12, 8, 6.2, O, { edge: true });
       h.ellipseM(9, 15, 1.6, 1.6, C);                                                            // cheek fluff peeking out
@@ -987,19 +1055,18 @@ const MONSTER_ART = {
     legA.px(11, 30, C.s).px(13, 30, C.s); legB.px(20, 30, C.s).px(18, 30, C.s);                  // toes
     b.ellipse(16, 22, 7.5, 6, O, { edge: true });                                                // body
     b.ellipse(16, 23, 5.2, 6, C);                                                                // white chest
-    h.polyM([[7, 10], [6.5, 0], [13.5, 5.5]], O, { edge: true });                                // big upright ears, set wide
-    h.polyM([[8.3, 8], [7.8, 2.5], [11.8, 5.8]], PINK);                                          // pink insides
-    h.pxM(9, 4, C.b); h.pxM(10, 6, C.b);                                                         // white fur at the inner edge
+    earA.poly([[7, 10], [6.5, 0], [13.5, 5.5]], O, { edge: true }); earB.poly([[25, 10], [25.5, 0], [18.5, 5.5]], O, { edge: true });   // big upright ears, set wide
+    earA.poly([[8.3, 8], [7.8, 2.5], [11.8, 5.8]], PINK); earB.poly([[23.7, 8], [24.2, 2.5], [20.2, 5.8]], PINK);   // pink insides
+    earA.px(9, 4, C.b).px(10, 6, C.b); earB.px(22, 4, C.b).px(21, 6, C.b);                       // white fur at the inner edge
     h.ellipse(16, 12, 8.5, 6.5, O, { edge: true });                                              // head
     h.ellipseM(10.5, 14.6, 2.8, 2.6, C);                                                         // white cheeks, up under the eyes
     h.ellipse(16, 15.6, 4.6, 3, C);                                                              // white muzzle
     h.rect(13, 17, 6, 3, C.b); h.rect(12, 18, 8, 2, C.b);                                        // white throat running into the chest (no chin line)
     h.rectM(11, 9, 2, 1, C.b);                                                                   // pale eyebrow spots
-    if (R.eyes === 'blink') h.rectM(10, 12, 4, 1, OUTLINE);
-    else if (R.eyes === 'hurt') h.pxM(10, 11, OUTLINE).pxM(11, 12, OUTLINE).pxM(12, 12, OUTLINE).pxM(13, 11, OUTLINE);   // squeezed shut
-    else { h.rectM(10, 11, 4, 1, OUTLINE); h.rectM(11, 12, 2, 1, DARK_EYE); }                    // smug half-shut lids
+    for (const x of [10, 18]) rigEye(h, R, x + (R.eyes ? 1 : 0), 11, () => { h.rect(x, 11, 4, 1, OUTLINE); h.rect(x + 1, 12, 2, 1, DARK_EYE); });   // smug half-shut lids
     h.rect(15, 13, 2, 2, OUTLINE); h.px(15, 13, '#5a5060');                                      // big black nose
-    if (R.mouth === 'open') { h.rect(14, 16, 4, 2, OUTLINE); h.px(15, 17, TONGUE).px(16, 17, TONGUE); }
+    if (R.mouth === 'roar') { h.rect(13, 16, 6, 3, OUTLINE); h.px(15, 18, TONGUE).px(16, 18, TONGUE); }
+    else if (R.mouth === 'open') { h.rect(14, 16, 4, 2, OUTLINE); h.px(15, 17, TONGUE).px(16, 17, TONGUE); }
     else { h.px(14, 17, OUTLINE).px(15, 17, OUTLINE).px(16, 17, OUTLINE).px(17, 17, OUTLINE); h.px(18, 16, OUTLINE); }   // flat, unimpressed mouth with a smug corner
   },
 
@@ -1111,13 +1178,14 @@ const MONSTER_ART_DIAG = {
     const O = TOSHI.coat, C = TOSHI.white, PINK = '#e8b4a4', TONGUE = '#e8607a';
     const R = rig();
     const b = part(g, 0, R.body), t = part(g, R.tail[0], R.body + R.tail[1]), h = part(g, R.head[0], R.head[1]);
+    const ear = i => part(g, R.head[0] - (R.ears[i] > 1 ? 1 : 0), R.head[1] + R.ears[i]), earA = ear(0), earB = ear(1);
     const legA = part(g, R.legs[0] ? 1 : 0, -R.legs[0]), legB = part(g, R.legs[1] ? 1 : 0, -R.legs[1]);
     if (v === 'bside') {
       legA.ellipse(11, 27.5, 2.2, 3, C, { edge: true }); legB.ellipse(19, 28, 2, 2.8, C, { edge: true });   // white hind legs
       b.ellipse(15, 22, 7.5, 6, O, { edge: true });
       b.ellipse(13, 26, 4, 2.2, C);                                                              // white rear
-      h.poly([[10, 9], [10, 0], [16, 5]], O, { edge: true });                                    // big upright ears
-      h.poly([[19, 6], [23, 0], [25, 7]], O, { edge: true });
+      earA.poly([[10, 9], [10, 0], [16, 5]], O, { edge: true });                                 // big upright ears
+      earB.poly([[19, 6], [23, 0], [25, 7]], O, { edge: true });
       b.ellipse(17, 18, 6.5, 2.3, C);                                                            // white crescent across the shoulders
       h.ellipse(18, 11.5, 8, 6.2, O, { edge: true });
       h.ellipse(24.5, 14, 1.8, 1.8, C); h.ellipse(25.5, 12.5, 1.4, 1.4, C);                      // cheek and muzzle peeking out
@@ -1132,20 +1200,20 @@ const MONSTER_ART_DIAG = {
     b.ellipse(18.5, 23, 4.5, 5.5, C);                                                            // white chest
     legB.ellipse(15, 27.5, 2.2, 3.2, C, { edge: true }); legA.ellipse(21, 27.5, 2.2, 3.2, C, { edge: true });   // white front legs
     legB.px(14, 30, C.s); legA.px(20, 30, C.s);
-    h.poly([[9, 10], [9, 0], [15, 5]], O, { edge: true });                                       // near ear
-    h.poly([[10.3, 8], [10.3, 2.5], [13.5, 5.3]], PINK); h.px(11, 4, C.b);
-    h.poly([[20, 7], [24, 0], [26, 7]], O, { edge: true });                                      // far ear
-    h.poly([[21.5, 6], [23.6, 2.5], [24.6, 6]], PINK);
+    earA.poly([[9, 10], [9, 0], [15, 5]], O, { edge: true });                                    // near ear
+    earA.poly([[10.3, 8], [10.3, 2.5], [13.5, 5.3]], PINK); earA.px(11, 4, C.b);
+    earB.poly([[20, 7], [24, 0], [26, 7]], O, { edge: true });                                   // far ear
+    earB.poly([[21.5, 6], [23.6, 2.5], [24.6, 6]], PINK);
     h.ellipse(17.5, 12, 8, 6.5, O, { edge: true });                                              // head
     h.ellipse(12.5, 14.8, 2.6, 2.4, C); h.ellipse(23, 14.5, 1.6, 2, C);                          // white cheeks
     h.ellipse(20, 15.6, 4.4, 3, C);                                                              // white muzzle, turned his way
     h.rect(16, 17, 7, 3, C.b); h.rect(15, 18, 8, 2, C.b);                                        // white throat into the chest
     h.rect(13, 9, 2, 1, C.b); h.rect(21, 9, 2, 1, C.b);                                          // pale eyebrow spots
-    if (R.eyes === 'blink') { h.rect(12, 12, 4, 1, OUTLINE); h.rect(20, 12, 3, 1, OUTLINE); }
-    else if (R.eyes === 'hurt') { h.px(12, 11, OUTLINE).px(13, 12, OUTLINE).px(14, 12, OUTLINE).px(15, 11, OUTLINE); h.px(20, 11, OUTLINE).px(21, 12, OUTLINE).px(22, 11, OUTLINE); }
-    else { h.rect(12, 11, 4, 1, OUTLINE); h.rect(13, 12, 2, 1, DARK_EYE); h.rect(20, 11, 3, 1, OUTLINE); h.rect(21, 12, 2, 1, DARK_EYE); }   // smug lids
+    rigEye(h, R, 13, 11, () => { h.rect(12, 11, 4, 1, OUTLINE); h.rect(13, 12, 2, 1, DARK_EYE); });   // smug lids
+    rigEye(h, R, 21, 11, () => { h.rect(20, 11, 3, 1, OUTLINE); h.rect(21, 12, 2, 1, DARK_EYE); });
     h.rect(21, 13, 2, 2, OUTLINE); h.px(21, 13, '#5a5060');                                      // big black nose
-    if (R.mouth === 'open') { h.rect(19, 16, 4, 2, OUTLINE); h.px(20, 17, TONGUE).px(21, 17, TONGUE); }
+    if (R.mouth === 'roar') { h.rect(18, 16, 6, 3, OUTLINE); h.px(20, 18, TONGUE).px(21, 18, TONGUE); }
+    else if (R.mouth === 'open') { h.rect(19, 16, 4, 2, OUTLINE); h.px(20, 17, TONGUE).px(21, 17, TONGUE); }
     else h.px(19, 17, OUTLINE).px(20, 17, OUTLINE).px(21, 17, OUTLINE).px(22, 17, OUTLINE).px(23, 16, OUTLINE);   // flat mouth, smug corner
   },
 
@@ -1556,33 +1624,37 @@ const MONSTER_ART_DIAG = {
   },
 
   brawlix(g, v) {
-    const T = P('#d9a066', '#a8703e', '#f2c896'), R = P('#d23a3a', '#9a2222', '#ff7a6a');
-    const legs = () => { g.ellipse(12, 29, 2.2, 2, T, { edge: true }); g.ellipse(19.5, 29, 2, 1.9, T, { edge: true }); };
+    const T = P('#d9a066', '#a8703e', '#f2c896'), R = P('#d23a3a', '#9a2222', '#ff7a6a'), Q = rig(), TONGUE = '#e8607a';
+    const b = part(g, 0, Q.body), h = part(g, Q.head[0], Q.head[1]), tails = part(g, Q.head[0] + Q.tail[0], Q.head[1] + Q.tail[1]);
+    const leg = i => part(g, Q.legs[i] ? 1 : 0, -Q.legs[i]), legA = leg(0), legB = leg(1);
+    const arm = i => part(g, Q.arms[i], Q.body), armA = arm(0), armB = arm(1);
+    const legs = () => { legB.ellipse(12, 29, 2.2, 2, T, { edge: true }); legA.ellipse(19.5, 29, 2, 1.9, T, { edge: true }); };
     if (v === 'bside') {
       legs();
-      g.ellipse(16, 21, 6.5, 6, T, { edge: true });
-      g.ellipse(16, 26, 6, 2.6, '#3a5ab8', { edge: true });
-      g.ellipse(10, 18, 2.5, 3.5, T, { edge: true }); g.ellipse(22, 18, 2.2, 3.2, T, { edge: true });
-      g.ellipse(6.5, 21, 3.5, 3.5, R, { edge: true }); g.ellipse(25.5, 21, 3.2, 3.2, R, { edge: true });
-      g.ellipse(17, 11, 6, 5.5, T, { edge: true });
-      g.rect(11, 8, 12, 2, '#d23a3a');
-      g.rect(15, 8, 2, 3, '#9a2222');                                                            // headband knot
-      g.poly([[15, 10], [12, 16], [15, 15]], '#d23a3a'); g.poly([[17, 10], [19, 16], [17, 15]], '#d23a3a');
-      g.rect(14, 19, 4, 1, '#a8703e');
+      b.ellipse(16, 21, 6.5, 6, T, { edge: true });
+      b.ellipse(16, 26, 6, 2.6, '#3a5ab8', { edge: true });
+      armB.ellipse(10, 18, 2.5, 3.5, T, { edge: true }); armA.ellipse(22, 18, 2.2, 3.2, T, { edge: true });
+      armB.ellipse(6.5, 21, 3.5, 3.5, R, { edge: true }); armA.ellipse(25.5, 21, 3.2, 3.2, R, { edge: true });
+      h.ellipse(17, 11, 6, 5.5, T, { edge: true });
+      h.rect(11, 8, 12, 2, '#d23a3a');
+      h.rect(15, 8, 2, 3, '#9a2222');                                                            // headband knot
+      tails.poly([[15, 10], [12, 16], [15, 15]], '#d23a3a'); tails.poly([[17, 10], [19, 16], [17, 15]], '#d23a3a');
+      b.rect(14, 19, 4, 1, '#a8703e');
       return;
     }
-    g.poly([[11, 8], [4, 5], [5, 10]], '#d23a3a');                                               // headband tails
+    tails.poly([[11, 8], [4, 5], [5, 10]], '#d23a3a');                                           // headband tails
     legs();
-    g.ellipse(16, 21, 6.5, 6, T, { edge: true });
-    g.ellipse(16, 26, 6, 2.6, '#3a5ab8', { edge: true });
-    g.ellipse(10, 18, 2.5, 3.5, T, { edge: true }); g.ellipse(22, 18, 2.2, 3.2, T, { edge: true });
-    g.ellipse(6.5, 21, 3.5, 3.5, R, { edge: true }); g.ellipse(25, 20.5, 3.2, 3.2, R, { edge: true });   // gloves up
-    g.ellipse(17, 11, 6, 5.5, T, { edge: true });
-    g.rect(11, 8, 12, 2, '#d23a3a');
-    g.rect(14, 11, 2, 2, DARK_EYE); g.px(14, 11, '#ffffff'); g.px(13, 9, OUTLINE).px(14, 9, OUTLINE).px(15, 10, OUTLINE).px(16, 10, OUTLINE);
-    g.rect(20, 11, 2, 2, DARK_EYE); g.px(20, 11, '#ffffff'); g.px(22, 9, OUTLINE).px(21, 9, OUTLINE).px(20, 10, OUTLINE).px(19, 10, OUTLINE);
-    g.rect(17, 14, 2, 1, OUTLINE);
-    g.rect(15, 19, 4, 1, '#a8703e');
+    b.ellipse(16, 21, 6.5, 6, T, { edge: true });
+    b.ellipse(16, 26, 6, 2.6, '#3a5ab8', { edge: true });
+    armB.ellipse(10, 18, 2.5, 3.5, T, { edge: true }); armA.ellipse(22, 18, 2.2, 3.2, T, { edge: true });
+    armB.ellipse(6.5, 21, 3.5, 3.5, R, { edge: true }); armA.ellipse(25, 20.5, 3.2, 3.2, R, { edge: true });   // gloves up
+    h.ellipse(17, 11, 6, 5.5, T, { edge: true });
+    h.rect(11, 8, 12, 2, '#d23a3a');
+    for (const x of [14, 20]) rigEye(h, Q, x, 11, () => { h.rect(x, 11, 2, 2, DARK_EYE); h.px(x, 11, '#ffffff'); });
+    h.px(13, 9, OUTLINE).px(14, 9, OUTLINE).px(15, 10, OUTLINE).px(16, 10, OUTLINE);
+    h.px(22, 9, OUTLINE).px(21, 9, OUTLINE).px(20, 10, OUTLINE).px(19, 10, OUTLINE);
+    if (Q.mouth === 'roar') { h.rect(16, 14, 4, 2, OUTLINE); h.px(17, 15, TONGUE); } else if (Q.mouth === 'open') h.rect(17, 14, 2, 2, OUTLINE); else h.rect(17, 14, 2, 1, OUTLINE);
+    b.rect(15, 19, 4, 1, '#a8703e');
   },
 
   galewing(g, v) {
@@ -1661,31 +1733,34 @@ const MONSTER_ART_DIAG = {
   },
 
   wispurr(g, v) {
-    const B = P('#8a74c8', '#5a4494', '#bcaaf0'), F = P('#7af0e0', '#3ab8b0', '#e0fffa');
+    const B = P('#8a74c8', '#5a4494', '#bcaaf0'), F = P('#7af0e0', '#3ab8b0', '#e0fffa'), Q = rig(), TONGUE = '#e8607a';
+    const b = part(g, 0, Q.body), t = part(g, Q.tail[0], Q.body + Q.tail[1]), h = part(g, Q.head[0], Q.head[1]);
+    const ear = i => part(g, Q.head[0] - (Q.ears[i] > 1 ? 1 : 0), Q.head[1] + Q.ears[i]), earA = ear(0), earB = ear(1);
     const ears = () => {
-      g.poly([[10, 9], [7, 1], [14, 6]], B, { edge: true }); g.px(8, 3, '#3ab8b0'); g.px(9, 5, '#3ab8b0');
-      g.poly([[19, 8], [23, 1], [24, 7]], B, { edge: true }); g.px(22, 3, '#3ab8b0');
+      earA.poly([[10, 9], [7, 1], [14, 6]], B, { edge: true }); earA.px(8, 3, '#3ab8b0'); earA.px(9, 5, '#3ab8b0');
+      earB.poly([[19, 8], [23, 1], [24, 7]], B, { edge: true }); earB.px(22, 3, '#3ab8b0');
     };
     if (v === 'bside') {
       ears();
-      g.ellipse(16, 21, 7, 6, B, { edge: true });
-      g.poly([[9, 21], [10, 29], [13, 25], [16, 30], [19, 25], [22, 29], [23, 21]], B);           // ragged hem
-      g.ellipse(17, 12, 7.5, 6.5, B, { edge: true });
-      g.px(25, 14, '#bcaaf0'); g.px(26, 13, '#bcaaf0');                                          // a whisker
-      g.poly([[11, 25], [16, 17], [13, 11], [20, 13], [15, 23]], B, { edge: true });             // wispy tail
-      g.ellipse(19, 10, 2.5, 3.5, F);
+      b.ellipse(16, 21, 7, 6, B, { edge: true });
+      b.poly([[9, 21], [10, 29], [13, 25], [16, 30], [19, 25], [22, 29], [23, 21]], B);           // ragged hem
+      h.ellipse(17, 12, 7.5, 6.5, B, { edge: true });
+      h.px(25, 14, '#bcaaf0'); h.px(26, 13, '#bcaaf0');                                          // a whisker
+      t.poly([[11, 25], [16, 17], [13, 11], [20, 13], [15, 23]], B, { edge: true });             // wispy tail
+      t.ellipse(19, 10, 2.5, 3.5, F);
       return;
     }
-    g.poly([[14, 23], [5, 29], [7, 23], [2, 18], [10, 19]], B);                                  // wispy tail
-    g.ellipse(3, 16, 2.5, 3.5, F);
+    t.poly([[14, 23], [5, 29], [7, 23], [2, 18], [10, 19]], B);                                  // wispy tail
+    t.ellipse(3, 16, 2.5, 3.5, F);
     ears();
-    g.ellipse(15, 21, 7, 6, B, { edge: true });
-    g.poly([[8, 21], [9, 29], [12, 25], [15, 30], [18, 25], [21, 29], [22, 21]], B);
-    g.ellipse(17, 12, 7.5, 6.5, B, { edge: true });
-    g.rect(13, 11, 2, 3, '#2ad8c0'); g.px(13, 11, '#ffffff');
-    g.rect(20, 11, 2, 3, '#2ad8c0'); g.px(20, 11, '#ffffff');
-    g.px(17, 15, OUTLINE).px(19, 15, OUTLINE).px(18, 16, OUTLINE);                              // cat mouth
-    g.px(8, 14, '#bcaaf0'); g.px(7, 15, '#bcaaf0'); g.px(25, 14, '#bcaaf0');                     // whiskers
+    b.ellipse(15, 21, 7, 6, B, { edge: true });
+    b.poly([[8, 21], [9, 29], [12, 25], [15, 30], [18, 25], [21, 29], [22, 21]], B);
+    h.ellipse(17, 12, 7.5, 6.5, B, { edge: true });
+    for (const x of [13, 20]) rigEye(h, Q, x, 11, () => { h.rect(x, 11, 2, 3, '#2ad8c0'); h.px(x, 11, '#ffffff'); });
+    if (Q.mouth === 'roar') { h.rect(16, 15, 5, 3, OUTLINE); h.px(18, 17, TONGUE); }
+    else if (Q.mouth === 'open') { h.rect(17, 15, 3, 2, OUTLINE); h.px(18, 16, TONGUE); }
+    else h.px(17, 15, OUTLINE).px(19, 15, OUTLINE).px(18, 16, OUTLINE);                          // cat mouth
+    h.px(8, 14, '#bcaaf0'); h.px(7, 15, '#bcaaf0'); h.px(25, 14, '#bcaaf0');                     // whiskers
   },
 
   gearhulk(g, v) { // 44x44
@@ -1808,10 +1883,11 @@ function buildSprites() {
     let flap = null;
     if (fly && fly.flap) { FLAP = 1; flap = draw(); FLAP = 0; }   // the wings-down frame
     let frames = null;
-    if (RIGGED.has(mon.id)) {   // its animation frames, each a full set of views
+    if (RIGGED[mon.id]) {   // its animation frames, each a full set of views
       const at = f => { RIG = { ...REST, ...f }; const out = draw(); RIG = null; return out; };
       frames = {};
-      for (const [k, f] of Object.entries(RIG_FRAMES)) frames[k] = Array.isArray(f) ? f.map(at) : at(f);
+      for (const [k, f] of Object.entries({ ...RIG_COMMON, ...RIG_FRAMES[RIGGED[mon.id]] })) frames[k] = Array.isArray(f) ? f.map(at) : at(f);
+      for (const v of Object.keys(frames.faint)) frames.faint[v] = lying(frames.faint[v]);   // laid on its side
     }
     SPRITES[mon.id] = { img: views.front, views, size, diag, fly, flap, frames };
   }
@@ -1908,7 +1984,8 @@ function tintOf(src, color) {
 // Moments monAnim reacts to are time stamps on the real clock, not countdowns, so they can't get
 // stuck when some part of the game stops updating a monster: animMark(m, 'hurt') on a real hit,
 // animMark(m, 'pop') when it's sent out.
-const animClock = () => performance.now() / 1000;
+let ANIM_CLOCK = null;   // a page can run its own clock instead (anim.html: slow motion, pause)
+const animClock = () => (ANIM_CLOCK ? ANIM_CLOCK() : performance.now() / 1000);
 function animMark(m, what) { m[what + 'At'] = animClock(); }
 const animSince = (m, what) => animClock() - (m[what + 'At'] ?? -99);
 function monAnim(m, phase, flying) {
@@ -1918,16 +1995,28 @@ function monAnim(m, phase, flying) {
   if (m.walkT !== m._walkT) { m._walkT = m.walkT; m.walkSeen = clock; }
   const walking = m.walkSeen !== undefined && clock - m.walkSeen < 0.15;
   if (m.fainted) {
-    if (F) return out(F.hurt);
+    if (F) return out(m.fadeT < 0.15 ? F.hurt : F.faint);   // flinch, then topple onto its side
     const k = Math.min(1, m.fadeT / 0.5);
     return out(null, Math.round(2 * k), side ? -Math.round(2 * k) : 0);
   }
   const pop = animSince(m, 'pop');
   if (pop < 0.3) return out(F && F.windup, F ? 0 : pop < 0.12 ? -1 : 1, 0, pop < 0.12 ? 2 : 0);   // sent out: up, then landing
   if (animSince(m, 'hurt') < 0.2) return F ? out(F.hurt) : out(null, 1, side ? -1 : 0);
+  const healPose = () => {   // Blanket Nap sleeps, Snack Time chews, sunny and wishful heals look proud
+    const k = m.healPose || (a && a.mv && HEAL_POSE[a.mv.id] ? HEAL_POSE[a.mv.id][0] : 'proud');
+    return out(k === 'chew' ? F.chew[Math.floor(clock * 7) % 2] : F[k]);
+  };
   if (a) {
+    if (F) {   // a pose for the kind of move
+      if (a.kind === 'dash') return out(F.run[Math.floor(clock * 12) % 2]);
+      if (a.kind === 'beam') return out(a.phase === 'charge' ? F.windup : F.roar);
+      if (a.kind === 'vortex') return out(F.roar);
+      if (a.kind === 'burst') return out(a.done ? F.attack : F.windup);
+      if (a.pose === 'proud') return out(F.proud);
+      if (a.pose === 'heal') return healPose();
+      return out(a.t < a.dur * 0.45 ? F.windup : F.throw);
+    }
     const wind = a.kind === 'cast' ? a.t < a.dur * 0.45 : a.kind === 'burst' ? !a.done : a.kind === 'beam' ? a.phase === 'charge' : false;
-    if (F) return out(wind ? F.windup : F.attack);
     return out(null, wind ? 1 : 0, 0, wind ? 0 : 1);
   }
   if (walking) {
@@ -1937,8 +2026,15 @@ function monAnim(m, phase, flying) {
     return out(null, 0, 0, f === 1 ? 2 : f === 2 ? 1 : 0);    // a simple 3-frame hop
   }
   if (F) {
+    if (animSince(m, 'heal') < (m.healDur || 0)) return healPose();
     if ((clock + phase) % 3.7 < 0.14) return out(F.blink);
+    if ((clock + phase * 1.7) % 5.3 < 0.22) return out(F.flick);   // an ear twitch now and then
     return out(F.idle[Math.floor(clock * 2.5 + phase) % 4]);
   }
   return out(null);
+}
+// A heal starts its pose (HEAL_POSE), which outlasts the move itself (Blanket Nap's blanket).
+function animHeal(m, mv) {
+  const hp = HEAL_POSE[mv.id] || ['proud', 0.45];
+  m.healPose = hp[0]; m.healDur = hp[1]; animMark(m, 'heal');
 }

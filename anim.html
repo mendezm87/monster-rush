@@ -7,11 +7,13 @@
   <link rel="stylesheet" href="css/fonts.css">
   <style>
     body { margin: 0; background: #1c2e1a; color: #fff; font-family: 'Lilita One', 'Arial Black', Arial, sans-serif; }
-    header { padding: 12px 16px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-    h1 { font-size: 22px; margin: 0 12px 0 0; color: #ffe066; }
-    select, button { font: inherit; font-size: 15px; padding: 6px 10px; border-radius: 8px; border: 2px solid #15111f; background: #3a3358; color: #fff; cursor: pointer; }
+    header { padding: 12px 16px 4px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    h1 { font-size: 22px; margin: 0 10px 0 0; color: #ffe066; }
+    .row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding: 4px 16px; }
+    select, button { font: inherit; font-size: 14px; padding: 5px 9px; border-radius: 8px; border: 2px solid #15111f; background: #3a3358; color: #fff; cursor: pointer; }
     button.on { background: #e0a83a; color: #15111f; }
-    .note { font: 600 14px system-ui, sans-serif; opacity: .8; padding: 0 16px 8px; }
+    label { font: 600 14px system-ui, sans-serif; display: flex; gap: 6px; align-items: center; }
+    .note { font: 600 14px system-ui, sans-serif; opacity: .8; padding: 4px 16px 8px; }
     canvas { display: block; margin: 0 auto; max-width: 100%; image-rendering: pixelated; }
   </style>
 </head>
@@ -19,8 +21,14 @@
   <header>
     <h1>Animations</h1>
     <select id="mon"></select>
-    <span id="anims"></span>
+    <button id="sheet">Frame sheet</button>
   </header>
+  <div class="row" id="anims"></div>
+  <div class="row">
+    <label>Speed <input type="range" id="speed" min="0.1" max="1" step="0.05" value="1"> <b id="speed-v">100%</b></label>
+    <button id="pause">Pause</button>
+    <button id="step">Step</button>
+  </div>
   <div class="note" id="note"></div>
   <canvas id="c" width="1000" height="230"></canvas>
 
@@ -28,42 +36,82 @@
   <script src="js/pixel.js"></script>
   <script src="js/sprites.js"></script>
   <script>
-    // Plays a monster's animations at real speed in all five views, with the game's own
-    // frame picking (monAnim in sprites.js). Rigged monsters have real frames; the rest hop.
+    // Plays a monster's animations at real speed (or slowed, paused, stepped) in all five views,
+    // with the game's own frame picking (monAnim in sprites.js). "Frame sheet" lays every frame
+    // out side by side. Rigged monsters (RIGGED) have real frames; the rest just hop.
     buildSprites();
-    const ANIMS = ['idle', 'walk', 'attack', 'hurt'];
     const SHOW_VIEWS = ['front', 'fside', 'side', 'bside', 'back'];
+    // what each button plays: an action the monster is doing, on a loop
+    const ANIMS = {
+      Idle: () => null, Walk: () => null,
+      Dash: t => ({ kind: 'dash', t: t % 0.5 }),
+      Beam: t => ({ kind: 'beam', t: t % 1.6, phase: t % 1.6 < 0.6 ? 'charge' : 'fire' }),
+      Throw: t => ({ kind: 'cast', t: t % 0.9, dur: 0.5, pose: 'throw' }),
+      Buff: t => ({ kind: 'cast', t: t % 1, dur: 0.7, pose: 'proud' }),
+      'Blanket Nap': t => ({ kind: 'cast', t: 0, dur: 1, pose: 'heal', mv: MOVES.blanketNap }),
+      'Snack Time': t => ({ kind: 'cast', t: 0, dur: 1, pose: 'heal', mv: MOVES.snack }),
+      Hurt: () => null, Faint: () => null,
+    };
     const sel = document.getElementById('mon');
-    for (const m of ALL_MONS()) sel.add(new Option(m.name + (RIGGED.has(m.id) ? '  (rigged)' : ''), m.id));
+    for (const m of ALL_MONS()) sel.add(new Option(m.name + (RIGGED[m.id] ? '  (rigged: ' + RIGGED[m.id] + ')' : ''), m.id));
     sel.value = 'smugshi';
-    let anim = 'walk';
+    let anim = 'Walk', sheet = false, paused = false, stepOnce = false, speed = 1;
     const box = document.getElementById('anims');
-    for (const a of ANIMS) {
-      const b = document.createElement('button'); b.textContent = a[0].toUpperCase() + a.slice(1);
-      b.onclick = () => { anim = a; [...box.children].forEach(x => x.classList.toggle('on', x === b)); };
+    for (const a of Object.keys(ANIMS)) {
+      const b = document.createElement('button'); b.textContent = a;
+      b.onclick = () => { anim = a; sheet = false; [...box.children].forEach(x => x.classList.toggle('on', x === b)); };
       if (a === anim) b.classList.add('on');
       box.appendChild(b);
     }
-    const note = () => document.getElementById('note').textContent = RIGGED.has(sel.value)
-      ? 'Rigged: its legs, head, tail and face move as separate parts.'
+    const speedIn = document.getElementById('speed');
+    speedIn.oninput = () => { speed = +speedIn.value; document.getElementById('speed-v').textContent = Math.round(speed * 100) + '%'; };
+    document.getElementById('pause').onclick = e => { paused = !paused; e.target.textContent = paused ? 'Play' : 'Pause'; };
+    document.getElementById('step').onclick = () => { paused = true; stepOnce = true; document.getElementById('pause').textContent = 'Play'; };
+    document.getElementById('sheet').onclick = () => { sheet = !sheet; };
+    const note = () => document.getElementById('note').textContent = RIGGED[sel.value]
+      ? 'Rigged (' + RIGGED[sel.value] + '): its parts move separately. Dash, Beam, Throw, Buff and the heals each have a pose of their own.'
       : 'Not rigged yet: it only hops when walking and dips when attacking.';
     sel.onchange = note; note();
 
     const c = document.getElementById('c'), x = c.getContext('2d');
-    x.imageSmoothingEnabled = false;
+    // monAnim reads the real clock; the page runs its own (slowed, paused) clock instead
+    let clock = 0;
+    ANIM_CLOCK = () => clock;
     const mons = SHOW_VIEWS.map((view, i) => ({ view, walkT: 0, fadeT: 0, phase: i * 0.7 }));
     let last = performance.now();
+    function drawSheet() {
+      const F = SPRITES[sel.value].frames;
+      if (!F) return false;
+      const cols = [...F.walk, F.idle[2], F.blink, F.flick, F.windup, F.attack, F.run[0], F.roar, F.throw, F.proud, F.sleep, F.hurt, F.faint];
+      const cell = 64, size = SPRITES[sel.value].size;
+      c.width = cols.length * cell; c.height = SHOW_VIEWS.length * cell + 20;
+      x.imageSmoothingEnabled = false;
+      x.fillStyle = '#3f7a3a'; x.fillRect(0, 0, c.width, c.height);
+      x.fillStyle = '#fff'; x.font = '12px system-ui';
+      ['walk 1', '2', '3', '4', 'idle', 'blink', 'ear', 'wind-up', 'attack', 'dash', 'beam', 'throw', 'buff', 'sleep', 'hurt', 'faint'].forEach((t, i) => x.fillText(t, i * cell + 4, 14));
+      SHOW_VIEWS.forEach((v, r) => cols.forEach((fr, i) => {
+        const pic = fr[v], k = cell / size * 0.9;
+        x.drawImage(pic, Math.round(i * cell + (cell - pic.width * k) / 2), Math.round(20 + r * cell + cell - pic.height * k - 2), pic.width * k, pic.height * k);
+      }));
+      return true;
+    }
     function frame(now) {
-      const dt = Math.min(0.05, (now - last) / 1000); last = now;
+      let dt = Math.min(0.05, (now - last) / 1000) * speed; last = now;
+      if (paused && !stepOnce) dt = 0;
+      if (stepOnce) { dt = 1 / 12; stepOnce = false; }
+      clock += dt;
+      if (sheet && drawSheet()) { requestAnimationFrame(frame); return; }
+      if (c.width !== 1000) { c.width = 1000; c.height = 230; }
+      x.imageSmoothingEnabled = false;
       x.fillStyle = '#3f7a3a'; x.fillRect(0, 0, c.width, c.height);
       const sp = SPRITES[sel.value], scale = 5 * 32 / sp.size;
       mons.forEach((m, i) => {
-        m.id = sel.value; m.fainted = false;
-        m.action = null;
-        const t = now / 1000 + m.phase;
-        if (anim === 'walk') m.walkT += 110 * dt;
-        if (anim === 'attack') { const k = t % 1.2; m.action = { kind: 'cast', t: k, dur: 0.6 }; }
-        if (anim === 'hurt' && (t % 1) < 0.02) animMark(m, 'hurt');
+        m.id = sel.value; m.fainted = false; m.fadeT = 0; m.healPose = null; m.healDur = 0;
+        const t = clock + m.phase;
+        if (anim === 'Walk') m.walkT += 110 * dt;
+        m.action = ANIMS[anim](t);
+        if (anim === 'Hurt' && (t % 1) < dt + 0.001) animMark(m, 'hurt');
+        if (anim === 'Faint') { m.fainted = true; m.fadeT = t % 1.6; }
         const look = monAnim(m, m.phase, false);
         const pic = posed(look.views[m.view], look.sq, look.sh);
         const w = pic.width * scale, h = pic.height * scale;
