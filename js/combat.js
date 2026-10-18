@@ -427,7 +427,7 @@ mixInto(Battle, class {
         if (p.mv.explode) {
           this.fxBlast(p.x, p.y, p.mv.explode, p.mv);
           this.decalAt(foe.x, foe.y, p.mv.explode * 0.6);
-          Sfx.play('boom');
+          Sfx.move(p.mv, 'land');
         }
         this.hit(p.owner, foe, p.mv, 1, { kb: Math.atan2(p.vy, p.vx) });
         if (this.state === 'faint') return;

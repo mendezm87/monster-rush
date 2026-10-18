@@ -377,6 +377,9 @@ const Sfx = (() => {
   // (the beam gains suit long layers; a few types come out too strong in short bursts)
   const SHORT_TRIM = { flying: 0.45, fire: 0.6 };
   function typeLayer(type, dur, vol = 1, delay = 0) {
+    // fire and dark have short-burst voices of their own (the beam layers don't carry: see above)
+    if (type === 'fire') return flame(dur, vol, delay);
+    if (type === 'dark') return shadow(dur, vol * 2.2, delay);
     const L = BEAM_LAYERS[type];
     if (!L) return;
     bus = ctx.createGain(); bus.gain.value = (LAYER_GAIN[type] || 1) * vol * (SHORT_TRIM[type] || 1); bus.connect(master);
@@ -392,6 +395,83 @@ const Sfx = (() => {
     s.connect(f).connect(g).connect(master); s.start(t, Math.random() * 0.5); s.stop(t + dur + 0.02);
     return f;
   }
+  // a tiny sharp pop of high noise at absolute time t (fire crackles, thunder's snap)
+  function pop(t, len, vol, freq) {
+    const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    s.buffer = noiseBuf; f.type = 'highpass'; f.frequency.value = freq;
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.001, t + len);
+    s.connect(f).connect(g).connect(master); s.start(t, Math.random() * 0.5); s.stop(t + len + 0.02);
+  }
+  // noise through a filter with a shaped level: [[time, level], ...] (relative to now + delay)
+  function shaped(type, freq, q, levels, delay = 0) {
+    const t = ctx.currentTime + delay, s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    s.buffer = noiseBuf; s.loop = true; f.type = type; f.frequency.value = freq; f.Q.value = q;
+    g.gain.setValueAtTime(0.001, t);
+    for (const [at, l] of levels) g.gain.exponentialRampToValueAtTime(Math.max(0.001, l), t + at);
+    s.connect(f).connect(g).connect(master);
+    const end = levels[levels.length - 1][0];
+    s.start(t, Math.random() * 0.5); s.stop(t + end + 0.05);
+    return { f, g, t, end };
+  }
+  // a gain that wobbles irregularly (two LFOs at odd rates) for flicker and rolling
+  function flutterGain(t, end, rates, depth) {
+    const fl = ctx.createGain(); fl.gain.value = 1 - depth;
+    for (const r of rates) {
+      const l = ctx.createOscillator(), lg = ctx.createGain();
+      l.frequency.value = r * (0.85 + Math.random() * 0.3); lg.gain.value = depth / rates.length;
+      l.connect(lg).connect(fl.gain); l.start(t); l.stop(end + 0.1);
+    }
+    return fl;
+  }
+
+  // FIRE: a roaring flame that flares open and flickers, a breathy "fwoosh", and crackles
+  function flame(dur, vol = 1, delay = 0) {
+    const t = ctx.currentTime + delay, end = t + dur;
+    const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    s.buffer = noiseBuf; s.loop = true; f.type = 'lowpass'; f.Q.value = 1.4;
+    f.frequency.setValueAtTime(350, t); f.frequency.exponentialRampToValueAtTime(2800, t + Math.min(0.12, dur * 0.3)); f.frequency.exponentialRampToValueAtTime(800, end);
+    g.gain.setValueAtTime(0.001, t); g.gain.exponentialRampToValueAtTime(0.55 * vol, t + 0.04);
+    g.gain.setValueAtTime(0.45 * vol, t + dur * 0.6); g.gain.exponentialRampToValueAtTime(0.001, end + 0.15);
+    const fl = flutterGain(t, end, [13, 21], 0.55);
+    s.connect(f).connect(fl).connect(g).connect(master); s.start(t, Math.random() * 0.5); s.stop(end + 0.2);
+    sweep(Math.min(0.35, dur + 0.05), 450, 2200, 0.3 * vol, 1.4, delay);
+    for (let at = 0.02; at < dur + 0.1; at += 0.018 + Math.random() * 0.045) pop(t + at, 0.006 + Math.random() * 0.012, (0.12 + Math.random() * 0.22) * vol, 2500 + Math.random() * 4500);
+  }
+
+  // THUNDER: a far-off grumble building (cast), then the crack and a long rolling rumble
+  function thunderNear(dur) {
+    shaped('lowpass', 260, 0.8, [[dur * 0.8, 0.22], [dur, 0.12]]);
+    shaped('bandpass', 320, 1.2, [[dur * 0.8, 0.12], [dur, 0.05]]);
+  }
+  function thunderClap(big = 0.8) {
+    const t = ctx.currentTime;
+    pop(t, 0.09, 0.75 * big, 2200); pop(t + 0.03, 0.12, 0.5 * big, 900);              // the crack
+    tone(65, 0.45, 'sine', 0.35 * big, -20);                                            // the hit
+    // the roll: low noise swelling and sinking a few times, the rumble darkening as it fades
+    const r = shaped('lowpass', 1400, 0.7, [[0.04, 0.6 * big], [0.5, 0.4 * big], [1.2, 0.18 * big], [1.9, 0.001]]);
+    r.f.frequency.exponentialRampToValueAtTime(260, r.t + 1.6);
+    const fl = flutterGain(r.t, r.t + r.end, [3.1, 5.3, 8.2], 0.6);
+    r.g.disconnect(); r.g.connect(fl).connect(master);
+    shaped('bandpass', 380, 1, [[0.05, 0.25 * big], [0.9, 0.1 * big], [1.7, 0.001]]);   // so phone speakers hear the roll too
+  }
+
+  // DARK: a shadowy swell that rushes in and cuts off, a sour pair of notes, and a sinking moan
+  // (kept in the middle range: phone speakers can't play the beam's deep drones)
+  function shadow(dur, vol = 1, delay = 0) {
+    const d = Math.max(0.15, dur);
+    const sw = shaped('bandpass', 700, 2.2, [[d * 0.75, 0.42 * vol], [d * 0.85, 0.3 * vol], [d + 0.05, 0.001]], delay);
+    sw.f.frequency.setValueAtTime(900, sw.t); sw.f.frequency.exponentialRampToValueAtTime(280, sw.t + d);
+    const t = ctx.currentTime + delay;
+    for (const fr of [233, 247]) {   // a minor second, rubbing
+      const o = ctx.createOscillator(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+      o.type = 'sawtooth'; o.frequency.setValueAtTime(fr, t); o.frequency.exponentialRampToValueAtTime(fr * 0.8, t + d);
+      f.type = 'lowpass'; f.frequency.value = 1400;
+      g.gain.setValueAtTime(0.001, t); g.gain.exponentialRampToValueAtTime(0.07 * vol, t + d * 0.6); g.gain.exponentialRampToValueAtTime(0.001, t + d + 0.1);
+      o.connect(f).connect(g).connect(master); o.start(t); o.stop(t + d + 0.15);
+    }
+    tone(680, d + 0.1, 'triangle', 0.06 * vol, -380, delay);   // the moan, sinking
+  }
+
   // how high a type's "pew" sits
   const TYPE_PITCH = { normal: 700, fire: 520, water: 480, grass: 880, electric: 1400, ice: 1700, ground: 200, rock: 260, poison: 300,
     psychic: 820, dark: 340, fairy: 1500, fighting: 240, flying: 1000, bug: 1250, ghost: 650, dragon: 300, steel: 1100 };
@@ -421,7 +501,10 @@ const Sfx = (() => {
 
   // the sound of each kind of move, at each phase
   const KIND_SFX = {
-    projectile: { cast(mv) { const p = TYPE_PITCH[mv.type] || 700; tone(p, 0.09, 'square', 0.06, -p * 0.5); typeLayer(mv.type, 0.16, 0.55); } },
+    projectile: {
+      cast(mv) { const p = TYPE_PITCH[mv.type] || 700; tone(p, 0.09, 'square', 0.06, -p * 0.5); typeLayer(mv.type, 0.16, 0.55); },
+      land(mv) { noise(0.35, 0.4, 700); tone(80, 0.3, 'triangle', 0.2, -30); typeLayer(mv.type, 0.4, 0.8); },   // a shot that explodes
+    },
     dash: {
       cast(mv) { sweep(0.22, 400, 2600, 0.6); tone((TYPE_PITCH[mv.type] || 700) * 0.4, 0.16, 'sawtooth', 0.07, 250); typeLayer(mv.type, 0.28, 0.5); },
     },
@@ -429,13 +512,13 @@ const Sfx = (() => {
       cast(mv) { tone(160, mv.delay || 0.4, 'sawtooth', 0.06, 500); typeLayer(mv.type, mv.delay || 0.4, 0.3); },
       release(mv) {
         if (mv.cone) { sweep(mv.blow + 0.1, 300, 2400, 0.45, 2); typeLayer(mv.type, mv.blow, 0.8); return; }
-        if (mv.ripple) { for (let i = 0; i < 3; i++) tone(70, 0.25, 'sine', 0.35, -25, i * 0.14); typeLayer(mv.type, mv.ripple, 0.8); return; }
+        if (mv.ripple) { for (let i = 0; i < 3; i++) { tone(170, 0.2, 'sawtooth', 0.09, -80, i * 0.14); tone(85, 0.2, 'sine', 0.25, -30, i * 0.14); } typeLayer(mv.type, mv.ripple, 1); return; }
         noise(0.4, 0.42, 650); tone(75, 0.36, 'triangle', 0.22, -30); typeLayer(mv.type, 0.38, 0.75);
       },
     },
     zone: {
-      cast(mv) { tone((TYPE_PITCH[mv.type] || 700) * 0.6, 0.18, 'triangle', 0.08, 500); typeLayer(mv.type, 0.12, 0.4); },
-      land(mv) { if (mv.fx === 'bolt') lib.zap(); else { noise(0.3, 0.35, 800); tone(90, 0.25, 'triangle', 0.18, -30); } typeLayer(mv.type, 0.28, 0.6); },
+      cast(mv) { if (mv.fx === 'bolt') return thunderNear(mv.delay); tone((TYPE_PITCH[mv.type] || 700) * 0.6, 0.18, 'triangle', 0.08, 500); typeLayer(mv.type, 0.12, 0.4); },
+      land(mv) { if (mv.fx === 'bolt') return thunderClap(); noise(0.3, 0.35, 800); tone(90, 0.25, 'triangle', 0.18, -30); typeLayer(mv.type, 0.28, 0.6); },
     },
     vortex: { cast(mv) { lib.vortex(); typeLayer(mv.type, mv.dur || 1.2, 0.55); } },
     buff: { cast(mv) { tone(400, 0.25, 'triangle', 0.13, 500); typeLayer(mv.type, 0.3, 0.45); } },
@@ -448,6 +531,8 @@ const Sfx = (() => {
   const MOVE_SFX = {
     // a volley: five quick little launches, buzzing
     pinMissile: { cast(mv) { for (let i = 0; i < 5; i++) tone(1900 - i * 90, 0.05, 'square', 0.05, -900, i * 0.035); typeLayer('bug', 0.2, 0.5); } },
+    // a heavy orb of gloom: a low swelling 'wom' as it leaves
+    gloomOrb: { cast() { shadow(0.4, 2.4); tone(300, 0.3, 'sawtooth', 0.07, -150); } },
     // the boomerang blade keeps its rising swoosh
     razorGale: { cast() { lib.whoosh(); typeLayer('flying', 0.2, 0.4); } },
     // a sparkling breeze
@@ -460,8 +545,11 @@ const Sfx = (() => {
     // a rumbling roll
     rollout: { cast(mv) { const f = sweep(mv.dur + 0.15, 180, 120, 0.5, 1.2); const l = ctx.createOscillator(), lg = ctx.createGain(); l.frequency.value = 16; lg.gain.value = 60; l.connect(lg).connect(f.frequency); l.start(); l.stop(ctx.currentTime + mv.dur + 0.2); typeLayer('rock', mv.dur, 0.6); } },
     // a roaring ring of fire
-    flameWheel: { cast(mv) { sweep(mv.dur + 0.15, 250, 1400, 0.4, 1.5); typeLayer('fire', mv.dur + 0.1, 0.9); } },
-    blazeRush: { cast(mv) { tone(90, mv.dur, 'sawtooth', 0.07, 60); sweep(mv.dur + 0.15, 300, 1800, 0.38, 1.5); typeLayer('fire', mv.dur + 0.15, 1); } },
+    flameWheel: { cast(mv) { flame(mv.dur + 0.2, 1.1); sweep(mv.dur + 0.15, 250, 1400, 0.3, 1.5); } },
+    blazeRush: { cast(mv) { flame(mv.dur + 0.3, 1.25); tone(110, mv.dur, 'sawtooth', 0.06, 60); sweep(mv.dur + 0.15, 300, 1800, 0.3, 1.5); } },
+    // Eruption: a deep blast, then fire roaring up
+    eruption: { release() { noise(0.45, 0.42, 600); tone(70, 0.4, 'triangle', 0.22, -30); flame(0.8, 1.2, 0.05); } },
+    fireBlast: { cast() { flame(0.45, 0.9); tone(260, 0.2, 'sawtooth', 0.05, -120); } },
     // blade swishes
     nightSlash: { cast() { sweep(0.16, 1800, 7000, 0.45, 6); typeLayer('dark', 0.15, 0.4); }, hit() { sweep(0.1, 5000, 1500, 0.4, 8); } },
     dragonClaw: { cast() { sweep(0.18, 900, 4000, 0.4, 4); typeLayer('dragon', 0.2, 0.5); }, hit() { for (let i = 0; i < 3; i++) sweep(0.07, 4500, 1600, 0.3, 8, i * 0.04); } },
