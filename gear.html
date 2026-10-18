@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0d0b14">
+  <title>Gear Test</title>
+  <link rel="stylesheet" href="css/fonts.css">
+  <style>
+    :root { --ink: #15111f; --font: "Lilita One", "Arial Black", "Segoe UI Black", Arial, system-ui, sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #0d0b14; color: #fff; font-family: var(--font); padding: 16px; }
+    h1 { margin: 0 0 8px; font-size: 34px; color: #ffe066; -webkit-text-stroke: 3px #3a1d05; paint-order: stroke fill; }
+    .hint { font: 600 14px/1.4 system-ui, sans-serif; opacity: .75; max-width: 900px; margin-bottom: 12px; }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+    .chips button { font: 900 14px var(--font); padding: 6px 12px; border-radius: 10px; border: 2px solid var(--ink); background: #2b2540; color: #ccc; cursor: pointer; }
+    .chips button.on { background: #ffd23f; color: var(--ink); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
+    .card { background: #1c1730; border: 2px solid #3a3358; border-radius: 14px; padding: 8px 10px; }
+    .name { font-size: 18px; }
+    .views { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; margin-top: 6px; }
+    .views canvas { width: 100%; aspect-ratio: 1; image-rendering: pixelated; border-radius: 6px; display: block; background: #5f7a4a; }
+  </style>
+</head>
+<body>
+  <h1>Gear Test</h1>
+  <div class="hint">A test of relics shown as gear the monsters wear. Nothing here is hand-placed: each piece finds the monster's head, eyes and neck from its animation rig, so it sits in the right spot and bobs with the head. Pick gear below; the last box on each card plays the walk.</div>
+  <div class="chips" id="pick"></div>
+  <div class="grid" id="grid"></div>
+
+  <script src="js/data.js"></script>
+  <script src="js/pixel.js"></script>
+  <script src="js/sprites.js"></script>
+  <script src="js/gear.js"></script>
+  <script>
+    const ALL = ['crown', 'goggles', 'scarf'];
+    let on = ['crown', 'goggles', 'scarf'];
+    const VIEWS5 = ['front', 'fside', 'side', 'bside', 'back'];
+    let sets = {};   // id -> sprite set with the current gear
+    const pick = document.getElementById('pick'), grid = document.getElementById('grid');
+    function chips() {
+      pick.innerHTML = '';
+      for (const k of ALL) {
+        const b = document.createElement('button');
+        b.textContent = k; b.className = on.includes(k) ? 'on' : '';
+        b.onclick = () => { on = on.includes(k) ? on.filter(x => x !== k) : ALL.filter(x => x === k || on.includes(x)); chips(); build(); };
+        pick.appendChild(b);
+      }
+    }
+    function paint(cv, img) {
+      const x = cv.getContext('2d'); x.imageSmoothingEnabled = false; x.clearRect(0, 0, cv.width, cv.height);
+      const s = Math.floor(cv.width / 48), o = (cv.width - img.width * s) / 2;
+      x.drawImage(img, o, cv.height - img.height * s - 6, img.width * s, img.height * s);
+    }
+    function build() {
+      grid.innerHTML = ''; sets = {};
+      for (const mon of ALL_MONS()) {
+        const sp = sets[mon.id] = buildMonSprites(mon, on);
+        const el = document.createElement('div'); el.className = 'card';
+        el.innerHTML = `<div class="name">${mon.name}</div><div class="views">${[...VIEWS5, 'walk'].map(v => `<canvas width="144" height="144" data-v="${v}"></canvas>`).join('')}</div>`;
+        grid.appendChild(el);
+        el.querySelectorAll('canvas').forEach(cv => { cv.dataset.id = mon.id; if (cv.dataset.v !== 'walk') paint(cv, sp.views[cv.dataset.v]); });
+      }
+    }
+    let t = 0;
+    setInterval(() => {
+      t++;
+      for (const cv of document.querySelectorAll('canvas[data-v="walk"]')) {
+        const sp = sets[cv.dataset.id], w = sp.frames && sp.frames.walk;
+        paint(cv, w ? w[t % w.length].fside : sp.views.fside);
+      }
+    }, 140);
+    chips(); build();
+  </script>
+</body>
+</html>

@@ -2413,7 +2413,11 @@ const VIEWS = ['front', 'side', 'back'];
 // A set of views remembers its wings-down twin (hidden, so it isn't listed as a view).
 const flapped = (views, twin) => Object.defineProperty(views, 'flapped', { value: twin });
 function buildSprites() {
-  for (const mon of ALL_MONS()) {
+  for (const mon of ALL_MONS()) SPRITES[mon.id] = buildMonSprites(mon);
+}
+// One monster's sprite set. gear (optional, Monster Rush's js/gear.js) is drawn onto every view and frame.
+function buildMonSprites(mon, gear) {
+  {
     const size = mon.size === 'L' ? 44 : 32;
     const diag = !!MONSTER_ART_DIAG[mon.id];
     const draw = () => {
@@ -2421,6 +2425,7 @@ function buildSprites() {
       for (const v of diag ? [...VIEWS, 'fside', 'bside'] : VIEWS) {
         const g = new PixGrid(size, size);
         (v === 'fside' || v === 'bside' ? MONSTER_ART_DIAG : MONSTER_ART)[mon.id](g, v);
+        if (gear && gear.length) drawGear(g, mon.id, v, gear);
         g.outline();
         out[v] = g.toCanvas();
       }
@@ -2445,7 +2450,7 @@ function buildSprites() {
       }
     }
     if (flap) flapped(views, flap);
-    SPRITES[mon.id] = { img: views.front, views, size, diag, fly, flap, frames };
+    return { img: views.front, views, size, diag, fly, flap, frames };
   }
 }
 
