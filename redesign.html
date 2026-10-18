@@ -16,6 +16,11 @@
     .card { width: 240px; background: #3f7a3a; border-radius: 10px; padding: 10px; }
     .art { width: 220px; height: 220px; margin: 0 auto; background: #4a8a44; border-radius: 8px; }
     .art svg { width: 100%; height: 100%; display: block; }
+    .art { overflow: hidden; }
+    body.anime .art.cartoon, body:not(.anime) .art.anime { display: none; }
+    .styles { margin: 0 16px 8px; display: flex; gap: 8px; align-items: center; }
+    .styles button { font: inherit; font-family: 'Lilita One', 'Arial Black', sans-serif; padding: 6px 14px; border-radius: 8px; border: 2px solid #15111f; background: #3a3358; color: #fff; cursor: pointer; }
+    .styles button.on { background: #e0a83a; color: #15111f; }
     .pix { display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 12px; opacity: .85; }
     .pix canvas { width: 64px; height: 64px; margin: 0; background: #4a8a44; border-radius: 6px; }
     .card.now { background: #4a3a3a; }
@@ -24,15 +29,17 @@
     canvas { display: block; image-rendering: pixelated; width: 192px; height: 192px; margin: 0 auto; }
   </style>
 </head>
-<body>
+<body class="anime">
   <h1>Monster redesigns</h1>
-  <div class="intro">Monsters that look too much like a specific Pokémon get original new looks before release. Each keeps its name, type and moves. The big pictures show what each concept is meant to look like; the small one beside "In the game" is its actual 32-pixel sprite. Pick a concept for each (or mix ideas, e.g. "A with C's horns"), and it'll be drawn in all five views and animated.</div>
+  <div class="intro">Monsters that look too much like a specific Pokémon get original new looks before release. Each keeps its name, type and moves. The big pictures show what each concept is meant to look like (switch between anime and cartoon styles below); the small one beside "In the game" is its actual 32-pixel sprite. Pick a concept for each (or mix ideas, e.g. "A with C's horns"), and it'll be drawn in all five views and animated.</div>
+  <div class="styles">Art style: <button id="st-anime" class="on">Anime</button><button id="st-cartoon">Cartoon</button></div>
   <div id="list"></div>
   <script src="js/data.js"></script>
   <script src="js/pixel.js"></script>
   <script src="js/sprites.js"></script>
   <script src="js/concepts.js"></script>
   <script src="js/concept-art.js"></script>
+  <script src="js/concept-anime.js"></script>
   <script>
     buildSprites();
     const draw = (fn, size) => { const g = new PixGrid(size, size); fn(g, 'front'); g.outline(); return g.toCanvas(); };
@@ -47,14 +54,18 @@
       row.appendChild(now);
       c.list.forEach((k, i) => {
         const card = document.createElement('div'); card.className = 'card';
-        const art = (CONCEPT_ART[id] || [])[i];
-        card.innerHTML = `<b>${k.name}</b>` + (art ? `<div class="art">${art}</div>` : '') + '<div class="pix"></div>';
+        const art = (CONCEPT_ART[id] || [])[i], anime = (CONCEPT_ANIME[id] || [])[i];
+        card.innerHTML = `<b>${k.name}</b>` + (anime ? `<div class="art anime">${anime}</div>` : '') + (art ? `<div class="art cartoon">${art}</div>` : '') + '<div class="pix"></div>';
         const pix = card.querySelector('.pix'); pix.appendChild(draw(k.art, size)); pix.insertAdjacentHTML('beforeend', '<span>In the game</span>');
         card.insertAdjacentHTML('beforeend', `<p>${k.desc}</p>`);
         row.appendChild(card);
       });
       document.getElementById('list').appendChild(box);
     }
+    // anime or cartoon illustrations
+    const setStyle = a => { document.body.classList.toggle('anime', a); document.getElementById('st-anime').classList.toggle('on', a); document.getElementById('st-cartoon').classList.toggle('on', !a); };
+    document.getElementById('st-anime').onclick = () => setStyle(true);
+    document.getElementById('st-cartoon').onclick = () => setStyle(false);
   </script>
 </body>
 </html>
