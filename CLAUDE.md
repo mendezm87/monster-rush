@@ -79,6 +79,8 @@ A real-time, top-down pixel-art **roguelike** in the style of *The Binding of Is
 
 Improvements made here that make sense for the arena game (`mendezm87/monster-battle-stadium`, cloned to `C:\Users\thecl\code\monster-battle-stadium`) get ported there too, **especially visuals**: sprites and diagonal views, attack art, scaling, the bundled font, music, settings. Roguelike-only things (rooms, floors, relics, recruiting, the bot test runs as written) stay here. After porting, test the arena in the browser and push it like this repo.
 
+**First port done (arena r2, 2026-10-17):** `js/sprites.js`, `js/fx.js` and `js/audio.js` are **shared files, kept identical in both repos**: when you change one here, copy it to the arena (and check it there; the arena's `battle.js` provides `mixInto`, `mons`, `foes(m)` and calls `fxImpact`/`fxBlast`/`fxBuff`/`fxHeal`). Also ported: 8-way facing, crisp scaling (`RES`), the bundled font, a song per arena stage, online sync of attack sounds and views. Still to do there: the new art in the online guest's turned-round view (it keeps the simple effects), and any of Rush's gameplay changes (ask the owner first). The arena's own CLAUDE.md lists the details.
+
 ### Develop in the browser, wrap for stores later (decided 2026-10-17)
 
 The owner wants to keep developing and testing in the browser (local server, plus the GitHub Pages link on their phone, which updates a few minutes after each push) and only make Capacitor (phones) and Electron/Tauri (Steam) builds near the end. They have Apple and Google developer accounts and a Mac for iPhone builds; development stays on the Windows PC. No installable web app for now. To keep the later wrap easy:
