@@ -375,10 +375,14 @@ mixInto(Battle, class {
     const t = this.trainer, img = this.trainerImg[t.view];
     const px = Math.round(t.x), py = Math.round(t.y);
     Lighting.shadow(ctx, px, py, 9, 3.5, 0.9);
-    const bob = t.moving ? -Math.round(Math.abs(Math.sin(t.walkT / 6 * Math.PI))) : (Math.sin(this.time * 2) > 0.7 ? -1 : 0);
-    const w = img.width * SPR_SCALE, h = img.height * SPR_SCALE;
+    // a bouncy step like the monsters' (sprites.js posed): knees bend as a foot lands, a lean when walking sideways
+    const s = Math.abs(Math.sin(t.walkT / 6 * Math.PI));
+    const bob = t.moving ? -Math.round(s * 1.5) : 0;
+    const sq = t.moving ? (s < 0.3 ? 1 : 0) : (Math.sin(this.time * 2) > 0.7 ? 1 : 0);
+    const pic = posed(img, sq, t.moving && isSideView(t.view) ? 1 : 0);
+    const w = pic.width * SPR_SCALE, h = pic.height * SPR_SCALE;
     ctx.save(); ctx.translate(px, 0); if (isSideView(t.view) && t.face < 0) ctx.scale(-1, 1);
-    ctx.drawImage(img, Math.round(-w / 2), Math.round(py - h + 1 + bob), w, h);
+    ctx.drawImage(pic, Math.round(-w / 2), Math.round(py - h + 1 + bob), w, h);
     ctx.restore();
   }
 
@@ -388,15 +392,16 @@ mixInto(Battle, class {
     if (m.fainted) { alpha = Math.max(0, 1 - m.fadeT / 1.1); sink = m.fadeT * 6; }
     if (alpha <= 0) return;
     const moving = Math.hypot(m.vx, m.vy) > 12;
-    let bob = moving ? -Math.round(Math.abs(Math.sin(m.walkT / 7 * Math.PI)) * 2) : (Math.sin(this.time * 3 + m.x) > 0.6 ? -1 : 0);
-    if (m.status === 'frz' || m.stunT > 0 || m.fainted) bob = 0;
     const X = Math.round(m.x), Y = Math.round(m.y);
     // flying monsters hover above their shadow with a slow bob and flap their wings (they drop
     // to the ground when frozen or fainted)
     const fly = sp.fly, grounded = m.status === 'frz' || m.fainted, phase = (m.x0 ?? (m.x0 = Math.random() * 10));
     const hover = fly && !grounded ? Math.round(fly.hover + Math.sin(this.time * 2.4 + phase) * 1.5) : 0;
-    if (hover) bob = 0;
     m.hover = hover;
+    // its pose (sprites.js monPose): walking hops, breathing, winding up, lunging, getting hit
+    const still = m.status === 'frz' || m.stunT > 0 || m.lift > 0.01;
+    const pose = still && !m.fainted ? { sq: 0, sh: 0, dy: 0 } : monPose(m, this.time, moving, phase, !!hover);
+    const bob = -pose.dy;
     const flapping = fly && sp.flap && !grounded && m.stunT <= 0 && Math.sin((this.time * fly.flap * (moving ? 1.3 : 1) + phase) * TAU) > 0;
     const img = (flapping ? sp.flap : sp.views)[m.view];
     const mine = m.side === 'player';
@@ -437,8 +442,9 @@ mixInto(Battle, class {
       ctx.rotate(this.time * 9 * L);
       ctx.translate(0, S / 2 - 3);
     }
-    const dx = -S / 2, dy = -S + 3;
-    ctx.drawImage(img, dx, dy, S, S);
+    const pic = posed(img, pose.sq, pose.sh), k = S / sp.size, pw = pic.width * k, ph = pic.height * k;
+    const dx = -pw / 2, dy = 3 - ph;
+    ctx.drawImage(pic, dx, dy, pw, ph);
     let tint = null, ta = 0;
     if (m.flash > 0) { tint = '#ffffff'; ta = Math.min(1, m.flash * 8); }
     else if (m.fainted) { tint = '#ffffff'; ta = Math.min(0.8, m.fadeT); }
@@ -447,7 +453,7 @@ mixInto(Battle, class {
     else if (m.status === 'brn' && Math.sin(this.time * 10) > 0.5) { tint = '#ff5a2a'; ta = 0.35; }
     else if (m.status === 'psn' && Math.sin(this.time * 7) > 0.4) { tint = '#b04ae0'; ta = 0.4; }
     else if (m.stunT > 0 && Math.sin(this.time * 20) > 0) { tint = '#ffffff'; ta = 0.25; }
-    if (tint) { ctx.globalAlpha = ta * alpha; ctx.drawImage(tinted(m.id, tint, m.view), dx, dy, S, S); }
+    if (tint) { ctx.globalAlpha = ta * alpha; ctx.drawImage(tintOf(pic, tint), dx, dy, pw, ph); }
     ctx.restore();
     ctx.globalAlpha = 1;
 

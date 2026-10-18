@@ -123,7 +123,7 @@ mixInto(Battle, class {
     dmg = Math.max(1, Math.round(dmg));
     tgt.hp = Math.max(0, tgt.hp - dmg);
     src.dmgDealt += dmg;
-    tgt.flash = 0.12;
+    tgt.flash = 0.12; tgt.hurtT = 0.22;
 
     const merge = opts.merge ? opts.merge + ':' + (tgt.uid || (tgt.uid = _uid++)) : null;
     const fresh = this.number(tgt, dmg, merge);

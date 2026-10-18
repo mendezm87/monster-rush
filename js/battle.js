@@ -436,7 +436,7 @@ class Battle {
   updateSpawn(m, dt) {
     m.spawnT -= dt;
     if (m.spawnT > 0) return;
-    m.visible = true; m.flash = 0.35; m.invuln = 0.4;
+    m.visible = true; m.flash = 0.35; m.invuln = 0.4; m.popT = 0.3;
     this.particles.push({ x: m.x, y: m.y, r0: 2, r1: 30, life: 0.35, max: 0.35, color: '#ffffff', kind: 'ring', w: 3 });
     this.burst(m.x, m.cy, ['#ffffff', '#d8d0e8', '#8a809a'], 22, 90);
     Sfx.play('pop');
@@ -520,6 +520,7 @@ class Battle {
       m.x = clamp(m.x + (m.vx + m.kx) * dt, B.x0, B.x1);
       m.y = clamp(m.y + (m.vy + m.ky) * dt, B.y0, B.y1);
       m.flash = Math.max(0, m.flash - dt);
+      m.hurtT = Math.max(0, (m.hurtT || 0) - dt); m.popT = Math.max(0, (m.popT || 0) - dt);   // animation poses (monPose)
     }
   }
 

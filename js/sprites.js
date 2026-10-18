@@ -1783,3 +1783,77 @@ function drawPortrait(canvas, monId, opts = {}) {
   ctx.drawImage(sp.img, x, y, w, w);
   ctx.filter = 'none';
 }
+
+// ---------- animation poses (shared by both games' drawMon) ----------
+// Pixel-true poses: a sprite bent at its own resolution, so whole rows and columns move and
+// pixels stay square and crisp. sq > 0 squashes: sq rows come out of the body (55-85% of the
+// height, below the eyes) and the body gets wider (the middle column repeated). sq < 0
+// stretches: those rows are doubled instead. sh leans it: the top row shifts sh pixels
+// forward (sprite space faces right), less further down. Anchored bottom-centre; cached.
+const _poses = new WeakMap();
+function posed(src, sq = 0, sh = 0) {
+  if (!sq && !sh) return src;
+  let cache = _poses.get(src);
+  if (!cache) _poses.set(src, cache = {});
+  const key = sq + ',' + sh;
+  if (cache[key]) return cache[key];
+  const w = src.width, h = src.height, b0 = Math.round(h * 0.55), b1 = Math.round(h * 0.85), L = b1 - b0;
+  const k = Math.abs(sq), marks = new Set();
+  for (let i = 0; i < k; i++) marks.add(b0 + Math.min(L - 1, Math.floor((i + 0.5) * L / k)));
+  const rows = [];   // the source row for each output row, top to bottom
+  for (let y = 0; y < h; y++) {
+    if (sq > 0 && marks.has(y)) continue;
+    rows.push(y);
+    if (sq < 0 && marks.has(y)) rows.push(y);
+  }
+  const dw = sq > 0 ? Math.ceil(sq / 2) : 0, pad = Math.abs(sh), H = rows.length;
+  const cv = document.createElement('canvas');
+  cv.width = w + 2 * dw + 2 * pad; cv.height = H;
+  const c = cv.getContext('2d'), cx = w >> 1;
+  rows.forEach((r, y) => {
+    const off = pad + Math.round(sh * (H - 1 - y) / Math.max(1, H - 1));
+    if (dw && r >= b0) {   // the body widens: the middle column is repeated
+      c.drawImage(src, 0, r, cx, 1, off, y, cx, 1);
+      for (let i = 0; i <= 2 * dw; i++) c.drawImage(src, cx, r, 1, 1, off + cx + i, y, 1, 1);
+      c.drawImage(src, cx + 1, r, w - cx - 1, 1, off + cx + 2 * dw + 1, y, w - cx - 1, 1);
+    } else c.drawImage(src, 0, r, w, 1, off + dw, y, w, 1);
+  });
+  return (cache[key] = cv);
+}
+// A canvas filled with one colour where it isn't transparent (hit flash, status tints), cached.
+const _tints = new WeakMap();
+function tintOf(src, color) {
+  let cache = _tints.get(src);
+  if (!cache) _tints.set(src, cache = {});
+  if (cache[color]) return cache[color];
+  const cv = document.createElement('canvas');
+  cv.width = src.width; cv.height = src.height;
+  const c = cv.getContext('2d');
+  c.drawImage(src, 0, 0);
+  c.globalCompositeOperation = 'source-atop';
+  c.fillStyle = color; c.fillRect(0, 0, cv.width, cv.height);
+  return (cache[color] = cv);
+}
+// Which pose a monster is in right now: { sq, sh } for posed(), dy = extra lift (world units).
+// Reads m.action (cast / beam / dash / burst / vortex), m.hurtT (set when hit), m.popT (set when
+// it appears), fainting, walking (m.walkT) and an idle breath. hop = how high a walk step lifts.
+function monPose(m, time, moving, phase, flying) {
+  const side = m.view === 'side' || m.view === 'fside' || m.view === 'bside';
+  const a = m.action;
+  if (m.fainted) { const k = Math.min(1, m.fadeT / 0.5); return { sq: Math.round(3 * k), sh: side ? -Math.round(3 * k) : 0, dy: 0 }; }
+  if (m.popT > 0) return m.popT > 0.18 ? { sq: -2, sh: 0, dy: 2 } : { sq: 2, sh: 0, dy: 0 };   // pops out tall, lands squashed
+  if (m.hurtT > 0) return { sq: m.hurtT > 0.12 ? 3 : 1, sh: side ? -2 : 0, dy: 0 };                // squished and knocked back
+  if (a) {
+    if (a.kind === 'dash') return { sq: -2, sh: side ? 3 : 0, dy: 0 };                              // stretched, leaning into it
+    if (a.kind === 'beam') return a.phase === 'charge' ? { sq: 2, sh: side ? -1 : 0, dy: 0 } : { sq: 1, sh: side ? -2 : 0, dy: 0 };   // braced, then pushed back
+    if (a.kind === 'burst') return a.done ? { sq: -2, sh: 0, dy: 1 } : { sq: 3, sh: 0, dy: 0 };    // crouch, then spring up
+    if (a.kind === 'vortex') return { sq: 1, sh: 0, dy: 0 };
+    if (a.kind === 'cast') return a.t < a.dur * 0.45 ? { sq: 2, sh: side ? -1 : 0, dy: 0 } : { sq: -1, sh: side ? 2 : 0, dy: 1 };   // wind up, then throw
+  }
+  if (moving) {   // a bouncy step: squashed as a foot lands, stretched at the top of the hop
+    const s = Math.abs(Math.sin(m.walkT / 7 * Math.PI));
+    if (flying) return { sq: 0, sh: side ? 1 : 0, dy: 0 };
+    return { sq: s < 0.3 ? 1 : s > 0.85 ? -1 : 0, sh: side ? 1 : 0, dy: Math.round(s * 2) };
+  }
+  return { sq: Math.sin(time * 2.2 + phase) > 0.55 ? 1 : 0, sh: 0, dy: 0 };   // breathing
+}
