@@ -9,6 +9,8 @@ const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 let _uid = 1;
 const BERRY_HEAL = 0.25;   // a berry heals a quarter of your active monster's HP
 // The Ember Tracks relic's fire pools.
+// a spiky champion's spines (it hurts to touch one)
+const SPIKE_MV = { id: 'spikes', name: 'Spikes', type: 'normal', kind: 'dash', power: 70 };
 const EMBER_MV = { id: 'emberTrail', name: 'Ember Trail', type: 'fire', kind: 'zone', power: 60, linger: 1.4, tick: 0.35, status: ['brn', 0.1] };
 
 // opts (wild monsters): hpMul / atkMul scale the arena stats, scale draws it bigger, boss marks a boss.
@@ -20,6 +22,8 @@ class Mon {
     this.scale = opts.scale || 1;
     this.boss = !!opts.boss;
     this.final = !!opts.final;   // the run's final boss
+    this.champ = opts.champ || null;   // a champion's trait (CHAMPIONS)
+    this.small = !!opts.small;   // a splitting champion's copy
     this.aiKind = opts.ai || null;
     this.level = 1; this.xp = 0;
     this.bonus = { atk: 1, def: 1, spd: 1, cd: 1 };   // from relics (player side)
@@ -84,7 +88,7 @@ class Mon {
   calcMaxHp() { return Math.round(this.def.hp * this.hpMul * this.lvMul(LV_HP)); }
   atk() { return this.def.atk * this.atkMul * this.lvMul(LV_STAT) * this.bonus.atk * (this.item.atk || 1) * this.buffMul('atk') * (this.status === 'brn' ? 0.75 : 1); }
   defense() { return this.def.def * this.lvMul(LV_STAT) * this.bonus.def * (this.item.def || 1) * this.buffMul('def'); }
-  cdMul() { return (this.item.cd || 1) * this.bonus.cd; }
+  cdMul() { return (this.item.cd || 1) * this.bonus.cd * (this.champ === 'swift' ? 0.75 : 1); }
   // Gain levels; HP grows with the level (and the new HP comes filled in).
   setLevel(n) {
     const old = this.maxHp;
@@ -93,7 +97,7 @@ class Mon {
     if (!this.fainted) this.hp = Math.min(this.maxHp, this.hp + (this.maxHp - old));
   }
   speed() {
-    return this.def.spd * (this.item.spd || 1) * this.bonus.spd * this.buffMul('spd') *
+    return this.def.spd * (this.item.spd || 1) * this.bonus.spd * this.buffMul('spd') * (this.champ === 'swift' ? 1.4 : 1) *
       (this.status === 'par' ? 0.55 : 1) * (this.slowT > 0 ? 0.55 : 1);
   }
   canAct() { return this.visible && !this.fainted && !this.action && this.stunT <= 0 && this.status !== 'frz'; }

@@ -129,7 +129,7 @@ mixInto(Battle, class {
     const fresh = this.number(tgt, dmg, merge);
     const kb = opts.kb ?? Math.atan2(tgt.cy - src.cy, tgt.x - src.x);
     // bosses barely budge
-    const force = (opts.force ?? (mult < 1 ? 22 : Math.min(260, 60 + dmg * 0.45))) * (tgt.boss ? 0.35 : 1);
+    const force = (opts.force ?? (mult < 1 ? 22 : Math.min(260, 60 + dmg * 0.45))) * (tgt.boss ? 0.35 : tgt.champ === 'giant' ? 0.5 : 1);
     tgt.kx += Math.cos(kb) * force; tgt.ky += Math.sin(kb) * force;
 
     this.fxImpact(tgt, mv, dmg, eff, mult, src);

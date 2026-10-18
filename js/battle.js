@@ -122,7 +122,10 @@ class Battle {
         this.placeStairs();
         Sfx.music.play(floorSong(this.run));
       }
-    } else this.ui.banner('ROOM CLEAR!');
+    } else {
+      this.ui.banner('ROOM CLEAR!');
+      if (this.room.reward) this.spawnReward(this.room.reward);
+    }
   }
 
   // Things to walk up to: recruits, shop goods, a treasure relic.
@@ -226,6 +229,7 @@ class Battle {
       this.run.stats.kos++;
       this.dropLoot(m);
       this.giveXp(m.boss ? XP_BOSS : m.scale > 1 ? XP_TOUGH : XP_WILD);
+      if (m.champ === 'split') this.splitChampion(m);
       return;
     }
     this.ui.banner(`${m.def.name} FAINTED!`);
@@ -272,13 +276,51 @@ class Battle {
     if (this.state === 'explore') this.evolveReady();
   }
 
+  // A splitting champion breaks into two small copies of itself.
+  splitChampion(m) {
+    const F = this.F;
+    for (const s of [-1, 1]) {
+      const c = new Mon(m.def, 'enemy', { hpMul: m.hpMul * 0.4, atkMul: m.atkMul * 0.7, scale: 0.75, small: true, ai: 'wild' });
+      c.ai = new AI(WILD_AI.wild);
+      c.x = clamp(m.x + s * 22, F.x0 + 12, F.x1 - 12); c.y = clamp(m.y + rand(-8, 8), F.y0 + 12, F.y1 - 8);
+      c.face = s; c.spawnT = 0.25;
+      this.e.push(c);
+    }
+    this.text(m.x, m.y - m.h - 10, 'SPLIT!', CHAMPIONS.split.color);
+  }
+
+  // Spiky champions hurt to touch; shiny ones glitter.
+  updateChampions(dt) {
+    const P = this.P;
+    P.spikeT = Math.max(0, (P.spikeT || 0) - dt);
+    for (const m of this.e) {
+      if (!m.alive || !m.champ) continue;
+      if (m.champ === 'shiny' && Math.random() < dt * 8) this.sparks(m.x + rand(-m.r, m.r), m.cy + rand(-m.h / 2, m.h / 2), 1, '#ffe066');
+      if (m.champ === 'spiky' && P.alive && P.spikeT <= 0 && Math.hypot(P.x - m.x, P.y - m.y) < P.r + m.r + 3) {
+        P.spikeT = 0.7;
+        this.hit(m, P, SPIKE_MV, 1, { force: 140 });
+      }
+    }
+  }
+
   // ---------------------------------------------------------- loot
   dropLoot(m) {
-    let coins = m.boss ? 8 + this.run.floorN * 2 : m.scale > 1 ? 3 : 1 + (Math.random() < 0.5 ? 1 : 0);
+    let coins = m.boss ? 8 + this.run.floorN * 2 : m.scale > 1 ? 2 : (Math.random() < 0.5 ? 1 : 0);   // rooms give the rest (spawnReward)
     if (this.run.relics.includes('luckyCoin')) coins = Math.round(coins * 1.5 + Math.random() * 0.5);
     for (let i = 0; i < coins; i++) this.spawnPickup('coin', m.x, m.y);
     const basket = this.run.relics.includes('berryBasket');
-    if (m.boss || Math.random() < (basket ? 0.45 : 0.3)) this.spawnPickup('berry', m.x, m.y);
+    if (m.boss || Math.random() < (basket ? 0.25 : 0.12)) this.spawnPickup('berry', m.x, m.y);
+    if (m.champ === 'shiny') { for (let i = 0; i < 10; i++) this.spawnPickup('coin', m.x, m.y); this.spawnPickup('chest', m.x, m.y); }
+  }
+
+  // the room's reward (shown over its doors) pops out in the middle once it's cleared
+  spawnReward(kind) {
+    const F = this.F, x = (F.x0 + F.x1) / 2, y = (F.y0 + F.y1) / 2;
+    if (kind === 'coins') for (let i = 0; i < 5 + this.run.floorN; i++) this.spawnPickup('coin', x, y);
+    if (kind === 'berries') { this.spawnPickup('berry', x, y); this.spawnPickup('berry', x, y); if (this.run.relics.includes('berryBasket')) this.spawnPickup('berry', x, y); }
+    if (kind === 'xp') this.spawnPickup('candy', x, y);
+    if (kind === 'move') this.spawnPickup('disc', x, y);
+    if (kind === 'chest') this.spawnPickup('chest', x, y);
   }
 
   spawnPickup(kind, x, y) {
@@ -313,6 +355,21 @@ class Battle {
       this.run.coins++;
       this.sparks(k.x, k.y - 4, 4, '#ffe066');
       Sfx.play('coin');
+    } else if (k.kind === 'candy') {   // XP for the party (the monster that's out gets it all)
+      this.ui.banner('XP CANDY!');
+      Sfx.play('levelUp');
+      this.giveXp(15 + 3 * this.run.floorN);
+    } else if (k.kind === 'disc') {    // the monster that's out learns a new move
+      const id = this.run.learnMove(P);
+      if (id) { this.run.learnQueue.push({ mon: P, id }); this.ui.banner('MOVE DISC!'); }
+      else { this.run.coins += 10; this.ui.banner('+10 COINS'); }
+      Sfx.play('select');
+    } else if (k.kind === 'chest') {   // a relic (or a picnic once you have them all)
+      const free = Object.keys(RELICS).filter(id => !this.run.relics.includes(id));
+      if (free.length) { const id = pickRand(free); this.run.addRelic(id); this.ui.banner(`GOT ${RELICS[id].name}!`); }
+      else { this.run.useGood('picnic'); this.ui.banner('PICNIC!'); }
+      this.sparks(k.x, k.y - 4, 10, '#ffe066');
+      Sfx.play('levelUp');
     } else {
       const heal = Math.round(Math.min(P.maxHp * (this.run.relics.includes('berryBasket') ? 0.4 : BERRY_HEAL), P.maxHp - P.hp));
       P.hp = Math.min(P.maxHp, P.hp + heal);
@@ -352,6 +409,7 @@ class Battle {
         if (this.state === 'faint') break;
         const ms = this.mons.filter(m => m.alive);
         for (let i = 0; i < ms.length; i++) for (let j = i + 1; j < ms.length; j++) this.separate(ms[i], ms[j]);
+        if (this.state === 'fight') this.updateChampions(dt);
         this.updateProjectiles(dt);
         this.updateZones(dt);
         if (this.state === 'faint') break;

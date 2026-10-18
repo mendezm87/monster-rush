@@ -65,15 +65,68 @@ function shuffle(a) {
   return a;
 }
 
+// Each area's own monsters: most wild monsters, recruits and bosses on a floor come from
+// here (AREA_ODDS), the rest from anywhere, so every area feels different but can surprise.
+const AREA_MONS = {
+  meadow: { natives: ['sparkit', 'thornback', 'slumbear', 'pixibelle', 'galewing', 'scarablade', 'lumawool', 'smugshi'], bosses: ['slumbear', 'thornback', 'galewing'] },
+  crater: { natives: ['cinderox', 'boulderon', 'drakorn', 'brawlix', 'venomire', 'thornback', 'gearhulk'], bosses: ['boulderon', 'drakorn', 'cinderox'] },
+  summit: { natives: ['frostling', 'galewing', 'boulderon', 'brawlix', 'slumbear', 'drakorn', 'lumawool'], bosses: ['frostling', 'slumbear', 'boulderon'] },
+  grotto: { natives: ['mindra', 'wispurr', 'shadefang', 'pixibelle', 'lumawool', 'venomire', 'gearhulk'], bosses: ['gearhulk', 'mindra', 'wispurr'] },
+  ruins:  { natives: ['tidalisk', 'venomire', 'scarablade', 'wispurr', 'shadefang', 'mondaze', 'gearhulk', 'mindra'], bosses: ['tidalisk', 'shadefang', 'mondaze'] },
+  spire:  { natives: ['drakorn', 'mindra', 'shadefang', 'pixibelle', 'galewing', 'gearhulk', 'wispurr', 'brawlix'], bosses: ['drakorn', 'gearhulk', 'slumbear'] },
+};
+const AREA_ODDS = 0.75;
+// n different wild monster ids for an area
+function wildIds(stage, n, skip = []) {
+  const nat = shuffle(AREA_MONS[stage].natives.filter(id => !skip.includes(id)));
+  const all = shuffle(ROSTER.map(m => m.id).filter(id => !skip.includes(id)));
+  const out = [];
+  while (out.length < n) {
+    const id = (Math.random() < AREA_ODDS && nat.find(i => !out.includes(i))) || all.find(i => !out.includes(i));
+    if (!id) break;
+    out.push(id);
+  }
+  return out;
+}
+
+// What clearing a fight room gives (weights). It shows over the room's doors, so you can choose
+// your way through a floor, like Hades' doors. Wild monsters drop less to make up for it, so the
+// total loot is about what it was; the doors decide what kind you get.
+const ROOM_REWARDS = { coins: 30, berries: 25, xp: 15, move: 15, chest: 3 };
+function pickReward() {
+  let r = Math.random() * Object.values(ROOM_REWARDS).reduce((a, b) => a + b, 0);
+  for (const [k, w] of Object.entries(ROOM_REWARDS)) if ((r -= w) < 0) return k;
+  return 'coins';
+}
+
+// Champions (like Isaac's): now and then a wild monster has a trait, shown by a coloured ring
+// and a label. Swift: faster, quicker recharges. Giant: bigger, more HP, hard to push. Spiky:
+// touching it hurts. Splitting: becomes two small copies when it faints. Shiny: rare, golden,
+// drops lots of coins and a treasure chest. w = how often, of the champions.
+const CHAMPIONS = {
+  swift: { name: 'SWIFT', color: '#5ae0ff', w: 30 },
+  giant: { name: 'GIANT', color: '#ff9a3a', w: 25 },
+  spiky: { name: 'SPIKY', color: '#d8d8e8', w: 20 },
+  split: { name: 'SPLITTING', color: '#8be04e', w: 20 },
+  shiny: { name: 'SHINY', color: '#ffe066', w: 5 },
+};
+const championOdds = floorN => Math.min(0.3, 0.06 + 0.035 * floorN);
+function makeChampion(spec, floorN) {
+  if (Math.random() >= championOdds(floorN)) return spec;
+  let r = Math.random() * Object.values(CHAMPIONS).reduce((a, c) => a + c.w, 0);
+  spec.champ = Object.keys(CHAMPIONS).find(k => (r -= CHAMPIONS[k].w) < 0) || 'swift';
+  if (spec.champ === 'giant') { spec.hpMul *= 1.8; spec.scale = 1.3; }
+  return spec;
+}
+
 // Who lives in a fight room: 1-3 wild monsters, or sometimes one tougher one.
-function makeWave(floorN, sizeKey) {
-  const ids = ROSTER.map(m => m.id);
-  if (Math.random() < (floorN > 3 ? 0.25 : 0.18)) return [wildSpec(pickRand(ids), floorN, 'tough')];
+function makeWave(floorN, sizeKey, stage) {
+  if (Math.random() < (floorN > 3 ? 0.25 : 0.18)) return [wildSpec(wildIds(stage, 1)[0], floorN, 'tough')];
   const roomy = sizeKey === 'big' || sizeKey === 'wide' || sizeKey === 'tall';
   const table = floorN === 1 ? [1, 2, 2, 3] : floorN <= 3 ? [2, 2, 3, 3] : [2, 3, 3, 3];
   let n = pickRand(table);
   if (roomy && n < 3 && Math.random() < 0.5) n++;
-  return shuffle(ids.slice()).slice(0, n).map(id => wildSpec(id, floorN, 'wild'));
+  return wildIds(stage, n).map(id => makeChampion(wildSpec(id, floorN, 'wild'), floorN));
 }
 
 // last: the last floor of a normal run (its boss is the final boss)
@@ -86,6 +139,7 @@ function genFloor(floorN, partyIds, relics = [], last = false) {
 }
 
 function tryFloor(floorN, partyIds, relics, last) {
+  const stage = FLOOR_STAGES[(floorN - 1) % FLOOR_STAGES.length];
   const G = 9, target = 10 + Math.min(floorN, 4) + ((Math.random() * 2) | 0);
   const grid = new Map(), key = (x, y) => x + ',' + y;
   const rooms = [];
@@ -133,15 +187,19 @@ function tryFloor(floorN, partyIds, relics, last) {
     r.cleared = r.type !== 'fight' && r.type !== 'boss';
     r.visited = false;
     r.pickups = [];
-    r.enemies = r.type === 'fight' ? makeWave(floorN, sizeKey) : [];
+    r.enemies = r.type === 'fight' ? makeWave(floorN, sizeKey, stage) : [];
+    if (r.type === 'fight') r.reward = pickReward();
     if (r.type === 'boss') {
-      const big = ROSTER.filter(m => m.size === 'L').map(m => m.id);
-      r.enemies = [wildSpec(pickRand(Math.random() < 0.6 ? big : ids), floorN, 'boss')];
+      // usually one of the area's bosses, now and then anyone
+      r.enemies = [wildSpec(Math.random() < 0.8 ? pickRand(AREA_MONS[stage].bosses) : pickRand(ids), floorN, 'boss')];
       // the final boss is an evolved starter you didn't start with
       const rivals = EVOLVED.filter(e => !partyIds.includes(e.from));
       if (last) r.enemies = [wildSpec(pickRand(rivals.length ? rivals : EVOLVED).id, floorN, 'final')];
     }
-    if (r.type === 'recruit') r.offer = shuffle(ids.filter(id => !partyIds.includes(id))).slice(0, 3);
+    if (r.type === 'recruit') {   // two of the area's monsters and one from anywhere
+      const local = shuffle(AREA_MONS[stage].natives.filter(id => !partyIds.includes(id))).slice(0, 2);
+      r.offer = [...local, ...shuffle(ids.filter(id => !partyIds.includes(id) && !local.includes(id)))].slice(0, 3);
+    }
   }
   // a relic in the treasure room, two more (and two goods) in the shop
   const free = shuffle(Object.keys(RELICS).filter(id => !relics.includes(id)));
@@ -153,7 +211,7 @@ function tryFloor(floorN, partyIds, relics, last) {
     ...free.slice(1, 3).map(id => ({ id, price: relicPrice(floorN), relic: true })),
   ];
   while (shop.stock.length < 4 && goods.length > 1) { const id = goods.pop(); shop.stock.push({ id, price: GOODS[id].price }); }
-  return { n: floorN, last, rooms, start, boss, stage: FLOOR_STAGES[(floorN - 1) % FLOOR_STAGES.length] };
+  return { n: floorN, last, rooms, start, boss, stage };
 }
 
 // Progress kept between runs (in this browser). Beating a boss unlocks its species as a starter.

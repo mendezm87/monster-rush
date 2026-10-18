@@ -28,6 +28,51 @@ const BERRY_IMG = gridFromMap([
   '..kk..',
 ], { k: OUTLINE, g: '#4fae2e', r: '#e8435a', h: '#ffb0c0', d: '#a82a40' }).toCanvas();
 
+// Room rewards (see ROOM_REWARDS): XP candy, a move disc, a treasure chest; a skull marks the boss's door.
+const CANDY_IMG = gridFromMap([
+  '.k.kkk.k.',
+  'kpkpwpkpk',
+  'kpppppppk',
+  'kpkpppkpk',
+  '.k.kkk.k.',
+], { k: OUTLINE, p: '#ff7ab0', w: '#ffffff' }).toCanvas();
+const DISC_IMG = gridFromMap([
+  '..kkk..',
+  '.kbbbk.',
+  'kbbwbbk',
+  'kbwkwbk',
+  'kbbwbbk',
+  '.kbbbk.',
+  '..kkk..',
+], { k: OUTLINE, b: '#7ac8ff', w: '#e0f4ff' }).toCanvas();
+const CHEST_IMG = gridFromMap([
+  '.kkkkkkk.',
+  'koooooook',
+  'kkkkykkkk',
+  'kdddydddk',
+  'kdddddddk',
+  'kkkkkkkkk',
+], { k: OUTLINE, o: '#d08a3e', d: '#9a5a2a', y: '#ffd23f' }).toCanvas();
+const SKULL_IMG = gridFromMap([
+  '.kkkkk.',
+  'kwwwwwk',
+  'kwkwkwk',
+  'kwwwwwk',
+  '.kwkwk.',
+  '..kkk..',
+], { k: OUTLINE, w: '#f6f2ee' }).toCanvas();
+const PICKUP_IMG = { coin: COIN_IMG, berry: BERRY_IMG, candy: CANDY_IMG, disc: DISC_IMG, chest: CHEST_IMG };
+// the sign over a doorway: what's in the room behind it
+const REWARD_IMG = { coins: COIN_IMG, berries: BERRY_IMG, xp: CANDY_IMG, move: DISC_IMG, chest: CHEST_IMG };
+function doorSign(room) {
+  if (room.type === 'fight') return room.cleared ? null : { img: REWARD_IMG[room.reward], c: '#e8e0f0' };
+  if (room.type === 'boss') return room.cleared ? null : { img: SKULL_IMG, c: '#e8433a' };
+  if (room.type === 'shop') return { img: COIN_IMG, c: '#ffd23f' };
+  if (room.type === 'treasure') return room.taken ? null : { img: CHEST_IMG, c: '#ffffff' };
+  if (room.type === 'recruit') return room.recruited ? null : { img: BALL_IMG, c: '#5aa0ff' };
+  return null;
+}
+
 // 14px icons for relics and shop goods.
 const ICON_ART = {
   leechLens(g) { g.ellipse(6.5, 6.5, 5.5, 5.5, P('#c8d6ff', '#8a9ad0', '#ffffff')); g.ellipse(6.5, 6.5, 3, 3, P('#e8435a', '#a82a40', '#ffb0c0')); g.poly([[10, 10], [13, 13], [12, 14], [9, 11]], '#8a6a4a'); },
@@ -194,6 +239,7 @@ mixInto(Battle, class {
       ctx.save(); ctx.translate(Math.round(x), Math.round(y)); ctx.rotate(k * 10);
       ctx.drawImage(BALL_IMG, -4.5, -3.75, 9, 7.5); ctx.restore();
     }
+    this.drawDoorSigns(ctx);
     this.drawBars(ctx);
     this.drawFloats(ctx);
     ctx.setTransform(RES, 0, 0, RES, 0, 0);
@@ -225,6 +271,26 @@ mixInto(Battle, class {
     }
   }
 
+  // A little sign inside each doorway showing what the room behind it holds (crisp, after the lighting).
+  drawDoorSigns(ctx) {
+    if (this.state !== 'explore' && this.state !== 'fight') return;
+    const F = this.F;
+    for (const [dir, next] of Object.entries(this.room.doors)) {
+      const sign = doorSign(next);
+      if (!sign || !sign.img) continue;
+      const d = doorPos(this.room, dir), bob = Math.round(Math.sin(this.time * 3 + d.x) * 1.5);
+      const x = Math.round(dir === 'w' ? F.x0 + 24 : dir === 'e' ? F.x1 - 24 : d.x);
+      const y = Math.round(dir === 'n' ? F.y0 + 22 : dir === 's' ? F.y1 - 26 : d.y - 22) + bob;
+      const w = sign.img.width * 3, h = sign.img.height * 3, bw = Math.max(w, h) + 8;
+      ctx.globalAlpha = this.state === 'fight' ? 0.45 : 0.95;
+      ctx.fillStyle = OUTLINE; ctx.fillRect(x - bw / 2 - 1, y - bw / 2 - 1, bw + 2, bw + 2);
+      ctx.fillStyle = sign.c; ctx.fillRect(x - bw / 2, y - bw / 2, bw, bw);
+      ctx.fillStyle = '#2a2438'; ctx.fillRect(x - bw / 2 + 1, y - bw / 2 + 1, bw - 2, bw - 2);
+      ctx.drawImage(sign.img, Math.round(x - w / 2), Math.round(y - h / 2), w, h);
+      ctx.globalAlpha = 1;
+    }
+  }
+
   drawStairs(ctx) {
     const s = this.stairs, x = Math.round(s.x), y = Math.round(s.y);
     ctx.fillStyle = OUTLINE; ctx.fillRect(x - 18, y - 13, 36, 26);
@@ -240,7 +306,7 @@ mixInto(Battle, class {
 
   drawPickups(ctx) {
     for (const k of this.pickups) {
-      const img = k.kind === 'coin' ? COIN_IMG : BERRY_IMG;
+      const img = PICKUP_IMG[k.kind];
       const X = Math.round(k.x), Y = Math.round(k.y);
       Lighting.shadow(ctx, X, Y, 4, 1.6, 1.1);
       const bob = k.z > 0 ? k.z : Math.sin(this.time * 4 + k.x) > 0.5 ? 1 : 0;
@@ -297,6 +363,11 @@ mixInto(Battle, class {
       ctx.fillStyle = pct > 0.5 ? '#3ccf4e' : pct > 0.2 ? '#f2c12e' : '#e8433a';
       ctx.fillRect(x, y, Math.max(1, Math.round(w * pct)), 3);
       if (m.status) { ctx.fillStyle = STATUS_COL[m.status]; ctx.fillRect(x + w + 2, y - 1, 4, 5); }
+      if (m.champ) {   // the champion's trait over its bar
+        const c = CHAMPIONS[m.champ];
+        ctx.font = 'italic 900 7px "Lilita One", "Arial Black", Arial, sans-serif'; ctx.textAlign = 'center'; ctx.lineJoin = 'round';
+        ctx.lineWidth = 2.5; ctx.strokeStyle = '#15111f'; ctx.strokeText(c.name, m.x, y - 3); ctx.fillStyle = c.color; ctx.fillText(c.name, m.x, y - 3);
+      }
     }
   }
 
@@ -325,9 +396,11 @@ mixInto(Battle, class {
     // ground marker + shadow
     ctx.globalAlpha = alpha;
     Lighting.shadow(ctx, X, Y, m.r + 2, m.r * 0.42);
-    ctx.strokeStyle = mine ? 'rgba(90,160,255,0.75)' : m.boss ? 'rgba(255,200,60,0.8)' : 'rgba(255,90,80,0.6)';
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = mine ? 'rgba(90,160,255,0.75)' : m.boss ? 'rgba(255,200,60,0.8)' : m.champ ? CHAMPIONS[m.champ].color : 'rgba(255,90,80,0.6)';
+    ctx.lineWidth = m.champ ? 2 : 1;
     ctx.beginPath(); ctx.ellipse(X, Y, m.r + 4, m.r * 0.5 + 1, 0, 0, TAU); ctx.stroke();
+    // a champion glows in its colour
+    if (m.champ && !m.fainted) { ctx.globalAlpha = alpha * (0.18 + 0.08 * Math.sin(this.time * 5)); ctx.fillStyle = CHAMPIONS[m.champ].color; ctx.beginPath(); ctx.ellipse(X, Y - m.h / 2, m.r + 6, m.h / 2 + 4, 0, 0, TAU); ctx.fill(); ctx.globalAlpha = alpha; }
 
     // dash afterimages
     for (const g of m.ghosts) {
