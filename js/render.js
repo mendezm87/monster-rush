@@ -349,6 +349,12 @@ mixInto(Battle, class {
     if (m.face < 0) ctx.scale(-1, 1);
     const roll = m.action && m.action.kind === 'dash' && m.action.mv.fx === 'roll' && m.action.t > 0.1;
     if (roll) { ctx.translate(0, -S / 2 + 3); ctx.rotate((m.action.t - 0.1) * 22); ctx.translate(0, S / 2 - 3); }   // Rollout: tumble along
+    if (m.lift > 0.01) {   // caught in a tornado: carried up and spun round
+      const L = m.lift * m.lift;
+      ctx.translate(Math.sin(this.time * 9) * 5 * L, -L * (30 + Math.sin(this.time * 5) * 4) - S / 2 + 3);
+      ctx.rotate(this.time * 9 * L);
+      ctx.translate(0, S / 2 - 3);
+    }
     const dx = -S / 2, dy = -S + 3;
     ctx.drawImage(sp.views[m.view], dx, dy, S, S);
     let tint = null, ta = 0;
@@ -388,7 +394,7 @@ mixInto(Battle, class {
     }
     for (const z of this.zones) {
       if (z.done) {
-        if (!z.mv.linger) continue;
+        if (!z.mv.linger || z.mv.fx === 'tornado') continue;   // a tornado draws its own base (fx.js)
         // lingering pool: fades in and out, with bubbles popping across it
         const age = z.t - z.delay, left = z.mv.linger - age;
         const fade = clamp(Math.min(age / 0.15, left / 0.4), 0, 1);

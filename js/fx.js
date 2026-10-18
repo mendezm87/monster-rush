@@ -410,20 +410,78 @@ mixInto(Battle, class {
   }
 
   // Tornado: a funnel of wind that grows where it lands, spins for a while, then thins out.
+  // Tornado: a storm cloud gathers over the spot, a funnel of spiralling wind drops out of
+  // it to the ground, kicks up a ring of dust and whirls debris round, with lightning
+  // flickering in the cloud. When it ends the funnel draws back up and the cloud thins out.
+  // (Anyone caught is lifted and spun inside it: see `lift` in drawMon.)
   drawTornado(c, z) {
-    const fx = fxOf(z.mv), T = this.time + z.id;
-    const grow = z.done ? 1 : clamp(z.t / z.delay, 0, 1) * 0.5;
-    const left = z.done ? (z.delay + z.mv.linger) - z.t : 1, k = grow * clamp(left / 0.4, 0, 1);
-    if (k <= 0.02) return;
-    const Hh = 86 * k;
-    for (let i = 0; i < 9; i++) {
-      const t = i / 8, yy = z.y - t * Hh, rr = (z.r * 0.3 + t * t * z.r * 1.1) * k + 3;
-      const sway = Math.sin(T * 6 + t * 4) * 5 * t;
-      FXD.ring(c, z.x + sway, yy, rr, i % 2 ? '#ffffff' : fx[1], 2.4, 0.3);
+    const T = this.time + z.id * 1.7, mv = z.mv;
+    const ground = z.y, Hh = 112, cloudY = ground - Hh, r1 = z.r * 1.55, r0 = 5;
+    // how far the funnel reaches down (0 = still in the cloud, 1 = touching the ground), and the cloud's size
+    let reach, cloudK;
+    if (!z.done) { const k = clamp(z.t / z.delay, 0, 1); cloudK = 0.35 + 0.65 * k; reach = k * k; }
+    else {
+      const left = z.delay + mv.linger - z.t;
+      reach = clamp(left / 0.45, 0, 1); cloudK = clamp(left / 0.35, 0, 1);
     }
-    for (let i = 0; i < 4; i++) {   // bits of debris whirling round it
-      const ang = T * 9 + i * TAU / 4, t = (i * 0.27 + T * 0.4) % 1, rr = (z.r * 0.3 + t * t * z.r * 1.1) * k + 6;
-      FXD.rock(c, z.x + Math.cos(ang) * rr, z.y - t * Hh + Math.sin(ang) * rr * 0.3, ang, 2.2, TYPES.rock.fx, i + 1);
+    if (cloudK <= 0.02) return;
+    const tb = 1 - reach;   // the funnel's lowest point, as a fraction of the way up
+    const rAt = t => r0 + (r1 - r0) * Math.pow(t, 1.6);
+    const cxAt = t => z.x + Math.sin(T * 4 - t * 3) * 6 * (1 - t);
+
+    // dust storm round the base, and a scuffed ring on the ground
+    if (reach > 0.9) {
+      FXD.ring(c, z.x, ground, z.r * 1.15, '#d8ccb0', 1.6, 0.35);
+      for (let i = 0; i < 8; i++) {
+        const ang = -T * 7 + i * TAU / 8, rr = 11 + (i % 3) * 4;
+        if (Math.sin(ang) < 0) FXD.circle(c, cxAt(0) + Math.cos(ang) * rr, ground - 3 + Math.sin(ang) * rr * 0.32, 4 + (i % 2) * 1.5, '#a8987a');
+      }
+    }
+    // the funnel: wind strands spiralling up, the far side dimmer than the near side
+    const strands = 12, segs = [];
+    for (let j = 0; j < strands; j++) {
+      let prev = null;
+      for (let t = tb; t <= 1.0001; t += 0.05) {
+        const ang = -T * 11 + j * TAU / strands + t * 5.5, r = rAt(t);
+        const pt = [cxAt(t) + Math.cos(ang) * r, ground - t * Hh + Math.sin(ang) * r * 0.26];
+        if (prev && (j + Math.floor(t * 20 + T * 9)) % 4 !== 0) segs.push([prev, pt, Math.sin(ang) >= 0]);   // gaps make it look like streaks
+        prev = pt;
+      }
+    }
+    for (const [a, b, near] of segs) if (!near) FXD.line(c, [a, b], 3, INK);
+    for (const [a, b, near] of segs) if (!near) FXD.line(c, [a, b], 1.3, '#9fb0dc');
+    for (const [a, b, near] of segs) if (near) FXD.line(c, [a, b], 4, INK);
+    for (const [a, b, near] of segs) if (near) FXD.line(c, [a, b], 2, '#ffffff');
+    // the near half of the dust
+    if (reach > 0.9) for (let i = 0; i < 8; i++) {
+      const ang = -T * 7 + i * TAU / 8, rr = 11 + (i % 3) * 4;
+      if (Math.sin(ang) >= 0) FXD.circle(c, cxAt(0) + Math.cos(ang) * rr, ground - 3 + Math.sin(ang) * rr * 0.32, 4.5 + (i % 2) * 1.5, '#c8b898');
+    }
+    // rocks and leaves caught in the wind
+    for (let i = 0; i < 6; i++) {
+      const t = tb + ((i * 0.19 + T * 0.35) % 1) * (1 - tb), ang = -T * 9 + i * 2.3, r = rAt(t) + 4;
+      const x = cxAt(t) + Math.cos(ang) * r, y = ground - t * Hh + Math.sin(ang) * r * 0.26;
+      if (i % 2) FXD.leaf(c, x, y, ang * 2, 3.2, '#8be04e', '#2f9e3a'); else FXD.rock(c, x, y, ang, 2.4, TYPES.rock.fx, i + 1);
+    }
+    // the storm cloud: a flat, lumpy disc, dark underneath, with a slow swirl on top
+    const crx = r1 * 1.45 * cloudK, cry = 12 * cloudK, lumpy = (y, ry) => () => {
+      for (let i = 0; i <= 28; i++) {
+        const ang = i / 28 * TAU, bump = 1 + 0.09 * Math.sin(ang * 7 + T * 1.5) + 0.05 * Math.sin(ang * 13 - T);
+        const x = z.x + Math.cos(ang) * crx * bump, yy = y + Math.sin(ang) * ry * bump;
+        i ? c.lineTo(x, yy) : c.moveTo(x, yy);
+      }
+      c.closePath();
+    };
+    FXD.ink(c, lumpy(cloudY + 6 * cloudK, cry), '#2e2c40');          // the dark underside
+    FXD.ink(c, lumpy(cloudY, cry * 0.92), '#55536e');               // the body
+    c.beginPath(); lumpy(cloudY - 3 * cloudK, cry * 0.62)(); c.fillStyle = '#6c6a88'; c.fill();   // the lit top
+    const sw = [];                                                   // the swirl, turning with the wind
+    for (let i = 0; i < 46; i++) { const ang = -T * 2.2 + i * 0.32, r = i / 46; sw.push([z.x + Math.cos(ang) * crx * 0.85 * r, cloudY - 3 * cloudK + Math.sin(ang) * cry * 0.55 * r]); }
+    FXD.line(c, sw, 1.4, '#8e8ca8');
+    // now and then, lightning flickers out of the cloud
+    if (Math.sin(T * 7.3) > 0.9 && cloudK > 0.6) {
+      const bx = z.x + Math.sin(T * 13) * crx * 0.6;
+      FXD.bolt(c, bx, cloudY + 6, bx + Math.sin(T * 5) * 8, cloudY + 30, (T * 10) | 0, 1.8, '#fff27a', 4, false);
     }
   }
 

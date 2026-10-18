@@ -439,6 +439,13 @@ mixInto(Battle, class {
   }
 
   updateZones(dt) {
+    // anyone standing in a tornado is lifted off the ground and spun (only for looks)
+    const caught = new Set();
+    for (const z of this.zones) {
+      if (!z.done || z.mv.fx !== 'tornado' || z.t > z.delay + z.mv.linger - 0.3) continue;
+      for (const foe of this.foes(z.owner)) if (Math.hypot(foe.x - z.x, foe.y - z.y) < z.r + foe.r * 0.5) caught.add(foe);
+    }
+    for (const m of this.mons) m.lift = clamp((m.lift || 0) + (caught.has(m) ? 4 : -4) * dt, 0, 1);
     for (const z of this.zones) {
       z.t += dt;
       if (!z.done && z.t >= z.delay) {
@@ -446,7 +453,10 @@ mixInto(Battle, class {
         const fx = TYPES[z.mv.type].fx;
         if (z.mv.fx === 'bolt') { this.particles.push({ x: z.x, y: z.y, life: 0.25, max: 0.25, kind: 'bolt', color: fx[1], seed: Math.random() }); Sfx.play('zap'); }
         else Sfx.play('boom');
-        this.fxBlast(z.x, z.y, z.r * 1.2, z.mv);
+        if (z.mv.fx === 'tornado') {   // touching down: a puff of dust rather than a blast
+          this.particles.push({ kind: 'wave', x: z.x, y: z.y - 2, r0: 4, r1: z.r * 1.3, life: 0.35, max: 0.35, color: '#d8ccb0', w: 3 });
+          this.fxDebris(z.x, z.y - 4, { type: 'rock', palette: ['#8a7a5a', '#c8b898', '#e8dcc0'] }, 10, z.r * 3, 3.5, 4);
+        } else this.fxBlast(z.x, z.y, z.r * 1.2, z.mv);
         this.decalAt(z.x, z.y, z.r * 0.7);
         this.addShake(4);
         for (const foe of this.foes(z.owner)) {
