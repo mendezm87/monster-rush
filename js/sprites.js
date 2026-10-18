@@ -160,7 +160,7 @@ function rigEye(h, R, x, y, normal, w = 2) {
 // Flying monsters: how high they hover and how fast they flap (beats a second; 0 = they just
 // float). drawMon lifts them off their shadow and swaps in the flap frame (SPRITES[id].flap).
 // Monsters whose art is rigged (draws its parts through part() and reads rig()), and their body type (RIG_FRAMES).
-const RIGGED = { smugshi: 'quad', brawlix: 'biped', wispurr: 'floater', sparkit: 'biped', cinderox: 'quad', tidalisk: 'slither', thornback: 'quad', slumbear: 'biped', frostling: 'quad', boulderon: 'biped', mindra: 'biped', shadefang: 'quad', lumawool: 'quad', drakorn: 'flier', galewing: 'flier', pixibelle: 'flier', venomire: 'slither', scarablade: 'biped', gearhulk: 'biped', mondaze: 'biped', smugshogun: 'quad', infernox: 'quad', maelstrisk: 'slither', voltergeist: 'floater', coilizard: 'quad', bellpaca: 'quad', smouldox: 'quad' };
+const RIGGED = { smugshi: 'quad', brawlix: 'biped', wispurr: 'floater', sparkit: 'biped', cinderox: 'quad', tidalisk: 'slither', thornback: 'quad', slumbear: 'biped', frostling: 'quad', boulderon: 'biped', mindra: 'biped', shadefang: 'quad', lumawool: 'quad', drakorn: 'flier', galewing: 'flier', pixibelle: 'flier', venomire: 'slither', scarablade: 'biped', gearhulk: 'biped', mondaze: 'biped', smugshogun: 'quad', infernox: 'quad', maelstrisk: 'slither', voltergeist: 'floater', coilizard: 'quad', bellpaca: 'quad', smouldox: 'quad', garrishell: 'biped' };
 const FLYERS = { galewing: { hover: 8, flap: 4 }, pixibelle: { hover: 7, flap: 6 }, drakorn: { hover: 6, flap: 3 }, wispurr: { hover: 6, flap: 0 } };
 
 const MONSTER_ART = {
@@ -1387,6 +1387,84 @@ const MONSTER_ART = {
     h.pxM(12, 14, OUTLINE).pxM(13, 14, OUTLINE);                                                 // a hard brow
     rigMouth(h, Q, 15, 21, 2);
   },
+  // The siege turtle (the owner's pick, "A3 · visor helm"): a hulking green turtle with a gunmetal
+  // fortress-turret shell (battlements, rivets, gold trim), a castle-gate helm with one glowing eye
+  // behind the visor and a portcullis grille, and a water cannon for each forearm.
+  garrishell(g, v = 'front') { // 44x44
+    const S = P('#5a8a3a', '#3a6226', '#7aa856'), C = P('#b8c47a', '#8a9a52', '#d8e0a0');
+    const M = P('#8a909c', '#5a606c', '#b4bac4'), D = P('#4a4e58', '#30333c', '#64687a');
+    const GOLD = '#d8a838', BORE = '#1c2430', WET = '#7ad0f0', EYE = '#ffa020', HOT = '#fff0a0';
+    const { Q, b, h, t, legA, legB, armA, armB } = rigParts(g, v);
+    const merlon = (p, x, y, w = 5, hh = 6) => p.poly([[x, y], [x + w, y], [x + w, y + hh], [x, y + hh]], M, { edge: true });
+    if (v === 'side') {
+      t.poly([[8, 33], [1, 38], [10, 37]], S, { edge: true });                                   // stubby tail
+      legB.ellipse(20, 37, 4.5, 4.5, S, { edge: true }); legB.ellipse(21, 41, 5, 2.2, S, { edge: true });
+      merlon(b, 3, 5, 4, 5); merlon(b, 9, 3, 4); merlon(b, 15, 3, 4);                            // battlements
+      b.poly([[3, 12], [6, 8], [24, 8], [27, 13], [27, 32], [7, 35], [2, 27]], M, { edge: true });   // turret shell
+      b.rect(3, 13, 23, 1, GOLD); b.rect(14, 8, 1, 26, GOLD);
+      for (const [x, y] of [[6, 11], [11, 11], [19, 11], [6, 20], [10, 28], [20, 22], [22, 30]]) b.px(x, y, D.s);
+      armB.poly([[28, 19], [39, 19], [39, 24], [28, 24]], D, { edge: true });                   // far cannon
+      b.ellipse(27, 26, 8, 9, S, { edge: true });                                                // body
+      b.ellipse(31, 27, 3, 7, C);                                                                // plastron
+      b.rect(29, 24, 4, 1, C.s); b.rect(29, 29, 4, 1, C.s);
+      legA.ellipse(26, 37, 5, 5, S, { edge: true }); legA.ellipse(28, 41, 6, 2.4, S, { edge: true });   // near leg
+      legA.px(32, 41, C.l).px(34, 41, C.l);                                                      // claws
+      h.poly([[22, 7], [29, 3], [35, 6], [37, 10], [37, 17], [24, 18], [21, 13]], M, { edge: true });   // helm
+      h.rect(28, 3, 1, 7, M.l);                                                                  // crest ridge
+      h.rect(30, 9, 7, 3, BORE);                                                                 // visor slit
+      h.px(30, 10, S.s);
+      rigEye(h, Q, 33, 9, () => { h.rect(33, 9, 3, 2, EYE); h.px(34, 9, HOT); }, 3);            // the glowing eye
+      for (const x of [30, 32, 34, 36]) h.rect(x, 13, 1, 4, BORE);                               // portcullis grille
+      h.px(24, 9, D.s).px(24, 15, D.s);
+      armA.ellipse(26, 22, 4.5, 4.5, S, { edge: true });                                         // shoulder
+      armA.poly([[25, 24], [39, 24], [39, 31], [25, 31]], D, { edge: true });                   // near cannon
+      armA.rect(30, 24, 1, 7, GOLD); armA.rect(35, 24, 1, 7, GOLD);
+      armA.ellipse(40, 27.5, 2, 4.2, M, { edge: true });                                         // muzzle
+      armA.ellipse(40.5, 27.5, 1, 2.4, BORE); armA.px(41, 27, WET);
+      return;
+    }
+    if (v === 'back') {
+      h.poly([[16, 7], [19, 2], [25, 2], [28, 7], [28, 12], [16, 12]], M, { edge: true });       // top of the helm, behind the battlements
+      h.rect(21, 1, 2, 5, M.l);
+      armA.ellipse(5, 21, 4.5, 4.5, S, { edge: true }); armB.ellipse(39, 21, 4.5, 4.5, S, { edge: true });
+      armA.poly([[1, 22], [9, 22], [9, 34], [1, 34]], D, { edge: true }); armB.poly([[35, 22], [43, 22], [43, 34], [35, 34]], D, { edge: true });
+      armA.rect(1, 25, 8, 1, GOLD); armB.rect(35, 25, 8, 1, GOLD);
+      armA.ellipse(5, 35, 4.5, 2.2, M, { edge: true }); armB.ellipse(39, 35, 4.5, 2.2, M, { edge: true });
+      legA.ellipse(14, 38, 5, 4.5, S, { edge: true }); legB.ellipse(30, 38, 5, 4.5, S, { edge: true });
+      legA.ellipse(14, 41, 5.5, 2.2, S, { edge: true }); legB.ellipse(30, 41, 5.5, 2.2, S, { edge: true });
+      merlon(b, 6, 4); merlon(b, 33, 4); merlon(b, 12, 8, 5, 4); merlon(b, 27, 8, 5, 4);         // battlements
+      b.poly([[6, 12], [9, 9], [35, 9], [38, 12], [38, 34], [33, 37], [11, 37], [6, 34]], M, { edge: true });   // the shell
+      b.rect(6, 13, 33, 1, GOLD); b.rect(21, 13, 2, 24, GOLD); b.rect(7, 26, 31, 1, GOLD);
+      for (const [x, y] of [[9, 16], [16, 16], [27, 16], [34, 16], [9, 23], [34, 23], [12, 31], [17, 30], [27, 30], [32, 31]]) b.px(x, y, D.s);
+      b.px(14, 20, D.s).px(15, 21, D.s).px(16, 20, D.s).px(29, 33, D.s).px(30, 32, D.s);         // battle scratches
+      t.poly([[19, 36], [25, 36], [22, 41]], S, { edge: true });                                 // tail
+      return;
+    }
+    merlon(b, 3, 4, 4); merlon(b, 9, 5, 4, 5); merlon(b, 31, 5, 4, 5); merlon(b, 37, 4, 4);       // battlements over the shoulders
+    b.poly([[5, 14], [8, 9], [36, 9], [39, 14], [39, 30], [5, 30]], M, { edge: true });          // turret shell behind
+    b.rect(5, 13, 34, 1, GOLD);
+    b.pxM(7, 18, D.s); b.pxM(7, 25, D.s);
+    legA.ellipse(14, 37, 5, 4.5, S, { edge: true }); legB.ellipse(30, 37, 5, 4.5, S, { edge: true });   // legs
+    legA.ellipse(13, 41, 6, 2.4, S, { edge: true }); legB.ellipse(31, 41, 6, 2.4, S, { edge: true });   // feet
+    legA.px(9, 42, C.l).px(12, 42, C.l).px(15, 42, C.l); legB.px(28, 42, C.l).px(31, 42, C.l).px(34, 42, C.l);   // claws
+    b.ellipse(22, 26, 11, 9.5, S, { edge: true });                                               // body
+    b.ellipse(22, 27, 7, 7.5, C);                                                                // plastron
+    b.rect(16, 24, 12, 1, C.s); b.rect(16, 29, 12, 1, C.s); b.rect(21, 20, 1, 14, C.s);
+    armA.ellipse(9, 21, 5, 5, S, { edge: true }); armB.ellipse(35, 21, 5, 5, S, { edge: true });     // shoulders
+    armA.poly([[2, 23], [11, 23], [11, 34], [2, 34]], D, { edge: true });                       // the arm cannons
+    armB.poly([[33, 23], [42, 23], [42, 34], [33, 34]], D, { edge: true });
+    armA.rect(2, 26, 9, 1, GOLD); armB.rect(33, 26, 9, 1, GOLD);
+    armA.ellipse(6.5, 35, 5, 3, M, { edge: true }); armB.ellipse(37.5, 35, 5, 3, M, { edge: true });   // muzzles, pointed at you
+    armA.ellipse(6.5, 35, 3, 1.6, BORE); armB.ellipse(37.5, 35, 3, 1.6, BORE);
+    armA.px(5, 35, WET); armB.px(37, 35, WET);
+    h.poly([[15, 8], [18, 4], [26, 4], [29, 8], [30, 18], [14, 18]], M, { edge: true });         // castle-gate helm
+    h.rect(21, 3, 2, 6, M.l);                                                                    // crest ridge
+    h.rect(16, 10, 12, 3, BORE);                                                                 // visor slit
+    h.rect(17, 11, 3, 1, S.s);                                                                   // skin in the shadow
+    rigEye(h, Q, 23, 10, () => { h.rect(23, 10, 4, 2, EYE); h.px(24, 10, HOT); h.px(25, 10, HOT); }, 4);   // one huge glowing eye
+    for (const x of [17, 19, 21, 23, 25, 27]) h.rect(x, 14, 1, 3, BORE);                         // portcullis grille
+    h.px(16, 8, D.s).px(28, 8, D.s).px(15, 16, D.s).px(29, 16, D.s);                             // rivets
+  },
 };
 
 // Diagonal views, facing right like 'side' (flipped by face for left):
@@ -2224,6 +2302,58 @@ const MONSTER_ART_DIAG = {
     rigEye(h, Q, 20, 15, () => h.rect(20, 15, 2, 1, EYE));
     h.px(14, 14, OUTLINE).px(15, 14, OUTLINE); h.px(21, 14, OUTLINE).px(20, 14, OUTLINE);
     rigMouth(h, Q, 18, 21, 2);
+  },
+  garrishell(g, v) { // 44x44
+    const S = P('#5a8a3a', '#3a6226', '#7aa856'), C = P('#b8c47a', '#8a9a52', '#d8e0a0');
+    const M = P('#8a909c', '#5a606c', '#b4bac4'), D = P('#4a4e58', '#30333c', '#64687a');
+    const GOLD = '#d8a838', BORE = '#1c2430', WET = '#7ad0f0', EYE = '#ffa020', HOT = '#fff0a0';
+    const { Q, b, h, t, legA, legB, armA, armB } = rigParts(g, v);
+    const merlon = (p, x, y, w = 5, hh = 6) => p.poly([[x, y], [x + w, y], [x + w, y + hh], [x, y + hh]], M, { edge: true });
+    if (v === 'bside') {
+      armA.ellipse(38, 21, 4, 4, S, { edge: true });
+      armA.poly([[35, 22], [42, 22], [42, 33], [35, 33]], D, { edge: true }); armA.rect(35, 25, 7, 1, GOLD);
+      armA.ellipse(38.5, 34, 4, 2, M, { edge: true });
+      h.poly([[20, 6], [24, 2], [30, 3], [34, 7], [35, 15], [24, 15]], M, { edge: true });       // helm, turned right
+      h.rect(26, 1, 2, 5, M.l);
+      h.rect(33, 9, 2, 2, BORE); h.px(34, 9, EYE);                                               // a glint of the eye at the edge
+      armB.ellipse(5, 21, 4.5, 4.5, S, { edge: true });
+      armB.poly([[1, 22], [9, 22], [9, 34], [1, 34]], D, { edge: true }); armB.rect(1, 25, 8, 1, GOLD);
+      armB.ellipse(5, 35, 4.5, 2.2, M, { edge: true });
+      legA.ellipse(29, 38, 4.5, 4.5, S, { edge: true }); legA.ellipse(30, 41, 5, 2.2, S, { edge: true });
+      legB.ellipse(13, 38, 5, 4.5, S, { edge: true }); legB.ellipse(13, 41, 5.5, 2.2, S, { edge: true });
+      merlon(b, 5, 4); merlon(b, 11, 8, 5, 4); merlon(b, 25, 8, 4, 4); merlon(b, 31, 5, 4, 5);
+      b.poly([[5, 12], [8, 9], [33, 9], [36, 12], [36, 34], [31, 37], [10, 37], [5, 34]], M, { edge: true });
+      b.rect(5, 13, 31, 1, GOLD); b.rect(19, 13, 2, 24, GOLD); b.rect(6, 26, 30, 1, GOLD);
+      for (const [x, y] of [[8, 16], [15, 16], [25, 16], [32, 16], [8, 23], [32, 23], [11, 31], [16, 30], [25, 30], [30, 31]]) b.px(x, y, D.s);
+      b.px(13, 20, D.s).px(14, 21, D.s).px(15, 20, D.s);
+      t.poly([[13, 36], [19, 36], [15, 41]], S, { edge: true });                                 // tail, out to the left
+      return;
+    }
+    merlon(b, 2, 4, 4); merlon(b, 8, 5, 4, 5); merlon(b, 32, 5, 4, 5); merlon(b, 37, 5, 3, 5);   // battlements
+    b.poly([[4, 14], [7, 9], [35, 9], [38, 14], [38, 30], [4, 30]], M, { edge: true });          // shell behind
+    b.rect(4, 13, 34, 1, GOLD);
+    b.px(6, 18, D.s).px(6, 25, D.s).px(36, 18, D.s);
+    t.poly([[8, 33], [1, 37], [9, 37]], S, { edge: true });                                      // tail, out to the left
+    legB.ellipse(15, 37, 4.5, 4.5, S, { edge: true }); legA.ellipse(30, 37, 5, 4.5, S, { edge: true });
+    legB.ellipse(14, 41, 5.5, 2.2, S, { edge: true }); legA.ellipse(32, 41, 6, 2.4, S, { edge: true });
+    legB.px(10, 42, C.l).px(13, 42, C.l); legA.px(29, 42, C.l).px(32, 42, C.l).px(35, 42, C.l);
+    b.ellipse(23, 26, 10.5, 9.5, S, { edge: true });                                             // body
+    b.ellipse(25, 27, 6.5, 7.5, C);                                                              // plastron, turned our way
+    b.rect(19, 24, 12, 1, C.s); b.rect(19, 29, 12, 1, C.s); b.rect(24, 20, 1, 14, C.s);
+    armB.ellipse(10, 21, 4, 4, S, { edge: true });                                               // far shoulder and cannon
+    armB.poly([[4, 23], [11, 23], [11, 33], [4, 33]], D, { edge: true }); armB.rect(4, 26, 7, 1, GOLD);
+    armB.ellipse(7.5, 34, 4, 2.4, M, { edge: true }); armB.ellipse(7.5, 34, 2.2, 1.2, BORE);
+    armA.ellipse(36, 21, 5, 5, S, { edge: true });                                               // near shoulder and cannon
+    armA.poly([[33, 23], [42, 23], [42, 34], [33, 34]], D, { edge: true }); armA.rect(33, 26, 9, 1, GOLD);
+    armA.ellipse(37.5, 35, 5, 3, M, { edge: true }); armA.ellipse(38, 35, 3, 1.6, BORE); armA.px(37, 35, WET);
+    h.poly([[17, 8], [20, 4], [28, 4], [31, 8], [32, 18], [16, 18]], M, { edge: true });         // helm, turned right
+    h.rect(17, 7, 2, 10, M.s);                                                                   // its side, turned to us
+    h.rect(24, 3, 2, 6, M.l);
+    h.rect(20, 10, 11, 3, BORE);                                                                 // visor slit
+    h.rect(21, 11, 2, 1, S.s);
+    rigEye(h, Q, 26, 10, () => { h.rect(26, 10, 4, 2, EYE); h.px(27, 10, HOT); h.px(28, 10, HOT); }, 4);
+    for (const x of [21, 23, 25, 27, 29]) h.rect(x, 14, 1, 3, BORE);                             // grille
+    h.px(30, 8, D.s).px(31, 16, D.s);
   },
 };
 

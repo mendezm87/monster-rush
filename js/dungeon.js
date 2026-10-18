@@ -71,8 +71,8 @@ const AREA_MONS = {
   meadow: { natives: ['sparkit', 'thornback', 'slumbear', 'pixibelle', 'galewing', 'scarablade', 'lumawool', 'smugshi', 'bellpaca'], bosses: ['slumbear', 'thornback', 'galewing'] },
   crater: { natives: ['cinderox', 'boulderon', 'drakorn', 'brawlix', 'venomire', 'thornback', 'gearhulk', 'coilizard', 'smouldox'], bosses: ['boulderon', 'drakorn', 'cinderox'] },
   summit: { natives: ['frostling', 'galewing', 'boulderon', 'brawlix', 'slumbear', 'drakorn', 'lumawool', 'coilizard', 'bellpaca'], bosses: ['frostling', 'slumbear', 'boulderon'] },
-  grotto: { natives: ['mindra', 'wispurr', 'shadefang', 'pixibelle', 'lumawool', 'venomire', 'gearhulk', 'voltergeist'], bosses: ['gearhulk', 'mindra', 'wispurr'] },
-  ruins:  { natives: ['tidalisk', 'venomire', 'scarablade', 'wispurr', 'shadefang', 'mondaze', 'gearhulk', 'mindra', 'smouldox'], bosses: ['tidalisk', 'shadefang', 'mondaze'] },
+  grotto: { natives: ['mindra', 'wispurr', 'shadefang', 'pixibelle', 'lumawool', 'venomire', 'gearhulk', 'voltergeist', 'garrishell'], bosses: ['gearhulk', 'mindra', 'wispurr'] },
+  ruins:  { natives: ['tidalisk', 'venomire', 'scarablade', 'wispurr', 'shadefang', 'mondaze', 'gearhulk', 'mindra', 'smouldox', 'garrishell'], bosses: ['tidalisk', 'shadefang', 'mondaze', 'garrishell'] },
   spire:  { natives: ['drakorn', 'mindra', 'shadefang', 'pixibelle', 'galewing', 'gearhulk', 'wispurr', 'brawlix', 'voltergeist'], bosses: ['drakorn', 'gearhulk', 'slumbear'] },
 };
 const AREA_ODDS = 0.75;

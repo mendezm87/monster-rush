@@ -100,6 +100,7 @@ const MOVES = {
   hydroCannon:  { name: 'Hydro Cannon', type: 'water', kind: 'beam', power: 320, cd: 6.5, charge: 0.5, dur: 0.7, width: 12, len: 270 },
   bubbleBeam:   { name: 'Bubble Spray', type: 'water', kind: 'projectile', power: 55, cd: 2, speed: 170, r: 4, count: 5, spread: 0.5, slow: 1.5, fx: 'bubble' },
   aquaJet:      { name: 'Aqua Jet', type: 'water', kind: 'dash', power: 115, cd: 2.2, speed: 410, dur: 0.25 },
+  twinCannon:   { name: 'Twin Cannon', type: 'water', kind: 'projectile', power: 95, cd: 2.2, speed: 270, r: 5, count: 2, spread: 0.14 },
   whirlpool:    { name: 'Whirlpool', type: 'water', kind: 'vortex', power: 350, cd: 6, r: 100, dur: 1.4, pull: 115 },
   // grass
   razorLeaf:    { name: 'Razor Leaf', type: 'grass', kind: 'projectile', power: 90, cd: 1.8, speed: 255, r: 4, count: 2, spread: 0.15 },
@@ -262,6 +263,8 @@ const ROSTER = [
     moves: ['bodySlam', 'staticSiphon', 'voltCannon', 'wish'] },
   { id: 'smouldox', name: 'SMOULDOX', types: ['fire', 'rock'], hp: 1300, atk: 1.12, def: 1.2, spd: 64, size: 'M', item: 'emberStone',
     moves: ['flameWheel', 'rockSlide', 'fireBlast', 'heavyStomp'] },
+  { id: 'garrishell', name: 'GARRISHELL', types: ['water', 'steel'], hp: 1500, atk: 1.1, def: 1.3, spd: 58, size: 'L', item: 'mysticDrop',
+    moves: ['twinCannon', 'hydroCannon', 'ironSlam', 'ironDefense'] },
 ];
 
 // Evolved forms: a starter becomes one of these at `evolve.level` (see `evolve` on the base
