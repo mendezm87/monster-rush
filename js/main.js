@@ -2,7 +2,7 @@
 
 // Shown on the title screen so players can tell whether their browser has the latest
 // build (GitHub Pages lets browsers cache files for up to 10 minutes). Bump on every release.
-const VERSION = '2026.10.17-r31';
+const VERSION = '2026.10.17-r32';
 
 const App = {
   endless: false,   // the mode picked on the title screen
@@ -340,7 +340,7 @@ $('#btn-recruit-yes').onclick = () => {
 // ---------- party screen (from the pause menu) ----------
 const Party = { sel: -1, confirm: false };
 function openParty() {
-  Party.sel = -1; Party.confirm = false;
+  Party.sel = -1; Party.confirm = false; MovesEd.slot = -1; MovesEd.mv = null;
   drawParty();
   UI.show('party');
 }
@@ -355,7 +355,7 @@ function drawParty() {
   $('#party-count').textContent = `${run.party.length}/6`;
   UI.partyCards($('#party-list'), run.party, {
     mark: i => (i === Party.sel ? 'sel' : '') + (i === run.pi ? ' lead' : ''),
-    onPick: i => { Sfx.play('select'); Party.sel = i; Party.confirm = false; drawParty(); },
+    onPick: i => { Sfx.play('select'); Party.sel = i; Party.confirm = false; MovesEd.slot = -1; MovesEd.mv = null; drawParty(); },
   });
   const btn = $('#btn-release');
   if (Party.sel < 0) {
@@ -364,7 +364,8 @@ function drawParty() {
     return;
   }
   const m = run.party[Party.sel];
-  UI.fillDetail($('#party-detail'), m.def, ` · ${m.fainted ? 'FAINTED' : `${Math.ceil(m.hp)} HP left`}`);
+  UI.fillDetail($('#party-detail'), m.def, ` · Lv ${m.level} · ${m.fainted ? 'FAINTED' : `${Math.ceil(m.hp)} / ${m.maxHp} HP`}`);
+  $('#party-detail .d-moves').outerHTML = movesEditorHtml(m);
   btn.disabled = !canRelease(Party.sel);
   btn.textContent = Party.confirm ? `Really release ${m.def.name}?` : 'Release';
 }
@@ -380,6 +381,94 @@ $('#btn-release').onclick = () => {
   Party.sel = -1; Party.confirm = false;
   drawParty();
 };
+$('#party-detail').addEventListener('click', e => {
+  const m = Party.sel >= 0 && App.run && App.run.party[Party.sel];
+  if (m && movesEditorTap(m, e.target)) drawParty();
+});
+
+// ---------- moves: the 4 in use (in click order) and the others a monster knows ----------
+// Tap a slot, then another slot (to change which click it's on) or a known move (to swap it in);
+// or tap a known move first, then the slot to put it in.
+const MovesEd = { slot: -1, mv: null };
+const SLOT_NAMES = ['Click', 'Right-click', 'Shift + click', 'Shift + right-click'];
+function slotLabel(i) {
+  if (!document.body.classList.contains('no-touch')) return 'Button ' + (i + 1);
+  const k = Input.keysFor('move' + (i + 1))[0];
+  return SLOT_NAMES[i] + (k ? ' · ' + Input.keyName(k) : '');
+}
+function moveBtn(k, attrs, cls = '', label = '') {
+  const mv = MOVES[k];
+  return `<button class="mv ${cls}" ${attrs} style="background:${TYPES[mv.type].color}">${label ? `<i>${label}</i>` : ''}${mv.name}<small>${TYPES[mv.type].name} ${mv.kind}${mv.power ? ' ' + mv.power : ''}</small></button>`;
+}
+function movesEditorHtml(m) {
+  const ids = m.moves.map(x => x.id), spare = m.known.filter(k => !ids.includes(k)), fresh = m.newMoves || [];
+  return `<div class="mv-ed"><div class="mv-head">Moves <span>${MovesEd.slot >= 0 || MovesEd.mv ? 'now tap where it goes' : 'tap one, then a slot or move to swap'}</span></div>
+    <div class="mv-slots">${ids.map((k, i) => moveBtn(k, `data-slot="${i}"`, i === MovesEd.slot ? 'sel' : '', slotLabel(i))).join('')}</div>
+    ${spare.length ? `<div class="mv-head">Also knows</div><div class="mv-known">${spare.map(k => moveBtn(k, `data-mv="${k}"`, (k === MovesEd.mv ? 'sel ' : '') + (fresh.includes(k) ? 'new' : ''))).join('')}</div>`
+      : `<div class="hint">It learns a new move at every 2nd level.</div>`}</div>`;
+}
+// a tap inside a moves editor; returns true if it should be redrawn
+function movesEditorTap(m, el) {
+  const b = el.closest('button');
+  if (!b || !(b.dataset.slot !== undefined || b.dataset.mv)) return false;
+  const put = (slot, id) => {
+    if (m.equip(slot, id)) { Sfx.play('ball'); if (m.newMoves) m.newMoves = m.newMoves.filter(k => k !== id); afterMovesChange(m); }
+    else { Sfx.play('back'); UI.banner('KEEP ONE ATTACK'); }
+    MovesEd.slot = -1; MovesEd.mv = null;
+  };
+  if (b.dataset.slot !== undefined) {
+    const s = +b.dataset.slot;
+    if (MovesEd.mv) put(s, MovesEd.mv);
+    else if (MovesEd.slot === s) MovesEd.slot = -1;
+    else if (MovesEd.slot >= 0) put(MovesEd.slot, m.moves[s].id);   // trade places: a different click
+    else { MovesEd.slot = s; Sfx.play('select'); }
+  } else {
+    const k = b.dataset.mv;
+    if (MovesEd.slot >= 0) put(MovesEd.slot, k);
+    else { MovesEd.mv = MovesEd.mv === k ? null : k; Sfx.play('select'); }
+  }
+  return true;
+}
+function afterMovesChange(m) {
+  const b = App.battle;
+  if (b && m === b.P) UI.buildMoveButtons(m);
+}
+
+// ---------- a new move learned on a level-up: offered between fights ----------
+const Learn = { cur: null };
+function openLearn() {
+  const run = App.run, item = run.learnQueue.shift();
+  if (!item || !run.party.includes(item.mon) || !item.mon.known.includes(item.id)) return;
+  Learn.cur = item; MovesEd.slot = -1; MovesEd.mv = null;
+  App.paused = true; Input.reset();
+  drawLearn();
+  UI.show('learn');
+  Sfx.play('levelUp');
+}
+function drawLearn() {
+  const { mon: m, id } = Learn.cur, mv = MOVES[id];
+  $('#learn-title').textContent = `${m.def.name} learned ${mv.name}!`;
+  UI.fillDetail($('#learn-detail'), m.def, ` · Lv ${m.level}`);
+  $('#learn-detail .d-moves').outerHTML = `<div class="mv-ed"><div class="mv-new">${moveBtn(id, 'disabled', 'big')}</div>
+    <div class="mv-head">Put it in place of <span>(the old move stays known: swap back any time in Pause, Party)</span></div>
+    <div class="mv-slots">${m.moves.map((x, i) => moveBtn(x.id, `data-slot="${i}"`, '', slotLabel(i))).join('')}</div></div>`;
+}
+function closeLearn(kept) {
+  const { mon: m, id } = Learn.cur;
+  if (kept) m.newMoves = [...(m.newMoves || []), id];   // marked NEW in the party screen
+  Learn.cur = null;
+  UI.hideScreens();
+  App.paused = false;
+}
+$('#learn-detail').addEventListener('click', e => {
+  const b = e.target.closest('button[data-slot]');
+  if (!b || !Learn.cur) return;
+  const { mon: m, id } = Learn.cur;
+  if (!m.equip(+b.dataset.slot, id)) { Sfx.play('back'); UI.banner('KEEP ONE ATTACK'); return; }
+  Sfx.play('ball'); afterMovesChange(m); UI.banner(`${m.def.name} USES ${MOVES[id].name.toUpperCase()}!`);
+  closeLearn(false);
+});
+$('#btn-learn-keep').onclick = () => { Sfx.play('back'); closeLearn(true); };
 $('#btn-party-back').onclick = () => { Sfx.play('back'); UI.show('pause'); };
 $('#btn-party').onclick = () => { Sfx.play('select'); openParty(); };
 
@@ -421,6 +510,8 @@ function frame(now) {
   const b = App.battle;
   if (b) {
     if (!App.paused && b.state !== 'pick') b.update(dt);
+    // a move learned on a level-up waits for a calm moment between fights
+    if (!App.paused && b.state === 'explore' && App.run && App.run.learnQueue.length) openLearn();
     b.render(ctx);
     UI.updateHud(b);
   } else {

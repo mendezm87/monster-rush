@@ -179,6 +179,7 @@ body.no-touch #swap-tray { bottom: 27cqh; }
 .screen { position: absolute; inset: 0; z-index: 5; display: flex; flex-direction: column; align-items: center;
   gap: 2.6cqh; padding: 5cqh 8cqh; background: rgba(10, 8, 18, .55); text-align: center; overflow-y: auto; justify-content: safe center; }
 .screen.dim { background: rgba(10, 8, 18, .8); }
+.screen > * { flex-shrink: 0; }
 .screen h2 { margin: 0; font-size: 7cqh; color: #ffe066; -webkit-text-stroke: 0.8cqh #3a1d05; paint-order: stroke fill; }
 .row { display: flex; gap: 2.4cqh; align-items: center; justify-content: center; }
 .hint { font: 700 3.2cqh system-ui, sans-serif; opacity: .75; }
@@ -211,6 +212,21 @@ kbd { background: #2b2540; border: 0.3cqh solid #555; border-bottom-width: 0.8cq
 .detail .d-stats { font: 700 3cqh system-ui, sans-serif; opacity: .85; margin: 0.8cqh 0; }
 .detail .d-moves { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8cqh; }
 .detail .d-move { font-size: 2.8cqh; padding: 0.6cqh 1.2cqh; border-radius: 1cqh; -webkit-text-stroke: 0.25cqh rgba(0,0,0,.55); paint-order: stroke fill; }
+/* moves editor (party screen, new-move offer) */
+.mv-ed { display: flex; flex-direction: column; gap: 0.8cqh; margin-top: 0.6cqh; }
+.mv-head { font-size: 3cqh; color: #ffe066; }
+.mv-head span { font: 700 2.3cqh system-ui, sans-serif; color: #fff; opacity: .7; margin-left: 1cqh; }
+.mv-slots { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8cqh; }
+.mv-known { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8cqh; }
+.mv { position: relative; font: 400 2.7cqh var(--font); color: #fff; text-align: left; cursor: pointer; padding: 0.6cqh 1.2cqh; border-radius: 1cqh;
+  border: 0.4cqh solid rgba(0,0,0,.35); -webkit-text-stroke: 0.25cqh rgba(0,0,0,.55); paint-order: stroke fill; }
+.mv i { display: block; font: 700 1.9cqh system-ui, sans-serif; font-style: normal; -webkit-text-stroke: 0; opacity: .9; }
+.mv small { display: block; font: 700 1.9cqh system-ui, sans-serif; -webkit-text-stroke: 0; opacity: .85; }
+.mv.sel { outline: 0.6cqh solid var(--gold); }
+.mv.new::after { content: "NEW"; position: absolute; top: -1.2cqh; right: -0.6cqh; font: 400 1.8cqh var(--font); background: var(--gold); color: var(--ink);
+  padding: 0 0.8cqh; border-radius: 0.8cqh; -webkit-text-stroke: 0; }
+.mv.big { font-size: 3.6cqh; cursor: default; }
+.mv-new { display: flex; }
 
 /* monster cards */
 #starter-list { display: flex; flex-wrap: wrap; justify-content: center; gap: 2cqh; max-width: 150cqh; }

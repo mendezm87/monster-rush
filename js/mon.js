@@ -40,16 +40,39 @@ class Mon {
   }
   // Species-dependent bits (also used when evolving; HP keeps its share of the max).
   setDef(def) {
-    const share = this.maxHp ? this.hp / this.maxHp : 1;
+    const share = this.maxHp ? this.hp / this.maxHp : 1, old = this.def, prev = this.moves && this.moves.map(m => m.id);
     this.def = def; this.id = def.id;
     this.item = ITEMS[def.item] || {};
     this.maxHp = this.calcMaxHp(); this.hp = Math.round(this.maxHp * share);
     this.r = (def.size === 'L' ? 17 : 12) * this.scale;
     this.h = SPRITES[def.id].size * SPR_SCALE * this.scale;
-    this.moves = def.moves.map(k => MOVES[k]);
+    // Moves: `moves` are the 4 in use (slot order = left click, right click, Shift + left,
+    // Shift + right); `known` is every move it has learned, to swap in (movesets.js, RunState).
+    // Evolving upgrades each of the old form's own moves in place, so custom choices stay.
+    let ids = def.moves.slice();
+    if (prev && old) {
+      ids = prev.map(k => (old.moves.includes(k) ? def.moves[old.moves.indexOf(k)] : k));
+      if (new Set(ids).size < 4) ids = [...new Set([...ids, ...def.moves])].slice(0, 4);
+    }
+    this.known = [...new Set([...(this.known || []), ...(prev || []), ...def.moves])];
+    this.setMoves(ids);
+  }
+  setMoves(ids) {
+    this.moves = ids.map(k => MOVES[k]);
     const melee = this.moves.filter(m => m.kind === 'dash' || m.kind === 'burst' || m.kind === 'vortex').length;
     const ranged = this.moves.filter(m => ['projectile', 'beam', 'zone'].includes(m.kind)).length;
     this.prefRange = melee > ranged ? 45 : melee === ranged ? 85 : 125;
+  }
+  // Put a known move in a slot. If it's already in another slot, the two trade places
+  // (that's also how moves are moved to a different click). Cooldowns move with their move.
+  equip(slot, id) {
+    const ids = this.moves.map(m => m.id), at = ids.indexOf(id);
+    if (!this.known.includes(id)) return false;
+    if (at >= 0) [ids[at], ids[slot]] = [ids[slot], ids[at]]; else ids[slot] = id;
+    if (!ids.some(k => !['buff', 'heal'].includes(MOVES[k].kind))) return false;   // keep at least one attack
+    if (at >= 0) [this.cd[at], this.cd[slot]] = [this.cd[slot], this.cd[at]]; else this.cd[slot] = 0;
+    this.setMoves(ids);
+    return true;
   }
   get canEvolve() { return !this.fainted && this.def.evolve && this.level >= this.def.evolve.level; }
   get cy() { return this.y - this.h * 0.4; }

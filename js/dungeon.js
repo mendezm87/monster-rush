@@ -15,6 +15,7 @@ const REVIVE_HP = 0.3;                                   // fainted party member
 const XP_WILD = 10, XP_TOUGH = 20, XP_BOSS = 50, XP_BENCH = 0.5;
 const XP_NEED = n => 18 + 11 * n;
 const LV_HP = 0.035, LV_STAT = 0.02, LV_HEAL = 0.05;     // per level: +3.5% HP, +2% atk/def; leveling heals 5%
+const LEARN_EVERY = 2;   // a new move to learn at every 2nd level (2, 4, 6, ...)
 
 // Wild monsters are weaker than arena monsters (there can be three of them) and get
 // tougher each floor; a boss is close to full arena strength.
@@ -209,6 +210,7 @@ class RunState {
     this.coins = 0;
     this.swapCd = 0;
     this.relics = [];
+    this.learnQueue = [];   // new moves waiting to be offered between fights: [{ mon, id }]
     this.stats = { rooms: 0, kos: 0, time: 0, floors: 0 };
     this.newFloor(1);
   }
@@ -237,7 +239,7 @@ class RunState {
     if (id === 'revive') { if (!down.length) return false; if (!dry) for (const m of down) { m.fainted = false; m.hp = Math.round(m.maxHp * 0.4); m.status = null; } }
     return true;
   }
-  // Returns the level-ups: [{ mon, level }]
+  // Returns the level-ups: [{ mon, level, learned }] (learned: a new move id, at every even level)
   giveXp(amount) {
     const ups = [];
     this.party.forEach((m, i) => {
@@ -246,10 +248,20 @@ class RunState {
       while (m.xp >= XP_NEED(m.level)) {
         m.xp -= XP_NEED(m.level);
         m.setLevel(m.level + 1);
-        ups.push({ mon: m, level: m.level });
+        const learned = m.level % LEARN_EVERY === 0 ? this.learnMove(m) : null;
+        if (learned) this.learnQueue.push({ mon: m, id: learned });
+        ups.push({ mon: m, level: m.level, learned });
       }
     });
     return ups;
+  }
+  // Teach a monster a new move it can learn (movesets.js); returns its id, or null if it knows them all.
+  learnMove(m) {
+    const can = movePool(m.id).filter(k => !m.known.includes(k));
+    if (!can.length) return null;
+    const k = can[(Math.random() * can.length) | 0];
+    m.known.push(k);
+    return k;
   }
   // new recruits join a level behind the party's average, at full HP
   joinLevel() {
@@ -259,6 +271,7 @@ class RunState {
   recruit(id, releaseIdx = -1) {
     const m = new Mon(ROSTER_BY_ID[id], 'player');
     m.setLevel(this.joinLevel()); m.hp = m.maxHp;
+    for (let lv = LEARN_EVERY; lv <= m.level; lv += LEARN_EVERY) this.learnMove(m);   // the moves it learned on the way (in its moves menu)
     m.bonus = { ...this.party[0].bonus };
     if (releaseIdx >= 0) this.release(releaseIdx, m);
     else this.party.push(m);

@@ -266,6 +266,7 @@ class Battle {
         const t = this.trainer;
         this.text(t.x, t.y - 34, `${m.def.name} LV ${m.level}`, '#ffe9a0');
       }
+      if (ev.learned) this.text(m === this.P ? m.x : this.trainer.x, (m === this.P ? m.y - m.h : this.trainer.y - 34) - 24, `LEARNED ${MOVES[ev.learned].name.toUpperCase()}!`, TYPES[MOVES[ev.learned].type].fx[1]);
       Sfx.play('levelUp');
     }
     if (this.state === 'explore') this.evolveReady();
