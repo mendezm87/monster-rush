@@ -24,26 +24,30 @@
 </head>
 <body>
   <h1>Gear Test</h1>
-  <div class="hint">A test of relics shown as gear the monsters wear. Nothing here is hand-placed: each piece finds the monster's head, eyes and neck from its animation rig, so it sits in the right spot and bobs with the head. Pick gear below; the last box on each card plays the walk.</div>
+  <div class="hint">Every relic is something your monsters wear. Nothing is hand-placed: each piece finds the monster's head, eyes, neck and feet from its animation rig, so it sits in the right spot and moves with it. One piece per spot (head, eyes, neck, feet): the newest relic wins. Tap relics below to pick them up or drop them; the last box on each card plays the walk.</div>
   <div class="chips" id="pick"></div>
+  <div class="hint" id="time"></div>
   <div class="grid" id="grid"></div>
 
   <script src="js/data.js"></script>
   <script src="js/pixel.js"></script>
   <script src="js/sprites.js"></script>
+  <script src="js/dungeon.js"></script>
   <script src="js/gear.js"></script>
   <script>
-    const ALL = ['crown', 'goggles', 'scarf'];
-    let on = ['crown', 'goggles', 'scarf'];
+    buildSprites();
+    const ALL = Object.keys(RELIC_GEAR);
+    let owned = ['muscleCharm', 'leechLens', 'luckyCoin', 'swiftBoots'];   // in the order picked up
     const VIEWS5 = ['front', 'fside', 'side', 'bside', 'back'];
-    let sets = {};   // id -> sprite set with the current gear
     const pick = document.getElementById('pick'), grid = document.getElementById('grid');
+    const cards = {};
     function chips() {
       pick.innerHTML = '';
       for (const k of ALL) {
         const b = document.createElement('button');
-        b.textContent = k; b.className = on.includes(k) ? 'on' : '';
-        b.onclick = () => { on = on.includes(k) ? on.filter(x => x !== k) : ALL.filter(x => x === k || on.includes(x)); chips(); build(); };
+        b.textContent = RELICS[k].name.toLowerCase(); b.className = owned.includes(k) ? 'on' : '';
+        b.title = RELIC_GEAR[k];
+        b.onclick = () => { owned = owned.includes(k) ? owned.filter(x => x !== k) : [...owned, k]; chips(); dressAll(); };
         pick.appendChild(b);
       }
     }
@@ -52,25 +56,30 @@
       const s = Math.floor(cv.width / 48), o = (cv.width - img.width * s) / 2;
       x.drawImage(img, o, cv.height - img.height * s - 6, img.width * s, img.height * s);
     }
-    function build() {
-      grid.innerHTML = ''; sets = {};
+    for (const mon of ALL_MONS()) {
+      const el = document.createElement('div'); el.className = 'card';
+      el.innerHTML = `<div class="name">${mon.name}</div><div class="views">${[...VIEWS5, 'walk'].map(v => `<canvas width="144" height="144" data-v="${v}"></canvas>`).join('')}</div>`;
+      grid.appendChild(el); cards[mon.id] = el;
+    }
+    const sets = {};
+    // the same quick path the game uses when you pick up a relic
+    function dressAll() {
+      const t0 = performance.now(), gear = gearFor(owned);
       for (const mon of ALL_MONS()) {
-        const sp = sets[mon.id] = buildMonSprites(mon, on);
-        const el = document.createElement('div'); el.className = 'card';
-        el.innerHTML = `<div class="name">${mon.name}</div><div class="views">${[...VIEWS5, 'walk'].map(v => `<canvas width="144" height="144" data-v="${v}"></canvas>`).join('')}</div>`;
-        grid.appendChild(el);
-        el.querySelectorAll('canvas').forEach(cv => { cv.dataset.id = mon.id; if (cv.dataset.v !== 'walk') paint(cv, sp.views[cv.dataset.v]); });
+        const sp = sets[mon.id] = gear.length ? gearSprites(mon.id, gear) : SPRITES[mon.id];
+        cards[mon.id].querySelectorAll('canvas').forEach(cv => { if (cv.dataset.v !== 'walk') paint(cv, sp.views[cv.dataset.v]); });
       }
+      document.getElementById('time').textContent = `Dressed all ${ALL_MONS().length} monsters in ${Math.round(performance.now() - t0)} ms (the game only dresses your party).`;
     }
     let t = 0;
     setInterval(() => {
       t++;
-      for (const cv of document.querySelectorAll('canvas[data-v="walk"]')) {
-        const sp = sets[cv.dataset.id], w = sp.frames && sp.frames.walk;
-        paint(cv, w ? w[t % w.length].fside : sp.views.fside);
+      for (const [id, el] of Object.entries(cards)) {
+        const sp = sets[id], w = sp.frames && sp.frames.walk;
+        paint(el.querySelector('canvas[data-v="walk"]'), w ? w[t % w.length].fside : sp.views.fside);
       }
     }, 140);
-    chips(); build();
+    chips(); dressAll();
   </script>
 </body>
 </html>

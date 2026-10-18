@@ -408,7 +408,7 @@ mixInto(Battle, class {
   }
 
   drawMon(ctx, m) {
-    const sp = SPRITES[m.id], S = sp.size * SPR_SCALE * m.scale;
+    const sp = monSprite(m), S = sp.size * SPR_SCALE * m.scale;
     let alpha = 1, sink = 0;
     if (m.fainted) { alpha = Math.max(0, 1 - m.fadeT / 1.1); sink = m.fadeT * 6; }
     if (alpha <= 0) return;

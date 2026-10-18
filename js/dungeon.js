@@ -68,10 +68,10 @@ function shuffle(a) {
 // Each area's own monsters: most wild monsters, recruits and bosses on a floor come from
 // here (AREA_ODDS), the rest from anywhere, so every area feels different but can surprise.
 const AREA_MONS = {
-  meadow: { natives: ['sparkit', 'thornback', 'slumbear', 'pixibelle', 'galewing', 'scarablade', 'lumawool', 'smugshi', 'bellpaca'], bosses: ['slumbear', 'thornback', 'galewing'] },
+  meadow: { natives: ['sparkit', 'thornback', 'slumbear', 'pixibelle', 'galewing', 'scarablade', 'lumawool', 'smugshi', 'bellpaca', 'shellmet'], bosses: ['slumbear', 'thornback', 'galewing'] },
   crater: { natives: ['cinderox', 'boulderon', 'drakorn', 'brawlix', 'venomire', 'thornback', 'gearhulk', 'coilizard', 'smouldox'], bosses: ['boulderon', 'drakorn', 'cinderox'] },
-  summit: { natives: ['frostling', 'galewing', 'boulderon', 'brawlix', 'slumbear', 'drakorn', 'lumawool', 'coilizard', 'bellpaca'], bosses: ['frostling', 'slumbear', 'boulderon'] },
-  grotto: { natives: ['mindra', 'wispurr', 'shadefang', 'pixibelle', 'lumawool', 'venomire', 'gearhulk', 'voltergeist', 'garrishell'], bosses: ['gearhulk', 'mindra', 'wispurr'] },
+  summit: { natives: ['frostling', 'galewing', 'boulderon', 'brawlix', 'slumbear', 'drakorn', 'lumawool', 'coilizard', 'bellpaca', 'shellmet', 'bulwarden'], bosses: ['frostling', 'slumbear', 'boulderon'] },
+  grotto: { natives: ['mindra', 'wispurr', 'shadefang', 'pixibelle', 'lumawool', 'venomire', 'gearhulk', 'voltergeist', 'garrishell', 'bulwarden'], bosses: ['gearhulk', 'mindra', 'wispurr'] },
   ruins:  { natives: ['tidalisk', 'venomire', 'scarablade', 'wispurr', 'shadefang', 'mondaze', 'gearhulk', 'mindra', 'smouldox', 'garrishell'], bosses: ['tidalisk', 'shadefang', 'mondaze', 'garrishell'] },
   spire:  { natives: ['drakorn', 'mindra', 'shadefang', 'pixibelle', 'galewing', 'gearhulk', 'wispurr', 'brawlix', 'voltergeist'], bosses: ['drakorn', 'gearhulk', 'slumbear'] },
 };
@@ -297,6 +297,12 @@ class RunState {
     const b = { atk: 1, def: 1, spd: 1, cd: 1 };
     for (const id of this.relics) for (const [k, v] of Object.entries(RELICS[id].bonus || {})) b[k] *= v;
     for (const m of this.party) m.bonus = { ...b };
+    this.dress();
+  }
+  // everyone in the party wears the relics' gear (js/gear.js); drawn now, while things are calm
+  dress() {
+    const gear = typeof gearFor === 'function' ? gearFor(this.relics) : [];
+    for (const m of this.party) { m.gear = gear; monSprite(m); }
   }
   // Use a shop good; returns false if it would do nothing.
   useGood(id, dry = false) {
@@ -343,6 +349,7 @@ class RunState {
     m.bonus = { ...this.party[0].bonus };
     if (releaseIdx >= 0) this.release(releaseIdx, m);
     else this.party.push(m);
+    this.dress();
     return m;
   }
   // Remove a party member (optionally putting a new one in its slot).
