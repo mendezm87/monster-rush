@@ -26,6 +26,7 @@ class Battle {
     if (!room.decal) { room.decal = document.createElement('canvas'); room.decal.width = room.w; room.decal.height = room.h; }
     this.decal = room.decal; this.dctx = this.decal.getContext('2d');
     this.trainerImg = Object.fromEntries(TRAINER_VIEWS.map(v => [v, trainerCanvas(TRAINER_OUTFIT, v)]));
+    this.trainerWalk = Object.fromEntries(TRAINER_VIEWS.map(v => [v, trainerWalk(TRAINER_OUTFIT, v)]));
     this.projectiles = []; this.zones = []; this.particles = []; this.floats = []; this.texts = []; this.balls = [];
     this.pickups = room.pickups;
     this.weather = Array.from({ length: 70 }, () => this.newFlake(true));

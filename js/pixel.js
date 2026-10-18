@@ -326,6 +326,21 @@ const TRAINER_OUTFITS = {
 const TRAINER_OUTFIT = 'crimson';    // the one used in the game for now
 
 // outfit: a TRAINER_OUTFITS key; view: one of TRAINER_VIEWS
+// The trainer's walk: 4 frames (both feet down, the left leg lifted, both down, the right leg
+// lifted). A lifted leg is its half of the bottom three rows (the legs split at column 8 in every
+// view) moved up a pixel, so the shoe rises and the knee bends.
+function trainerStep(map, leg) {
+  return map.map((row, y) => {
+    if (y < 21) return row;
+    const up = (map[y + 1] || '').padEnd(row.length, '.');
+    return leg === 0 ? up.slice(0, 8) + row.slice(8) : row.slice(0, 8) + up.slice(8);
+  });
+}
+function trainerWalk(outfit = TRAINER_OUTFIT, view = 'front') {
+  const map = TRAINER_MAPS[view] || TRAINER_FRONT, pal = { ...TRAINER_BASE, ...(TRAINER_OUTFITS[outfit] || TRAINER_OUTFITS[TRAINER_OUTFIT]) };
+  const still = gridFromMap(map, pal).toCanvas();
+  return [still, gridFromMap(trainerStep(map, 0), pal).toCanvas(), still, gridFromMap(trainerStep(map, 1), pal).toCanvas()];
+}
 function trainerCanvas(outfit = TRAINER_OUTFIT, view = 'front') {
   const map = TRAINER_MAPS[view] || TRAINER_FRONT;
   return gridFromMap(map, { ...TRAINER_BASE, ...(TRAINER_OUTFITS[outfit] || TRAINER_OUTFITS[TRAINER_OUTFIT]) }).toCanvas();

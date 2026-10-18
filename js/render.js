@@ -375,10 +375,10 @@ mixInto(Battle, class {
     const t = this.trainer, img = this.trainerImg[t.view];
     const px = Math.round(t.x), py = Math.round(t.y);
     Lighting.shadow(ctx, px, py, 9, 3.5, 0.9);
-    // a little step bob: 3 frames a step, one step every 20 world units (a rigged walk cycle is still to do)
-    const f = Math.floor((t.walkT / 20 % 1) * 3);
-    const bob = t.moving ? -(f === 1 ? 1 : 0) : 0;
-    const pic = img;
+    // walking: a 4-frame step (pixel.js trainerWalk), a frame every 10 world units, up a pixel as a leg lifts
+    const f = Math.floor(t.walkT / 10) % 4;
+    const pic = t.moving ? this.trainerWalk[t.view][f] : img;
+    const bob = t.moving && f % 2 ? -1 : 0;
     const w = pic.width * SPR_SCALE, h = pic.height * SPR_SCALE;
     ctx.save(); ctx.translate(px, 0); if (isSideView(t.view) && t.face < 0) ctx.scale(-1, 1);
     ctx.drawImage(pic, Math.round(-w / 2), Math.round(py - h + 1 + bob), w, h);
@@ -402,7 +402,7 @@ mixInto(Battle, class {
     const pose = still && !m.fainted ? { views: sp.views, sq: 0, sh: 0, dy: 0 } : monAnim(m, phase, !!hover);
     const bob = -pose.dy;
     const flapping = fly && sp.flap && !grounded && m.stunT <= 0 && Math.sin((this.time * fly.flap * (moving ? 1.3 : 1) + phase) * TAU) > 0;
-    const img = (pose.views !== sp.views ? pose.views : flapping ? sp.flap : sp.views)[m.view];
+    const img = (flapping && pose.views.flapped ? pose.views.flapped : pose.views)[m.view];
     const mine = m.side === 'player';
 
     // ground marker + shadow
