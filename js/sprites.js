@@ -1462,10 +1462,13 @@ const MONSTER_ART = {
       backTail(11);
       return;
     }
-    merlon(b, 3, 4, 4); merlon(b, 9, 5, 4, 5); merlon(b, 31, 5, 4, 5); merlon(b, 37, 4, 4);       // battlements over the shoulders
-    b.poly([[5, 14], [8, 9], [36, 9], [39, 14], [39, 30], [5, 30]], M, { edge: true });          // turret shell behind
-    b.rect(5, 13, 34, 1, GOLD);
-    b.pxM(7, 18, D.s); b.pxM(7, 25, D.s);
+    b.ellipse(22, 21, 18, 12, P(GOLD, '#a07220', '#f0cc68'), { edge: true });              // the domed shell behind, gold rim
+    b.ellipse(22, 21.5, 16.5, 10.5, M);
+    b.rect(7, 21, 30, 1, GOLD); b.px(8, 17, D.s).px(8, 26, D.s).px(36, 17, D.s).px(36, 26, D.s);
+    merlon(b, 10, 2, 3, 4); merlon(b, 15, 2, 3, 4); merlon(b, 26, 2, 3, 4); merlon(b, 31, 2, 3, 4);   // the round turret's battlements, over the head
+    b.poly([[10, 4], [34, 4], [34, 11], [10, 11]], M, { edge: true });     // the turret
+    b.rect(10, 5, 2, 6, M.s); b.rect(32, 5, 2, 6, M.s);                                // shading round its sides
+    b.rect(10, 10, 24, 1, GOLD); b.px(13, 7, D.s).px(31, 7, D.s);
     legA.ellipse(14, 37, 5, 4.5, S, { edge: true }); legB.ellipse(30, 37, 5, 4.5, S, { edge: true });   // legs
     legA.ellipse(13, 41, 6, 2.4, S, { edge: true }); legB.ellipse(31, 41, 6, 2.4, S, { edge: true });   // feet
     legA.px(9, 42, C.l).px(12, 42, C.l).px(15, 42, C.l); legB.px(28, 42, C.l).px(31, 42, C.l).px(34, 42, C.l);   // claws
@@ -2371,10 +2374,13 @@ const MONSTER_ART_DIAG = {
       backTail(9);
       return;
     }
-    merlon(b, 2, 4, 4); merlon(b, 8, 5, 4, 5); merlon(b, 32, 5, 4, 5); merlon(b, 37, 5, 3, 5);   // battlements
-    b.poly([[4, 14], [7, 9], [35, 9], [38, 14], [38, 30], [4, 30]], M, { edge: true });          // shell behind
-    b.rect(4, 13, 34, 1, GOLD);
-    b.px(6, 18, D.s).px(6, 25, D.s).px(36, 18, D.s);
+    b.ellipse(21, 21, 18, 12, P(GOLD, '#a07220', '#f0cc68'), { edge: true });              // the domed shell behind, gold rim
+    b.ellipse(21, 21.5, 16.5, 10.5, M);
+    b.rect(6, 21, 30, 1, GOLD); b.px(7, 17, D.s).px(7, 26, D.s).px(35, 17, D.s).px(35, 26, D.s);
+    merlon(b, 9, 2, 3, 4); merlon(b, 14, 2, 3, 4); merlon(b, 25, 2, 3, 4); merlon(b, 30, 2, 3, 4);   // the round turret's battlements, over the head
+    b.poly([[9, 4], [33, 4], [33, 11], [9, 11]], M, { edge: true });     // the turret
+    b.rect(9, 5, 2, 6, M.s); b.rect(31, 5, 2, 6, M.s);                                // shading round its sides
+    b.rect(9, 10, 24, 1, GOLD); b.px(12, 7, D.s).px(30, 7, D.s);
     t.poly([[8, 33], [1, 37], [9, 37]], S, { edge: true });                                      // tail, out to the left
     legB.ellipse(15, 37, 4.5, 4.5, S, { edge: true }); legA.ellipse(30, 37, 5, 4.5, S, { edge: true });
     legB.ellipse(14, 41, 5.5, 2.2, S, { edge: true }); legA.ellipse(32, 41, 6, 2.4, S, { edge: true });
