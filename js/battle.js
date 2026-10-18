@@ -520,7 +520,7 @@ class Battle {
       m.x = clamp(m.x + (m.vx + m.kx) * dt, B.x0, B.x1);
       m.y = clamp(m.y + (m.vy + m.ky) * dt, B.y0, B.y1);
       m.flash = Math.max(0, m.flash - dt);
-      m.hurtT = Math.max(0, (m.hurtT || 0) - dt); m.popT = Math.max(0, (m.popT || 0) - dt);   // animation poses (monPose)
+      m.hurtT = Math.max(0, (m.hurtT || 0) - dt); m.popT = Math.max(0, (m.popT || 0) - dt);   // animation (monAnim)
     }
   }
 

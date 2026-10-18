@@ -23,8 +23,54 @@ const flapEll = (cx, rx) => (FLAP ? [16 + (cx - 16) * 0.72, rx * 0.55] : [cx, rx
 const wingEllipse = (g, cx, cy, rx, ry, pal, opt) => { const [x, r] = flapEll(cx, rx); return g.ellipse(x, cy, r, ry, pal, opt); };
 const wingEllipseM = (g, cx, cy, rx, ry, pal, opt) => { const [x, r] = flapEll(cx, rx); return g.ellipseM(x, cy, r, ry, pal, opt); };
 
+// ---------- rigs: real frame animation drawn from the same art ----------
+// A rigged monster draws each part of itself through part(g, dx, dy), so the parts can move
+// separately: RIG (set while its animation frames are built, null for the plain drawing) says
+// where. body: the torso's y; head: [x, y] for the head and everything on it (x is "forward",
+// used in side views); tail: [x, y]; legs: [a, b] how far each diagonal pair of legs is lifted
+// (a = the near front and far back leg); eyes: null, 'blink' or 'hurt'; mouth: null or 'open'.
+// RIG_FRAMES is the cycle every rigged four-legged monster uses; buildSprites draws them all.
+let RIG = null;
+const REST = { body: 0, head: [0, 0], tail: [0, 0], legs: [0, 0], eyes: null, mouth: null };
+const rig = () => RIG || REST;
+function part(g, dx = 0, dy = 0) {
+  if (!dx && !dy) return g;
+  const W = g.w, p = {};
+  const sh = pts => pts.map(([x, y]) => [x + dx, y + dy]), mir = pts => pts.map(([x, y]) => [W - x, y]);
+  p.ellipse = (cx, cy, rx, ry, pal, opt) => (g.ellipse(cx + dx, cy + dy, rx, ry, pal, opt), p);
+  p.ellipseM = (cx, cy, rx, ry, pal, opt) => (g.ellipse(cx + dx, cy + dy, rx, ry, pal, opt), g.ellipse(W - cx + dx, cy + dy, rx, ry, pal, opt), p);
+  p.poly = (pts, pal, opt) => (g.poly(sh(pts), pal, opt), p);
+  p.polyM = (pts, pal, opt) => (g.poly(sh(pts), pal, opt), g.poly(sh(mir(pts)), pal, opt), p);
+  p.rect = (x, y, w, h, col) => (g.rect(x + dx, y + dy, w, h, col), p);
+  p.rectM = (x, y, w, h, col) => (g.rect(x + dx, y + dy, w, h, col), g.rect(W - x - w + dx, y + dy, w, h, col), p);
+  p.px = (x, y, col) => (g.px(x + dx, y + dy, col), p);
+  p.pxM = (x, y, col) => (g.px(x + dx, y + dy, col), g.px(W - 1 - x + dx, y + dy, col), p);
+  return p;
+}
+// The animation frames: a 4-frame walk (a diagonal pair of legs lifts while the body rises; the
+// head follows the body a frame late; the tail swings), a slow 4-frame idle (breathing head bob,
+// tail wag), a blink, a crouched wind-up, the attack (head forward, mouth open) and a hurt flinch.
+const RIG_FRAMES = {
+  walk: [
+    { body: 0, tail: [1, 0], legs: [0, 0] },
+    { body: -1, tail: [0, -1], legs: [2, 0] },
+    { body: 0, tail: [-1, 0], legs: [0, 0] },
+    { body: -1, tail: [0, -1], legs: [0, 2] },
+  ].map((f, i, a) => ({ ...f, head: [0, a[(i + 3) % 4].body] })),
+  idle: [
+    { head: [0, 0], tail: [0, 0] }, { head: [0, 0], tail: [1, 0] },
+    { head: [0, -1], tail: [0, 0] }, { head: [0, -1], tail: [-1, 0] },
+  ],
+  blink: { eyes: 'blink' },
+  windup: { body: 1, head: [-1, 1], tail: [0, 1] },
+  attack: { head: [1, 0], tail: [0, -1], mouth: 'open' },
+  hurt: { head: [-1, -1], eyes: 'hurt', mouth: 'open' },
+};
+
 // Flying monsters: how high they hover and how fast they flap (beats a second; 0 = they just
 // float). drawMon lifts them off their shadow and swaps in the flap frame (SPRITES[id].flap).
+// Monsters whose art is rigged (draws its parts through part() and reads rig()).
+const RIGGED = new Set(['smugshi']);
 const FLYERS = { galewing: { hover: 8, flap: 4 }, pixibelle: { hover: 7, flap: 6 }, drakorn: { hover: 6, flap: 3 }, wispurr: { hover: 6, flap: 0 } };
 
 const MONSTER_ART = {
@@ -892,61 +938,69 @@ const MONSTER_ART = {
   // ears with pale insides; a big black nose; a ring of white ruff round the neck; and his smug half-shut stare.
   // The curled tail is ginger on top with lots of white fluff.
   smugshi(g, v = 'front') {
-    const O = TOSHI.coat, C = TOSHI.white, Ei = TOSHI.ear, PINK = '#e8b4a4';
-    if (v === 'side') {
-      g.ellipse(8, 15, 4.5, 4.5, O, { edge: true });                                             // curled tail, very fluffy
-      g.ellipse(7.5, 14.5, 3.3, 3.3, C); g.px(7, 14, O.l); g.px(8, 15, O.s);
-      g.ellipse(10, 27, 1.8, 3, P(C.s, '#cbbba4', C.b)); g.ellipse(19, 27, 1.8, 3, P(C.s, '#cbbba4', C.b));   // far legs
-      g.ellipse(14, 22, 8.5, 5.5, O, { edge: true });                                            // body
-      g.ellipse(14, 25.5, 7, 2, C);                                                              // white belly
-      g.ellipse(9, 25, 2.2, 2.6, C);                                                             // white back of the thigh
-      g.ellipse(20, 22, 3.5, 4.5, C);                                                            // white chest
-      g.ellipse(11, 27.5, 1.9, 3, C, { edge: true }); g.ellipse(21, 27.5, 1.9, 3, C, { edge: true });   // white legs
-      g.poly([[13, 15], [16, 13.5], [19, 17], [22, 22], [18, 23], [15.5, 18.5]], C);             // white sash from the chest up over the neck
-      g.poly([[14, 8], [13, 1], [17, 5]], O);                                                    // far ear
-      g.ellipse(19, 12, 6.5, 5.5, O, { edge: true });                                            // head
-      g.px(13, 15, C.b); g.px(13, 16, C.b); g.px(14, 17, C.b);                                   // the ruff showing behind the head
-      g.poly([[17, 7], [19, 0], [22, 6]], O, { edge: true });                                    // near ear
-      g.poly([[18.5, 6], [19.3, 2.5], [21, 5.5]], PINK);
-      g.poly([[21, 12], [28, 13.5], [27.5, 16.5], [20, 17.5]], C, { edge: true });               // white muzzle
-      g.ellipse(19.5, 15.5, 3, 2, C);                                                            // white cheek
-      g.px(21, 9, C.b); g.px(22, 9, C.b);                                                        // eyebrow spot
-      g.rect(21, 11, 3, 1, OUTLINE); g.px(22, 12, DARK_EYE); g.px(23, 12, DARK_EYE);              // smug half-shut eye
-      g.rect(27, 13, 2, 2, OUTLINE);                                                             // nose
-      g.px(24, 17, OUTLINE).px(25, 17, OUTLINE).px(26, 16, OUTLINE);                             // flat little mouth
+    const O = TOSHI.coat, C = TOSHI.white, Ei = TOSHI.ear, PINK = '#e8b4a4', TONGUE = '#e8607a';
+    const R = rig(), side = v === 'side';
+    const b = part(g, 0, R.body), t = part(g, R.tail[0], R.body + R.tail[1]);
+    const h = part(g, side ? R.head[0] : 0, R.head[1]);
+    const legA = part(g, side && R.legs[0] ? 1 : 0, -R.legs[0]), legB = part(g, side && R.legs[1] ? 1 : 0, -R.legs[1]);
+    if (side) {
+      t.ellipse(8, 15, 4.5, 4.5, O, { edge: true });                                             // curled tail, very fluffy
+      t.ellipse(7.5, 14.5, 3.3, 3.3, C); t.px(7, 14, O.l); t.px(8, 15, O.s);
+      legA.ellipse(10, 27, 1.8, 3, P(C.s, '#cbbba4', C.b)); legB.ellipse(19, 27, 1.8, 3, P(C.s, '#cbbba4', C.b));   // far legs
+      b.ellipse(14, 22, 8.5, 5.5, O, { edge: true });                                            // body
+      b.ellipse(14, 25.5, 7, 2, C);                                                              // white belly
+      b.ellipse(9, 25, 2.2, 2.6, C);                                                             // white back of the thigh
+      b.ellipse(20, 22, 3.5, 4.5, C);                                                            // white chest
+      legB.ellipse(11, 27.5, 1.9, 3, C, { edge: true }); legA.ellipse(21, 27.5, 1.9, 3, C, { edge: true });   // white legs
+      b.poly([[13, 15], [16, 13.5], [19, 17], [22, 22], [18, 23], [15.5, 18.5]], C);             // white sash from the chest up over the neck
+      h.poly([[14, 8], [13, 1], [17, 5]], O);                                                    // far ear
+      h.ellipse(19, 12, 6.5, 5.5, O, { edge: true });                                            // head
+      b.px(13, 15, C.b); b.px(13, 16, C.b); b.px(14, 17, C.b);                                   // the ruff showing behind the head
+      h.poly([[17, 7], [19, 0], [22, 6]], O, { edge: true });                                    // near ear
+      h.poly([[18.5, 6], [19.3, 2.5], [21, 5.5]], PINK);
+      h.poly([[21, 12], [28, 13.5], [27.5, 16.5], [20, 17.5]], C, { edge: true });               // white muzzle
+      h.ellipse(19.5, 15.5, 3, 2, C);                                                            // white cheek
+      h.px(21, 9, C.b); h.px(22, 9, C.b);                                                        // eyebrow spot
+      if (R.eyes === 'blink') h.rect(21, 12, 3, 1, OUTLINE);
+      else if (R.eyes === 'hurt') { h.rect(21, 12, 3, 1, OUTLINE); h.px(21, 11, OUTLINE); h.px(23, 11, OUTLINE); }
+      else { h.rect(21, 11, 3, 1, OUTLINE); h.px(22, 12, DARK_EYE); h.px(23, 12, DARK_EYE); }    // smug half-shut eye
+      h.rect(27, 13, 2, 2, OUTLINE);                                                             // nose
+      if (R.mouth === 'open') { h.rect(23, 16, 4, 2, OUTLINE); h.px(24, 17, TONGUE); h.px(25, 17, TONGUE); }
+      else h.px(24, 17, OUTLINE).px(25, 17, OUTLINE).px(26, 16, OUTLINE);                       // flat little mouth
       return;
     }
     if (v === 'back') {
-      g.ellipseM(12, 27.5, 2.2, 3, C, { edge: true });                                           // white hind legs
-      g.ellipse(16, 22, 7.5, 6, O, { edge: true });
-      g.ellipse(16, 26, 4, 2.2, C);                                                              // white rear
-      g.polyM([[7, 10], [6.5, 0], [13.5, 5.5]], O, { edge: true });                             // big upright ears
-      g.ellipse(16, 18.2, 7, 2.3, C);                                                            // white crescent across the shoulders
-      g.ellipse(16, 12, 8, 6.2, O, { edge: true });
-      g.ellipseM(9, 15, 1.6, 1.6, C);                                                            // cheek fluff peeking out
-      g.ellipse(16, 19, 5, 4.5, O, { edge: true });                                              // the famous curled tail
-      g.ellipse(16, 18.5, 3, 2.6, C); g.px(16, 18, O.s); g.px(17, 18, O.s);
+      legA.ellipse(12, 27.5, 2.2, 3, C, { edge: true }); legB.ellipse(20, 27.5, 2.2, 3, C, { edge: true });   // white hind legs
+      b.ellipse(16, 22, 7.5, 6, O, { edge: true });
+      b.ellipse(16, 26, 4, 2.2, C);                                                              // white rear
+      h.polyM([[7, 10], [6.5, 0], [13.5, 5.5]], O, { edge: true });                             // big upright ears
+      b.ellipse(16, 18.2, 7, 2.3, C);                                                            // white crescent across the shoulders
+      h.ellipse(16, 12, 8, 6.2, O, { edge: true });
+      h.ellipseM(9, 15, 1.6, 1.6, C);                                                            // cheek fluff peeking out
+      t.ellipse(16, 19, 5, 4.5, O, { edge: true });                                              // the famous curled tail
+      t.ellipse(16, 18.5, 3, 2.6, C); t.px(16, 18, O.s); t.px(17, 18, O.s);
       return;
     }
-    g.ellipse(25.5, 17.5, 4.5, 4.5, O, { edge: true });                                          // curled tail behind him
-    g.ellipse(26, 17, 3.2, 3.2, C); g.px(25, 17, O.l); g.px(26, 17, O.s);                        // lots of cream fluff in the curl
-    g.ellipseM(12, 27, 2.4, 3.4, C, { edge: true });                                             // white front legs
-    g.pxM(11, 30, C.s); g.pxM(13, 30, C.s);                                                      // toes
-    g.ellipse(16, 22, 7.5, 6, O, { edge: true });                                                // body
-    g.ellipse(16, 23, 5.2, 6, C);                                                                // white chest
-    g.polyM([[7, 10], [6.5, 0], [13.5, 5.5]], O, { edge: true });                                // big upright ears, set wide
-    g.polyM([[8.3, 8], [7.8, 2.5], [11.8, 5.8]], PINK);                                          // pink insides
-    g.pxM(9, 4, C.b); g.pxM(10, 6, C.b);                                                         // white fur at the inner edge
-    g.ellipse(16, 12, 8.5, 6.5, O, { edge: true });                                              // head
-    g.ellipseM(10.5, 14.6, 2.8, 2.6, C);                                                         // white cheeks, up under the eyes
-    g.ellipse(16, 15.6, 4.6, 3, C);                                                              // white muzzle
-    g.rect(13, 17, 6, 3, C.b); g.rect(12, 18, 8, 2, C.b);                                        // white throat running into the chest (no chin line)
-    g.rectM(11, 9, 2, 1, C.b);                                                                   // pale eyebrow spots
-    g.rectM(10, 11, 4, 1, OUTLINE);                                                              // smug half-shut lids
-    g.rectM(11, 12, 2, 1, DARK_EYE);
-    g.rect(15, 13, 2, 2, OUTLINE); g.px(15, 13, '#5a5060');                                      // big black nose
-    g.px(14, 17, OUTLINE).px(15, 17, OUTLINE).px(16, 17, OUTLINE).px(17, 17, OUTLINE);          // flat, unimpressed mouth
-    g.px(18, 16, OUTLINE);                                                                       // ...with a smug corner
+    t.ellipse(25.5, 17.5, 4.5, 4.5, O, { edge: true });                                          // curled tail behind him
+    t.ellipse(26, 17, 3.2, 3.2, C); t.px(25, 17, O.l); t.px(26, 17, O.s);                        // lots of cream fluff in the curl
+    legA.ellipse(12, 27, 2.4, 3.4, C, { edge: true }); legB.ellipse(20, 27, 2.4, 3.4, C, { edge: true });   // white front legs
+    legA.px(11, 30, C.s).px(13, 30, C.s); legB.px(20, 30, C.s).px(18, 30, C.s);                  // toes
+    b.ellipse(16, 22, 7.5, 6, O, { edge: true });                                                // body
+    b.ellipse(16, 23, 5.2, 6, C);                                                                // white chest
+    h.polyM([[7, 10], [6.5, 0], [13.5, 5.5]], O, { edge: true });                                // big upright ears, set wide
+    h.polyM([[8.3, 8], [7.8, 2.5], [11.8, 5.8]], PINK);                                          // pink insides
+    h.pxM(9, 4, C.b); h.pxM(10, 6, C.b);                                                         // white fur at the inner edge
+    h.ellipse(16, 12, 8.5, 6.5, O, { edge: true });                                              // head
+    h.ellipseM(10.5, 14.6, 2.8, 2.6, C);                                                         // white cheeks, up under the eyes
+    h.ellipse(16, 15.6, 4.6, 3, C);                                                              // white muzzle
+    h.rect(13, 17, 6, 3, C.b); h.rect(12, 18, 8, 2, C.b);                                        // white throat running into the chest (no chin line)
+    h.rectM(11, 9, 2, 1, C.b);                                                                   // pale eyebrow spots
+    if (R.eyes === 'blink') h.rectM(10, 12, 4, 1, OUTLINE);
+    else if (R.eyes === 'hurt') h.pxM(10, 11, OUTLINE).pxM(11, 12, OUTLINE).pxM(12, 12, OUTLINE).pxM(13, 11, OUTLINE);   // squeezed shut
+    else { h.rectM(10, 11, 4, 1, OUTLINE); h.rectM(11, 12, 2, 1, DARK_EYE); }                    // smug half-shut lids
+    h.rect(15, 13, 2, 2, OUTLINE); h.px(15, 13, '#5a5060');                                      // big black nose
+    if (R.mouth === 'open') { h.rect(14, 16, 4, 2, OUTLINE); h.px(15, 17, TONGUE).px(16, 17, TONGUE); }
+    else { h.px(14, 17, OUTLINE).px(15, 17, OUTLINE).px(16, 17, OUTLINE).px(17, 17, OUTLINE); h.px(18, 16, OUTLINE); }   // flat, unimpressed mouth with a smug corner
   },
 
   // An exhausted sloth clinging to its coffee: dark eye bands that double as
@@ -1054,40 +1108,45 @@ const MONSTER_ART = {
 // (heading up-right). A monster without an entry here turns in 4 directions only.
 const MONSTER_ART_DIAG = {
   smugshi(g, v) {
-    const O = TOSHI.coat, C = TOSHI.white, PINK = '#e8b4a4';
+    const O = TOSHI.coat, C = TOSHI.white, PINK = '#e8b4a4', TONGUE = '#e8607a';
+    const R = rig();
+    const b = part(g, 0, R.body), t = part(g, R.tail[0], R.body + R.tail[1]), h = part(g, R.head[0], R.head[1]);
+    const legA = part(g, R.legs[0] ? 1 : 0, -R.legs[0]), legB = part(g, R.legs[1] ? 1 : 0, -R.legs[1]);
     if (v === 'bside') {
-      g.ellipse(11, 27.5, 2.2, 3, C, { edge: true }); g.ellipse(19, 28, 2, 2.8, C, { edge: true });   // white hind legs
-      g.ellipse(15, 22, 7.5, 6, O, { edge: true });
-      g.ellipse(13, 26, 4, 2.2, C);                                                              // white rear
-      g.poly([[10, 9], [10, 0], [16, 5]], O, { edge: true });                                    // big upright ears
-      g.poly([[19, 6], [23, 0], [25, 7]], O, { edge: true });
-      g.ellipse(17, 18, 6.5, 2.3, C);                                                            // white crescent across the shoulders
-      g.ellipse(18, 11.5, 8, 6.2, O, { edge: true });
-      g.ellipse(24.5, 14, 1.8, 1.8, C); g.ellipse(25.5, 12.5, 1.4, 1.4, C);                      // cheek and muzzle peeking out
-      g.ellipse(13, 19, 5, 4.5, O, { edge: true });                                              // the famous curled tail
-      g.ellipse(13, 18.5, 3, 2.6, C); g.px(13, 18, O.s); g.px(14, 18, O.s);
+      legA.ellipse(11, 27.5, 2.2, 3, C, { edge: true }); legB.ellipse(19, 28, 2, 2.8, C, { edge: true });   // white hind legs
+      b.ellipse(15, 22, 7.5, 6, O, { edge: true });
+      b.ellipse(13, 26, 4, 2.2, C);                                                              // white rear
+      h.poly([[10, 9], [10, 0], [16, 5]], O, { edge: true });                                    // big upright ears
+      h.poly([[19, 6], [23, 0], [25, 7]], O, { edge: true });
+      b.ellipse(17, 18, 6.5, 2.3, C);                                                            // white crescent across the shoulders
+      h.ellipse(18, 11.5, 8, 6.2, O, { edge: true });
+      h.ellipse(24.5, 14, 1.8, 1.8, C); h.ellipse(25.5, 12.5, 1.4, 1.4, C);                      // cheek and muzzle peeking out
+      t.ellipse(13, 19, 5, 4.5, O, { edge: true });                                              // the famous curled tail
+      t.ellipse(13, 18.5, 3, 2.6, C); t.px(13, 18, O.s); t.px(14, 18, O.s);
       return;
     }
-    g.ellipse(8, 17, 4.5, 4.5, O, { edge: true });                                               // curled tail behind him
-    g.ellipse(7.5, 16.5, 3.2, 3.2, C); g.px(7, 16, O.l); g.px(8, 17, O.s);
-    g.ellipse(9, 26.5, 1.8, 2.8, P(C.s, '#cbbba4', C.b));                                        // hind leg
-    g.ellipse(14, 22, 8, 6, O, { edge: true });                                                  // body
-    g.ellipse(18.5, 23, 4.5, 5.5, C);                                                            // white chest
-    g.ellipse(15, 27.5, 2.2, 3.2, C, { edge: true }); g.ellipse(21, 27.5, 2.2, 3.2, C, { edge: true });   // white front legs
-    g.px(14, 30, C.s); g.px(20, 30, C.s);
-    g.poly([[9, 10], [9, 0], [15, 5]], O, { edge: true });                                       // near ear
-    g.poly([[10.3, 8], [10.3, 2.5], [13.5, 5.3]], PINK); g.px(11, 4, C.b);
-    g.poly([[20, 7], [24, 0], [26, 7]], O, { edge: true });                                      // far ear
-    g.poly([[21.5, 6], [23.6, 2.5], [24.6, 6]], PINK);
-    g.ellipse(17.5, 12, 8, 6.5, O, { edge: true });                                              // head
-    g.ellipse(12.5, 14.8, 2.6, 2.4, C); g.ellipse(23, 14.5, 1.6, 2, C);                          // white cheeks
-    g.ellipse(20, 15.6, 4.4, 3, C);                                                              // white muzzle, turned his way
-    g.rect(16, 17, 7, 3, C.b); g.rect(15, 18, 8, 2, C.b);                                        // white throat into the chest
-    g.rect(13, 9, 2, 1, C.b); g.rect(21, 9, 2, 1, C.b);                                          // pale eyebrow spots
-    g.rect(12, 11, 4, 1, OUTLINE); g.rect(13, 12, 2, 1, DARK_EYE);                               // smug lids
-    g.rect(20, 11, 3, 1, OUTLINE); g.rect(21, 12, 2, 1, DARK_EYE);
-    g.rect(21, 13, 2, 2, OUTLINE); g.px(21, 13, '#5a5060');                                      // big black nose
-    g.px(19, 17, OUTLINE).px(20, 17, OUTLINE).px(21, 17, OUTLINE).px(22, 17, OUTLINE).px(23, 16, OUTLINE);   // flat mouth, smug corner
+    t.ellipse(8, 17, 4.5, 4.5, O, { edge: true });                                               // curled tail behind him
+    t.ellipse(7.5, 16.5, 3.2, 3.2, C); t.px(7, 16, O.l); t.px(8, 17, O.s);
+    legB.ellipse(9, 26.5, 1.8, 2.8, P(C.s, '#cbbba4', C.b));                                     // hind leg
+    b.ellipse(14, 22, 8, 6, O, { edge: true });                                                  // body
+    b.ellipse(18.5, 23, 4.5, 5.5, C);                                                            // white chest
+    legB.ellipse(15, 27.5, 2.2, 3.2, C, { edge: true }); legA.ellipse(21, 27.5, 2.2, 3.2, C, { edge: true });   // white front legs
+    legB.px(14, 30, C.s); legA.px(20, 30, C.s);
+    h.poly([[9, 10], [9, 0], [15, 5]], O, { edge: true });                                       // near ear
+    h.poly([[10.3, 8], [10.3, 2.5], [13.5, 5.3]], PINK); h.px(11, 4, C.b);
+    h.poly([[20, 7], [24, 0], [26, 7]], O, { edge: true });                                      // far ear
+    h.poly([[21.5, 6], [23.6, 2.5], [24.6, 6]], PINK);
+    h.ellipse(17.5, 12, 8, 6.5, O, { edge: true });                                              // head
+    h.ellipse(12.5, 14.8, 2.6, 2.4, C); h.ellipse(23, 14.5, 1.6, 2, C);                          // white cheeks
+    h.ellipse(20, 15.6, 4.4, 3, C);                                                              // white muzzle, turned his way
+    h.rect(16, 17, 7, 3, C.b); h.rect(15, 18, 8, 2, C.b);                                        // white throat into the chest
+    h.rect(13, 9, 2, 1, C.b); h.rect(21, 9, 2, 1, C.b);                                          // pale eyebrow spots
+    if (R.eyes === 'blink') { h.rect(12, 12, 4, 1, OUTLINE); h.rect(20, 12, 3, 1, OUTLINE); }
+    else if (R.eyes === 'hurt') { h.px(12, 11, OUTLINE).px(13, 12, OUTLINE).px(14, 12, OUTLINE).px(15, 11, OUTLINE); h.px(20, 11, OUTLINE).px(21, 12, OUTLINE).px(22, 11, OUTLINE); }
+    else { h.rect(12, 11, 4, 1, OUTLINE); h.rect(13, 12, 2, 1, DARK_EYE); h.rect(20, 11, 3, 1, OUTLINE); h.rect(21, 12, 2, 1, DARK_EYE); }   // smug lids
+    h.rect(21, 13, 2, 2, OUTLINE); h.px(21, 13, '#5a5060');                                      // big black nose
+    if (R.mouth === 'open') { h.rect(19, 16, 4, 2, OUTLINE); h.px(20, 17, TONGUE).px(21, 17, TONGUE); }
+    else h.px(19, 17, OUTLINE).px(20, 17, OUTLINE).px(21, 17, OUTLINE).px(22, 17, OUTLINE).px(23, 16, OUTLINE);   // flat mouth, smug corner
   },
 
   cinderox(g, v) {
@@ -1748,7 +1807,13 @@ function buildSprites() {
     const views = draw(), fly = FLYERS[mon.id] || null;
     let flap = null;
     if (fly && fly.flap) { FLAP = 1; flap = draw(); FLAP = 0; }   // the wings-down frame
-    SPRITES[mon.id] = { img: views.front, views, size, diag, fly, flap };
+    let frames = null;
+    if (RIGGED.has(mon.id)) {   // its animation frames, each a full set of views
+      const at = f => { RIG = { ...REST, ...f }; const out = draw(); RIG = null; return out; };
+      frames = {};
+      for (const [k, f] of Object.entries(RIG_FRAMES)) frames[k] = Array.isArray(f) ? f.map(at) : at(f);
+    }
+    SPRITES[mon.id] = { img: views.front, views, size, diag, fly, flap, frames };
   }
 }
 
@@ -1834,30 +1899,39 @@ function tintOf(src, color) {
   c.fillStyle = color; c.fillRect(0, 0, cv.width, cv.height);
   return (cache[color] = cv);
 }
-// Which pose a monster is in right now: { sq, sh } for posed(), dy = extra lift (world units).
-// Reads m.action (cast / beam / dash / burst / vortex), m.hurtT (set when hit), m.popT (set when
-// it appears), fainting, walking (m.walkT) and an idle breath. Poses change at a hand-animated
-// pace (a walk is 3 frames a hop, about 11 a second), never every frame: fast flicking reads as jitter.
-function monPose(m, time, moving, phase, flying) {
+// What a monster looks like right now: { views } (a rigged monster's animation frame, or its
+// plain views), plus { sq, sh } for posed() and dy = extra lift (world units). Rigged monsters
+// animate with real frames (walk cycle, idle with a tail wag, blinks, wind-up, attack, hurt);
+// the rest just hop when walking and dip or rise a pixel when attacking. Walking means really
+// covering ground (a monster the game has paused keeps its speed but mustn't keep stepping), and
+// idle, blinks and the walk's hold run on the real clock, so nothing freezes mid-pose.
+function monAnim(m, phase, flying) {
+  const sp = SPRITES[m.id], F = sp.frames, a = m.action, clock = performance.now() / 1000;
   const side = m.view === 'side' || m.view === 'fside' || m.view === 'bside';
-  const a = m.action;
-  if (m.fainted) { const k = Math.min(1, m.fadeT / 0.5); return { sq: Math.round(3 * k), sh: side ? -Math.round(3 * k) : 0, dy: 0 }; }
-  if (m.popT > 0) return m.popT > 0.18 ? { sq: -2, sh: 0, dy: 2 } : { sq: 2, sh: 0, dy: 0 };   // pops out tall, lands squashed
-  if (m.hurtT > 0) return { sq: 2, sh: side ? -2 : 0, dy: 0 };                                     // squished and knocked back
+  const out = (views, sq = 0, sh = 0, dy = 0) => ({ views: views || sp.views, sq, sh, dy });
+  if (m.walkT !== m._walkT) { m._walkT = m.walkT; m.walkSeen = clock; }
+  const walking = m.walkSeen !== undefined && clock - m.walkSeen < 0.15;
+  if (m.fainted) {
+    if (F) return out(F.hurt);
+    const k = Math.min(1, m.fadeT / 0.5);
+    return out(null, Math.round(2 * k), side ? -Math.round(2 * k) : 0);
+  }
+  if (m.popT > 0) return out(F && F.windup, F ? 0 : m.popT > 0.18 ? -1 : 1, 0, m.popT > 0.18 ? 2 : 0);   // sent out: up, then landing
+  if (m.hurtT > 0) return F ? out(F.hurt) : out(null, 1, side ? -1 : 0);
   if (a) {
-    if (a.kind === 'dash') return { sq: -2, sh: side ? 3 : 0, dy: 0 };                              // stretched, leaning into it
-    if (a.kind === 'beam') return a.phase === 'charge' ? { sq: 2, sh: side ? -1 : 0, dy: 0 } : { sq: 1, sh: side ? -2 : 0, dy: 0 };   // braced, then pushed back
-    if (a.kind === 'burst') return a.done ? { sq: -2, sh: 0, dy: 1 } : { sq: 3, sh: 0, dy: 0 };    // crouch, then spring up
-    if (a.kind === 'vortex') return { sq: 1, sh: 0, dy: 0 };
-    if (a.kind === 'cast') return a.t < a.dur * 0.45 ? { sq: 2, sh: side ? -1 : 0, dy: 0 } : { sq: -1, sh: side ? 2 : 0, dy: 1 };   // wind up, then throw
+    const wind = a.kind === 'cast' ? a.t < a.dur * 0.45 : a.kind === 'burst' ? !a.done : a.kind === 'beam' ? a.phase === 'charge' : false;
+    if (F) return out(wind ? F.windup : F.attack);
+    return out(null, wind ? 1 : 0, 0, wind ? 0 : 1);
   }
-  // walking (held a moment after stopping, so stop-start movement doesn't flick between poses):
-  // one hop every 30 world units, in 3 frames: land squashed, spring up, come down
-  if (moving) m.walkSeen = time;
-  if (m.walkSeen !== undefined && time - m.walkSeen < 0.2) {
-    if (flying) return { sq: 0, sh: side ? 1 : 0, dy: 0 };
+  if (walking) {
+    if (F) return out(F.walk[Math.floor(m.walkT / 9) % 4]);   // a frame every 9 world units walked
+    if (flying) return out(null);
     const f = Math.floor((m.walkT / 30 % 1) * 3);
-    return f === 0 ? { sq: 1, sh: side ? 1 : 0, dy: 0 } : { sq: 0, sh: side ? 1 : 0, dy: f === 1 ? 2 : 1 };
+    return out(null, 0, 0, f === 1 ? 2 : f === 2 ? 1 : 0);    // a simple 3-frame hop
   }
-  return { sq: Math.sin(time * 2.2 + phase) > 0.55 ? 1 : 0, sh: 0, dy: 0 };   // breathing
+  if (F) {
+    if ((clock + phase) % 3.7 < 0.14) return out(F.blink);
+    return out(F.idle[Math.floor(clock * 2.5 + phase) % 4]);
+  }
+  return out(null);
 }

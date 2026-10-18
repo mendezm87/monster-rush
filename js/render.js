@@ -375,12 +375,10 @@ mixInto(Battle, class {
     const t = this.trainer, img = this.trainerImg[t.view];
     const px = Math.round(t.x), py = Math.round(t.y);
     Lighting.shadow(ctx, px, py, 9, 3.5, 0.9);
-    // a bouncy step like the monsters' (sprites.js posed): knees bend as a foot lands, a lean when walking sideways
-    // (3 frames a step, one step every 20 world units walked, like the monsters' hop)
+    // a little step bob: 3 frames a step, one step every 20 world units (a rigged walk cycle is still to do)
     const f = Math.floor((t.walkT / 20 % 1) * 3);
     const bob = t.moving ? -(f === 1 ? 1 : 0) : 0;
-    const sq = t.moving ? (f === 0 ? 1 : 0) : (Math.sin(this.time * 2) > 0.7 ? 1 : 0);
-    const pic = posed(img, sq, t.moving && isSideView(t.view) ? 1 : 0);
+    const pic = img;
     const w = pic.width * SPR_SCALE, h = pic.height * SPR_SCALE;
     ctx.save(); ctx.translate(px, 0); if (isSideView(t.view) && t.face < 0) ctx.scale(-1, 1);
     ctx.drawImage(pic, Math.round(-w / 2), Math.round(py - h + 1 + bob), w, h);
@@ -399,12 +397,12 @@ mixInto(Battle, class {
     const fly = sp.fly, grounded = m.status === 'frz' || m.fainted, phase = (m.x0 ?? (m.x0 = Math.random() * 10));
     const hover = fly && !grounded ? Math.round(fly.hover + Math.sin(this.time * 2.4 + phase) * 1.5) : 0;
     m.hover = hover;
-    // its pose (sprites.js monPose): walking hops, breathing, winding up, lunging, getting hit
+    // how it looks right now (sprites.js monAnim): a rigged monster's animation frame, or a hop / dip
     const still = m.status === 'frz' || m.stunT > 0 || m.lift > 0.01;
-    const pose = still && !m.fainted ? { sq: 0, sh: 0, dy: 0 } : monPose(m, this.time, moving, phase, !!hover);
+    const pose = still && !m.fainted ? { views: sp.views, sq: 0, sh: 0, dy: 0 } : monAnim(m, phase, !!hover);
     const bob = -pose.dy;
     const flapping = fly && sp.flap && !grounded && m.stunT <= 0 && Math.sin((this.time * fly.flap * (moving ? 1.3 : 1) + phase) * TAU) > 0;
-    const img = (flapping ? sp.flap : sp.views)[m.view];
+    const img = (pose.views !== sp.views ? pose.views : flapping ? sp.flap : sp.views)[m.view];
     const mine = m.side === 'player';
 
     // ground marker + shadow
