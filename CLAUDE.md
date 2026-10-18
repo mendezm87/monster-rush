@@ -62,6 +62,17 @@ A real-time, top-down pixel-art **roguelike** in the style of *The Binding of Is
 
 - The owner wants this to become a **full-fledged roguelike**, with **Steam and phones** as the release targets (browser stays for now). Plan: wrap with Electron or Tauri for Steam and Capacitor for phones; consoles only much later. Port-readiness basics done in r23 (below); still to do: gamepad button remapping, and an installable web app (manifest + offline cache).
 
+### Attack art (r25, after the owner shared screenshots of a fan battle game they like)
+
+- The owner wants **big, readable, punchy attacks**: chunky outlined shapes, a look of their own per type, effects as big as the monsters. Original drawings only, never copied assets.
+- `js/fx.js` draws every attack into `FXLayer`, a pixel buffer where **one pixel = one sprite pixel** (1.5 world units). Shapes get a 1-pixel ink outline (`FXD.ink`), soft edges are snapped to hard pixels, and the layer is scaled up without smoothing after the lighting, so attacks stay crisp pixel art that matches the monsters (no glow or bloom, as the owner prefers).
+- Per type: electric = zigzag bolts, fire/dragon/ghost = flames, water = droplets and twisting strands, grass/bug = leaves and stingers, ice = shards, rock/ground = rocks, poison = sludge blobs, psychic/dark = rings, fairy/normal/fighting/steel = stars, flying = wind blades and a tornado. Beams have an inked body plus the type's flourish; blasts throw a crown of the type's debris (`FX_DEBRIS`); hits pop a "pow" star (`fxImpact`); buffs show a hex shield (defence) or rising chevrons; heals rising + signs. New particle kinds live in `FX_PARTS`; a particle with `life > max` waits before it starts.
+- **`moves.html`** (linked nowhere public; open it directly) plays any move at a practice target, cycles through them, and "Freeze sheet" lays a whole type's moves out frozen mid-attack for review. Use it to check every visual change to attacks.
+
+### Keep Monster Battle Stadium in sync (owner's rule, 2026-10-17)
+
+Improvements made here that make sense for the arena game (`mendezm87/monster-battle-stadium`, cloned to `C:\Users\thecl\code\monster-battle-stadium`) get ported there too, **especially visuals**: sprites and diagonal views, attack art, scaling, the bundled font, music, settings. Roguelike-only things (rooms, floors, relics, recruiting, the bot test runs as written) stay here. After porting, test the arena in the browser and push it like this repo.
+
 ### Develop in the browser, wrap for stores later (decided 2026-10-17)
 
 The owner wants to keep developing and testing in the browser (local server, plus the GitHub Pages link on their phone, which updates a few minutes after each push) and only make Capacitor (phones) and Electron/Tauri (Steam) builds near the end. They have Apple and Google developer accounts and a Mac for iPhone builds; development stays on the Windows PC. No installable web app for now. To keep the later wrap easy:
@@ -111,7 +122,9 @@ Which other monsters evolve and into what (to design together); more relics and 
 | `js/ai.js` | `AI`: one brain per wild monster (the test bots use it too) |
 | `js/battle.js` | `Battle` = one room: exploring, doors, pedestals (recruits, shop, treasure), starting and clearing fights, `foe(m)` = nearest target, `foes(m)` = everything an attack can hit, relic checks (`relic(m, id)`), swapping and fainting, loot, XP, evolution, the `update` loop, movement, trainer follow, camera. Also `mixInto`, which lets the class continue in the next two files |
 | `js/combat.js` | `mixInto(Battle, class {...})`: moves (`tryMove`, `aim`, `execute`), `hit`, statuses, move actions in flight (dashes, beams, bursts, vortexes), projectiles, zones, thrown balls |
-| `js/render.js` | Sprite tints (`tinted`), `ICON_ART`/`itemIcon` for relic and shop icons, and `mixInto(Battle, ...)`: effects (shake, particles, numbers, weather) and all of a room's drawing, minimap included |
+| `js/render.js` | Sprite tints (`tinted`), `ICON_ART`/`itemIcon` for relic and shop icons, and `mixInto(Battle, ...)`: effects (shake, particles, numbers, weather) and a room's drawing (monsters, doors, bars, minimap) |
+| `js/fx.js` | Attack art: `FXLayer` (the pixel layer), `FXD` drawing helpers, `FX_PARTS` particle kinds, and `mixInto(Battle, ...)`: `drawProjectile`, `drawBeam`, `drawVortex`, `drawZoneFalls`, `drawParticles`, plus `fxImpact` / `fxBlast` / `fxBuff` / `fxHeal` that combat.js calls |
+| `moves.html` | Move showcase: every attack at a practice target, plus frozen review sheets |
 | `js/audio.js` | `Sfx`: synthesized SFX (incl. `coin`, `doorShut`, `doorOpen`, `stairs`), `beamCharge`/`beamFire` + per-type layers, `Sfx.music` sequencer, `_offline` render hook for level checks |
 | `js/ui.js`, `js/main.js` | HUD (active monster, boss bar), callouts, swap tray, starter / recruit / party / pick / result screens, room-to-room flow (`enterRoom`, `roomHooks`), the settings screen, `fitScreen` (picks `RES`), game loop, `VERSION` |
 | `gallery.html` | Sprite gallery (linked from the title screen): every monster and the trainer in front/side/back plus a turning preview, on any floor theme. New monsters appear in it automatically |

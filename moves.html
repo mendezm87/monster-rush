@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0d0b14">
+  <title>Move Showcase</title>
+  <link rel="stylesheet" href="css/fonts.css">
+  <style>
+    :root { --ink: #15111f; --font: "Lilita One", "Arial Black", system-ui, sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #0d0b14; color: #eee; font: 14px/1.4 system-ui, sans-serif; padding: 12px 16px; }
+    h1 { margin: 0; font: 400 28px var(--font); color: #ffe066; }
+    a { color: #7fd4ff; }
+    .top { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: baseline; margin-bottom: 8px; }
+    .wrap { display: flex; flex-wrap: wrap; gap: 14px; align-items: flex-start; }
+    iframe { width: min(100%, 860px); aspect-ratio: 16 / 9; border: 2px solid #3a3358; border-radius: 10px; background: #000; }
+    #list { flex: 1; min-width: 280px; max-height: 80vh; overflow: auto; }
+    .type { margin: 8px 0 4px; font: 400 16px var(--font); }
+    .moves { display: flex; flex-wrap: wrap; gap: 5px; }
+    .moves button { font: 400 14px var(--font); padding: 4px 10px; border-radius: 8px; border: 2px solid var(--ink); color: #fff; cursor: pointer; opacity: .85; }
+    .moves button.on { outline: 3px solid #ffe066; opacity: 1; }
+    .moves small { opacity: .75; font-family: system-ui; font-size: 10px; }
+    .bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 6px 0; }
+    .bar button, .bar select { font: 700 13px system-ui; padding: 5px 10px; border-radius: 8px; border: 2px solid var(--ink); background: #3a3358; color: #fff; cursor: pointer; }
+    #now { font: 400 18px var(--font); color: #ffe066; }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <h1>Move showcase</h1>
+    <span>Every attack, fired at a practice target (sound off). Pick a move, or let it cycle.</span>
+    <a href="gallery.html">Gallery</a> <a href="./">Game</a>
+  </div>
+  <div class="bar">
+    <span id="now">Loading…</span>
+    <button id="prev">◀ Prev</button><button id="next">Next ▶</button>
+    <button id="auto">Auto: off</button>
+    <select id="dist"><option value="110">Close target</option><option value="200" selected>Medium range</option><option value="300">Far target</option></select>
+    <select id="who"></select>
+    <button id="freeze">Freeze sheet of this type</button>
+  </div>
+  <canvas id="sheet" style="display:none;width:100%;max-width:1100px;border:2px solid #3a3358;border-radius:10px;cursor:pointer" title="Click to close"></canvas>
+  <div class="wrap">
+    <iframe id="game"></iframe>
+    <div id="list"></div>
+  </div>
+<script>
+const $ = s => document.querySelector(s);
+let w, G, order = [], cur = 0, auto = false, autoT = 0;
+(async () => {
+  const html = await (await fetch('index.html', { cache: 'reload' })).text();
+  const files = [...html.matchAll(/(?:src|href)="((?:js|css)\/[^"]+)"/g)].map(m => m[1]);
+  await Promise.all(files.map(f => fetch(f, { cache: 'reload' })));
+  $('#game').src = 'index.html?showcase=' + Date.now();
+})();
+
+$('#game').addEventListener('load', () => {
+  if (!$('#game').getAttribute('src')) return;
+  w = $('#game').contentWindow; G = n => w.eval(n);
+  const Save = G('Save'), Sfx = G('Sfx'), MOVES = G('MOVES'), TYPES = G('TYPES');
+  Save.write = () => {};
+  if (!Sfx.muted) w.toggleMute();
+  // the move list, grouped by type
+  const byType = {};
+  for (const [id, mv] of Object.entries(MOVES)) {
+    if (!mv.name || !TYPES[mv.type]) continue;
+    (byType[mv.type] = byType[mv.type] || []).push(id);
+  }
+  for (const [t, ids] of Object.entries(byType)) {
+    $('#list').insertAdjacentHTML('beforeend', `<div class="type" style="color:${TYPES[t].color}">${TYPES[t].name}</div><div class="moves">${ids.map(id =>
+      `<button data-id="${id}" style="background:${TYPES[t].color}">${MOVES[id].name} <small>${MOVES[id].kind}</small></button>`).join('')}</div>`);
+    order.push(...ids);
+  }
+  $('#list').addEventListener('click', e => { const b = e.target.closest('button'); if (b) pick(order.indexOf(b.dataset.id)); });
+  $('#prev').onclick = () => pick((cur - 1 + order.length) % order.length);
+  $('#next').onclick = () => pick((cur + 1) % order.length);
+  $('#auto').onclick = () => { auto = !auto; $('#auto').textContent = 'Auto: ' + (auto ? 'on' : 'off'); };
+  for (const m of G('ALL_MONS()')) $('#who').insertAdjacentHTML('beforeend', `<option value="${m.id}">${m.name}</option>`);
+  $('#who').value = 'drakorn';
+  $('#who').onchange = () => { setup(); };
+  $('#dist').onchange = () => place();
+  setup();
+  const start = new URLSearchParams(location.search).get('move');
+  pick(start ? Math.max(0, order.indexOf(start)) : 0);
+  setInterval(tick, 50);
+});
+
+// A run in a plain room: your monster on the left, a sturdy practice target on the right that never fights back.
+function setup() {
+  const App = G('App');
+  if (App.run) w.leaveRun('title');
+  App.endless = false;
+  w.startRun('smugshi');
+  const run = App.run, def = G('ROSTER_BY_ID')[$('#who').value];
+  run.party[0].setDef(def); run.party[0].hp = run.party[0].maxHp;
+  const room = run.floor.rooms.find(r => r.type === 'fight');
+  room.enemies = [{ id: 'boulderon', hpMul: 400, atkMul: 0, ai: 'wild' }]; room.cleared = false;
+  w.enterRoom(room, null);
+  G('UI').hideScreens();
+  const b = App.battle;
+  b.e[0].spawnT = 0.01;
+  // the target just stands there
+  b.e[0].ai = { update: () => ({ x: 0, y: 0 }) };
+  w.transition = fn => fn();
+  setTimeout(place, 100);
+}
+function place() {
+  const b = G('App').battle; if (!b) return;
+  const F = b.F, cx = (F.x0 + F.x1) / 2, cy = (F.y0 + F.y1) / 2 + 30, d = +$('#dist').value;
+  b.P.x = cx - d / 2; b.P.y = cy; b.e[0].x = cx + d / 2; b.e[0].y = cy;
+  b.P.vx = b.P.vy = b.e[0].vx = b.e[0].vy = 0;
+}
+function pick(i) {
+  cur = i;
+  const id = order[cur], MOVES = G('MOVES');
+  document.querySelectorAll('.moves button').forEach(b => b.classList.toggle('on', b.dataset.id === id));
+  $('#now').textContent = `${MOVES[id].name} (${MOVES[id].type} ${MOVES[id].kind})`;
+  const b = G('App').battle; if (!b) return;
+  b.P.moves[0] = MOVES[id]; b.P.cd[0] = 0; b.P.action = null;
+  fireT = 0;
+}
+// Freeze moves mid-flight and lay them out side by side (each at a telling moment).
+async function sheet(ids, cols = 2) {
+  const App = G('App'), MOVES = G('MOVES'), cv = G('canvas'), o = $('#sheet');
+  const CW = 300, CH = 150, S = 2;
+  o.width = cols * CW * S; o.height = Math.ceil(ids.length / cols) * CH * S; o.style.display = 'block';
+  const c = o.getContext('2d'); c.imageSmoothingEnabled = false; c.font = '22px sans-serif';
+  for (let i = -1; i < ids.length; i++) {   // the first pass warms up the room
+    const id = ids[Math.max(0, i)], mv = MOVES[id];
+    const t = { projectile: 0.4, beam: (mv.charge || 0) + 0.25, burst: (mv.delay || 0) + 0.12, zone: (mv.delay || 0) + 0.08, vortex: 0.6, dash: 0.2, buff: 0.2, heal: 0.25 }[mv.kind] || 0.3;
+    pick(order.indexOf(id)); place();
+    const b = App.battle; App.paused = true; fireT = 99;
+    b.P.cd[0] = 0; b.P.gcd = 0; b.P.action = null; b.particles.length = 0; b.projectiles.length = 0; b.zones.length = 0;
+    b.tryMove(b.P, 0);
+    for (let k = 0; k < Math.round(t * 60); k++) b.update(1 / 60);
+    b.render(G('ctx'));
+    if (i < 0) continue;
+    const R = G('RES'), x0 = b.P.x - 50, y0 = b.P.y - 95, cx = (i % cols) * CW * S, cy = Math.floor(i / cols) * CH * S;
+    c.drawImage(cv, (x0 - Math.round(b.cam.x)) * R, (y0 - Math.round(b.cam.y)) * R, CW * R, CH * R, cx, cy, CW * S, CH * S);
+    c.fillStyle = '#000a'; c.fillRect(cx, cy, 300, 30); c.fillStyle = '#fff'; c.fillText(`${mv.name} (${mv.kind})`, cx + 6, cy + 22);
+  }
+  App.paused = false; fireT = 0;
+}
+$('#freeze').onclick = () => { const t = G('MOVES')[order[cur]].type; sheet(order.filter(id => G('MOVES')[id].type === t)); };
+$('#sheet').onclick = () => { $('#sheet').style.display = 'none'; };
+window.sheet = sheet;
+
+let fireT = 0;
+function tick() {
+  const App = G && G('App'), b = App && App.battle; if (!b) return;
+  if (b.state !== 'fight') { setup(); return; }
+  const P = b.P, T = b.e[0];
+  T.hp = T.maxHp; P.hp = P.maxHp; P.status = null; T.status = null; P.buffs = []; P.stunT = 0;
+  // hold position between shots so every attack starts from the same spot
+  if (!P.action) { const F = b.F; if (Math.abs(T.x - ((F.x0 + F.x1) / 2 + +$('#dist').value / 2)) > 30 || Math.abs(P.y - T.y) > 30) place(); }
+  fireT -= 0.05;
+  if (fireT <= 0 && !P.action) { P.cd[0] = 0; P.gcd = 0; if (b.tryMove(P, 0)) fireT = 2.2; }
+  if (auto && (autoT += 0.05) > 3.3) { autoT = 0; pick((cur + 1) % order.length); }
+}
+</script>
+</body>
+</html>

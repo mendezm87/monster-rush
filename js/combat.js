@@ -91,7 +91,8 @@ mixInto(Battle, class {
         }
         const label = Object.keys(mv.buff).map(s => s.toUpperCase()).join(' & ') + ' UP!';
         this.text(m.x, m.y - m.h - 6, label, fx[1], m.y);
-        this.burst(m.x, m.cy, fx, 18, 60, -40);
+        this.fxBuff(m, mv);
+        this.burst(m.x, m.cy, fx, 8, 60, -40);
         m.action = { kind: 'cast', t: 0, dur: 0.35, lock: true };
         Sfx.play('buff');
         break;
@@ -101,7 +102,8 @@ mixInto(Battle, class {
         const real = Math.round(Math.min(amt, m.maxHp - m.hp));
         m.hp = Math.min(m.maxHp, m.hp + real);
         this.number(m, real, null, '#b6ff9a', '#4fae2e', '+');
-        this.burst(m.x, m.cy, ['#4fae2e', '#b6ff9a', '#ffffff'], 22, 50, -50);
+        this.fxHeal(m);
+        this.burst(m.x, m.cy, ['#4fae2e', '#b6ff9a', '#ffffff'], 8, 50, -50);
         m.action = { kind: 'cast', t: 0, dur: 0.45, lock: true };
         Sfx.play('heal');
         break;
@@ -130,9 +132,8 @@ mixInto(Battle, class {
     const force = (opts.force ?? (mult < 1 ? 22 : Math.min(260, 60 + dmg * 0.45))) * (tgt.boss ? 0.35 : 1);
     tgt.kx += Math.cos(kb) * force; tgt.ky += Math.sin(kb) * force;
 
-    const fx = TYPES[mv.type].fx;
-    this.burst(tgt.x, tgt.cy, fx, mult < 1 ? 4 : Math.min(30, 8 + dmg / 15), 110);
-    if (mult >= 1 || fresh) this.sparks(tgt.x, tgt.cy, mult < 1 ? 3 : 8);
+    this.fxImpact(tgt, mv, dmg, eff, mult);
+    if (mult >= 1 || fresh) this.sparks(tgt.x, tgt.cy, mult < 1 ? 2 : 6);
     if (fresh) {
       if (eff >= 2) this.text(tgt.x, tgt.y - tgt.h - 12, 'SUPER EFFECTIVE!', '#ffe066', tgt.y);
       else if (eff < 1) this.text(tgt.x, tgt.y - tgt.h - 12, eff <= 0.25 ? 'BARELY AFFECTS...' : 'NOT VERY EFFECTIVE', '#c8c8d8', tgt.y);
@@ -248,6 +249,7 @@ mixInto(Battle, class {
         m.ghostT -= dt;
         if (m.ghostT <= 0) { m.ghostT = 0.03; m.ghosts.push({ x: m.x, y: m.y, face: m.face, view: m.view, t: 0.22, color: fx[1] }); }
         if (Math.random() < 0.7) this.particles.push({ x: m.x + rand(-6, 6), y: m.cy + rand(-6, 6), vx: -m.vx * 0.2, vy: -m.vy * 0.2, life: 0.3, max: 0.3, size: 2, color: fx[rand() < 0.5 ? 0 : 1], kind: 'sq' });
+        if (Math.random() < 0.6) this.particles.push({ kind: 'streak', x: m.x + rand(-9, 9), y: m.cy + rand(-9, 9), sx: m.vx, sy: m.vy, color: fx[2], life: 0.16, max: 0.16 });
         const foe = !a.hit && this.foes(m).find(f => Math.hypot(m.x - f.x, m.cy - f.cy) < m.r + f.r + 4);
         if (foe) {
           a.hit = true; a.tgt = foe;
@@ -278,9 +280,7 @@ mixInto(Battle, class {
         const mv = a.mv;
         if (!a.done && a.t >= mv.delay) {
           a.done = true;
-          this.particles.push({ x: m.x, y: m.y - 2, r0: 6, r1: a.r, life: 0.35, max: 0.35, color: fx[2], kind: 'ring', w: 3 });
-          this.particles.push({ x: m.x, y: m.y - 2, r0: 4, r1: a.r * 0.8, life: 0.45, max: 0.45, color: fx[1], kind: 'ring', w: 2 });
-          this.burst(m.x, m.y - 4, fx, 30, a.r * 2.6, 0, 4);
+          this.fxBlast(m.x, m.y, a.r, mv);
           this.decalAt(m.x, m.y, a.r * 0.6);
           this.addShake(6);
           Sfx.play('boom');
@@ -375,8 +375,7 @@ mixInto(Battle, class {
         // a boomerang cuts through and can hit again on the way back
         if (p.mv.boomerang) p.hitCd = 0.35; else p.life = -1;
         if (p.mv.explode) {
-          this.particles.push({ x: p.x, y: p.y, g: p.y + p.k, r0: 4, r1: p.mv.explode, life: 0.3, max: 0.3, color: fx[2], kind: 'ring', w: 3 });
-          this.burst(p.x, p.y, fx, 26, 140);
+          this.fxBlast(p.x, p.y, p.mv.explode, p.mv);
           this.decalAt(foe.x, foe.y, p.mv.explode * 0.6);
           Sfx.play('boom');
         }
@@ -398,8 +397,7 @@ mixInto(Battle, class {
         const fx = TYPES[z.mv.type].fx;
         if (z.mv.fx === 'bolt') { this.particles.push({ x: z.x, y: z.y, life: 0.25, max: 0.25, kind: 'bolt', color: fx[1], seed: Math.random() }); Sfx.play('zap'); }
         else Sfx.play('boom');
-        this.particles.push({ x: z.x, y: z.y, r0: 3, r1: z.r * 1.2, life: 0.3, max: 0.3, color: fx[2], kind: 'ring', w: 3 });
-        this.burst(z.x, z.y - 4, fx, 22, z.r * 4, 0, 4);
+        this.fxBlast(z.x, z.y, z.r * 1.2, z.mv);
         this.decalAt(z.x, z.y, z.r * 0.7);
         this.addShake(4);
         for (const foe of this.foes(z.owner)) {

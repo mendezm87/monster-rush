@@ -183,10 +183,9 @@ mixInto(Battle, class {
     Lighting.apply(ctx, this);
     if (Lighting.on) this.drawTelegraphs(ctx, true);
 
-    for (const m of this.mons) if (m.action && m.action.kind === 'beam' && m.visible) this.drawBeam(ctx, m, m.action);
-    for (const p of this.projectiles) this.drawProjectile(ctx, p);
-    this.drawZoneFalls(ctx);
-    this.drawParticles(ctx);
+    // attacks and effects: chunky pixel art in their own layer (see fx.js)
+    this.drawAttacks(FXLayer.begin(Math.round(this.cam.x) - shx, Math.round(this.cam.y) - shy));
+    FXLayer.end(ctx);
     for (const b of this.balls) {
       const k = Math.min(1, b.t / b.dur);
       const x = b.from.x + (b.to.x - b.from.x) * k;
@@ -454,154 +453,6 @@ mixInto(Battle, class {
         ctx.globalAlpha = 0.5; ctx.strokeStyle = TYPES[a.mv.type].fx[2];
         ctx.beginPath(); ctx.moveTo(X, Y);
         ctx.lineTo(X + Math.cos(dir) * 40, Y + Math.sin(dir) * 40); ctx.stroke();
-      }
-    }
-    ctx.globalAlpha = 1;
-  }
-
-  drawZoneFalls(ctx) {
-    for (const z of this.zones) {
-      if (z.done) continue;
-      const left = z.delay - z.t;
-      const fx = TYPES[z.mv.type].fx;
-      const zx = z.x, zy = z.y;
-      if (z.mv.fx === 'meteor' && left < 0.45) {
-        const k = 1 - left / 0.45;
-        const x = zx - 70 * (1 - k), y = zy - 170 * (1 - k);
-        ctx.globalAlpha = 0.5; ctx.strokeStyle = fx[1]; ctx.lineWidth = 4;
-        ctx.beginPath(); ctx.moveTo(x - 20, y - 48); ctx.lineTo(x, y); ctx.stroke();
-        ctx.globalAlpha = 1;
-        ctx.fillStyle = fx[0]; ctx.beginPath(); ctx.arc(x, y, 6, 0, TAU); ctx.fill();
-        ctx.fillStyle = fx[2]; ctx.beginPath(); ctx.arc(x, y, 3, 0, TAU); ctx.fill();
-      } else if (z.mv.fx === 'rock' && left < 0.35) {
-        const k = 1 - left / 0.35;
-        const y = zy - 150 * (1 - k * k);
-        ctx.fillStyle = '#8f8170'; ctx.fillRect(Math.round(zx - 6), Math.round(y - 10), 12, 10);
-        ctx.fillStyle = '#b8aa96'; ctx.fillRect(Math.round(zx - 5), Math.round(y - 9), 6, 3);
-        ctx.strokeStyle = OUTLINE; ctx.lineWidth = 1; ctx.strokeRect(Math.round(zx - 6) + 0.5, Math.round(y - 10) + 0.5, 11, 9);
-      }
-    }
-  }
-
-  drawBeam(ctx, m, a) {
-    const mv = a.mv, fx = TYPES[mv.type].fx;
-    // the muzzle sits at body height, 6 units out along the aim
-    const ox = m.x + Math.cos(a.dir) * 6, oy = m.cy + Math.sin(a.dir) * 6;
-    if (a.phase === 'charge') {
-      const k = a.t / mv.charge;
-      ctx.globalAlpha = 0.5; ctx.fillStyle = fx[0];
-      ctx.beginPath(); ctx.arc(ox, oy, 3 + k * mv.width * 0.5, 0, TAU); ctx.fill();
-      ctx.globalAlpha = 1; ctx.fillStyle = fx[2];
-      ctx.beginPath(); ctx.arc(ox, oy, 1 + k * mv.width * 0.25, 0, TAU); ctx.fill();
-      return;
-    }
-    const grow = Math.min(1, a.t / 0.08);
-    const fade = Math.min(1, (mv.dur - a.t) / 0.15);
-    const len = mv.len * grow, w = mv.width * Math.max(0.2, fade);
-    ctx.save();
-    ctx.translate(ox, oy); ctx.rotate(a.dir);
-    const layers = [[fx[0], 0.35, 1.7], [fx[0], 0.9, 1.15], [fx[1], 1, 0.8], [fx[2], 1, 0.38]];
-    for (const [col, al, sc] of layers) {
-      ctx.globalAlpha = al; ctx.fillStyle = col;
-      ctx.beginPath();
-      const steps = Math.max(2, Math.ceil(len / 5));
-      for (let i = 0; i <= steps; i++) {
-        const x = (i / steps) * len;
-        const hw = (w / 2) * sc * (1 + 0.16 * Math.sin(x * 0.18 - this.time * 40)) * Math.min(1, 0.4 + x / 20);
-        i === 0 ? ctx.moveTo(x, -hw) : ctx.lineTo(x, -hw);
-      }
-      for (let i = steps; i >= 0; i--) {
-        const x = (i / steps) * len;
-        const hw = (w / 2) * sc * (1 + 0.16 * Math.sin(x * 0.18 - this.time * 40 + 1.5)) * Math.min(1, 0.4 + x / 20);
-        ctx.lineTo(x, hw);
-      }
-      ctx.closePath(); ctx.fill();
-      ctx.beginPath(); ctx.arc(len, 0, (w / 2) * sc, 0, TAU); ctx.fill();
-    }
-    // spiral rings travelling down the beam
-    ctx.globalAlpha = 0.9 * fade; ctx.strokeStyle = fx[2]; ctx.lineWidth = 1.3;
-    for (let x = (this.time * 260) % 24; x < len; x += 24) {
-      ctx.beginPath(); ctx.ellipse(x, 0, 2.5, w * 0.95, 0, 0, TAU); ctx.stroke();
-    }
-    ctx.globalAlpha = 1; ctx.fillStyle = fx[2];
-    ctx.beginPath(); ctx.arc(0, 0, w * 0.7, 0, TAU); ctx.fill();
-    ctx.restore();
-  }
-
-  drawProjectile(ctx, p) {
-    const fx = TYPES[p.mv.type].fx, t = p.mv.type;
-    const px = p.x, py = p.y;
-    if (p.mv.boomerang) {   // a spinning crescent blade
-      ctx.save(); ctx.translate(px, py); ctx.rotate(p.spin * 1.7);
-      ctx.fillStyle = fx[1];
-      ctx.beginPath(); ctx.arc(0, 0, p.r * 1.7, 0, Math.PI * 1.25); ctx.arc(p.r * 0.6, -p.r * 0.2, p.r * 1.1, Math.PI * 1.25, 0, true);
-      ctx.closePath(); ctx.fill();
-      ctx.strokeStyle = fx[2]; ctx.lineWidth = 1; ctx.stroke();
-      ctx.restore();
-      return;
-    }
-    if (t === 'grass') {
-      ctx.save(); ctx.translate(px, py); ctx.rotate(p.spin);
-      ctx.fillStyle = fx[1]; ctx.beginPath(); ctx.moveTo(-p.r * 1.4, 0); ctx.lineTo(0, -p.r * 0.7); ctx.lineTo(p.r * 1.4, 0); ctx.lineTo(0, p.r * 0.7); ctx.closePath(); ctx.fill();
-      ctx.strokeStyle = OUTLINE; ctx.lineWidth = 0.8; ctx.stroke(); ctx.restore();
-      return;
-    }
-    if (t === 'rock' || t === 'ground') {
-      ctx.save(); ctx.translate(Math.round(px), Math.round(py)); ctx.rotate(p.spin * 0.3);
-      ctx.fillStyle = fx[1]; ctx.fillRect(-p.r, -p.r, p.r * 2, p.r * 2);
-      ctx.fillStyle = fx[2]; ctx.fillRect(-p.r, -p.r, p.r, p.r * 0.7);
-      ctx.strokeStyle = OUTLINE; ctx.lineWidth = 1; ctx.strokeRect(-p.r, -p.r, p.r * 2, p.r * 2); ctx.restore();
-      return;
-    }
-    if (t === 'ice' || t === 'bug' || t === 'flying') {
-      const a = Math.atan2(p.vy, p.vx);
-      ctx.save(); ctx.translate(px, py); ctx.rotate(a);
-      ctx.fillStyle = fx[1]; ctx.beginPath(); ctx.moveTo(p.r * 3, 0); ctx.lineTo(-p.r * 2, -p.r); ctx.lineTo(-p.r * 2, p.r); ctx.closePath(); ctx.fill();
-      ctx.fillStyle = fx[2]; ctx.fillRect(-p.r, -0.5, p.r * 3, 1);
-      ctx.restore();
-      return;
-    }
-    ctx.globalAlpha = 0.35; ctx.fillStyle = fx[0];
-    ctx.beginPath(); ctx.arc(px, py, p.r * 2, 0, TAU); ctx.fill();
-    ctx.globalAlpha = 1; ctx.fillStyle = fx[1];
-    ctx.beginPath(); ctx.arc(px, py, p.r * 1.2, 0, TAU); ctx.fill();
-    ctx.fillStyle = fx[2];
-    ctx.beginPath(); ctx.arc(px, py, p.r * 0.6, 0, TAU); ctx.fill();
-  }
-
-  drawParticles(ctx) {
-    for (const p of this.particles) {
-      const k = clamp(p.life / p.max, 0, 1);
-      const X = p.x, Y = p.y;
-      ctx.globalAlpha = k;
-      switch (p.kind) {
-        case 'sq': {
-          const s = Math.max(1, Math.round(p.size * (0.5 + k * 0.5)));
-          ctx.fillStyle = p.color; ctx.fillRect(Math.round(X - s / 2), Math.round(Y - s / 2), s, s);
-          break;
-        }
-        case 'spark':
-          ctx.strokeStyle = p.color; ctx.lineWidth = 1.2;
-          ctx.beginPath(); ctx.moveTo(X, Y); ctx.lineTo(X - p.vx * 0.06, Y - p.vy * 0.06); ctx.stroke();
-          break;
-        case 'ring': {
-          const r = p.r1 + (p.r0 - p.r1) * k;
-          ctx.strokeStyle = p.color; ctx.lineWidth = p.w * k + 0.5;
-          ctx.beginPath(); ctx.ellipse(X, Y, r, r * 0.7, 0, 0, TAU); ctx.stroke();
-          break;
-        }
-        case 'line':
-          ctx.strokeStyle = p.color; ctx.lineWidth = 3 * k + 0.5;
-          ctx.beginPath(); ctx.moveTo(X, Y); ctx.lineTo(p.x2, p.y2); ctx.stroke();
-          break;
-        case 'bolt': {
-          ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3;
-          const r2 = mulberry((p.seed * 1e6) | 0);
-          ctx.beginPath(); let x = X + (r2() - 0.5) * 30, y = Y - 220; ctx.moveTo(x, y);
-          while (y < Y) { y += 14; x += (r2() - 0.5) * 18; if (y >= Y) { x = X; y = Y; } ctx.lineTo(x, y); }
-          ctx.stroke(); ctx.strokeStyle = p.color; ctx.lineWidth = 1.2; ctx.stroke();
-          break;
-        }
       }
     }
     ctx.globalAlpha = 1;
