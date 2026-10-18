@@ -28,6 +28,13 @@ const BERRY_IMG = gridFromMap([
   '..kk..',
 ], { k: OUTLINE, g: '#4fae2e', r: '#e8435a', h: '#ffb0c0', d: '#a82a40' }).toCanvas();
 
+// The 2x canvas a lit scene is drawn into (Battle.render), made once.
+let _scene = null;
+function sceneBuffer() {
+  if (!_scene) { _scene = document.createElement('canvas'); _scene.width = W * 2; _scene.height = H * 2; }
+  return _scene.getContext('2d');
+}
+
 // Room rewards (see ROOM_REWARDS): XP candy, a move disc, a treasure chest; a skull marks the boss's door.
 const CANDY_IMG = gridFromMap([
   '.k.kkk.k.',
@@ -206,10 +213,17 @@ mixInto(Battle, class {
 
   // ---------------------------------------------------------- render
   render(ctx) {
-    ctx.setTransform(RES, 0, 0, RES, 0, 0);
-    ctx.imageSmoothingEnabled = false;
+    // With lighting on, the room and everyone in it are drawn and lit in a 2x buffer (the art's
+    // own scale: sprite pixels stay whole, nothing is lost) and stretched onto the canvas in one
+    // crisp step, so the lighting's full-screen passes cost the same at 4K as at 720p. Attacks,
+    // numbers and the HUD still draw at full resolution on top.
+    const screen = ctx, fullRES = RES, lit = Lighting.on && RES > 2;
+    if (lit) { ctx = sceneBuffer(); RES = 2; }
     const shx = this.shake > 0.3 ? Math.round(rand(-1, 1) * this.shake * 2) / 2 : 0;
     const shy = this.shake > 0.3 ? Math.round(rand(-1, 1) * this.shake * 2) / 2 : 0;
+    try {
+    ctx.setTransform(RES, 0, 0, RES, 0, 0);
+    ctx.imageSmoothingEnabled = false;
     ctx.fillStyle = this.stage.bg; ctx.fillRect(0, 0, W, H);
     ctx.translate(-Math.round(this.cam.x) + shx, -Math.round(this.cam.y) + shy);
     ctx.drawImage(this.ground, 0, 0);
@@ -227,6 +241,14 @@ mixInto(Battle, class {
     actors.sort((a, b) => a.y - b.y).forEach(a => a.draw());
     // the room and everyone in it get lit; attacks and effects below stay crisp and unlit
     Lighting.apply(ctx, this);
+    } finally { RES = fullRES; }
+    if (lit) {   // the lit 2x scene onto the real canvas, then carry on in world space there
+      screen.setTransform(1, 0, 0, 1, 0, 0); screen.imageSmoothingEnabled = false;
+      screen.drawImage(ctx.canvas, 0, 0, W * RES, H * RES);
+      ctx = screen;
+      ctx.setTransform(RES, 0, 0, RES, 0, 0);
+      ctx.translate(-Math.round(this.cam.x) + shx, -Math.round(this.cam.y) + shy);
+    }
     if (Lighting.on) this.drawTelegraphs(ctx, true);
 
     // attacks and effects: chunky pixel art in their own layer (see fx.js)

@@ -2,17 +2,50 @@
 // soft shadows, a lens-style blur on the far and near edges, and floating light motes.
 // Attacks, warning circles, numbers and the HUD are drawn after the lighting, so they
 // stay crisp pixel art. Can be switched off (Settings) for slow devices.
+//
+// Kept cheap because it runs every frame over the whole screen (r42, the owner saw the frame
+// rate drop with it on): the light map is built at half the view's size from pre-drawn glow
+// sprites (no new gradients per frame), the lens blur only touches the top and bottom strips
+// and softens them by shrinking and stretching (no canvas blur filter, which was the slowest
+// part), and the motes and vignette are pre-drawn too.
 
 const Lighting = (() => {
-  const CW = W * 2, CH = H * 2;   // the light buffers work at 2x whatever the canvas size (RES)
+  const LS = 0.5;                                  // light map pixels per world unit (it's a soft map)
+  const LW = Math.round(W * LS), LH = Math.round(H * LS);
   const mk = (w, h) => { const c = document.createElement('canvas'); c.width = w; c.height = h; return c; };
-  const light = mk(CW, CH), small = mk(CW / 4, CH / 4), blur = mk(CW, CH), mask = mk(CW, CH);
-  // where the lens blur shows: the top and bottom edges of the screen
-  {
-    const c = mask.getContext('2d'), g = c.createLinearGradient(0, 0, 0, CH);
-    g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(0.15, 'rgba(0,0,0,0)');
-    g.addColorStop(0.86, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,0.9)');
-    c.fillStyle = g; c.fillRect(0, 0, CW, CH);
+  const light = mk(LW, LH);
+  // Pre-drawn soft round glows, one per colour, stretched to size when drawn.
+  const glows = {};
+  function glowSprite([R, G, B], size = 64) {
+    const key = R + ',' + G + ',' + B + ',' + size;
+    if (glows[key]) return glows[key];
+    const c = mk(size, size), x = c.getContext('2d'), h = size / 2, g = x.createRadialGradient(h, h, 0, h, h, h);
+    g.addColorStop(0, `rgba(${R},${G},${B},1)`); g.addColorStop(1, `rgba(${R},${G},${B},0)`);
+    x.fillStyle = g; x.fillRect(0, 0, size, size);
+    return (glows[key] = c);
+  }
+  // The lens blur: the top 15% and bottom 14% of the view, shrunk to a third and stretched back
+  // (bilinear smoothing does the blurring), fading out towards the middle (the strip masks).
+  const BLUR = 1 / 3, TOP = Math.round(H * 0.15), BOT = Math.round(H * 0.14);
+  const strip = (h, fadeDown) => {
+    const c = mk(Math.round(W * BLUR), Math.max(1, Math.round(h * BLUR))), m = mk(c.width, c.height), mx = m.getContext('2d');
+    const g = mx.createLinearGradient(0, 0, 0, m.height);
+    g.addColorStop(fadeDown ? 0 : 1, `rgba(0,0,0,${fadeDown ? 1 : 0.9})`); g.addColorStop(fadeDown ? 1 : 0, 'rgba(0,0,0,0)');
+    mx.fillStyle = g; mx.fillRect(0, 0, m.width, m.height);
+    return { c, m };
+  };
+  const topStrip = strip(TOP, true), botStrip = strip(BOT, false);
+  // the theme's colour tint and a vignette (darker towards the corners), drawn once per tint
+  // so the overlay is a single full-screen layer
+  const finishes = {};
+  function finish(tint) {
+    if (finishes[tint]) return finishes[tint];
+    const c = mk(W / 2, H / 2), x = c.getContext('2d');
+    x.fillStyle = tint; x.fillRect(0, 0, c.width, c.height);
+    const v = x.createRadialGradient(c.width / 2, c.height / 2, c.height * 0.4, c.width / 2, c.height / 2, c.height);
+    v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,0.45)');
+    x.fillStyle = v; x.fillRect(0, 0, c.width, c.height);
+    return (finishes[tint] = c);
   }
   // a soft shadow blob, stretched to size when drawn
   const SHADOW = mk(64, 32);
@@ -70,36 +103,36 @@ const Lighting = (() => {
       if (!this.on) return;
       const mood = b.stage.light, cx = Math.round(b.cam.x), cy = Math.round(b.cam.y), t = b.time;
       const lc = light.getContext('2d');
-      lc.setTransform(1, 0, 0, 1, 0, 0); lc.globalCompositeOperation = 'source-over';
-      lc.fillStyle = mood.amb; lc.fillRect(0, 0, CW, CH);
-      lc.globalCompositeOperation = 'lighter';
-      const glow = (x, y, r, [R, G, B], a) => {
-        const sx = (x - cx) * 2, sy = (y - cy) * 2, sr = r * 2;
-        if (sx < -sr || sy < -sr || sx > CW + sr || sy > CH + sr) return;
-        const g = lc.createRadialGradient(sx, sy, 0, sx, sy, sr);
-        g.addColorStop(0, `rgba(${R},${G},${B},${a})`); g.addColorStop(1, `rgba(${R},${G},${B},0)`);
-        lc.fillStyle = g; lc.fillRect(sx - sr, sy - sr, sr * 2, sr * 2);
+      lc.setTransform(1, 0, 0, 1, 0, 0); lc.globalCompositeOperation = 'source-over'; lc.globalAlpha = 1;
+      lc.fillStyle = mood.amb; lc.fillRect(0, 0, LW, LH);
+      lc.globalCompositeOperation = 'lighter'; lc.imageSmoothingEnabled = true;
+      const glow = (x, y, r, rgb, a) => {
+        const sx = (x - cx) * LS, sy = (y - cy) * LS, sr = r * LS;
+        if (sx < -sr || sy < -sr || sx > LW + sr || sy > LH + sr) return;
+        lc.globalAlpha = a; lc.drawImage(glowSprite(rgb), sx - sr, sy - sr, sr * 2, sr * 2);
       };
       for (const tc of torches(b.room)) glow(tc.x, tc.y + 14, 200 + Math.sin(t * 9 + tc.x) * 10, mood.torch, 0.85);
       const P = b.P;
       if (P.visible) glow(P.x, P.y - 10, 110, [255, 235, 210], 0.35);   // a soft light that follows your monster
       for (const m of b.e) if (m.alive) glow(m.x, m.y - 10, 70, [255, 235, 210], 0.18);
       if (b.stairs) glow(b.stairs.x, b.stairs.y, 60, [255, 220, 120], 0.4);
+      lc.globalAlpha = 1;
       ctx.save();
-      ctx.setTransform(RES / 2, 0, 0, RES / 2, 0, 0);   // the light buffers are 2x; stretch them to the canvas
+      ctx.setTransform(RES / LS, 0, 0, RES / LS, 0, 0);   // stretch the small light map over the canvas
       ctx.imageSmoothingEnabled = true;
       ctx.globalCompositeOperation = 'multiply'; ctx.drawImage(light, 0, 0);
       ctx.globalCompositeOperation = 'soft-light'; ctx.globalAlpha = 0.5; ctx.drawImage(light, 0, 0);
       ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
-      // lens blur: a small blurred copy, shown only along the top and bottom edges
-      const sc = small.getContext('2d');
-      sc.setTransform(1, 0, 0, 1, 0, 0); sc.imageSmoothingEnabled = true; sc.filter = 'blur(1.2px)';
-      sc.drawImage(ctx.canvas, 0, 0, small.width, small.height); sc.filter = 'none';
-      const bc = blur.getContext('2d');
-      bc.globalCompositeOperation = 'source-over'; bc.clearRect(0, 0, CW, CH);
-      bc.imageSmoothingEnabled = true; bc.drawImage(small, 0, 0, CW, CH);
-      bc.globalCompositeOperation = 'destination-in'; bc.drawImage(mask, 0, 0);
-      ctx.drawImage(blur, 0, 0);
+      // lens blur along the top and bottom edges only
+      ctx.setTransform(RES, 0, 0, RES, 0, 0);
+      const cvs = ctx.canvas;
+      for (const [s, y, h] of [[topStrip, 0, TOP], [botStrip, H - BOT, BOT]]) {
+        const sc = s.c.getContext('2d');
+        sc.globalCompositeOperation = 'copy'; sc.imageSmoothingEnabled = true;
+        sc.drawImage(cvs, 0, y * RES, W * RES, h * RES, 0, 0, s.c.width, s.c.height);
+        sc.globalCompositeOperation = 'destination-in'; sc.drawImage(s.m, 0, 0);
+        ctx.drawImage(s.c, 0, y, W, h);
+      }
       ctx.restore();
     },
     // After the crisp layer: floating motes, the theme's colour tint and a soft vignette (screen space).
@@ -108,22 +141,17 @@ const Lighting = (() => {
       const mood = b.stage.light, t = b.time, dt = lastT === null ? 0 : Math.max(0, Math.min(0.05, t - lastT));
       lastT = t;
       ctx.save();
-      ctx.setTransform(RES / 2, 0, 0, RES / 2, 0, 0);
-      ctx.globalCompositeOperation = 'lighter';
-      const [R, G, B] = mood.torch;
+      ctx.setTransform(RES, 0, 0, RES, 0, 0);
+      ctx.globalCompositeOperation = 'lighter'; ctx.imageSmoothingEnabled = true;
+      const mote = glowSprite(mood.torch, 16);
       for (const m of motes) {
         m.y += m.vy * dt; m.x += Math.sin(t + m.ph) * 4 * dt;
         if (m.y < -4) { m.y = H + 4; m.x = Math.random() * W; }
-        const a = 0.3 + Math.sin(t * 2 + m.ph) * 0.2, x = m.x * 2, y = m.y * 2;
-        const g = ctx.createRadialGradient(x, y, 0, x, y, 7);
-        g.addColorStop(0, `rgba(${R},${G},${B},${a})`); g.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.fillStyle = g; ctx.fillRect(x - 7, y - 7, 14, 14);
+        ctx.globalAlpha = 0.3 + Math.sin(t * 2 + m.ph) * 0.2;
+        ctx.drawImage(mote, m.x - 3.5, m.y - 3.5, 7, 7);
       }
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.fillStyle = mood.tint; ctx.fillRect(0, 0, CW, CH);
-      const v = ctx.createRadialGradient(CW / 2, CH / 2, CH * 0.4, CW / 2, CH / 2, CH * 1.0);
-      v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,0.45)');
-      ctx.fillStyle = v; ctx.fillRect(0, 0, CW, CH);
+      ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+      ctx.drawImage(finish(mood.tint), 0, 0, W, H);
       ctx.restore();
     },
   };
