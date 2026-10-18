@@ -75,6 +75,9 @@ const Lighting = (() => {
 
   return {
     on: true,
+    // soft: how strongly the light map soft-lights the scene (0.5 washed the colours out; r43);
+    // pop: the lit scene overlaid on itself, which brings back its contrast and colour
+    tune: { soft: 0.25, pop: 0.4 },
     // soft shadow when lit, the old flat ellipse otherwise (world coordinates)
     shadow(ctx, x, y, rx, ry, alpha = 1) {
       if (!this.on) {
@@ -121,7 +124,8 @@ const Lighting = (() => {
       ctx.setTransform(RES / LS, 0, 0, RES / LS, 0, 0);   // stretch the small light map over the canvas
       ctx.imageSmoothingEnabled = true;
       ctx.globalCompositeOperation = 'multiply'; ctx.drawImage(light, 0, 0);
-      ctx.globalCompositeOperation = 'soft-light'; ctx.globalAlpha = 0.5; ctx.drawImage(light, 0, 0);
+      if (this.tune.soft) { ctx.globalCompositeOperation = 'soft-light'; ctx.globalAlpha = this.tune.soft; ctx.drawImage(light, 0, 0); }
+      if (this.tune.pop) { ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalCompositeOperation = 'overlay'; ctx.globalAlpha = this.tune.pop; ctx.drawImage(ctx.canvas, 0, 0); }
       ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
       // lens blur along the top and bottom edges only
       ctx.setTransform(RES, 0, 0, RES, 0, 0);

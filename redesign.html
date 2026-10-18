@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Monster Redesigns</title>
+  <link rel="stylesheet" href="css/fonts.css">
+  <style>
+    body { margin: 0; background: #1c2e1a; color: #fff; font: 15px system-ui, sans-serif; }
+    h1 { font-family: 'Lilita One', 'Arial Black', sans-serif; color: #ffe066; margin: 16px; font-size: 26px; }
+    .intro { margin: 0 16px 8px; opacity: .85; max-width: 760px; }
+    .mon { margin: 16px; padding: 14px; background: #24361f; border-radius: 12px; }
+    .mon h2 { font-family: 'Lilita One', 'Arial Black', sans-serif; margin: 0 0 4px; color: #fff; font-size: 22px; }
+    .why { opacity: .8; margin-bottom: 12px; }
+    .row { display: flex; flex-wrap: wrap; gap: 12px; }
+    .card { width: 220px; background: #3f7a3a; border-radius: 10px; padding: 10px; }
+    .card.now { background: #4a3a3a; }
+    .card b { display: block; font-family: 'Lilita One', 'Arial Black', sans-serif; font-weight: normal; font-size: 17px; margin-bottom: 4px; }
+    .card p { margin: 6px 0 0; font-size: 13px; line-height: 1.35; }
+    canvas { display: block; image-rendering: pixelated; width: 192px; height: 192px; margin: 0 auto; }
+  </style>
+</head>
+<body>
+  <h1>Monster redesigns</h1>
+  <div class="intro">Monsters that look too much like a specific Pokémon get original new looks before release. Each keeps its name, type and moves. Pick a concept for each (or mix ideas, e.g. "A with C's horns"), and it'll be drawn in all five views and animated.</div>
+  <div id="list"></div>
+  <script src="js/data.js"></script>
+  <script src="js/pixel.js"></script>
+  <script src="js/sprites.js"></script>
+  <script src="js/concepts.js"></script>
+  <script>
+    buildSprites();
+    const draw = (fn, size) => { const g = new PixGrid(size, size); fn(g, 'front'); g.outline(); return g.toCanvas(); };
+    const big = src => { const c = document.createElement('canvas'); c.width = src.width; c.height = src.height; c.getContext('2d').drawImage(src, 0, 0); return c; };
+    for (const [id, c] of Object.entries(CONCEPTS)) {
+      const def = ROSTER_BY_ID[id], size = def.size === 'L' ? 44 : 32;
+      const box = document.createElement('div'); box.className = 'mon';
+      box.innerHTML = `<h2>${def.name} <small style="opacity:.6;font-size:14px">${def.types.join(' / ')}</small></h2><div class="why">${c.why}</div><div class="row"></div>`;
+      const row = box.querySelector('.row');
+      const now = document.createElement('div'); now.className = 'card now';
+      now.innerHTML = '<b>Now</b>'; now.appendChild(big(SPRITES[id].views.front)); now.insertAdjacentHTML('beforeend', '<p>The current look.</p>');
+      row.appendChild(now);
+      for (const k of c.list) {
+        const card = document.createElement('div'); card.className = 'card';
+        card.innerHTML = `<b>${k.name}</b>`; card.appendChild(draw(k.art, size)); card.insertAdjacentHTML('beforeend', `<p>${k.desc}</p>`);
+        row.appendChild(card);
+      }
+      document.getElementById('list').appendChild(box);
+    }
+  </script>
+</body>
+</html>
