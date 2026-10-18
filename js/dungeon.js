@@ -69,11 +69,11 @@ function shuffle(a) {
 // here (AREA_ODDS), the rest from anywhere, so every area feels different but can surprise.
 const AREA_MONS = {
   meadow: { natives: ['sparkit', 'thornback', 'slumbear', 'pixibelle', 'galewing', 'scarablade', 'lumawool', 'smugshi'], bosses: ['slumbear', 'thornback', 'galewing'] },
-  crater: { natives: ['cinderox', 'boulderon', 'drakorn', 'brawlix', 'venomire', 'thornback', 'gearhulk'], bosses: ['boulderon', 'drakorn', 'cinderox'] },
-  summit: { natives: ['frostling', 'galewing', 'boulderon', 'brawlix', 'slumbear', 'drakorn', 'lumawool'], bosses: ['frostling', 'slumbear', 'boulderon'] },
-  grotto: { natives: ['mindra', 'wispurr', 'shadefang', 'pixibelle', 'lumawool', 'venomire', 'gearhulk'], bosses: ['gearhulk', 'mindra', 'wispurr'] },
+  crater: { natives: ['cinderox', 'boulderon', 'drakorn', 'brawlix', 'venomire', 'thornback', 'gearhulk', 'coilizard'], bosses: ['boulderon', 'drakorn', 'cinderox'] },
+  summit: { natives: ['frostling', 'galewing', 'boulderon', 'brawlix', 'slumbear', 'drakorn', 'lumawool', 'coilizard'], bosses: ['frostling', 'slumbear', 'boulderon'] },
+  grotto: { natives: ['mindra', 'wispurr', 'shadefang', 'pixibelle', 'lumawool', 'venomire', 'gearhulk', 'voltergeist'], bosses: ['gearhulk', 'mindra', 'wispurr'] },
   ruins:  { natives: ['tidalisk', 'venomire', 'scarablade', 'wispurr', 'shadefang', 'mondaze', 'gearhulk', 'mindra'], bosses: ['tidalisk', 'shadefang', 'mondaze'] },
-  spire:  { natives: ['drakorn', 'mindra', 'shadefang', 'pixibelle', 'galewing', 'gearhulk', 'wispurr', 'brawlix'], bosses: ['drakorn', 'gearhulk', 'slumbear'] },
+  spire:  { natives: ['drakorn', 'mindra', 'shadefang', 'pixibelle', 'galewing', 'gearhulk', 'wispurr', 'brawlix', 'voltergeist'], bosses: ['drakorn', 'gearhulk', 'slumbear'] },
 };
 const AREA_ODDS = 0.75;
 // n different wild monster ids for an area

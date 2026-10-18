@@ -251,6 +251,12 @@ const ROSTER = [
     moves: ['zoomies', 'shibaScream', 'smugBeam', 'blanketNap'] },
   { id: 'mondaze',   name: 'MONDAZE',   types: ['normal', 'dark'], hp: 1220, atk: 1.2, def: 1.15, spd: 70, size: 'M', item: 'powerBand',
     moves: ['deadlineDash', 'heavySigh', 'blankStare', 'coffeeBreak'] },
+  // r48, designed from the owner's picks: a crackling ball of static fur (fragile, hits hard) and a
+  // spring-tailed cliff gecko (sturdy; Rollout is it springing off its coiled tail)
+  { id: 'voltergeist', name: 'VOLTERGEIST', types: ['electric', 'ghost'], hp: 900, atk: 1.22, def: 0.88, spd: 98, size: 'M', item: 'quickCharm',
+    moves: ['discharge', 'shadowBall', 'thunder', 'staticSiphon'] },
+  { id: 'coilizard', name: 'COILIZARD', types: ['electric', 'rock'], hp: 1080, atk: 1.12, def: 1.12, spd: 92, size: 'M', item: 'ironPlate',
+    moves: ['rollout', 'thunderbolt', 'rockSlide', 'thunder'] },
 ];
 
 // Evolved forms: a starter becomes one of these at `evolve.level` (see `evolve` on the base
