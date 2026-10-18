@@ -122,6 +122,23 @@ const Sfx = (() => {
       for (const s of [o, vib, flutter]) { s.start(t); s.stop(t + dur + 0.05); }
       noise(dur, 0.05, 3200);                                      // hoarse breath
     },
+    // Shiba Roar: the Shiba Scream, overreacting even for a Shiba. It stammers ("a-a-"),
+    // scoops way up, warbles wider, cracks twice, sputters, collapses into a wheeze and
+    // then squeaks one last time.
+    shibaRoar() {
+      const G = SCREAM_GAIN * 1.05;
+      voice(
+        [[0, 420], [0.05, 720], [0.09, 460], [0.14, 760], [0.2, 520], [0.32, 1120], [0.72, 1180], [0.78, 1560], [0.86, 1150], [1.0, 1200], [1.06, 1620], [1.14, 1180], [1.36, 560], [1.48, 980], [1.56, 1300]],
+        [[0.02, G], [0.07, 0.05], [0.1, G], [0.16, 0.06], [0.2, G], [1.22, G], [1.38, G * 0.25], [1.47, G * 0.7], [1.6, 0.001]],
+        { vib: [13, 95], flutter: 9 });
+      noise(1.5, 0.06, 3200);                                    // hoarse, ragged breath under it all
+      noise(0.3, 0.05, 1500, 1.22);                              // the wheeze
+    },
+    // a big sleepy yawn, then two soft snores
+    yawn() {
+      voice([[0, 170], [0.25, 270], [0.95, 140]], [[0.12, 0.22], [0.75, 0.18], [1.05, 0.001]], { vib: [5, 6], flutter: 3 });
+      for (const at of [1.2, 1.85]) { noise(0.45, 0.1, 260, at); tone(70, 0.4, 'sine', 0.08, -10, at); }
+    },
     win() { [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.22, 'square', 0.1, 0, i * 0.13)); },
     lose() { [392, 330, 262, 196].forEach((f, i) => tone(f, 0.28, 'triangle', 0.14, 0, i * 0.18)); },
     // dungeon sounds
@@ -350,6 +367,135 @@ const Sfx = (() => {
       hiss(t, dur + 0.25, 0.04, 'highpass', 9000);
     },
   };
+
+  // ---------- attack sounds: every move that isn't a beam has a voice of its own ----------
+  // A move sounds like its kind (a launch, a rush, a wind-up and blast, a landing, a gust...)
+  // plus a short burst of its type's beam layer (above), so moves of one type share a
+  // family sound and different kinds of move sound different. MOVE_SFX gives signature
+  // moves their own sounds. Played through Sfx.move(mv, phase): 'cast' when it's used,
+  // 'release' when a blast goes off, 'land' when a zone lands, 'hit' on each direct hit.
+  // (the beam gains suit long layers; a few types come out too strong in short bursts)
+  const SHORT_TRIM = { flying: 0.45, fire: 0.6 };
+  function typeLayer(type, dur, vol = 1, delay = 0) {
+    const L = BEAM_LAYERS[type];
+    if (!L) return;
+    bus = ctx.createGain(); bus.gain.value = (LAYER_GAIN[type] || 1) * vol * (SHORT_TRIM[type] || 1); bus.connect(master);
+    L(ctx.currentTime + delay, dur, BEAM_PITCH[type] || 58);
+    bus = null;
+  }
+  // a band of noise sweeping f1 -> f2 (whooshes, rushes, swishes), straight to the effects bus
+  function sweep(dur, f1, f2, vol, q = 3, delay = 0) {
+    const t = ctx.currentTime + delay, s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    s.buffer = noiseBuf; s.loop = true; f.type = 'bandpass'; f.Q.value = q;
+    f.frequency.setValueAtTime(f1, t); f.frequency.exponentialRampToValueAtTime(f2, t + dur);
+    g.gain.setValueAtTime(0.001, t); g.gain.exponentialRampToValueAtTime(vol, t + Math.min(0.05, dur / 3)); g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    s.connect(f).connect(g).connect(master); s.start(t, Math.random() * 0.5); s.stop(t + dur + 0.02);
+    return f;
+  }
+  // how high a type's "pew" sits
+  const TYPE_PITCH = { normal: 700, fire: 520, water: 480, grass: 880, electric: 1400, ice: 1700, ground: 200, rock: 260, poison: 300,
+    psychic: 820, dark: 340, fairy: 1500, fighting: 240, flying: 1000, bug: 1250, ghost: 650, dragon: 300, steel: 1100 };
+
+  // A breathy "ah" voice: a buzzy saw shaped by three formant filters. pitch: [[time, Hz], ...],
+  // gain: [[time, level], ...]; wobble: vibrato Hz and depth; chop: a stutter rate (0 = none).
+  function voice(pitch, gain, { vib = [11, 48], flutter = 7, chop = 0 } = {}) {
+    const t = ctx.currentTime, end = gain[gain.length - 1][0];
+    const o = ctx.createOscillator(); o.type = 'sawtooth';
+    o.frequency.setValueAtTime(pitch[0][1], t);
+    for (const [at, f] of pitch.slice(1)) o.frequency.exponentialRampToValueAtTime(f, t + at);
+    const v = ctx.createOscillator(), vg = ctx.createGain(); v.frequency.value = vib[0]; vg.gain.value = vib[1]; v.connect(vg).connect(o.frequency);
+    const g = ctx.createGain(); g.gain.setValueAtTime(0.001, t);
+    for (const [at, l] of gain) g.gain.exponentialRampToValueAtTime(Math.max(0.001, l), t + at);
+    const peak = Math.max(...gain.map(x => x[1]));
+    const fl = ctx.createOscillator(), fg = ctx.createGain(); fl.frequency.value = flutter; fg.gain.value = peak * 0.3; fl.connect(fg).connect(g.gain);
+    const nodes = [o, v, fl];
+    if (chop) { const ch = ctx.createOscillator(), cg = ctx.createGain(); ch.type = 'square'; ch.frequency.value = chop; cg.gain.value = peak * 0.45; ch.connect(cg).connect(g.gain); nodes.push(ch); }
+    for (const [f, q, lv] of [[850, 5, 1], [1250, 7, 0.55], [2850, 9, 0.25]]) {
+      const bp = ctx.createBiquadFilter(), fv = ctx.createGain(); bp.type = 'bandpass'; bp.frequency.value = f; bp.Q.value = q; fv.gain.value = lv;
+      o.connect(bp).connect(fv).connect(g);
+    }
+    g.connect(master);
+    for (const n of nodes) { n.start(t); n.stop(t + end + 0.05); }
+    return end;
+  }
+
+  // the sound of each kind of move, at each phase
+  const KIND_SFX = {
+    projectile: { cast(mv) { const p = TYPE_PITCH[mv.type] || 700; tone(p, 0.09, 'square', 0.06, -p * 0.5); typeLayer(mv.type, 0.16, 0.55); } },
+    dash: {
+      cast(mv) { sweep(0.22, 400, 2600, 0.6); tone((TYPE_PITCH[mv.type] || 700) * 0.4, 0.16, 'sawtooth', 0.07, 250); typeLayer(mv.type, 0.28, 0.5); },
+    },
+    burst: {
+      cast(mv) { tone(160, mv.delay || 0.4, 'sawtooth', 0.06, 500); typeLayer(mv.type, mv.delay || 0.4, 0.3); },
+      release(mv) {
+        if (mv.cone) { sweep(mv.blow + 0.1, 300, 2400, 0.45, 2); typeLayer(mv.type, mv.blow, 0.8); return; }
+        if (mv.ripple) { for (let i = 0; i < 3; i++) tone(70, 0.25, 'sine', 0.35, -25, i * 0.14); typeLayer(mv.type, mv.ripple, 0.8); return; }
+        noise(0.4, 0.42, 650); tone(75, 0.36, 'triangle', 0.22, -30); typeLayer(mv.type, 0.38, 0.75);
+      },
+    },
+    zone: {
+      cast(mv) { tone((TYPE_PITCH[mv.type] || 700) * 0.6, 0.18, 'triangle', 0.08, 500); typeLayer(mv.type, 0.12, 0.4); },
+      land(mv) { if (mv.fx === 'bolt') lib.zap(); else { noise(0.3, 0.35, 800); tone(90, 0.25, 'triangle', 0.18, -30); } typeLayer(mv.type, 0.28, 0.6); },
+    },
+    vortex: { cast(mv) { lib.vortex(); typeLayer(mv.type, mv.dur || 1.2, 0.55); } },
+    buff: { cast(mv) { tone(400, 0.25, 'triangle', 0.13, 500); typeLayer(mv.type, 0.3, 0.45); } },
+    heal: { cast() { lib.heal(); } },
+    // a direct hit: a thud with a dash of the type on top
+    hit: { hit(mv) { typeLayer(mv.type, 0.08, 0.4); } },
+  };
+
+  // signature moves
+  const MOVE_SFX = {
+    // a volley: five quick little launches, buzzing
+    pinMissile: { cast(mv) { for (let i = 0; i < 5; i++) tone(1900 - i * 90, 0.05, 'square', 0.05, -900, i * 0.035); typeLayer('bug', 0.2, 0.5); } },
+    // the boomerang blade keeps its rising swoosh
+    razorGale: { cast() { lib.whoosh(); typeLayer('flying', 0.2, 0.4); } },
+    // a sparkling breeze
+    fairyWind: { cast() { sweep(0.4, 1200, 5000, 0.3, 5); typeLayer('fairy', 0.3, 0.6); } },
+    // bubbles popping off one after another
+    bubbleBeam: { cast() { for (let i = 0; i < 5; i++) { const p = 500 + Math.random() * 400; tone(p, 0.07, 'sine', 0.14, p * 1.3, i * 0.05); } } },
+    // a wet splat
+    mudShot: { cast() { noise(0.12, 0.35, 500); tone(110, 0.14, 'sine', 0.25, -50); tone(220, 0.08, 'sine', 0.12, -120, 0.06); } },
+    thunderbolt: { cast() { lib.zap(); typeLayer('electric', 0.18, 0.6); } },
+    // a rumbling roll
+    rollout: { cast(mv) { const f = sweep(mv.dur + 0.15, 180, 120, 0.5, 1.2); const l = ctx.createOscillator(), lg = ctx.createGain(); l.frequency.value = 16; lg.gain.value = 60; l.connect(lg).connect(f.frequency); l.start(); l.stop(ctx.currentTime + mv.dur + 0.2); typeLayer('rock', mv.dur, 0.6); } },
+    // a roaring ring of fire
+    flameWheel: { cast(mv) { sweep(mv.dur + 0.15, 250, 1400, 0.4, 1.5); typeLayer('fire', mv.dur + 0.1, 0.9); } },
+    blazeRush: { cast(mv) { tone(90, mv.dur, 'sawtooth', 0.07, 60); sweep(mv.dur + 0.15, 300, 1800, 0.38, 1.5); typeLayer('fire', mv.dur + 0.15, 1); } },
+    // blade swishes
+    nightSlash: { cast() { sweep(0.16, 1800, 7000, 0.45, 6); typeLayer('dark', 0.15, 0.4); }, hit() { sweep(0.1, 5000, 1500, 0.4, 8); } },
+    dragonClaw: { cast() { sweep(0.18, 900, 4000, 0.4, 4); typeLayer('dragon', 0.2, 0.5); }, hit() { for (let i = 0; i < 3; i++) sweep(0.07, 4500, 1600, 0.3, 8, i * 0.04); } },
+    // a flurry: a sharp shout of air, then every punch thumps (each hit)
+    closeCombat: { cast() { sweep(0.14, 600, 3000, 0.4); }, hit() { tone(170, 0.06, 'square', 0.12, -90); noise(0.05, 0.25, 1400); } },
+    // a soft fluffy whump with static crackling
+    woolTackle: { cast() { noise(0.2, 0.3, 450); typeLayer('electric', 0.25, 0.35); }, hit() { noise(0.15, 0.4, 350); } },
+    gust: { release(mv) { lib.whoosh(); sweep(mv.blow + 0.15, 400, 2600, 0.45, 2); typeLayer('flying', mv.blow, 0.6); } },
+    // a howling storm for as long as it lasts
+    tornado: { land(mv) { typeLayer('flying', mv.linger * 0.85, 0.55); sweep(mv.linger, 300, 900, 0.18, 4); } },
+    // Smugshi's zoomies: scampering paws and a whoosh
+    zoomies: { cast() { for (let i = 0; i < 6; i++) tone(520 + (i % 2) * 140, 0.035, 'square', 0.07, -200, i * 0.045); sweep(0.25, 600, 3000, 0.5); } },
+    zoomiesMax: { cast() { for (let i = 0; i < 8; i++) tone(560 + (i % 2) * 160, 0.035, 'square', 0.08, -220, i * 0.035); sweep(0.3, 600, 3600, 0.55); }, hit() { tone(420, 0.05, 'square', 0.08, -200); } },
+    // a big heavy body flop
+    bodySlam: { cast() { sweep(0.3, 200, 900, 0.6, 1.5); }, hit() { tone(60, 0.3, 'sine', 0.4, -20); noise(0.25, 0.4, 400); } },
+    // Mondaze heaves a long, tired sigh
+    heavySigh: { cast() { voice([[0, 210], [0.6, 120]], [[0.15, 0.2], [0.55, 0.14], [0.75, 0.001]], { vib: [4, 4], flutter: 2 }); noise(0.75, 0.08, 1400); }, release() { noise(0.4, 0.35, 500); tone(80, 0.35, 'triangle', 0.18, -30); } },
+    // Shiba Scream (as before) and Shiba Roar, which is the same scream, overreacting
+    shibaScream: { cast() { lib.shibaScream(); }, release() { noise(0.3, 0.3, 700); } },
+    shibaRoar: { cast() { lib.shibaRoar(); }, release() { noise(0.35, 0.35, 650); } },
+    // heals that sound like their names
+    snack: { cast() { for (let i = 0; i < 3; i++) noise(0.06, 0.4, 2600, 0.25 + i * 0.2); tone(300, 0.12, 'sine', 0.2, -150, 0.85); } },   // crunch, crunch, crunch, gulp
+    photosynth: { cast() { [523, 659, 784, 1047].forEach((f, i) => tone(f, 0.7 - i * 0.1, 'sine', 0.09, 0, i * 0.09)); typeLayer('grass', 0.5, 0.4, 0.2); } },   // warm light swelling
+    blanketNap: { cast() { lib.yawn(); } },
+    wish: { cast() { [1568, 1760, 2093, 2349, 2637].forEach((f, i) => tone(f, 0.25, 'triangle', 0.07, 0, i * 0.08)); tone(3136, 0.5, 'sine', 0.08, 0, 0.5); [2637, 2093, 1568, 1319].forEach((f, i) => tone(f, 0.18, 'triangle', 0.07, 0, 0.72 + i * 0.06)); lib.heal(); } },   // twinkle, the star chimes, then sparkles down
+  };
+
+  function moveSound(mv, phase) {
+    const sig = MOVE_SFX[mv.id];
+    if (sig && sig[phase]) return sig[phase](mv);
+    if (phase === 'hit') return KIND_SFX.hit.hit(mv);
+    const k = KIND_SFX[mv.kind];
+    if (k && k[phase]) k[phase](mv);
+  }
 
   // ---------- music: original Game Boy-style chiptunes ----------
   // Pulse lead, 12.5% pulse arpeggios, triangle bass, noise drums. Every song is
@@ -627,6 +773,14 @@ const Sfx = (() => {
       last[name] = now;
       lib[name]();
     },
+    // an attack's sound (see KIND_SFX / MOVE_SFX); phase: 'cast' | 'release' | 'land' | 'hit'
+    move(mv, phase) {
+      if (!ctx || muted || !mv) return;
+      const key = mv.id + ':' + phase, now = performance.now();
+      if (last[key] && now - last[key] < (phase === 'hit' ? 70 : 45)) return;   // throttle spam
+      last[key] = now;
+      moveSound(mv, phase);
+    },
     beamCharge(dur) { if (ctx && !muted) beamCharge(dur); },
     beamFire(dur, type) { if (ctx && !muted) beamFire(dur, type); },
     music: Music,
@@ -654,7 +808,7 @@ const Sfx = (() => {
       noiseBuf = off.createBuffer(1, off.sampleRate, off.sampleRate);
       const d = noiseBuf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
       const layer = (type, t, dur) => { bus = ctx.createGain(); bus.gain.value = LAYER_GAIN[type] || 1; bus.connect(master); BEAM_LAYERS[type](t, dur, BEAM_PITCH[type] || 58); bus = null; };
-      try { fn({ tone, beamCharge, beamFire, Music, BEAM_LAYERS, layer, lib }); } finally { [ctx, master, musicBus, mainOut, noiseBuf] = saved; }
+      try { fn({ tone, beamCharge, beamFire, Music, BEAM_LAYERS, layer, lib, moveSound }); } finally { [ctx, master, musicBus, mainOut, noiseBuf] = saved; }
     },
   };
 })();

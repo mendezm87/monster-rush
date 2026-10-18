@@ -50,7 +50,7 @@ mixInto(Battle, class {
           });
         }
         m.action = { kind: 'cast', t: 0, dur: 0.18, lock: true };
-        Sfx.play(mv.boomerang ? 'whoosh' : 'shoot');
+        Sfx.move(mv, 'cast');
         break;
       }
       case 'beam':
@@ -59,15 +59,15 @@ mixInto(Battle, class {
         break;
       case 'dash':
         m.action = { kind: 'dash', t: 0, mv, dir, lock: true, hit: false, tgt: foe, id: _uid++ };
-        Sfx.play('dash');
+        Sfx.move(mv, 'cast');
         break;
       case 'vortex':
         m.action = { kind: 'vortex', t: 0, mv, dir, lock: true, tick: 0, id: _uid++ };
-        Sfx.play('vortex');
+        Sfx.move(mv, 'cast');
         break;
       case 'burst':
         m.action = { kind: 'burst', t: 0, mv, dir, lock: true, done: false, r: mv.r * (this.relic(m, 'blastCore') ? 1.25 : 1), id: _uid++ };
-        Sfx.play(mv.sfx || 'charge');   // a move can bring its own wind-up sound
+        Sfx.move(mv, 'cast');   // see KIND_SFX / MOVE_SFX in audio.js
         break;
       case 'zone': {
         const n = mv.count || 1;
@@ -81,7 +81,7 @@ mixInto(Battle, class {
           });
         }
         m.action = { kind: 'cast', t: 0, dur: 0.25, lock: true };
-        Sfx.play('shoot');
+        Sfx.move(mv, 'cast');
         break;
       }
       case 'buff': {
@@ -94,7 +94,7 @@ mixInto(Battle, class {
         this.fxBuff(m, mv);
         this.burst(m.x, m.cy, fx, 8, 60, -40);
         m.action = { kind: 'cast', t: 0, dur: 0.35, lock: true };
-        Sfx.play('buff');
+        Sfx.move(mv, 'cast');
         break;
       }
       case 'heal': {
@@ -102,10 +102,10 @@ mixInto(Battle, class {
         const real = Math.round(Math.min(amt, m.maxHp - m.hp));
         m.hp = Math.min(m.maxHp, m.hp + real);
         this.number(m, real, null, '#b6ff9a', '#4fae2e', '+');
-        this.fxHeal(m);
+        this.fxHeal(m, mv);
         this.burst(m.x, m.cy, ['#4fae2e', '#b6ff9a', '#ffffff'], 8, 50, -50);
         m.action = { kind: 'cast', t: 0, dur: 0.45, lock: true };
-        Sfx.play('heal');
+        Sfx.move(mv, 'cast');
         break;
       }
     }
@@ -140,6 +140,7 @@ mixInto(Battle, class {
       if (crit) this.text(tgt.x, tgt.y - tgt.h - 22, 'CRITICAL HIT!', '#ff7a5a', tgt.y);
     }
     Sfx.play(dmg > 200 ? 'bigHit' : 'hit');
+    if (mult >= 1) Sfx.move(mv, 'hit');
     this.addShake(mult < 1 ? 1.2 : Math.min(6, 1 + dmg / 80));
     if (mult >= 1 && dmg > 150) this.hitstop = Math.min(0.09, 0.03 + dmg / 6000);
 
@@ -286,7 +287,7 @@ mixInto(Battle, class {
           if (!a.done && a.t >= mv.delay) {
             a.done = true; a.blowT = 0; a.ticks = 0;
             const f = this.foe(m); if (f) a.dir = this.aim(m, f, mv);
-            this.addShake(3); Sfx.play(mv.sfx === 'whoosh' ? 'whoosh' : 'boom');
+            this.addShake(3); Sfx.move(mv, 'release');
           }
           if (a.done) {
             a.blowT += dt;
@@ -305,7 +306,7 @@ mixInto(Battle, class {
         }
         // a ripple (Dark Pulse): a ring that travels out, hitting each opponent once as it passes
         if (mv.ripple) {
-          if (!a.done && a.t >= mv.delay) { a.done = true; a.ripT = 0; a.hitIds = new Set(); this.addShake(3); Sfx.play('boom'); }
+          if (!a.done && a.t >= mv.delay) { a.done = true; a.ripT = 0; a.hitIds = new Set(); this.addShake(3); Sfx.move(mv, 'release'); }
           if (a.done) {
             a.ripT += dt;
             const R = a.r * Math.min(1, a.ripT / mv.ripple);
@@ -324,7 +325,7 @@ mixInto(Battle, class {
           this.fxBlast(m.x, m.y, a.r, mv);
           this.decalAt(m.x, m.y, a.r * 0.6);
           this.addShake(6);
-          Sfx.play('boom');
+          Sfx.move(mv, 'release');
           for (const foe of this.foes(m)) {
             if (Math.hypot(foe.x - m.x, foe.y - m.y) < a.r + foe.r * 0.6) this.hit(m, foe, mv, 1);
             if (m.fainted || this.state === 'faint') return;
@@ -451,8 +452,8 @@ mixInto(Battle, class {
       if (!z.done && z.t >= z.delay) {
         z.done = true; z.tick = 0.5;   // a pool's first tick comes after the landing hit
         const fx = TYPES[z.mv.type].fx;
-        if (z.mv.fx === 'bolt') { this.particles.push({ x: z.x, y: z.y, life: 0.25, max: 0.25, kind: 'bolt', color: fx[1], seed: Math.random() }); Sfx.play('zap'); }
-        else Sfx.play('boom');
+        if (z.mv.fx === 'bolt') this.particles.push({ x: z.x, y: z.y, life: 0.25, max: 0.25, kind: 'bolt', color: fx[1], seed: Math.random() });
+        Sfx.move(z.mv, 'land');
         if (z.mv.fx === 'tornado') {   // touching down: a puff of dust rather than a blast
           this.particles.push({ kind: 'wave', x: z.x, y: z.y - 2, r0: 4, r1: z.r * 1.3, life: 0.35, max: 0.35, color: '#d8ccb0', w: 3 });
           this.fxDebris(z.x, z.y - 4, { type: 'rock', palette: ['#8a7a5a', '#c8b898', '#e8dcc0'] }, 10, z.r * 3, 3.5, 4);

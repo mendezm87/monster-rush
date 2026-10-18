@@ -238,6 +238,73 @@ const FX_PARTS = {
     c.lineWidth = 3; c.strokeStyle = INK; c.strokeText(p.str, p.x, p.y);
     c.fillStyle = p.color; c.fillText(p.str, p.x, p.y);
   },
+  // ---- heals ----
+  // Snack Time: a cookie, eaten in three bites, crumbs falling, "nom!"
+  snack(c, p, k) {
+    const m = p.mon, age = (1 - k) * p.max, f = m.face || 1, x = m.x + f * 13, y = m.y - m.h * 0.5;
+    const bites = age < 0.25 ? 0 : age < 0.45 ? 1 : age < 0.65 ? 2 : 3;
+    if (bites < 3) {
+      FXD.circle(c, x, y, 6.5, '#d89a58');
+      FXD.dot(c, x - 2.5, y - 1.5, 1.1, '#5a3a22'); FXD.dot(c, x + 2, y + 2, 1.1, '#5a3a22'); FXD.dot(c, x + 2.5, y - 2.5, 1, '#5a3a22');
+      c.save(); c.globalCompositeOperation = 'destination-out';
+      for (let i = 0; i < bites; i++) { c.beginPath(); c.arc(x - f * 9 + f * i * 2.5, y - 4 + i * 5, 5, 0, TAU); c.fill(); }
+      c.restore();
+    }
+    for (let i = 0; i < 6; i++) {   // crumbs
+      const t = (age * 1.6 + i * 0.17) % 1;
+      if (age > 0.25) FXD.dot(c, x - f * 4 + (i - 3) * 2, y + 4 + t * 18, 1, i % 2 ? '#d89a58' : '#a86a38');
+    }
+    if (bites > 0 && (age % 0.2) < 0.13) FX_PARTS.glyph(c, { str: 'nom', x: m.x - f * 4, y: m.y - m.h - 6 - (age % 0.2) * 20, size: 8, color: '#fff3d6' });
+  },
+  // Photosynth: the sun comes out and pours light down onto the user
+  sunbeam(c, p, k) {
+    const m = p.mon, age = 1 - k, sx = m.x + 26, sy = m.y - m.h - 46, grow = Math.min(1, age * 5) * Math.min(1, k * 4);
+    for (let i = -1; i <= 1; i++) {   // the rays
+      const tx = m.x + i * 9, ty = m.y - 2, w = (3.5 - Math.abs(i)) * grow;
+      if (w <= 0.3) continue;
+      const a = Math.atan2(ty - sy, tx - sx), nx = -Math.sin(a) * w, ny = Math.cos(a) * w;
+      FXD.ink(c, () => { c.moveTo(sx + nx * 0.4, sy + ny * 0.4); c.lineTo(tx + nx, ty + ny); c.lineTo(tx - nx, ty - ny); c.lineTo(sx - nx * 0.4, sy - ny * 0.4); c.closePath(); }, '#fff27a');
+    }
+    FXD.star(c, sx, sy, 11 * grow + 1, 7 * grow + 1, 10, age * 3, '#ffd23f');   // the sun
+    FXD.circle(c, sx, sy, 6.5 * grow + 0.5, '#ffe866');
+    for (let i = 0; i < 5; i++) {   // leaves glinting in the light
+      const ang = i * 1.3 + age * 6, r = m.r + 3;
+      if ((i + ((age * 12) | 0)) % 2) FXD.star(c, m.x + Math.cos(ang) * r, m.cy + Math.sin(ang) * r * 0.7, 3, 1, 4, 0, '#d4ff9a', 2.4);
+    }
+  },
+  // Blanket Nap: a cosy patchwork blanket settles over the user, and the Z's float up
+  blanket(c, p, k) {
+    const m = p.mon, age = (1 - k) * p.max, drop = Math.min(1, age / 0.22), lift = k < 0.12 ? (0.12 - k) / 0.12 : 0;
+    const w = m.r * 1.35, top = m.y - m.h * 0.42 - (1 - drop) * 30 - lift * 30, bot = m.y + 1 - lift * 30;
+    if (drop > 0) {
+      const path = () => { c.moveTo(m.x - w, top + 3); c.quadraticCurveTo(m.x, top - 5, m.x + w, top + 3); for (let i = 0; i <= 6; i++) c.lineTo(m.x + w - i * (w * 2 / 6), bot + (i % 2) * 2.5); c.closePath(); };
+      FXD.ink(c, path, '#d8434a');
+      c.save(); c.beginPath(); path(); c.clip();
+      for (let gx = -3; gx <= 3; gx++) for (let gy = 0; gy < 5; gy++) if ((gx + gy) % 2 === 0) { c.fillStyle = '#f2e6c8'; c.fillRect(m.x + gx * 6 - 3, top - 4 + gy * 6, 6, 6); }
+      c.restore();
+    }
+    for (let i = 0; i < 3; i++) {   // Z's drifting up from the nap
+      const t = (age * 0.9 + i / 3) % 1;
+      if (age > 0.3) FX_PARTS.glyph(c, { str: 'Z', x: m.x + 8 + t * 12 + Math.sin(t * 6) * 2, y: m.y - m.h - 2 - t * 24, size: 7 + t * 6, color: '#cfe0ff' });
+    }
+  },
+  // Wish: a star appears high above, twinkles, then falls onto the user in a burst of sparkle
+  wishStar(c, p, k) {
+    const m = p.mon, age = (1 - k) * p.max, hx = m.x, hy = m.y - m.h - 48;
+    if (age < 0.55) {   // twinkling up above
+      const g = Math.min(1, age / 0.2), tw = 1 + 0.18 * Math.sin(age * 40);
+      FXD.star(c, hx, hy, 8 * g * tw, 3.6 * g, 5, -Math.PI / 2 + age * 2, '#ffe066');
+      FXD.dot(c, hx, hy, 1.6 * g, '#ffffff');
+      for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2 + age * 5, r = 13 * g; if (Math.sin(age * 30 + i * 2) > 0) FXD.star(c, hx + Math.cos(a) * r, hy + Math.sin(a) * r, 3, 0.9, 4, 0, '#fff6c8', 2.4); }
+    } else if (age < 0.85) {   // falling, with a trail of little stars
+      const t = (age - 0.55) / 0.3, y = hy + (m.cy - hy) * t * t;
+      for (let i = 1; i <= 4; i++) FXD.star(c, hx, y - i * 7, 3 - i * 0.5, 1.2, 4, i, '#fff6c8', 2.4);
+      FXD.star(c, hx, y, 8, 3.6, 5, -Math.PI / 2 + age * 8, '#ffe066');
+    } else {   // a ring of sparkles bursting from the user
+      const t = (age - 0.85) / 0.4, r = 6 + t * 26;
+      for (let i = 0; i < 8; i++) { const a = i * TAU / 8 + t; FXD.star(c, m.x + Math.cos(a) * r, m.cy + Math.sin(a) * r * 0.7, 4 * (1 - t) + 1, 1.5, 4, a, i % 2 ? '#ffe066' : '#ffffff', 2.4); }
+    }
+  },
   // a speed streak behind a dashing monster
   streak(c, p, k) {
     const pts = [[p.x, p.y], [p.x - p.sx * 0.07 * k, p.y - p.sy * 0.07 * k]];
@@ -326,10 +393,14 @@ mixInto(Battle, class {
         color: b.atk ? '#ff7a5a' : '#7ad0ff', life: rand(0.5, 0.8), max: 0.8 });
     }
   }
-  fxHeal(m) {
-    for (let i = 0; i < 7; i++) {
+  // Heals act out their names (snack, sunbeams, blanket, wishing star), then + signs rise.
+  fxHeal(m, mv) {
+    const show = { snack: ['snack', 0.95], photosynth: ['sunbeam', 1.1], blanketNap: ['blanket', 1.7], wish: ['wishStar', 1.25] }[mv.id];
+    if (show) this.particles.push({ kind: show[0], mon: m, x: m.x, y: m.y, life: show[1], max: show[1], face: m.face });
+    if (mv.id === 'wish') m.look(0, -1);   // look up at the star
+    for (let i = 0; i < (show ? 4 : 7); i++) {
       this.particles.push({ kind: 'plus', x: m.x + rand(-16, 16), y: m.cy + rand(-4, 14), vx: rand(-6, 6), vy: -rand(30, 55), size: rand(2.5, 4),
-        color: i % 3 ? '#8be04e' : '#eaffc8', life: rand(0.55, 0.9), max: 0.9 });
+        color: i % 3 ? '#8be04e' : '#eaffc8', life: rand(0.55, 0.9) + (show ? show[1] * 0.5 : 0), max: 0.9 });
     }
   }
 
@@ -536,6 +607,25 @@ mixInto(Battle, class {
       const r = R * (0.85 + 0.08 * Math.sin(T * 14 + p.spin));
       FXD.ring(c, x, y, r, '#cfeeff', 1.4, 0.92);
       FXD.dot(c, x - r * 0.4, y - r * 0.4, r * 0.24, '#ffffff'); FXD.dot(c, x + r * 0.3, y + r * 0.35, 0.8, '#ffffff');
+      return;
+    }
+    if (p.mv.fx === 'pin') {   // a little needle-missile: sharp tip, fins, a puff of exhaust
+      c.save(); c.translate(x, y); c.rotate(a);
+      FXD.circle(c, -R * 2.2 + Math.sin(T * 50 + p.spin) * 0.8, 0, R * 0.55, '#fff3b0');
+      FXD.ink(c, () => { c.moveTo(-R * 1.6, -R * 0.9); c.lineTo(-R * 0.9, 0); c.lineTo(-R * 1.6, R * 0.9); c.closePath(); }, fx[0]);
+      FXD.ink(c, () => { c.moveTo(R * 2.4, 0); c.lineTo(R * 0.9, -R * 0.45); c.lineTo(-R * 1.7, -R * 0.4); c.lineTo(-R * 1.7, R * 0.4); c.lineTo(R * 0.9, R * 0.45); c.closePath(); }, '#e8ecf4');
+      c.beginPath(); c.moveTo(R * 2.4, 0); c.lineTo(R * 1.2, -R * 0.35); c.lineTo(R * 1.2, R * 0.35); c.closePath(); c.fillStyle = fx[1]; c.fill();
+      FXD.line(c, [[-R * 1.2, -R * 0.15], [R * 0.8, -R * 0.15]], 0.9, '#ffffff');
+      c.restore();
+      return;
+    }
+    if (p.mv.fx === 'breeze') {   // a curl of fairy wind with a sparkle riding it
+      c.save(); c.translate(x, y); c.rotate(a);
+      const pts = [];
+      for (let i = 0; i <= 14; i++) { const t = i / 14, ang = t * 4.2 + T * 6 + p.spin, r = R * (1.6 - t * 1.1); pts.push([-t * R * 3.2 + Math.cos(ang) * r * 0.5, Math.sin(ang) * r]); }
+      FXD.line(c, pts, 4.4, INK); FXD.line(c, pts, 2.4, fx[1]); FXD.line(c, pts.slice(0, 7), 1.1, '#ffffff');
+      c.restore();
+      if (Math.sin(T * 20 + p.spin) > -0.2) FXD.star(c, x + Math.cos(T * 9 + p.spin) * R, y + Math.sin(T * 9 + p.spin) * R, 2.6, 0.8, 4, 0, '#ffffff', 2.4);
       return;
     }
     if (p.mv.fx === 'mud') {   // a wet clump of mud, dripping

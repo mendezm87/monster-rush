@@ -130,7 +130,7 @@ async function sheet(ids, cols = 2) {
     const id = ids[Math.max(0, i)], mv = MOVES[id];
     const dash = mv.kind === 'dash', close = 90;
     const t = { projectile: 0.4, beam: (mv.charge || 0) + 0.25, burst: (mv.delay || 0) + (mv.cone || mv.ripple ? 0.3 : 0.12),
-      zone: (mv.delay || 0) + (mv.linger ? 0.6 : 0.08), vortex: 0.6, buff: 0.2, heal: 0.25,
+      zone: (mv.delay || 0) + (mv.linger ? 0.6 : 0.08), vortex: 0.6, buff: 0.2, heal: mv.id === 'wish' ? 0.75 : 0.55,
       dash: mv.hits ? 0.1 + (close - 26) / mv.speed + 0.25 : mv.fx === 'claw' || mv.fx === 'slash' ? 0.1 + (close - 26) / mv.speed + 0.06 : 0.22 }[mv.kind] || 0.3;
     $('#dist').value = dash ? 110 : 200;
     pick(order.indexOf(id)); place();

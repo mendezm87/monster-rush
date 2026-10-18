@@ -156,7 +156,7 @@ const MOVES = {
   // bug
   megahorn:     { name: 'Megahorn', type: 'bug', kind: 'dash', power: 290, cd: 5, speed: 310, dur: 0.4 },
   beetleBarrage:{ name: 'Beetle Barrage', type: 'bug', kind: 'dash', power: 58, cd: 5, speed: 360, dur: 0.35, hits: 4 },
-  pinMissile:   { name: 'Pin Missile', type: 'bug', kind: 'projectile', power: 40, cd: 1.8, speed: 340, r: 3, count: 5, spread: 0.3 },
+  pinMissile:   { name: 'Pin Missile', type: 'bug', kind: 'projectile', power: 40, cd: 1.8, speed: 340, r: 3, count: 5, spread: 0.3, fx: 'pin' },
   // ghost
   shadowBall:   { name: 'Shadow Ball', type: 'ghost', kind: 'projectile', power: 175, cd: 2.8, speed: 190, r: 7, homing: 2 },
   phantomStrike:{ name: 'Phantom Strike', type: 'ghost', kind: 'dash', power: 190, cd: 3, speed: 400, dur: 0.28, crit: 0.3 },
@@ -170,7 +170,7 @@ const MOVES = {
   // fairy
   moonblast:    { name: 'Moonblast', type: 'fairy', kind: 'projectile', power: 210, cd: 3.2, speed: 200, r: 7 },
   dazzleBeam:   { name: 'Dazzle Beam', type: 'fairy', kind: 'beam', power: 240, cd: 5, charge: 0.4, dur: 0.6, width: 12, len: 270 },
-  fairyWind:    { name: 'Fairy Wind', type: 'fairy', kind: 'projectile', power: 50, cd: 2, speed: 240, r: 4, count: 5, spread: 0.7 },
+  fairyWind:    { name: 'Fairy Wind', type: 'fairy', kind: 'projectile', power: 50, cd: 2, speed: 240, r: 4, count: 5, spread: 0.7, fx: 'breeze' },
   wish:         { name: 'Wish', type: 'fairy', kind: 'heal', amount: 0.35, cd: 16 },
   // Toshi (Smugshi): the owner's Shiba Inu
   zoomies:      { name: 'Zoomies', type: 'normal', kind: 'dash', power: 170, cd: 2, speed: 430, dur: 0.35 },
