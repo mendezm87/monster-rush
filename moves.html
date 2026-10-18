@@ -128,8 +128,13 @@ async function sheet(ids, cols = 2) {
   const c = o.getContext('2d'); c.imageSmoothingEnabled = false; c.font = '22px sans-serif';
   for (let i = -1; i < ids.length; i++) {   // the first pass warms up the room
     const id = ids[Math.max(0, i)], mv = MOVES[id];
-    const t = { projectile: 0.4, beam: (mv.charge || 0) + 0.25, burst: (mv.delay || 0) + 0.12, zone: (mv.delay || 0) + 0.08, vortex: 0.6, dash: 0.2, buff: 0.2, heal: 0.25 }[mv.kind] || 0.3;
+    const dash = mv.kind === 'dash', close = 90;
+    const t = { projectile: 0.4, beam: (mv.charge || 0) + 0.25, burst: (mv.delay || 0) + (mv.cone || mv.ripple ? 0.3 : 0.12),
+      zone: (mv.delay || 0) + (mv.linger ? 0.6 : 0.08), vortex: 0.6, buff: 0.2, heal: 0.25,
+      dash: mv.hits ? 0.1 + (close - 26) / mv.speed + 0.25 : mv.fx === 'claw' || mv.fx === 'slash' ? 0.1 + (close - 26) / mv.speed + 0.06 : 0.22 }[mv.kind] || 0.3;
+    $('#dist').value = dash ? 110 : 200;
     pick(order.indexOf(id)); place();
+    if (dash) { const b = App.battle; b.P.x = b.e[0].x - close; }
     const b = App.battle; App.paused = true; fireT = 99;
     b.P.cd[0] = 0; b.P.gcd = 0; b.P.action = null; b.particles.length = 0; b.projectiles.length = 0; b.zones.length = 0;
     b.tryMove(b.P, 0);

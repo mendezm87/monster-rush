@@ -7,6 +7,10 @@
 
 const FX_PX = 1.5;   // world units per effect pixel (the size of a sprite pixel)
 const INK = OUTLINE;
+// a move's colours: its own palette if it has one (Mud Shot), else its type's
+const fxOf = mv => mv.palette || TYPES[mv.type].fx;
+// a move's debris: its own if its look needs it (bubbles, mud), else its type's
+const debrisOf = mv => (mv.fx === 'bubble' ? 'bubble' : mv.fx === 'mud' ? 'mud' : FX_DEBRIS[mv.type] || 'star');
 
 const FXLayer = (() => {
   const w = Math.ceil(W / FX_PX) + 2, h = Math.ceil(H / FX_PX) + 2;
@@ -172,6 +176,7 @@ const FX_PARTS = {
       case 'rock': FXD.rock(c, p.x, p.y, p.rot, s, fx, p.seed); break;
       case 'drop': FXD.ink(c, () => { c.save(); c.translate(p.x, p.y); c.rotate(a); c.arc(0, 0, s * 0.7, -Math.PI / 2, Math.PI / 2); c.lineTo(-s * 1.8, 0); c.closePath(); c.restore(); }, fx[1]); FXD.dot(c, p.x, p.y - s * 0.2, s * 0.25, fx[2]); break;
       case 'bubble': FXD.ring(c, p.x, p.y, s * 0.8, fx[1], 1.2, 1); break;
+      case 'mud': FXD.blob(c, p.x, p.y, s * 0.75, p.life * 10, fx[1], p.seed); FXD.dot(c, p.x - s * 0.2, p.y - s * 0.25, s * 0.2, fx[2]); break;
       case 'ring': FXD.ring(c, p.x, p.y, s * (2 - k), fx[1], 1.4, 0.7); break;
       case 'bolt': FXD.bolt(c, p.x, p.y, p.x + Math.cos(a) * s * 2.6, p.y + Math.sin(a) * s * 2.6, p.seed, 2, fx[1], 3, false); break;
       case 'feather': FXD.crescent(c, p.x, p.y, a, s * 1.1, fx[2]); break;
@@ -193,6 +198,46 @@ const FX_PARTS = {
     const s = p.size;
     FXD.ink(c, () => { c.moveTo(p.x - s, p.y + s * 0.5); c.lineTo(p.x, p.y - s * 0.5); c.lineTo(p.x + s, p.y + s * 0.5); c.lineTo(p.x + s, p.y + s * 1.1); c.lineTo(p.x, p.y + s * 0.1); c.lineTo(p.x - s, p.y + s * 1.1); c.closePath(); }, p.color);
   },
+  // a snowflake (Blizzard)
+  flake(c, p, k) {
+    const s = p.size;
+    for (let i = 0; i < 3; i++) {
+      const a = p.rot + i * Math.PI / 3, dx = Math.cos(a) * s, dy = Math.sin(a) * s;
+      FXD.line(c, [[p.x - dx, p.y - dy], [p.x + dx, p.y + dy]], 3, INK);
+    }
+    for (let i = 0; i < 3; i++) {
+      const a = p.rot + i * Math.PI / 3, dx = Math.cos(a) * s, dy = Math.sin(a) * s;
+      FXD.line(c, [[p.x - dx, p.y - dy], [p.x + dx, p.y + dy]], 1.6, '#ffffff');
+    }
+  },
+  // a gust line (wind): a short curl
+  gust(c, p, k) {
+    const a = Math.atan2(p.vy, p.vx), L = p.size * 3, pts = [];
+    for (let i = 0; i <= 6; i++) { const t = i / 6; pts.push([p.x - Math.cos(a) * L * t + Math.sin(a) * Math.sin(t * 5 + p.rot) * 2.5, p.y - Math.sin(a) * L * t - Math.cos(a) * Math.sin(t * 5 + p.rot) * 2.5]); }
+    FXD.line(c, pts, 3.6, INK); FXD.line(c, pts, 2, p.color);
+  },
+  // three claw marks raking across (Dragon Claw), or one big crescent slash (Night Slash)
+  claw(c, p, k) {
+    const grow = Math.min(1, (1 - k) * 4), L = p.size * grow;
+    for (let i = -1; i <= 1; i++) {
+      const ox = Math.cos(p.rot + Math.PI / 2) * i * 6, oy = Math.sin(p.rot + Math.PI / 2) * i * 6, pts = [];
+      for (let t = -0.5; t <= 0.51; t += 0.1) pts.push([p.x + ox + Math.cos(p.rot) * L * t + Math.sin(p.rot) * (t * t - 0.25) * 10, p.y + oy + Math.sin(p.rot) * L * t - Math.cos(p.rot) * (t * t - 0.25) * 10]);
+      FXD.line(c, pts, 4.6 * k + 2, INK); FXD.line(c, pts, 2.6 * k + 0.8, i ? p.color : '#ffffff');
+    }
+  },
+  slash(c, p, k) {
+    const grow = Math.min(1, (1 - k) * 5), R = p.size;
+    c.save(); c.translate(p.x, p.y); c.rotate(p.rot);
+    FXD.ink(c, () => { c.arc(0, 0, R, -1.4 * grow, 1.4 * grow); c.arc(-R * 0.35, 0, R * 0.8, 1.3 * grow, -1.3 * grow, true); c.closePath(); }, p.color);
+    c.beginPath(); c.arc(0, 0, R - 1.5, -1.2 * grow, 1.2 * grow); c.strokeStyle = '#ffffff'; c.lineWidth = 1.2; c.stroke();
+    c.restore();
+  },
+  // a floating letter: "z", "?", "!" (Blank Stare and friends)
+  glyph(c, p, k) {
+    c.font = `bold ${p.size}px monospace`; c.textAlign = 'center'; c.textBaseline = 'middle';
+    c.lineWidth = 3; c.strokeStyle = INK; c.strokeText(p.str, p.x, p.y);
+    c.fillStyle = p.color; c.fillText(p.str, p.x, p.y);
+  },
   // a speed streak behind a dashing monster
   streak(c, p, k) {
     const pts = [[p.x, p.y], [p.x - p.sx * 0.07 * k, p.y - p.sy * 0.07 * k]];
@@ -203,8 +248,8 @@ const FX_PARTS = {
 mixInto(Battle, class {
   // ---------------------------------------------------------- spawning effects
   // Debris of the move's type flying out of (x, y).
-  fxDebris(x, y, type, n, speed, size = 3, ground = 19) {
-    const fx = TYPES[type].fx, shape = FX_DEBRIS[type] || 'star';
+  fxDebris(x, y, mv, n, speed, size = 3, ground = 19) {
+    const fx = fxOf(mv), shape = debrisOf(mv);
     for (let i = 0; i < n; i++) {
       const a = rand(0, TAU), s = rand(0.35, 1) * speed;
       this.particles.push({ kind: 'deb', shape, fx, x, y, g: y + ground, vx: Math.cos(a) * s, vy: Math.sin(a) * s * 0.75, drag: 3.2,
@@ -213,23 +258,48 @@ mixInto(Battle, class {
   }
 
   // Where a hit lands: a "pow" star, debris of the move's type, and white sparks.
-  fxImpact(tgt, mv, dmg, eff, mult) {
-    const fx = TYPES[mv.type].fx, big = mult >= 1;
+  fxImpact(tgt, mv, dmg, eff, mult, src) {
+    const fx = fxOf(mv), big = mult >= 1;
     if (!big && Math.random() > 0.35) return;   // beam and vortex ticks: only now and then
     const size = big ? clamp(9 + dmg / 25, 11, 24) * (eff >= 2 ? 1.25 : 1) : 7;
     this.particles.push({ kind: 'impact', x: tgt.x + rand(-4, 4), y: tgt.cy + rand(-4, 4), size, rot: rand(0, TAU),
       color: eff >= 2 ? '#ffe066' : fx[1], life: 0.24, max: 0.24 });
-    this.fxDebris(tgt.x, tgt.cy, mv.type, big ? Math.min(9, 3 + dmg / 60) : 1, big ? 140 : 70, big ? 4 : 3);
+    this.fxDebris(tgt.x, tgt.cy, mv, big ? Math.min(9, 3 + dmg / 60) : 1, big ? 140 : 70, big ? 4 : 3);
+    // signature hits
+    const toward = src ? Math.atan2(tgt.cy - src.cy, tgt.x - src.x) : 0;
+    if (mv.fx === 'claw') this.particles.push({ kind: 'claw', x: tgt.x, y: tgt.cy, size: 34, rot: toward + Math.PI / 2 + rand(-0.3, 0.3), color: fx[1], life: 0.3, max: 0.3 });
+    if (mv.fx === 'slash') this.particles.push({ kind: 'slash', x: tgt.x, y: tgt.cy, size: 22, rot: toward + rand(-0.4, 0.4), color: fx[1], life: 0.28, max: 0.28 });
+    if (mv.fx === 'flurry') {   // fists everywhere at once
+      for (let i = 0; i < 3; i++) this.particles.push({ kind: 'impact', x: tgt.x + rand(-14, 14), y: tgt.cy + rand(-14, 10), size: rand(7, 11), rot: rand(0, TAU), color: i ? fx[1] : '#ffffff', life: 0.14, max: 0.14 });
+    }
+    if (mv.fx === 'stare') {   // the target is left baffled
+      for (const [str, dx] of [['?', -8], ['z', 6], ['?', 14]]) this.particles.push({ kind: 'glyph', str, x: tgt.x + dx + rand(-3, 3), y: tgt.y - tgt.h - 4, vx: rand(-6, 6), vy: -rand(18, 30), size: rand(9, 12), color: '#e8e0ff', life: 0.9, max: 0.9 });
+    }
+  }
+
+  // Blowing a cone (Blizzard, Gust): snow or wind pouring out in front of the user.
+  fxCone(m, a) {
+    const mv = a.mv, fx = TYPES[mv.type].fx, speed = a.r / 0.35, snow = mv.type === 'ice';
+    for (let i = 0; i < (snow ? 4 : 3); i++) {
+      const ang = a.dir + rand(-mv.cone, mv.cone) * 0.95, s = speed * rand(0.7, 1.15), ox = m.x + Math.cos(a.dir) * 8, oy = m.cy + Math.sin(a.dir) * 8;
+      const life = a.r / s;
+      if (snow && i < 2) this.particles.push({ kind: 'flake', x: ox, y: oy, vx: Math.cos(ang) * s, vy: Math.sin(ang) * s, size: rand(3.6, 5.4), rot: rand(0, 1), life, max: life });
+      else this.particles.push({ kind: 'gust', x: ox, y: oy, vx: Math.cos(ang) * s, vy: Math.sin(ang) * s, size: rand(4, 7), rot: rand(0, 6), color: snow ? fx[1] : '#ffffff', life, max: life });
+    }
+    if (snow && Math.random() < 0.5) {   // chunks of ice in the storm
+      const ang = a.dir + rand(-mv.cone, mv.cone) * 0.7, s = speed * rand(0.8, 1);
+      this.particles.push({ kind: 'deb', shape: 'shard', fx, x: m.x, y: m.cy, vx: Math.cos(ang) * s, vy: Math.sin(ang) * s, size: rand(3, 4.5), rot: 0, seed: 1, life: a.r / s, max: a.r / s });
+    }
   }
 
   // A blast going off at (x, y) with radius r: shockwaves, debris, and a type flourish.
   fxBlast(x, y, r, mv) {
-    const fx = TYPES[mv.type].fx;
+    const fx = fxOf(mv);
     this.particles.push({ kind: 'wave', x, y: y - 2, r0: 4, r1: r, life: 0.32, max: 0.32, color: fx[2], w: 4 });
     this.particles.push({ kind: 'wave', x, y: y - 2, r0: 2, r1: r * 0.7, life: 0.42, max: 0.42, color: fx[1], w: 3 });
-    this.fxDebris(x, y - 4, mv.type, Math.round(10 + r / 6), r * 2.4, 4.2, 4);
+    this.fxDebris(x, y - 4, mv, Math.round(10 + r / 6), r * 2.4, 4.2, 4);
     // a crown of the type's debris thrown up all round the edge
-    const shape = FX_DEBRIS[mv.type] || 'star', n = Math.round(8 + r / 10), up = ['flame', 'drop', 'leaf', 'bubble', 'feather'].includes(shape);
+    const shape = debrisOf(mv), n = Math.round(8 + r / 10), up = ['flame', 'drop', 'leaf', 'bubble', 'feather'].includes(shape);
     for (let i = 0; i < n; i++) {
       const a = i / n * TAU + rand(-0.15, 0.15), px = x + Math.cos(a) * r * 0.7, py = y + Math.sin(a) * r * 0.5;
       this.particles.push({ kind: 'deb', shape, fx, x: px, y: py, vx: Math.cos(a) * 70, vy: Math.sin(a) * 40 - (up ? 110 : 30), drag: 2.5,
@@ -266,14 +336,131 @@ mixInto(Battle, class {
   // ---------------------------------------------------------- drawing (into the effect layer)
   // Everything attack-shaped for this frame. c is the effect layer, in world coordinates.
   drawAttacks(c) {
+    for (const z of this.zones) if (z.mv.fx === 'tornado') this.drawTornado(c, z);
     for (const m of this.mons) if (m.visible && m.action) {
-      if (m.action.kind === 'beam') this.drawBeam(c, m, m.action);
-      if (m.action.kind === 'vortex') this.drawVortex(c, m, m.action);
-      if (m.action.kind === 'burst' && !m.action.done) this.drawCharge(c, m, m.action);
+      const a = m.action;
+      if (a.kind === 'beam') this.drawBeam(c, m, a);
+      if (a.kind === 'vortex') this.drawVortex(c, m, a);
+      if (a.kind === 'burst' && !a.done) this.drawCharge(c, m, a);
+      if (a.kind === 'burst' && a.done && a.mv.ripple) this.drawRipple(c, m, a);
+      if (a.kind === 'dash' && a.mv.fx && (a.t > 0.1 || a.phase === 'combo')) this.drawDashFx(c, m, a);
     }
     for (const p of this.projectiles) this.drawProjectile(c, p);
     this.drawZoneFalls(c);
     this.drawParticles(c);
+  }
+
+  // Dashes with a look of their own, drawn round the moving monster.
+  drawDashFx(c, m, a) {
+    const mv = a.mv, fx = fxOf(mv), T = this.time, cx = m.x, cy = m.cy, R = m.r + 7;
+    switch (mv.fx) {
+      case 'wheel': {   // a ring of flames spinning round the user
+        const spin = T * 16 * (Math.cos(a.dir) >= 0 ? 1 : -1);
+        FXD.ring(c, cx, cy, R, fx[1], 3, 1);
+        for (let i = 0; i < 10; i++) {
+          const ang = spin + i * TAU / 10;
+          FXD.flame(c, cx + Math.cos(ang) * R, cy + Math.sin(ang) * R, ang + Math.PI / 2 * Math.sign(spin), 3.6, fx, T + i);
+        }
+        break;
+      }
+      case 'aura':   // flames rising all round the body
+        for (let i = 0; i < 9; i++) {
+          const ang = i / 9 * TAU, fl = 3.4 + Math.sin(T * 25 + i * 2) * 1.2;
+          FXD.flame(c, cx + Math.cos(ang) * (m.r + 1), cy + Math.sin(ang) * (m.r * 0.9) + 2, -Math.PI / 2, fl, fx, T * 1.3 + i);
+        }
+        break;
+      case 'wool':   // a cloud of fluffy wool with sparks in it
+        for (let i = 0; i < 7; i++) {
+          const ang = i / 7 * TAU + T * 4;
+          FXD.circle(c, cx + Math.cos(ang) * (m.r - 1), cy + Math.sin(ang) * (m.r - 2), 4.2 + Math.sin(T * 12 + i) * 0.8, '#fff3d6');
+        }
+        if (Math.sin(T * 40) > 0.3) FXD.bolt(c, cx - 10, cy - 8, cx + 10, cy + 6, (T * 30) | 0, 1.4, '#fff27a', 3, false);
+        break;
+      case 'roll':   // motion arcs round the rolling body
+        for (const off of [0, Math.PI]) {
+          c.beginPath(); c.arc(cx, cy, R, T * 14 + off, T * 14 + off + 1.6);
+          c.strokeStyle = INK; c.lineWidth = 4.4; c.stroke(); c.strokeStyle = fx[2]; c.lineWidth = 2; c.stroke();
+        }
+        break;
+      case 'flurry':   // a blur of punches: speed lines aimed at the target
+        for (let i = 0; i < 5; i++) {
+          const ang = a.dir + rand(-0.9, 0.9), d0 = rand(4, 10);
+          const pts = [[cx + Math.cos(ang) * d0, cy + Math.sin(ang) * d0], [cx + Math.cos(ang) * (d0 + 16), cy + Math.sin(ang) * (d0 + 16)]];
+          FXD.line(c, pts, 3.4, INK); FXD.line(c, pts, 1.5, i % 2 ? fx[1] : '#ffffff');
+        }
+        break;
+    }
+  }
+
+  // Dark Pulse: jagged dark rings rolling outwards.
+  drawRipple(c, m, a) {
+    const fx = fxOf(a.mv), T = this.time, R = a.r * Math.min(1, a.ripT / a.mv.ripple);
+    for (const [sc, col] of [[1, fx[1]], [0.72, fx[2]], [0.45, fx[1]]]) {
+      const r = R * sc; if (r < 4) continue;
+      const path = () => {
+        for (let i = 0; i <= 40; i++) {
+          const ang = i / 40 * TAU, rr = r * (1 + 0.06 * Math.sin(ang * 9 + T * 14));
+          i ? c.lineTo(m.x + Math.cos(ang) * rr, m.y - 2 + Math.sin(ang) * rr * 0.62) : c.moveTo(m.x + Math.cos(ang) * rr, m.y - 2 + Math.sin(ang) * rr * 0.62);
+        }
+      };
+      c.beginPath(); path(); c.strokeStyle = INK; c.lineWidth = 7; c.stroke();
+      c.beginPath(); path(); c.strokeStyle = fx[0]; c.lineWidth = 4.5; c.stroke();
+      c.beginPath(); path(); c.strokeStyle = col; c.lineWidth = 1.8; c.stroke();
+    }
+  }
+
+  // Tornado: a funnel of wind that grows where it lands, spins for a while, then thins out.
+  drawTornado(c, z) {
+    const fx = fxOf(z.mv), T = this.time + z.id;
+    const grow = z.done ? 1 : clamp(z.t / z.delay, 0, 1) * 0.5;
+    const left = z.done ? (z.delay + z.mv.linger) - z.t : 1, k = grow * clamp(left / 0.4, 0, 1);
+    if (k <= 0.02) return;
+    const Hh = 86 * k;
+    for (let i = 0; i < 9; i++) {
+      const t = i / 8, yy = z.y - t * Hh, rr = (z.r * 0.3 + t * t * z.r * 1.1) * k + 3;
+      const sway = Math.sin(T * 6 + t * 4) * 5 * t;
+      FXD.ring(c, z.x + sway, yy, rr, i % 2 ? '#ffffff' : fx[1], 2.4, 0.3);
+    }
+    for (let i = 0; i < 4; i++) {   // bits of debris whirling round it
+      const ang = T * 9 + i * TAU / 4, t = (i * 0.27 + T * 0.4) % 1, rr = (z.r * 0.3 + t * t * z.r * 1.1) * k + 6;
+      FXD.rock(c, z.x + Math.cos(ang) * rr, z.y - t * Hh + Math.sin(ang) * rr * 0.3, ang, 2.2, TYPES.rock.fx, i + 1);
+    }
+  }
+
+  // Blank Stare: Mondaze stops, says "...", stares with huge empty eyes, and two droopy
+  // stare-beams wobble out at the target, trailing sleepy z's into a hypnotic swirl.
+  drawStare(c, m, a) {
+    const mv = a.mv, T = this.time, ey = m.y - m.h * 0.66, k = a.phase === 'charge' ? a.t / mv.charge : 1;
+    const eyes = [m.x - 4, m.x + 4];
+    // the speech bubble
+    const bx = m.x + 16, by = m.y - m.h - 12;
+    FXD.ink(c, () => { c.ellipse(bx, by, 11, 7, 0, 0, TAU); c.moveTo(bx - 6, by + 5); c.lineTo(bx - 10, by + 11); c.lineTo(bx - 1, by + 6); }, '#ffffff');
+    for (let i = 0; i < Math.min(3, Math.ceil(k * 3 + 0.01)); i++) FXD.dot(c, bx - 5 + i * 5, by + 1, 1.4, INK);
+    // the beams
+    if (a.phase !== 'charge') {
+      const fade = Math.min(1, (mv.dur - a.t) / 0.15), len = mv.len * Math.min(1, a.t / 0.15);
+      const cos = Math.cos(a.dir), sin = Math.sin(a.dir);
+      for (const ex of eyes) {
+        const pts = [];
+        for (let x = 0; x <= len; x += 4) {
+          const t = x / mv.len, wob = Math.sin(x * 0.09 - T * 9 + ex) * 2.2;
+          pts.push([ex + cos * x - sin * wob, ey + sin * x + cos * wob + t * (1 - t) * 26]);   // the gaze droops in the middle
+        }
+        FXD.line(c, pts, 7.5 * fade + 1, INK); FXD.line(c, pts, 4.5 * fade, '#b8acd4'); FXD.line(c, pts, 1.6, '#f4f0ff');
+        for (let j = 0; j < pts.length; j += 3) if ((j + ((T * 20) | 0)) % 6 < 3) FXD.dot(c, pts[j][0], pts[j][1], 1, '#7a6a9a');
+      }
+      // sleepy z's drifting along, and a slowly turning swirl where the stare lands
+      for (let j = 0; j < 4; j++) {
+        const x = (T * 70 + j * len / 4) % Math.max(1, len), t = x / mv.len;
+        FX_PARTS.glyph(c, { str: j % 2 ? 'z' : 'Z', x: m.x + cos * x, y: ey + sin * x + t * (1 - t) * 26 - 9 - Math.sin(T * 6 + j) * 3, size: 8 + j % 2 * 2, color: '#e8e0ff' });
+      }
+      const sx = m.x + cos * len, sy = ey + sin * len, sw = [];
+      for (let i = 0; i < 30; i++) { const ang = -T * 7 + i * 0.5, r = i * 0.55; sw.push([sx + Math.cos(ang) * r, sy + Math.sin(ang) * r * 0.8]); }
+      FXD.line(c, sw, 4.5, INK); FXD.line(c, sw, 2, '#d8d0f0');
+    }
+    // the huge blank eyes, opening up as it charges
+    const er = 2.5 + k * 3;
+    for (const ex of eyes) { FXD.circle(c, ex, ey, er, '#ffffff'); FXD.dot(c, ex + Math.cos(a.dir) * 0.6, ey + 0.4, 0.8, INK); }
   }
 
   // a blast winding up: energy gathering at the user's feet
@@ -286,7 +473,19 @@ mixInto(Battle, class {
   }
 
   drawProjectile(c, p) {
-    const t = p.mv.type, fx = TYPES[t].fx, R = p.r * 2.2, a = Math.atan2(p.vy, p.vx), T = this.time, x = p.x, y = p.y;
+    const t = p.mv.type, fx = fxOf(p.mv), R = p.r * 2.2, a = Math.atan2(p.vy, p.vx), T = this.time, x = p.x, y = p.y;
+    if (p.mv.fx === 'bubble') {   // a wobbly see-through bubble with a shine
+      const r = R * (0.85 + 0.08 * Math.sin(T * 14 + p.spin));
+      FXD.ring(c, x, y, r, '#cfeeff', 1.4, 0.92);
+      FXD.dot(c, x - r * 0.4, y - r * 0.4, r * 0.24, '#ffffff'); FXD.dot(c, x + r * 0.3, y + r * 0.35, 0.8, '#ffffff');
+      return;
+    }
+    if (p.mv.fx === 'mud') {   // a wet clump of mud, dripping
+      FXD.blob(c, x, y, R * 1.05, T, fx[1], p.spin);
+      FXD.dot(c, x - R * 0.35, y - R * 0.35, R * 0.3, fx[2]); FXD.dot(c, x + R * 0.3, y + R * 0.1, R * 0.22, fx[0]);
+      for (let i = 1; i <= 2; i++) FXD.circle(c, x - Math.cos(a) * R * 1.3 * i, y - Math.sin(a) * R * 1.3 * i + i * 1.5, R * (0.45 - i * 0.12), fx[1]);
+      return;
+    }
     if (p.mv.boomerang) {   // a spinning blade
       c.save(); c.translate(x, y); c.rotate(p.spin * 1.7);
       FXD.ink(c, () => { c.arc(0, 0, R * 1.3, 0, Math.PI * 1.3); c.arc(R * 0.45, -R * 0.15, R * 0.85, Math.PI * 1.3, 0, true); c.closePath(); }, fx[1]);
@@ -363,6 +562,7 @@ mixInto(Battle, class {
   }
 
   drawBeam(c, m, a) {
+    if (a.mv.fx === 'stare') { this.drawStare(c, m, a); return; }
     const mv = a.mv, fx = TYPES[mv.type].fx, T = this.time;
     const ox = m.x + Math.cos(a.dir) * 6, oy = m.cy + Math.sin(a.dir) * 6;
     if (a.phase === 'charge') {   // a ball of energy growing at the muzzle

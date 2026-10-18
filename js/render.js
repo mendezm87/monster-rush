@@ -347,6 +347,8 @@ mixInto(Battle, class {
     ctx.save();
     ctx.translate(X, Math.round(Y + bob + sink));
     if (m.face < 0) ctx.scale(-1, 1);
+    const roll = m.action && m.action.kind === 'dash' && m.action.mv.fx === 'roll' && m.action.t > 0.1;
+    if (roll) { ctx.translate(0, -S / 2 + 3); ctx.rotate((m.action.t - 0.1) * 22); ctx.translate(0, S / 2 - 3); }   // Rollout: tumble along
     const dx = -S / 2, dy = -S + 3;
     ctx.drawImage(sp.views[m.view], dx, dy, S, S);
     let tint = null, ta = 0;
@@ -417,7 +419,12 @@ mixInto(Battle, class {
       const a = m.action;
       if (!a || !m.visible) continue;
       const X = m.x, Y = m.y, dir = a.dir;
-      if (a.kind === 'burst' && !a.done) {
+      if (a.kind === 'burst' && !a.done && a.mv.cone) {   // a cone: a wedge in front
+        const k = clamp(a.t / a.mv.delay, 0, 1), c0 = dir - a.mv.cone, c1 = dir + a.mv.cone;
+        const wedge = r => { ctx.beginPath(); ctx.moveTo(X, Y); ctx.ellipse(X, Y, r, r * 0.7, 0, c0, c1); ctx.closePath(); };
+        ctx.fillStyle = TYPES[a.mv.type].fx[0]; ctx.globalAlpha = 0.15 + k * 0.2; wedge(a.r * k); fill();
+        ctx.globalAlpha = pulse; ctx.strokeStyle = '#ffffff'; ctx.setLineDash([4, 3]); wedge(a.r); ctx.stroke(); ctx.setLineDash([]);
+      } else if (a.kind === 'burst' && !a.done) {
         const k = clamp(a.t / a.mv.delay, 0, 1);
         ctx.fillStyle = TYPES[a.mv.type].fx[0];
         ctx.globalAlpha = 0.15 + k * 0.2;

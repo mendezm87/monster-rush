@@ -107,7 +107,7 @@ class AI {
     for (const foe of b.foes(me)) {
       const a = foe.action;
       if (!a) continue;
-      if (a.kind === 'beam' || a.kind === 'dash') {
+      if (a.kind === 'beam' || a.kind === 'dash' || (a.kind === 'burst' && a.mv.cone)) {
         const cx = Math.cos(a.dir), cy = Math.sin(a.dir);
         const along = (me.x - foe.x) * cx + (me.cy - foe.cy) * cy;
         if (along < -10) continue;   // it's aimed away from me

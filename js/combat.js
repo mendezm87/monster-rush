@@ -66,7 +66,7 @@ mixInto(Battle, class {
         Sfx.play('vortex');
         break;
       case 'burst':
-        m.action = { kind: 'burst', t: 0, mv, dir, lock: true, done: false, r: mv.r * (this.relic(m, 'blastCore') ? 1.25 : 1) };
+        m.action = { kind: 'burst', t: 0, mv, dir, lock: true, done: false, r: mv.r * (this.relic(m, 'blastCore') ? 1.25 : 1), id: _uid++ };
         Sfx.play(mv.sfx || 'charge');   // a move can bring its own wind-up sound
         break;
       case 'zone': {
@@ -132,7 +132,7 @@ mixInto(Battle, class {
     const force = (opts.force ?? (mult < 1 ? 22 : Math.min(260, 60 + dmg * 0.45))) * (tgt.boss ? 0.35 : 1);
     tgt.kx += Math.cos(kb) * force; tgt.ky += Math.sin(kb) * force;
 
-    this.fxImpact(tgt, mv, dmg, eff, mult);
+    this.fxImpact(tgt, mv, dmg, eff, mult, src);
     if (mult >= 1 || fresh) this.sparks(tgt.x, tgt.cy, mult < 1 ? 2 : 6);
     if (fresh) {
       if (eff >= 2) this.text(tgt.x, tgt.y - tgt.h - 12, 'SUPER EFFECTIVE!', '#ffe066', tgt.y);
@@ -233,8 +233,11 @@ mixInto(Battle, class {
             // light jabs keep the target close; the last hit knocks it away
             this.hit(m, foe, mv, 1, { kb: Math.atan2(foe.y - m.y, foe.x - m.x), merge: a.id, force: last ? undefined : 35 });
             if (m.fainted || !m.action || this.state === 'faint') return;
-            a.tick = 0.13;
-            if (last) { m.action = null; this.decalAt(foe.x, foe.y, 8); }
+            a.tick = mv.hitGap || 0.13;
+            if (last) {
+              m.action = null; this.decalAt(foe.x, foe.y, 8);
+              if (mv.selfDebuff) for (const [stat, mul] of Object.entries(mv.selfDebuff)) m.buffs.push({ stat, mul, t: 5 });
+            }
           }
           break;
         }
@@ -278,6 +281,44 @@ mixInto(Battle, class {
 
       case 'burst': {
         const mv = a.mv;
+        // a cone (Blizzard, Gust): aim again on release, then blow in front, hitting 3 times
+        if (mv.cone) {
+          if (!a.done && a.t >= mv.delay) {
+            a.done = true; a.blowT = 0; a.ticks = 0;
+            const f = this.foe(m); if (f) a.dir = this.aim(m, f, mv);
+            this.addShake(3); Sfx.play(mv.sfx === 'whoosh' ? 'whoosh' : 'boom');
+          }
+          if (a.done) {
+            a.blowT += dt;
+            this.fxCone(m, a);
+            const due = Math.min(3, Math.floor(a.blowT / (mv.blow / 3)) + 1);
+            while (a.ticks < due) {
+              a.ticks++;
+              for (const foe of this.foes(m)) {
+                if (this.inCone(m, a, foe)) this.hit(m, foe, mv, 1 / 3, { kb: a.dir, merge: a.id, force: mv.push ? mv.push / 3 : undefined });
+                if (m.fainted || !m.action || this.state === 'faint') return;
+              }
+            }
+            if (a.blowT >= mv.blow) m.action = null;
+          }
+          break;
+        }
+        // a ripple (Dark Pulse): a ring that travels out, hitting each opponent once as it passes
+        if (mv.ripple) {
+          if (!a.done && a.t >= mv.delay) { a.done = true; a.ripT = 0; a.hitIds = new Set(); this.addShake(3); Sfx.play('boom'); }
+          if (a.done) {
+            a.ripT += dt;
+            const R = a.r * Math.min(1, a.ripT / mv.ripple);
+            for (const foe of this.foes(m)) {
+              if (a.hitIds.has(foe) || Math.hypot(foe.x - m.x, foe.y - m.y) - foe.r * 0.6 > R) continue;
+              a.hitIds.add(foe);
+              this.hit(m, foe, mv, 1, { kb: Math.atan2(foe.y - m.y, foe.x - m.x) });
+              if (m.fainted || !m.action || this.state === 'faint') return;
+            }
+            if (a.ripT >= mv.ripple) m.action = null;
+          }
+          break;
+        }
         if (!a.done && a.t >= mv.delay) {
           a.done = true;
           this.fxBlast(m.x, m.y, a.r, mv);
@@ -324,6 +365,14 @@ mixInto(Battle, class {
     }
   }
 
+  // is foe inside a cone blast's wedge?
+  inCone(m, a, foe) {
+    const dx = foe.x - m.x, dy = foe.cy - m.cy, d = Math.hypot(dx, dy);
+    if (d > a.r + foe.r * 0.5) return false;
+    const off = Math.abs(((Math.atan2(dy, dx) - a.dir + Math.PI * 3) % TAU) - Math.PI);
+    return d < m.r + foe.r || off <= a.mv.cone + Math.atan2(foe.r, d);
+  }
+
   beamHits(m, a, foe) {
     const ox = m.x, oy = m.cy;
     const dx = Math.cos(a.dir), dy = Math.sin(a.dir);
@@ -368,7 +417,7 @@ mixInto(Battle, class {
         }
       }
       p.x += p.vx * dt; p.y += p.vy * dt;
-      const fx = TYPES[p.mv.type].fx;
+      const fx = p.mv.palette || TYPES[p.mv.type].fx;
       if (Math.random() < 0.9) this.particles.push({ x: p.x + rand(-1, 1) * p.r * 0.5, y: p.y + rand(-1, 1) * p.r * 0.5, vx: -p.vx * 0.1, vy: -p.vy * 0.1, life: 0.25, max: 0.25, size: Math.max(1, p.r * 0.6), color: fx[rand() < 0.5 ? 0 : 1], kind: 'sq' });
       const foe = p.life > 0 && !(p.hitCd > 0) && this.foes(p.owner).find(f => Math.hypot(p.x - f.x, p.y - f.cy) < p.r + f.r);
       if (foe) {
@@ -405,7 +454,14 @@ mixInto(Battle, class {
           if (this.state === 'faint') return;
         }
       } else if (z.done && z.mv.linger) {
-        // a lingering pool keeps hurting whoever stands in it
+        // a lingering pool keeps hurting whoever stands in it (and a tornado drags them in)
+        if (z.mv.pull) for (const foe of this.foes(z.owner)) {
+          const dx = z.x - foe.x, dy = z.y - foe.y, d = Math.hypot(dx, dy);
+          if (d > 2 && d < z.r * 2.2 + foe.r) {
+            const B = this.bounds(foe), pull = z.mv.pull * (foe.boss ? 0.4 : 1) * dt;
+            foe.x = clamp(foe.x + dx / d * pull, B.x0, B.x1); foe.y = clamp(foe.y + dy / d * pull, B.y0, B.y1);
+          }
+        }
         z.tick -= dt;
         if (z.tick <= 0) {
           z.tick = 0.5;
