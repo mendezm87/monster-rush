@@ -1905,8 +1905,14 @@ function tintOf(src, color) {
 // the rest just hop when walking and dip or rise a pixel when attacking. Walking means really
 // covering ground (a monster the game has paused keeps its speed but mustn't keep stepping), and
 // idle, blinks and the walk's hold run on the real clock, so nothing freezes mid-pose.
+// Moments monAnim reacts to are time stamps on the real clock, not countdowns, so they can't get
+// stuck when some part of the game stops updating a monster: animMark(m, 'hurt') on a real hit,
+// animMark(m, 'pop') when it's sent out.
+const animClock = () => performance.now() / 1000;
+function animMark(m, what) { m[what + 'At'] = animClock(); }
+const animSince = (m, what) => animClock() - (m[what + 'At'] ?? -99);
 function monAnim(m, phase, flying) {
-  const sp = SPRITES[m.id], F = sp.frames, a = m.action, clock = performance.now() / 1000;
+  const sp = SPRITES[m.id], F = sp.frames, a = m.action, clock = animClock();
   const side = m.view === 'side' || m.view === 'fside' || m.view === 'bside';
   const out = (views, sq = 0, sh = 0, dy = 0) => ({ views: views || sp.views, sq, sh, dy });
   if (m.walkT !== m._walkT) { m._walkT = m.walkT; m.walkSeen = clock; }
@@ -1916,8 +1922,9 @@ function monAnim(m, phase, flying) {
     const k = Math.min(1, m.fadeT / 0.5);
     return out(null, Math.round(2 * k), side ? -Math.round(2 * k) : 0);
   }
-  if (m.popT > 0) return out(F && F.windup, F ? 0 : m.popT > 0.18 ? -1 : 1, 0, m.popT > 0.18 ? 2 : 0);   // sent out: up, then landing
-  if (m.hurtT > 0) return F ? out(F.hurt) : out(null, 1, side ? -1 : 0);
+  const pop = animSince(m, 'pop');
+  if (pop < 0.3) return out(F && F.windup, F ? 0 : pop < 0.12 ? -1 : 1, 0, pop < 0.12 ? 2 : 0);   // sent out: up, then landing
+  if (animSince(m, 'hurt') < 0.2) return F ? out(F.hurt) : out(null, 1, side ? -1 : 0);
   if (a) {
     const wind = a.kind === 'cast' ? a.t < a.dur * 0.45 : a.kind === 'burst' ? !a.done : a.kind === 'beam' ? a.phase === 'charge' : false;
     if (F) return out(wind ? F.windup : F.attack);

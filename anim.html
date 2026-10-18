@@ -59,11 +59,11 @@
       const sp = SPRITES[sel.value], scale = 5 * 32 / sp.size;
       mons.forEach((m, i) => {
         m.id = sel.value; m.fainted = false;
-        m.action = null; m.hurtT = 0; m.popT = 0;
+        m.action = null;
         const t = now / 1000 + m.phase;
         if (anim === 'walk') m.walkT += 110 * dt;
         if (anim === 'attack') { const k = t % 1.2; m.action = { kind: 'cast', t: k, dur: 0.6 }; }
-        if (anim === 'hurt') m.hurtT = (t % 1) < 0.35 ? 0.2 : 0;
+        if (anim === 'hurt' && (t % 1) < 0.02) animMark(m, 'hurt');
         const look = monAnim(m, m.phase, false);
         const pic = posed(look.views[m.view], look.sq, look.sh);
         const w = pic.width * scale, h = pic.height * scale;

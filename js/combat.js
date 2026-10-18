@@ -124,7 +124,7 @@ mixInto(Battle, class {
     tgt.hp = Math.max(0, tgt.hp - dmg);
     src.dmgDealt += dmg;
     tgt.flash = 0.12;
-    if (mult >= 1 && !(tgt.hurtT > 0.08)) tgt.hurtT = 0.2;   // the hit pose: real hits only, not beam or burn ticks
+    if (mult >= 1 && animSince(tgt, 'hurt') > 0.12) animMark(tgt, 'hurt');   // the hit pose: real hits only, not beam or burn ticks
 
     const merge = opts.merge ? opts.merge + ':' + (tgt.uid || (tgt.uid = _uid++)) : null;
     const fresh = this.number(tgt, dmg, merge);
