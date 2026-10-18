@@ -113,6 +113,17 @@ cannons poking out over the shoulders. If one still looks too much like a real a
 > tone, soft airbrushed highlights, hand-painted watercolour background of a harbour fortress in a
 > storm, slight film grain, 4:3 screenshot framing, original creature design, no text
 
+**A2 · Siege brute, firing water** (the owner liked A: same design, now blasting water)
+> A hulking monster turtle standing upright on two thick legs like a heavyweight brawler, deep
+> moss-green scaly skin, a gunmetal shell built like a fortress turret with battlements, rivets and
+> gold trim, each huge forearm ending in a cannon barrel instead of a fist, both cannons firing
+> powerful high-pressure blasts of water that burst into spray and foam, water swirling inside the
+> barrels, a scarred beaked face with a heavy brow and fierce glowing amber eyes, braced against the
+> recoil, chunky exaggerated proportions, a water monster from a monster-battling game. 1990s TV
+> anime cel art, hand-inked line art with varying line weight, flat cel colours with one hard-edged
+> shadow tone, soft airbrushed highlights, hand-painted watercolour background of a harbour fortress
+> in a storm, slight film grain, 4:3 screenshot framing, original creature design, no text
+
 **B · Dreadnought**
 > A massive four-legged monster turtle like a living battleship, charcoal-black armoured shell
 > covered in jagged spikes, with a ring of short cannon barrels around the top of its shell like a
