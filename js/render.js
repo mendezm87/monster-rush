@@ -356,7 +356,7 @@ mixInto(Battle, class {
     const STATUS_COL = { par: '#d6b21e', brn: '#e0582a', frz: '#4fb6d8', psn: '#9a3ab8' };
     for (const m of this.e) {
       if (!m.alive || m.boss) continue;
-      const w = 26, x = Math.round(m.x - w / 2), y = Math.round(m.y - m.h - 6);
+      const w = 26, x = Math.round(m.x - w / 2), y = Math.round(m.y - m.h - 6 - (m.hover || 0));
       const pct = m.hp / m.maxHp;
       ctx.fillStyle = OUTLINE; ctx.fillRect(x - 1, y - 1, w + 2, 5);
       ctx.fillStyle = '#2a2638'; ctx.fillRect(x, y, w, 3);
@@ -391,11 +391,19 @@ mixInto(Battle, class {
     let bob = moving ? -Math.round(Math.abs(Math.sin(m.walkT / 7 * Math.PI)) * 2) : (Math.sin(this.time * 3 + m.x) > 0.6 ? -1 : 0);
     if (m.status === 'frz' || m.stunT > 0 || m.fainted) bob = 0;
     const X = Math.round(m.x), Y = Math.round(m.y);
+    // flying monsters hover above their shadow with a slow bob and flap their wings (they drop
+    // to the ground when frozen or fainted)
+    const fly = sp.fly, grounded = m.status === 'frz' || m.fainted, phase = (m.x0 ?? (m.x0 = Math.random() * 10));
+    const hover = fly && !grounded ? Math.round(fly.hover + Math.sin(this.time * 2.4 + phase) * 1.5) : 0;
+    if (hover) bob = 0;
+    m.hover = hover;
+    const flapping = fly && sp.flap && !grounded && m.stunT <= 0 && Math.sin((this.time * fly.flap * (moving ? 1.3 : 1) + phase) * TAU) > 0;
+    const img = (flapping ? sp.flap : sp.views)[m.view];
     const mine = m.side === 'player';
 
     // ground marker + shadow
     ctx.globalAlpha = alpha;
-    Lighting.shadow(ctx, X, Y, m.r + 2, m.r * 0.42);
+    Lighting.shadow(ctx, X, Y, (m.r + 2) * (hover ? 0.8 : 1), m.r * 0.42 * (hover ? 0.8 : 1));
     ctx.strokeStyle = mine ? 'rgba(90,160,255,0.75)' : m.boss ? 'rgba(255,200,60,0.8)' : m.champ ? CHAMPIONS[m.champ].color : 'rgba(255,90,80,0.6)';
     ctx.lineWidth = m.champ ? 2 : 1;
     ctx.beginPath(); ctx.ellipse(X, Y, m.r + 4, m.r * 0.5 + 1, 0, 0, TAU); ctx.stroke();
@@ -419,7 +427,7 @@ mixInto(Battle, class {
     }
 
     ctx.save();
-    ctx.translate(X, Math.round(Y + bob + sink));
+    ctx.translate(X, Math.round(Y + bob + sink - hover));
     if (m.face < 0) ctx.scale(-1, 1);
     const roll = m.action && m.action.kind === 'dash' && m.action.mv.fx === 'roll' && m.action.t > 0.1;
     if (roll) { ctx.translate(0, -S / 2 + 3); ctx.rotate((m.action.t - 0.1) * 22); ctx.translate(0, S / 2 - 3); }   // Rollout: tumble along
@@ -430,7 +438,7 @@ mixInto(Battle, class {
       ctx.translate(0, S / 2 - 3);
     }
     const dx = -S / 2, dy = -S + 3;
-    ctx.drawImage(sp.views[m.view], dx, dy, S, S);
+    ctx.drawImage(img, dx, dy, S, S);
     let tint = null, ta = 0;
     if (m.flash > 0) { tint = '#ffffff'; ta = Math.min(1, m.flash * 8); }
     else if (m.fainted) { tint = '#ffffff'; ta = Math.min(0.8, m.fadeT); }

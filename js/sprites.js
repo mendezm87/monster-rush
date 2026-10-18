@@ -6,6 +6,27 @@ const DARK_EYE = '#1a1222';
 // Toshi's colours (from photos of the real dog), shared by Smugshi and Smugshogun
 const TOSHI = { coat: P('#d08548', '#a85e2c', '#e8a868'), white: P('#f7f1e6', '#e2d4bf', '#ffffff'), ear: '#f1dcc4' };
 
+// Wings: flying monsters draw their wings through these, so buildSprites can make a second
+// "flap" frame (FLAP = 1): polygons swing down from the shoulder (their first point, or w.root;
+// w.swing overrides the angle), ellipses (butterfly wings) fold in toward the body.
+let FLAP = 0;
+function flapPts(pts, w = {}) {
+  if (!FLAP) return pts;
+  const [rx, ry] = w.root || pts[0];
+  const cx = pts.reduce((t, p) => t + p[0], 0) / pts.length;
+  const a = FLAP * (w.swing ?? 0.85 * Math.sign(cx - rx)), c = Math.cos(a), sn = Math.sin(a);
+  return pts.map(([x, y]) => { const dx = (x - rx) * 0.85, dy = (y - ry) * 0.85; return [rx + dx * c - dy * sn, ry + dx * sn + dy * c]; });
+}
+const wingPoly = (g, pts, pal, opt, w) => g.poly(flapPts(pts, w), pal, opt);
+const wingPolyM = (g, pts, pal, opt, w) => g.polyM(flapPts(pts, w), pal, opt);
+const flapEll = (cx, rx) => (FLAP ? [16 + (cx - 16) * 0.72, rx * 0.55] : [cx, rx]);
+const wingEllipse = (g, cx, cy, rx, ry, pal, opt) => { const [x, r] = flapEll(cx, rx); return g.ellipse(x, cy, r, ry, pal, opt); };
+const wingEllipseM = (g, cx, cy, rx, ry, pal, opt) => { const [x, r] = flapEll(cx, rx); return g.ellipseM(x, cy, r, ry, pal, opt); };
+
+// Flying monsters: how high they hover and how fast they flap (beats a second; 0 = they just
+// float). drawMon lifts them off their shadow and swaps in the flap frame (SPRITES[id].flap).
+const FLYERS = { galewing: { hover: 8, flap: 7 }, pixibelle: { hover: 7, flap: 11 }, drakorn: { hover: 6, flap: 5 }, wispurr: { hover: 6, flap: 0 } };
+
 const MONSTER_ART = {
   // ---- evolved starters (44px, their own designs) ----
 
@@ -428,7 +449,7 @@ const MONSTER_ART = {
   drakorn(g, v = 'front') {
     if (v === 'side') {
       const O = P('#f08a3a', '#c45e1e', '#ffb873'), W = P('#7b4bd6', '#5430a0', '#a682ff'), C = P('#f6e2b0', '#d2b070', '#fff6dc');
-      g.poly([[12, 18], [2, 5], [4, 19]], W);
+      wingPoly(g, [[12, 18], [2, 5], [4, 19]], W);
       g.poly([[10, 26], [1, 30], [8, 22]], O);
       g.poly([[17, 9], [13, 1], [19, 6]], C, { edge: true });
       g.ellipse(15, 23, 8, 7.5, O, { edge: true });
@@ -448,13 +469,13 @@ const MONSTER_ART = {
       g.ellipse(16, 12, 7, 6, O, { edge: true });
       g.poly([[14, 27], [18, 27], [16, 32]], O, { edge: true });
       for (const y of [8, 11, 17]) g.rect(15, y, 2, 1, '#c45e1e');
-      g.polyM([[13, 19], [1, 6], [3, 20], [12, 24]], W, { edge: true });
+      wingPolyM(g, [[13, 19], [1, 6], [3, 20], [12, 24]], W, { edge: true });
       return;
     }
     const O = P('#f08a3a', '#c45e1e', '#ffb873');
     const W = P('#7b4bd6', '#5430a0', '#a682ff');
     const C = P('#f6e2b0', '#d2b070', '#fff6dc');
-    g.polyM([[10, 17], [0, 5], [2, 19]], W);
+    wingPolyM(g, [[10, 17], [0, 5], [2, 19]], W);
     g.poly([[21, 26], [31, 30], [24, 22]], O);
     g.polyM([[13, 9], [9, 1], [15, 6]], C, { edge: true });
     g.ellipse(16, 23, 8, 7.5, O, { edge: true });
@@ -673,8 +694,8 @@ const MONSTER_ART = {
       g.ellipse(19, 11, 6.5, 6, B, { edge: true });
       g.poly([[24, 10], [30, 12], [24, 14]], Y);
       g.rect(20, 9, 2, 3, DARK_EYE); g.px(20, 9, '#ffffff'); g.px(19, 7, OUTLINE); g.px(20, 7, OUTLINE); g.px(21, 8, OUTLINE);
-      g.poly([[9, 16], [21, 18], [17, 25], [7, 24]], Wg, { edge: true });
-      g.px(11, 21, '#a8b4e0'); g.px(14, 20, '#a8b4e0');
+      wingPoly(g, [[9, 16], [21, 18], [17, 25], [7, 24]], Wg, { edge: true }, { root: [19, 18], swing: -0.6 });
+      FLAP || g.px(11, 21, '#a8b4e0'); FLAP || g.px(14, 20, '#a8b4e0');
       g.rect(14, 28, 2, 2, Y); g.rect(19, 28, 2, 2, Y);
       return;
     }
@@ -685,16 +706,16 @@ const MONSTER_ART = {
       g.ellipse(16, 11, 6.5, 6, B, { edge: true });
       g.rectM(12, 28, 2, 2, Y);
       g.poly([[13, 25], [16, 31], [19, 25]], B, { edge: true });
-      g.polyM([[13, 17], [0, 8], [2, 15], [1, 21], [11, 24]], Wg, { edge: true });
-      g.pxM(3, 13, '#a8b4e0'); g.pxM(5, 18, '#a8b4e0'); g.pxM(8, 16, '#a8b4e0');
+      wingPolyM(g, [[13, 17], [0, 8], [2, 15], [1, 21], [11, 24]], Wg, { edge: true });
+      FLAP || g.pxM(3, 13, '#a8b4e0'); FLAP || g.pxM(5, 18, '#a8b4e0'); FLAP || g.pxM(8, 16, '#a8b4e0');
       return;
     }
     const B = P('#8fa8f0', '#5a6ec8', '#c8d6ff');
     const Wg = P('#eef2ff', '#a8b4e0', '#ffffff');
     const Y = '#ffc23a';
     g.poly([[20, 23], [31, 29], [27, 21]], B);                                                  // tail feathers
-    g.polyM([[10, 17], [0, 8], [2, 15], [1, 21], [8, 25]], Wg, { edge: true });                // spread wings
-    g.pxM(3, 13, '#a8b4e0'); g.pxM(4, 18, '#a8b4e0');
+    wingPolyM(g, [[10, 17], [0, 8], [2, 15], [1, 21], [8, 25]], Wg, { edge: true });                // spread wings
+    FLAP || g.pxM(3, 13, '#a8b4e0'); FLAP || g.pxM(4, 18, '#a8b4e0');
     g.poly([[14, 7], [12, 0], [16, 4], [19, 0], [18, 7]], B);                                   // crest
     g.ellipse(16, 20, 7.5, 7.5, B, { edge: true });                                             // body
     g.ellipse(16, 22, 4.5, 5, '#f4f0e6');                                                       // belly
@@ -984,8 +1005,8 @@ const MONSTER_ART = {
   pixibelle(g, v = 'front') {
     if (v === 'side') {
       const B = P('#ffc4dc', '#e88ab4', '#fff0f6'), Wn = P('#d8f4ff', '#a4d4f0', '#ffffff'), Pk = '#ff5a9e';
-      g.ellipse(9, 13, 5.5, 5, Wn, { edge: true }); g.ellipse(10, 22, 4, 3.5, Wn, { edge: true });
-      g.ellipse(8, 12, 1.8, 1.5, '#ffb4dc');
+      wingEllipse(g, 9, 13, 5.5, 5, Wn, { edge: true }); wingEllipse(g, 10, 22, 4, 3.5, Wn, { edge: true });
+      wingEllipse(g, 8, 12, 1.8, 1.5, '#ffb4dc');
       g.rect(19, 2, 1, 4, OUTLINE); g.px(19, 1, '#ffe066'); g.px(20, 1, '#ffe066'); g.px(19, 0, '#ffe066');
       g.ellipse(16, 23, 5, 5.5, B, { edge: true });
       g.poly([[10, 29], [22, 29], [19, 22], [13, 22]], P(Pk, '#c83a7a', '#ff9ac4'), { edge: true });
@@ -1004,17 +1025,17 @@ const MONSTER_ART = {
       g.poly([[10, 29], [22, 29], [19, 22], [13, 22]], P(Pk, '#c83a7a', '#ff9ac4'), { edge: true });
       g.ellipse(16, 12.5, 7, 6.5, B, { edge: true });
       g.poly([[11, 5], [16, 8], [11, 10]], Pk); g.poly([[21, 5], [16, 8], [21, 10]], Pk); g.px(16, 8, '#c83a7a');
-      g.ellipseM(7.5, 14, 5.5, 5, Wn, { edge: true });
-      g.ellipseM(9, 22, 4, 3.5, Wn, { edge: true });
-      g.ellipseM(6.5, 13, 1.8, 1.5, '#ffb4dc');
+      wingEllipseM(g, 7.5, 14, 5.5, 5, Wn, { edge: true });
+      wingEllipseM(g, 9, 22, 4, 3.5, Wn, { edge: true });
+      wingEllipseM(g, 6.5, 13, 1.8, 1.5, '#ffb4dc');
       return;
     }
     const B = P('#ffc4dc', '#e88ab4', '#fff0f6');
     const Wn = P('#d8f4ff', '#a4d4f0', '#ffffff');
     const Pk = '#ff5a9e';
-    g.ellipseM(6.5, 13, 5.5, 5, Wn, { edge: true });                                            // upper wings
-    g.ellipseM(8, 22, 4, 3.5, Wn, { edge: true });                                              // lower wings
-    g.ellipseM(5.5, 12, 1.8, 1.5, '#ffb4dc');                                                   // wing spots
+    wingEllipseM(g, 6.5, 13, 5.5, 5, Wn, { edge: true });                                            // upper wings
+    wingEllipseM(g, 8, 22, 4, 3.5, Wn, { edge: true });                                              // lower wings
+    wingEllipseM(g, 5.5, 12, 1.8, 1.5, '#ffb4dc');                                                   // wing spots
     g.rectM(12, 2, 1, 4, OUTLINE);                                                              // antennae
     g.pxM(12, 1, '#ffe066'); g.pxM(11, 1, '#ffe066'); g.pxM(12, 0, '#ffe066');
     g.ellipse(16, 23, 5, 5.5, B, { edge: true });                                               // body
@@ -1361,11 +1382,11 @@ const MONSTER_ART_DIAG = {
       g.ellipse(24, 14, 1.6, 1.4, C);                                                            // snout peeking out
       g.poly([[13, 27], [17, 27], [11, 32]], O, { edge: true });                                 // tail
       for (const y of [8, 11, 17]) g.rect(16, y, 2, 1, '#c45e1e');
-      g.poly([[13, 19], [1, 6], [3, 20], [12, 24]], W, { edge: true });                          // wings
-      g.poly([[21, 18], [30, 6], [29, 19], [22, 23]], W, { edge: true });
+      wingPoly(g, [[13, 19], [1, 6], [3, 20], [12, 24]], W, { edge: true });                          // wings
+      wingPoly(g, [[21, 18], [30, 6], [29, 19], [22, 23]], W, { edge: true });
       return;
     }
-    g.poly([[9, 17], [0, 5], [2, 19]], W); g.poly([[21, 15], [29, 4], [27, 17]], W);            // wings
+    wingPoly(g, [[9, 17], [0, 5], [2, 19]], W); wingPoly(g, [[21, 15], [29, 4], [27, 17]], W);            // wings
     g.poly([[10, 26], [1, 30], [8, 22]], O);                                                     // tail
     horns();
     g.ellipse(15, 23, 8, 7.5, O, { edge: true });
@@ -1516,15 +1537,15 @@ const MONSTER_ART_DIAG = {
       g.poly([[24, 11], [27, 12], [24, 14]], Y);                                                 // beak peeking out
       feet();
       g.poly([[11, 25], [13, 31], [16, 25]], B, { edge: true });                                 // tail
-      g.poly([[13, 17], [0, 8], [2, 15], [1, 21], [11, 24]], Wg, { edge: true });                // wings
-      g.poly([[20, 17], [31, 9], [30, 17], [22, 23]], Wg, { edge: true });
-      g.px(3, 13, '#a8b4e0'); g.px(5, 18, '#a8b4e0'); g.px(8, 16, '#a8b4e0'); g.px(27, 14, '#a8b4e0');
+      wingPoly(g, [[13, 17], [0, 8], [2, 15], [1, 21], [11, 24]], Wg, { edge: true });                // wings
+      wingPoly(g, [[20, 17], [31, 9], [30, 17], [22, 23]], Wg, { edge: true });
+      FLAP || g.px(3, 13, '#a8b4e0'); FLAP || g.px(5, 18, '#a8b4e0'); FLAP || g.px(8, 16, '#a8b4e0'); FLAP || g.px(27, 14, '#a8b4e0');
       return;
     }
     g.poly([[12, 23], [1, 29], [5, 21]], B);                                                     // tail feathers
-    g.poly([[10, 17], [0, 8], [2, 15], [1, 21], [8, 25]], Wg, { edge: true });                   // spread wings
-    g.poly([[22, 16], [30, 9], [29, 17], [24, 23]], Wg, { edge: true });
-    g.px(3, 13, '#a8b4e0'); g.px(4, 18, '#a8b4e0');
+    wingPoly(g, [[10, 17], [0, 8], [2, 15], [1, 21], [8, 25]], Wg, { edge: true });                   // spread wings
+    wingPoly(g, [[22, 16], [30, 9], [29, 17], [24, 23]], Wg, { edge: true });
+    FLAP || g.px(3, 13, '#a8b4e0'); FLAP || g.px(4, 18, '#a8b4e0');
     crest();
     g.ellipse(16, 20, 7.5, 7.5, B, { edge: true });
     g.ellipse(18, 22, 4.5, 5, '#f4f0e6');
@@ -1687,14 +1708,14 @@ const MONSTER_ART_DIAG = {
       antennae();
       body();
       g.poly([[12, 5], [17, 8], [12, 10]], Pk); g.poly([[22, 5], [17, 8], [22, 10]], Pk); g.px(17, 8, '#c83a7a');   // bow
-      g.ellipse(7.5, 14, 5.5, 5, Wn, { edge: true }); g.ellipse(9, 22, 4, 3.5, Wn, { edge: true });   // wings
-      g.ellipse(25.5, 13, 4.5, 4.5, Wn, { edge: true }); g.ellipse(23.5, 21, 3.2, 3, Wn, { edge: true });
-      g.ellipse(6.5, 13, 1.8, 1.5, '#ffb4dc');
+      wingEllipse(g, 7.5, 14, 5.5, 5, Wn, { edge: true }); wingEllipse(g, 9, 22, 4, 3.5, Wn, { edge: true });   // wings
+      wingEllipse(g, 25.5, 13, 4.5, 4.5, Wn, { edge: true }); wingEllipse(g, 23.5, 21, 3.2, 3, Wn, { edge: true });
+      wingEllipse(g, 6.5, 13, 1.8, 1.5, '#ffb4dc');
       return;
     }
-    g.ellipse(6.5, 13, 5.5, 5, Wn, { edge: true }); g.ellipse(8, 22, 4, 3.5, Wn, { edge: true }); // wings
-    g.ellipse(25, 12, 4, 4.5, Wn, { edge: true }); g.ellipse(24, 21, 3, 3, Wn, { edge: true });
-    g.ellipse(5.5, 12, 1.8, 1.5, '#ffb4dc');
+    wingEllipse(g, 6.5, 13, 5.5, 5, Wn, { edge: true }); wingEllipse(g, 8, 22, 4, 3.5, Wn, { edge: true }); // wings
+    wingEllipse(g, 25, 12, 4, 4.5, Wn, { edge: true }); wingEllipse(g, 24, 21, 3, 3, Wn, { edge: true });
+    wingEllipse(g, 5.5, 12, 1.8, 1.5, '#ffb4dc');
     antennae();
     body();
     g.poly([[12, 5], [17, 8], [12, 10]], Pk); g.poly([[21, 6], [17, 8], [21, 10]], Pk); g.px(17, 8, '#c83a7a');   // bow
@@ -1714,14 +1735,20 @@ function buildSprites() {
   for (const mon of ALL_MONS()) {
     const size = mon.size === 'L' ? 44 : 32;
     const diag = !!MONSTER_ART_DIAG[mon.id];
-    const views = {};
-    for (const v of diag ? [...VIEWS, 'fside', 'bside'] : VIEWS) {
-      const g = new PixGrid(size, size);
-      (v === 'fside' || v === 'bside' ? MONSTER_ART_DIAG : MONSTER_ART)[mon.id](g, v);
-      g.outline();
-      views[v] = g.toCanvas();
-    }
-    SPRITES[mon.id] = { img: views.front, views, size, diag };
+    const draw = () => {
+      const out = {};
+      for (const v of diag ? [...VIEWS, 'fside', 'bside'] : VIEWS) {
+        const g = new PixGrid(size, size);
+        (v === 'fside' || v === 'bside' ? MONSTER_ART_DIAG : MONSTER_ART)[mon.id](g, v);
+        g.outline();
+        out[v] = g.toCanvas();
+      }
+      return out;
+    };
+    const views = draw(), fly = FLYERS[mon.id] || null;
+    let flap = null;
+    if (fly && fly.flap) { FLAP = 1; flap = draw(); FLAP = 0; }   // the wings-down frame
+    SPRITES[mon.id] = { img: views.front, views, size, diag, fly, flap };
   }
 }
 
