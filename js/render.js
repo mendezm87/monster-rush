@@ -376,9 +376,10 @@ mixInto(Battle, class {
     const px = Math.round(t.x), py = Math.round(t.y);
     Lighting.shadow(ctx, px, py, 9, 3.5, 0.9);
     // a bouncy step like the monsters' (sprites.js posed): knees bend as a foot lands, a lean when walking sideways
-    const s = Math.abs(Math.sin(t.walkT / 6 * Math.PI));
-    const bob = t.moving ? -Math.round(s * 1.5) : 0;
-    const sq = t.moving ? (s < 0.3 ? 1 : 0) : (Math.sin(this.time * 2) > 0.7 ? 1 : 0);
+    // (3 frames a step, one step every 20 world units walked, like the monsters' hop)
+    const f = Math.floor((t.walkT / 20 % 1) * 3);
+    const bob = t.moving ? -(f === 1 ? 1 : 0) : 0;
+    const sq = t.moving ? (f === 0 ? 1 : 0) : (Math.sin(this.time * 2) > 0.7 ? 1 : 0);
     const pic = posed(img, sq, t.moving && isSideView(t.view) ? 1 : 0);
     const w = pic.width * SPR_SCALE, h = pic.height * SPR_SCALE;
     ctx.save(); ctx.translate(px, 0); if (isSideView(t.view) && t.face < 0) ctx.scale(-1, 1);

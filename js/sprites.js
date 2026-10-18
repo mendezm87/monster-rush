@@ -25,7 +25,7 @@ const wingEllipseM = (g, cx, cy, rx, ry, pal, opt) => { const [x, r] = flapEll(c
 
 // Flying monsters: how high they hover and how fast they flap (beats a second; 0 = they just
 // float). drawMon lifts them off their shadow and swaps in the flap frame (SPRITES[id].flap).
-const FLYERS = { galewing: { hover: 8, flap: 7 }, pixibelle: { hover: 7, flap: 11 }, drakorn: { hover: 6, flap: 5 }, wispurr: { hover: 6, flap: 0 } };
+const FLYERS = { galewing: { hover: 8, flap: 4 }, pixibelle: { hover: 7, flap: 6 }, drakorn: { hover: 6, flap: 3 }, wispurr: { hover: 6, flap: 0 } };
 
 const MONSTER_ART = {
   // ---- evolved starters (44px, their own designs) ----
@@ -1836,13 +1836,14 @@ function tintOf(src, color) {
 }
 // Which pose a monster is in right now: { sq, sh } for posed(), dy = extra lift (world units).
 // Reads m.action (cast / beam / dash / burst / vortex), m.hurtT (set when hit), m.popT (set when
-// it appears), fainting, walking (m.walkT) and an idle breath. hop = how high a walk step lifts.
+// it appears), fainting, walking (m.walkT) and an idle breath. Poses change at a hand-animated
+// pace (a walk is 3 frames a hop, about 11 a second), never every frame: fast flicking reads as jitter.
 function monPose(m, time, moving, phase, flying) {
   const side = m.view === 'side' || m.view === 'fside' || m.view === 'bside';
   const a = m.action;
   if (m.fainted) { const k = Math.min(1, m.fadeT / 0.5); return { sq: Math.round(3 * k), sh: side ? -Math.round(3 * k) : 0, dy: 0 }; }
   if (m.popT > 0) return m.popT > 0.18 ? { sq: -2, sh: 0, dy: 2 } : { sq: 2, sh: 0, dy: 0 };   // pops out tall, lands squashed
-  if (m.hurtT > 0) return { sq: m.hurtT > 0.12 ? 3 : 1, sh: side ? -2 : 0, dy: 0 };                // squished and knocked back
+  if (m.hurtT > 0) return { sq: 2, sh: side ? -2 : 0, dy: 0 };                                     // squished and knocked back
   if (a) {
     if (a.kind === 'dash') return { sq: -2, sh: side ? 3 : 0, dy: 0 };                              // stretched, leaning into it
     if (a.kind === 'beam') return a.phase === 'charge' ? { sq: 2, sh: side ? -1 : 0, dy: 0 } : { sq: 1, sh: side ? -2 : 0, dy: 0 };   // braced, then pushed back
@@ -1850,10 +1851,13 @@ function monPose(m, time, moving, phase, flying) {
     if (a.kind === 'vortex') return { sq: 1, sh: 0, dy: 0 };
     if (a.kind === 'cast') return a.t < a.dur * 0.45 ? { sq: 2, sh: side ? -1 : 0, dy: 0 } : { sq: -1, sh: side ? 2 : 0, dy: 1 };   // wind up, then throw
   }
-  if (moving) {   // a bouncy step: squashed as a foot lands, stretched at the top of the hop
-    const s = Math.abs(Math.sin(m.walkT / 7 * Math.PI));
+  // walking (held a moment after stopping, so stop-start movement doesn't flick between poses):
+  // one hop every 30 world units, in 3 frames: land squashed, spring up, come down
+  if (moving) m.walkSeen = time;
+  if (m.walkSeen !== undefined && time - m.walkSeen < 0.2) {
     if (flying) return { sq: 0, sh: side ? 1 : 0, dy: 0 };
-    return { sq: s < 0.3 ? 1 : s > 0.85 ? -1 : 0, sh: side ? 1 : 0, dy: Math.round(s * 2) };
+    const f = Math.floor((m.walkT / 30 % 1) * 3);
+    return f === 0 ? { sq: 1, sh: side ? 1 : 0, dy: 0 } : { sq: 0, sh: side ? 1 : 0, dy: f === 1 ? 2 : 1 };
   }
   return { sq: Math.sin(time * 2.2 + phase) > 0.55 ? 1 : 0, sh: 0, dy: 0 };   // breathing
 }
