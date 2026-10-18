@@ -1396,13 +1396,41 @@ const MONSTER_ART = {
     const GOLD = '#d8a838', BORE = '#1c2430', WET = '#7ad0f0', EYE = '#ffa020', HOT = '#fff0a0';
     const { Q, b, h, t, legA, legB, armA, armB } = rigParts(g, v);
     const merlon = (p, x, y, w = 5, hh = 6) => p.poly([[x, y], [x + w, y], [x + w, y + hh], [x, y + hh]], M, { edge: true });
+    // From behind (the owner's reference): a domed shell of gold-trimmed plates, a round turret on
+    // top with battlements and a hatch, and a tail with an iron cuff.
+    const backShell = cx => {
+      b.ellipse(cx, 25, 15, 13, P(GOLD, '#a07220', '#f0cc68'), { edge: true });                  // gold rim
+      b.ellipse(cx, 25.5, 13.5, 11.5, M);                                                          // the dome
+      b.rect(cx - 6, 16, 1, 20, GOLD); b.rect(cx + 6, 16, 1, 20, GOLD);                            // plate seams
+      b.rect(cx - 13, 26, 27, 1, GOLD); b.rect(cx - 6, 20, 13, 1, GOLD); b.rect(cx - 6, 32, 13, 1, GOLD);
+      for (const [x, y] of [[-10, 21], [-10, 30], [10, 21], [10, 30], [0, 17], [0, 35], [-6, 23], [6, 23], [-6, 29], [6, 29]]) b.px(cx + x, y, D.s);   // rivets
+      b.px(cx - 3, 23, M.l).px(cx - 2, 22, M.l).px(cx + 2, 29, M.l).px(cx + 3, 28, M.l);           // shine
+      b.px(cx - 10, 24, D.s).px(cx - 9, 23, D.s).px(cx + 9, 33, D.s).px(cx + 10, 32, D.s);         // battle scratches
+      merlon(b, cx - 9, 2, 3, 4); merlon(b, cx - 2, 1, 4, 4); merlon(b, cx + 6, 2, 3, 4);          // back battlements
+      b.poly([[cx - 10, 5], [cx + 10, 5], [cx + 10, 14], [cx - 10, 14]], M, { edge: true });       // the round tower
+      b.ellipse(cx, 6, 9.5, 3.2, P(M.l, M.b, '#d4d8e0'));                                          // its round top
+      b.ellipse(cx, 6, 4, 2, D, { edge: true }); b.rect(cx - 1, 6, 2, 1, D.l);                     // round hatch
+      for (const x of [-9, 9]) b.rect(cx + x - (x > 0 ? 1 : 0), 8, 2, 6, M.s);                    // shading round the sides
+      merlon(b, cx - 11, 4, 3, 5); merlon(b, cx + 8, 4, 3, 5);                                     // battlements at the sides
+      b.rect(cx - 10, 13, 21, 1, GOLD);
+      b.px(cx - 7, 10, D.s).px(cx, 10, D.s).px(cx + 7, 10, D.s);
+    };
+    const backTail = x => {
+      t.poly([[x + 4, 33], [x + 8, 36], [x - 1, 42], [x - 5, 43]], S, { edge: true });           // tail, out from under the shell
+      t.poly([[x + 2, 36], [x + 5, 37.5], [x + 3, 40], [x, 39]], D, { edge: true });             // iron cuff
+    };
     if (v === 'side') {
       t.poly([[8, 33], [1, 38], [10, 37]], S, { edge: true });                                   // stubby tail
       legB.ellipse(20, 37, 4.5, 4.5, S, { edge: true }); legB.ellipse(21, 41, 5, 2.2, S, { edge: true });
-      merlon(b, 3, 5, 4, 5); merlon(b, 9, 3, 4); merlon(b, 15, 3, 4);                            // battlements
-      b.poly([[3, 12], [6, 8], [24, 8], [27, 13], [27, 32], [7, 35], [2, 27]], M, { edge: true });   // turret shell
-      b.rect(3, 13, 23, 1, GOLD); b.rect(14, 8, 1, 26, GOLD);
-      for (const [x, y] of [[6, 11], [11, 11], [19, 11], [6, 20], [10, 28], [20, 22], [22, 30]]) b.px(x, y, D.s);
+      b.ellipse(14, 23, 13, 12, P(GOLD, '#a07220', '#f0cc68'), { edge: true });                // domed shell, gold rim
+      b.ellipse(14, 23.5, 11.5, 10.5, M);
+      b.rect(9, 14, 1, 19, GOLD); b.rect(19, 14, 1, 19, GOLD); b.rect(3, 24, 23, 1, GOLD);         // plate seams
+      for (const [x, y] of [[5, 19], [5, 29], [14, 18], [14, 30], [23, 19], [23, 29]]) b.px(x, y, D.s);
+      b.px(12, 21, M.l).px(13, 20, M.l).px(6, 27, D.s).px(7, 26, D.s);
+      merlon(b, 4, 3, 3, 5); merlon(b, 10, 2, 3, 4); merlon(b, 16, 2, 3, 4); merlon(b, 21, 3, 3, 5);   // the round turret's battlements
+      b.poly([[5, 6], [23, 6], [23, 13], [5, 13]], M, { edge: true });                             // the turret
+      b.ellipse(14, 6, 8.5, 2, P(M.l, M.b, '#d4d8e0'));
+      b.rect(5, 12, 19, 1, GOLD); b.px(9, 9, D.s).px(14, 9, D.s).px(19, 9, D.s);
       armB.poly([[28, 19], [39, 19], [39, 24], [28, 24]], D, { edge: true });                   // far cannon
       b.ellipse(27, 26, 8, 9, S, { edge: true });                                                // body
       b.ellipse(31, 27, 3, 7, C);                                                                // plastron
@@ -1424,20 +1452,14 @@ const MONSTER_ART = {
       return;
     }
     if (v === 'back') {
-      h.poly([[16, 7], [19, 2], [25, 2], [28, 7], [28, 12], [16, 12]], M, { edge: true });       // top of the helm, behind the battlements
-      h.rect(21, 1, 2, 5, M.l);
       armA.ellipse(5, 21, 4.5, 4.5, S, { edge: true }); armB.ellipse(39, 21, 4.5, 4.5, S, { edge: true });
       armA.poly([[1, 22], [9, 22], [9, 34], [1, 34]], D, { edge: true }); armB.poly([[35, 22], [43, 22], [43, 34], [35, 34]], D, { edge: true });
       armA.rect(1, 25, 8, 1, GOLD); armB.rect(35, 25, 8, 1, GOLD);
       armA.ellipse(5, 35, 4.5, 2.2, M, { edge: true }); armB.ellipse(39, 35, 4.5, 2.2, M, { edge: true });
       legA.ellipse(14, 38, 5, 4.5, S, { edge: true }); legB.ellipse(30, 38, 5, 4.5, S, { edge: true });
       legA.ellipse(14, 41, 5.5, 2.2, S, { edge: true }); legB.ellipse(30, 41, 5.5, 2.2, S, { edge: true });
-      merlon(b, 6, 4); merlon(b, 33, 4); merlon(b, 12, 8, 5, 4); merlon(b, 27, 8, 5, 4);         // battlements
-      b.poly([[6, 12], [9, 9], [35, 9], [38, 12], [38, 34], [33, 37], [11, 37], [6, 34]], M, { edge: true });   // the shell
-      b.rect(6, 13, 33, 1, GOLD); b.rect(21, 13, 2, 24, GOLD); b.rect(7, 26, 31, 1, GOLD);
-      for (const [x, y] of [[9, 16], [16, 16], [27, 16], [34, 16], [9, 23], [34, 23], [12, 31], [17, 30], [27, 30], [32, 31]]) b.px(x, y, D.s);
-      b.px(14, 20, D.s).px(15, 21, D.s).px(16, 20, D.s).px(29, 33, D.s).px(30, 32, D.s);         // battle scratches
-      t.poly([[19, 36], [25, 36], [22, 41]], S, { edge: true });                                 // tail
+      backShell(22);
+      backTail(11);
       return;
     }
     merlon(b, 3, 4, 4); merlon(b, 9, 5, 4, 5); merlon(b, 31, 5, 4, 5); merlon(b, 37, 4, 4);       // battlements over the shoulders
@@ -2309,24 +2331,44 @@ const MONSTER_ART_DIAG = {
     const GOLD = '#d8a838', BORE = '#1c2430', WET = '#7ad0f0', EYE = '#ffa020', HOT = '#fff0a0';
     const { Q, b, h, t, legA, legB, armA, armB } = rigParts(g, v);
     const merlon = (p, x, y, w = 5, hh = 6) => p.poly([[x, y], [x + w, y], [x + w, y + hh], [x, y + hh]], M, { edge: true });
+    // From behind (the owner's reference): a domed shell of gold-trimmed plates, a round turret on
+    // top with battlements and a hatch, and a tail with an iron cuff.
+    const backShell = cx => {
+      b.ellipse(cx, 25, 15, 13, P(GOLD, '#a07220', '#f0cc68'), { edge: true });                  // gold rim
+      b.ellipse(cx, 25.5, 13.5, 11.5, M);                                                          // the dome
+      b.rect(cx - 6, 16, 1, 20, GOLD); b.rect(cx + 6, 16, 1, 20, GOLD);                            // plate seams
+      b.rect(cx - 13, 26, 27, 1, GOLD); b.rect(cx - 6, 20, 13, 1, GOLD); b.rect(cx - 6, 32, 13, 1, GOLD);
+      for (const [x, y] of [[-10, 21], [-10, 30], [10, 21], [10, 30], [0, 17], [0, 35], [-6, 23], [6, 23], [-6, 29], [6, 29]]) b.px(cx + x, y, D.s);   // rivets
+      b.px(cx - 3, 23, M.l).px(cx - 2, 22, M.l).px(cx + 2, 29, M.l).px(cx + 3, 28, M.l);           // shine
+      b.px(cx - 10, 24, D.s).px(cx - 9, 23, D.s).px(cx + 9, 33, D.s).px(cx + 10, 32, D.s);         // battle scratches
+      merlon(b, cx - 9, 2, 3, 4); merlon(b, cx - 2, 1, 4, 4); merlon(b, cx + 6, 2, 3, 4);          // back battlements
+      b.poly([[cx - 10, 5], [cx + 10, 5], [cx + 10, 14], [cx - 10, 14]], M, { edge: true });       // the round tower
+      b.ellipse(cx, 6, 9.5, 3.2, P(M.l, M.b, '#d4d8e0'));                                          // its round top
+      b.ellipse(cx, 6, 4, 2, D, { edge: true }); b.rect(cx - 1, 6, 2, 1, D.l);                     // round hatch
+      for (const x of [-9, 9]) b.rect(cx + x - (x > 0 ? 1 : 0), 8, 2, 6, M.s);                    // shading round the sides
+      merlon(b, cx - 11, 4, 3, 5); merlon(b, cx + 8, 4, 3, 5);                                     // battlements at the sides
+      b.rect(cx - 10, 13, 21, 1, GOLD);
+      b.px(cx - 7, 10, D.s).px(cx, 10, D.s).px(cx + 7, 10, D.s);
+    };
+    const backTail = x => {
+      t.poly([[x + 4, 33], [x + 8, 36], [x - 1, 42], [x - 5, 43]], S, { edge: true });           // tail, out from under the shell
+      t.poly([[x + 2, 36], [x + 5, 37.5], [x + 3, 40], [x, 39]], D, { edge: true });             // iron cuff
+    };
     if (v === 'bside') {
-      armA.ellipse(38, 21, 4, 4, S, { edge: true });
-      armA.poly([[35, 22], [42, 22], [42, 33], [35, 33]], D, { edge: true }); armA.rect(35, 25, 7, 1, GOLD);
-      armA.ellipse(38.5, 34, 4, 2, M, { edge: true });
-      h.poly([[20, 6], [24, 2], [30, 3], [34, 7], [35, 15], [24, 15]], M, { edge: true });       // helm, turned right
-      h.rect(26, 1, 2, 5, M.l);
-      h.rect(33, 9, 2, 2, BORE); h.px(34, 9, EYE);                                               // a glint of the eye at the edge
       armB.ellipse(5, 21, 4.5, 4.5, S, { edge: true });
       armB.poly([[1, 22], [9, 22], [9, 34], [1, 34]], D, { edge: true }); armB.rect(1, 25, 8, 1, GOLD);
       armB.ellipse(5, 35, 4.5, 2.2, M, { edge: true });
-      legA.ellipse(29, 38, 4.5, 4.5, S, { edge: true }); legA.ellipse(30, 41, 5, 2.2, S, { edge: true });
+      h.poly([[27, 6], [31, 2], [37, 3], [40, 7], [40, 15], [30, 15]], M, { edge: true });       // helm, turned right, peeking past the turret
+      h.rect(35, 1, 1, 5, M.l);
+      h.rect(37, 8, 3, 3, BORE); rigEye(h, Q, 38, 8, () => h.px(39, 9, EYE), 1);                 // the visor at its edge, eye glinting
+      for (const y of [12, 14]) h.rect(37, y, 3, 1, BORE);
+      armA.ellipse(36, 21, 4.5, 4.5, S, { edge: true });                                         // near arm and cannon, pointed ahead
+      armA.poly([[33, 22], [42, 22], [42, 30], [33, 30]], D, { edge: true }); armA.rect(38, 22, 1, 8, GOLD);
+      armA.ellipse(42, 26, 1.8, 3.6, M, { edge: true }); armA.px(43, 26, WET);
       legB.ellipse(13, 38, 5, 4.5, S, { edge: true }); legB.ellipse(13, 41, 5.5, 2.2, S, { edge: true });
-      merlon(b, 5, 4); merlon(b, 11, 8, 5, 4); merlon(b, 25, 8, 4, 4); merlon(b, 31, 5, 4, 5);
-      b.poly([[5, 12], [8, 9], [33, 9], [36, 12], [36, 34], [31, 37], [10, 37], [5, 34]], M, { edge: true });
-      b.rect(5, 13, 31, 1, GOLD); b.rect(19, 13, 2, 24, GOLD); b.rect(6, 26, 30, 1, GOLD);
-      for (const [x, y] of [[8, 16], [15, 16], [25, 16], [32, 16], [8, 23], [32, 23], [11, 31], [16, 30], [25, 30], [30, 31]]) b.px(x, y, D.s);
-      b.px(13, 20, D.s).px(14, 21, D.s).px(15, 20, D.s);
-      t.poly([[13, 36], [19, 36], [15, 41]], S, { edge: true });                                 // tail, out to the left
+      legA.ellipse(29, 38, 4.5, 4.5, S, { edge: true }); legA.ellipse(30, 41, 5, 2.2, S, { edge: true });
+      backShell(20);
+      backTail(9);
       return;
     }
     merlon(b, 2, 4, 4); merlon(b, 8, 5, 4, 5); merlon(b, 32, 5, 4, 5); merlon(b, 37, 5, 3, 5);   // battlements

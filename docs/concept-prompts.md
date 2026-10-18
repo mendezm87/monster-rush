@@ -135,6 +135,27 @@ Face options for the Siege brute (the owner: the water version is close, but it 
 **A5 · Siege brute, old admiral face**
 > A three-quarter view of a monster turtle, focusing on its face: its face is a grizzled old sea captain: a hooked beak, long white whisker-barbels hanging like a moustache, an iron eyepatch riveted over one eye, the other eye glowing amber under a heavy scowling brow, a gold ring through its beak. The monster is a hulking monster turtle standing upright on two thick legs like a heavyweight brawler, deep moss-green scaly skin, a gunmetal shell built like a fortress turret with battlements, rivets and gold trim, each huge forearm ending in a cannon barrel instead of a fist, both cannons firing powerful high-pressure blasts of water that burst into spray and foam, braced against the recoil, chunky exaggerated proportions, a water monster from a monster-battling game. 1990s TV anime cel art, hand-inked line art with varying line weight, flat cel colours with one hard-edged shadow tone, soft airbrushed highlights, hand-painted watercolour background of a harbour fortress in a storm, slight film grain, 4:3 screenshot framing, original creature design, no text
 
+## Garrishell's earlier forms (the owner picked A3, now Garrishell; these are the same creature, younger)
+
+Shared look so they read as one family: deep moss-green scaly skin, gunmetal armour with rivets and gold
+trim, a visor with ONE glowing amber eye, and cannons that shoot water. Each stage gets more fortress.
+Pick a 2-stage line (a small first form -> Garrishell) or a 3-stage line (hatchling -> squire -> Garrishell).
+
+**G1 · Hatchling (first of three)**
+> A tiny, scrappy baby monster turtle with deep moss-green scaly skin, wearing half of a riveted gunmetal
+> egg-shell as a helmet like a knight's bucket helm, one glowing amber eye peeking through a crack in it,
+> a small round gunmetal shell with a single gold band and one little stone battlement on top, stubby legs,
+> a short tail, a tiny brass spout on its snout that sprays a jet of water, puffed up and trying to look
+> tough, chunky cute-but-fierce proportions, a baby monster from a monster-battling game. 1990s TV anime cel art, hand-inked line art with varying line weight, flat cel colours with one hard-edged shadow tone, soft airbrushed highlights, hand-painted watercolour background of a rocky harbour beach at dawn, slight film grain, 4:3 screenshot framing, original creature design, no text
+
+**G2 · Squire (the middle of three, or the only first form)**
+> A young, stocky monster turtle standing on its hind legs, deep moss-green scaly skin, a riveted gunmetal
+> shell with gold trim and a short ring of battlements around the top like a half-built watchtower, a
+> simple knight's helm with a visor slit and one glowing amber eye, one forearm wrapped in an iron cuff
+> that ends in a single small water cannon, a short tail with an iron cuff, determined and cocky, braced in
+> a fighting stance, a monster from a monster-battling game, clearly a younger form of a bigger
+> fortress-turtle monster. 1990s TV anime cel art, hand-inked line art with varying line weight, flat cel colours with one hard-edged shadow tone, soft airbrushed highlights, hand-painted watercolour background of a stone harbour wall in light rain, slight film grain, 4:3 screenshot framing, original creature design, no text
+
 **B · Dreadnought**
 > A massive four-legged monster turtle like a living battleship, charcoal-black armoured shell
 > covered in jagged spikes, with a ring of short cannon barrels around the top of its shell like a
