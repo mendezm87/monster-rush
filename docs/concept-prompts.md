@@ -94,3 +94,32 @@ The shared style, already in every prompt:
 > art with varying line weight, flat cel colours with one hard-edged shadow tone, soft airbrushed
 > highlights, hand-painted watercolour background of a windswept cliff at dusk, slight film grain,
 > 4:3 screenshot framing, original creature design, no text
+
+## A cannon turtle (new monster; the owner loves Blastoise's design, so an original take on "a turtle with cannons")
+
+Kept away from Blastoise's signature look on purpose: these are four-legged, not blue-skinned with a
+brown shell, and don't have two cannons on the shoulders.
+
+**A · Broadside**
+> A huge, scarred sea turtle whose shell is built like the hull of an old wooden warship, a row of
+> brass cannon ports along each side of the shell with smoking barrels poking out, barnacles and
+> rope on the shell, a grizzled captain's scowl and a hooked beak, four flippers braced on a rocky
+> shore. 1990s TV anime cel art, hand-inked line art with varying line weight, flat cel colours with
+> one hard-edged shadow tone, soft airbrushed highlights, hand-painted watercolour background of a
+> stormy sea at dawn, slight film grain, 4:3 screenshot framing, original creature design, no text
+
+**B · Mortar tortoise**
+> A heavy armoured tortoise with a riveted iron-plated dome shell and one huge mortar barrel rising
+> from the top of its shell like a siege weapon, steam venting from the seams, thick elephant-like
+> legs, small fierce eyes under a heavy brow, muzzle-flash smoke drifting from the barrel. 1990s TV
+> anime cel art, hand-inked line art with varying line weight, flat cel colours with one hard-edged
+> shadow tone, soft airbrushed highlights, hand-painted watercolour background of a ruined fortress
+> wall, slight film grain, 4:3 screenshot framing, original creature design, no text
+
+**C · Geyser snapper**
+> A snapping turtle with a jagged shell of dark volcanic rock, pressure vents along the shell that
+> blast jets of scalding water like cannons, a hooked beak and a spiked tail, crouched low and
+> aggressive in a steaming hot spring. 1990s TV anime cel art, hand-inked line art with varying line
+> weight, flat cel colours with one hard-edged shadow tone, soft airbrushed highlights, hand-painted
+> watercolour background of volcanic hot springs at night, slight film grain, 4:3 screenshot
+> framing, original creature design, no text

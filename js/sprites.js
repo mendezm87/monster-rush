@@ -160,7 +160,7 @@ function rigEye(h, R, x, y, normal, w = 2) {
 // Flying monsters: how high they hover and how fast they flap (beats a second; 0 = they just
 // float). drawMon lifts them off their shadow and swaps in the flap frame (SPRITES[id].flap).
 // Monsters whose art is rigged (draws its parts through part() and reads rig()), and their body type (RIG_FRAMES).
-const RIGGED = { smugshi: 'quad', brawlix: 'biped', wispurr: 'floater', sparkit: 'biped', cinderox: 'quad', tidalisk: 'slither', thornback: 'quad', slumbear: 'biped', frostling: 'quad', boulderon: 'biped', mindra: 'biped', shadefang: 'quad', lumawool: 'quad', drakorn: 'flier', galewing: 'flier', pixibelle: 'flier', venomire: 'slither', scarablade: 'biped', gearhulk: 'biped', mondaze: 'biped', smugshogun: 'quad', infernox: 'quad', maelstrisk: 'slither', voltergeist: 'floater', coilizard: 'quad' };
+const RIGGED = { smugshi: 'quad', brawlix: 'biped', wispurr: 'floater', sparkit: 'biped', cinderox: 'quad', tidalisk: 'slither', thornback: 'quad', slumbear: 'biped', frostling: 'quad', boulderon: 'biped', mindra: 'biped', shadefang: 'quad', lumawool: 'quad', drakorn: 'flier', galewing: 'flier', pixibelle: 'flier', venomire: 'slither', scarablade: 'biped', gearhulk: 'biped', mondaze: 'biped', smugshogun: 'quad', infernox: 'quad', maelstrisk: 'slither', voltergeist: 'floater', coilizard: 'quad', bellpaca: 'quad', smouldox: 'quad' };
 const FLYERS = { galewing: { hover: 8, flap: 4 }, pixibelle: { hover: 7, flap: 6 }, drakorn: { hover: 6, flap: 3 }, wispurr: { hover: 6, flap: 0 } };
 
 const MONSTER_ART = {
@@ -752,40 +752,50 @@ const MONSTER_ART = {
     legA.ellipse(11, 28.5, 2.5, 1.5, '#24203a'); legB.ellipse(21, 28.5, 2.5, 1.5, '#24203a');
   },
 
+  // Lumawool, redrawn (r48) from the owner's pick: a storm ram. Its wool is a dark living
+  // thundercloud with lightning flickering inside, heavy curled iron horns, a long dark face and
+  // glowing eyes; sparks crackle off it.
   lumawool(g, v = 'front') {
-    const W = P('#fff3d6', '#d9c39a', '#ffffff'), Y = P('#ffd84a', '#e0a722', '#fff3a0');
+    const W = P('#3e4458', '#2a2e3e', '#5a627a'), Fc = P('#4a4c58', '#30323c', '#6a6c78'), H = P('#7a7e8a', '#4a4e5a', '#a8acb8');
+    const LEG = '#2a2a34', HOOF = '#141418', BOLT = '#ffe066', GLOW = '#fff2a0';
     const { Q, b, h, t, earA, earB, legA, legB } = rigParts(g, v);
+    const leg = (p, x) => { p.rect(x, 25, 2, 5, LEG); p.rect(x, 29, 2, 1, HOOF); };
+    const horn = (p, cx, cy) => { p.ellipse(cx, cy, 3, 3, H, { edge: true }); p.ellipse(cx, cy, 1.4, 1.4, H.s); p.px(cx, cy - 2, H.l); };
+    const bolts = pts => { for (const [x, y] of pts) b.px(x, y, BOLT).px(x + 1, y - 1, BOLT).px(x + 2, y, BOLT); };
+    const sparks = () => { t.px(3, 15, BOLT).px(4, 14, BOLT).px(4, 16, '#bfe8ff'); t.px(28, 22, BOLT).px(29, 21, BOLT).px(28, 23, '#bfe8ff'); };   // sparks that sway like a tail
     if (v === 'side') {
-      t.rect(4, 22, 1, 4, OUTLINE); t.ellipse(4, 21, 2.5, 2.5, '#ff4a3a');
-      legB.rect(10, 26, 2, 4, '#2a2230'); legA.rect(19, 26, 2, 4, '#2a2230');
-      b.ellipse(10, 20, 6, 6, W); b.ellipse(19, 20, 6, 6, W); b.ellipse(14, 15, 7, 6, W); b.ellipse(15, 23, 8, 6, W);
-      earA.poly([[19, 11], [14, 14], [19, 15]], Y);
-      h.rect(21, 6, 1, 3, '#2a2230');
-      h.ellipse(22, 13, 5, 5, Y, { edge: true });
-      rigEye(h, Q, 24, 12, () => { h.rect(24, 12, 2, 2, DARK_EYE); h.px(24, 12, '#ffffff'); });
-      h.ellipse(23, 8, 1.5, 1.5, '#ff4a3a');
-      rigMouth(h, Q, 24, 15, 2);
+      leg(legA, 9); leg(legB, 18);
+      for (const [x, y, r] of [[14, 19, 8], [8, 17, 4], [18, 14, 5], [12, 13, 4]]) b.ellipse(x, y, r, r * 0.8, W, { edge: true });   // thundercloud wool
+      bolts([[8, 19], [15, 21], [17, 15]]);
+      leg(legB, 11); leg(legA, 20);
+      h.poly([[19, 11], [25, 13], [27, 17], [25, 19], [20, 17]], Fc, { edge: true });            // long dark face
+      horn(earA, 20, 11);
+      rigEye(h, Q, 22, 13, () => h.rect(22, 13, 2, 1, GLOW));
+      h.px(21, 12, OUTLINE).px(22, 12, OUTLINE);
+      h.px(26, 16, OUTLINE);
+      rigMouth(h, Q, 24, 18, 2);
+      sparks();
       return;
     }
     if (v === 'back') {
-      legA.rect(11, 26, 2, 4, '#2a2230'); legB.rect(19, 26, 2, 4, '#2a2230');
-      b.ellipse(10, 20, 6, 6, W); b.ellipse(22, 20, 6, 6, W); b.ellipse(16, 15, 7, 6, W); b.ellipse(16, 23, 8, 6, W);
-      earA.poly([[12, 11], [6, 13], [11, 15]], Y); earB.poly([[20, 11], [26, 13], [21, 15]], Y);
-      h.ellipse(16, 12, 5, 5, Y, { edge: true });
-      h.rectM(13, 6, 1, 3, '#2a2230');
-      t.rect(16, 24, 1, 4, OUTLINE); t.ellipse(16.5, 28, 2.5, 2.5, '#ff4a3a');
+      leg(legA, 11); leg(legB, 19);
+      for (const [x, y, r] of [[16, 20, 9.5], [9, 17, 4.5], [23, 17, 4.5], [11, 13, 4], [21, 13, 4], [16, 12, 5]]) b.ellipse(x, y, r, r * 0.8, W, { edge: true });
+      bolts([[9, 19], [20, 22], [14, 14]]);
+      horn(earA, 9.5, 11); horn(earB, 22.5, 11);
+      sparks();
       return;
     }
-    t.rect(26, 22, 1, 4, OUTLINE);
-    t.ellipse(27, 21, 2.5, 2.5, '#ff4a3a');                                                      // tail orb
-    legA.rect(11, 26, 2, 4, '#2a2230'); legB.rect(19, 26, 2, 4, '#2a2230');
-    b.ellipse(10, 20, 6, 6, W); b.ellipse(22, 20, 6, 6, W); b.ellipse(16, 15, 7, 6, W); b.ellipse(16, 23, 8, 6, W);
-    earA.poly([[12, 11], [6, 13], [11, 15]], Y); earB.poly([[20, 11], [26, 13], [21, 15]], Y);
-    h.ellipse(16, 12, 5, 5, Y, { edge: true });
-    h.rectM(13, 6, 1, 3, '#2a2230');
-    rigEyes(h, Q, 32, 13, 11, 2, () => h.eyes(13, 11, DARK_EYE, { h: 2 }));
-    h.ellipse(16, 8, 1.5, 1.5, '#ff4a3a');
-    rigMouth(h, Q, 15, 15, 2);
+    leg(legA, 11); leg(legB, 19);                                                                // legs and hooves
+    for (const [x, y, r] of [[16, 21, 9], [9, 18, 4.5], [23, 18, 4.5], [11, 13, 4], [21, 13, 4], [16, 11, 5]]) b.ellipse(x, y, r, r * 0.8, W, { edge: true });   // thundercloud wool
+    bolts([[8, 19], [21, 20], [15, 24]]);                                                        // lightning inside it
+    horn(earA, 9.5, 11); horn(earB, 22.5, 11);                                                   // curled iron horns
+    h.poly([[13, 11], [19, 11], [18.5, 19], [16, 21], [13.5, 19]], Fc, { edge: true });         // long dark face
+    h.ellipse(16, 19, 2, 1.2, Fc.l);
+    rigEyes(h, Q, 32, 13, 14, 2, () => h.rectM(13, 14, 2, 1, GLOW));                            // glowing eyes
+    h.pxM(13, 13, OUTLINE).pxM(14, 13, OUTLINE);                                                 // heavy brows
+    h.px(15, 18, OUTLINE).px(17, 18, OUTLINE);                                                   // nostrils
+    rigMouth(h, Q, 15, 20, 2);
+    sparks();
   },
 
   brawlix(g, v = 'front') {
@@ -1281,6 +1291,102 @@ const MONSTER_ART = {
     rigEyes(h, Q, 32, 7, 15, 4, () => { h.ellipseM(9, 16, 2.4, 2.4, EYE, { edge: true }); h.rectM(9, 15, 1, 3, DARK_EYE); h.pxM(8, 15, '#ffffff'); });   // big golden slit eyes, low on the sides
     rigMouth(h, Q, 13, 18, 6, () => h.rect(12, 18, 8, 1, OUTLINE));
   },
+  // Bellpaca (r48, from the owner's pick): a tall, calm alpaca of thick cream wool, a woolly tuft
+  // over its half-lidded eyes, and a brass bell on a red collar glowing electric blue, lighting its
+  // chest. A quiet guardian.
+  bellpaca(g, v = 'front') {
+    const W = P('#f4ead2', '#d6c6a0', '#ffffff'), MZ = '#ece0c4', HOOF = '#5a4a3a', COL = '#a83030', BELL = P('#e0b048', '#a07828', '#fff0a0'), GLOW = '#9af0ff';
+    const { Q, b, h, t, earA, earB, legA, legB } = rigParts(g, v);
+    const leg = (p, x) => { p.rect(x, 25, 3, 5, W.s); p.rect(x, 29, 3, 1, HOOF); };
+    const bell = (x, y) => { b.ellipse(x, y - 1, 3, 2, '#d8fcff'); b.ellipse(x, y + 0.5, 1.6, 1.8, BELL, { edge: true }); b.px(x, y + 2, GLOW); };
+    if (v === 'side') {
+      leg(legA, 8); leg(legB, 17);
+      t.ellipse(6, 19, 1.6, 1.6, W, { edge: true });                                             // tail tuft
+      b.ellipse(13, 21, 8, 5.5, W, { edge: true });
+      b.ellipse(19, 13, 2.8, 6.5, W, { edge: true });                                            // long neck
+      b.rect(17, 15, 5, 1, COL);
+      bell(20, 17);
+      leg(legB, 10); leg(legA, 19);
+      earA.poly([[19, 3], [19, -1], [21, 2]], W, { edge: true });
+      h.ellipse(21, 6, 3.5, 3, W, { edge: true }); h.ellipse(24, 7.5, 2, 1.5, MZ, { edge: true });   // head, snout
+      h.ellipse(20, 3.5, 3, 1.6, W.l, { edge: true });                                           // woolly tuft
+      rigEye(h, Q, 21, 5, () => { h.rect(21, 5, 2, 1, OUTLINE); h.px(22, 6, '#3a2a1a'); });    // half-lidded stare
+      rigMouth(h, Q, 24, 9, 2, () => h.px(25, 9, OUTLINE));
+      return;
+    }
+    if (v === 'back') {
+      leg(legA, 10); leg(legB, 19);
+      b.ellipse(16, 21, 8, 5.5, W, { edge: true }); b.ellipse(9, 20, 2.5, 2.5, W); b.ellipse(23, 20, 2.5, 2.5, W);
+      b.ellipse(16, 13, 3.5, 6, W, { edge: true });
+      earA.poly([[11, 4], [11, 0], [13, 3]], W, { edge: true }); earB.poly([[21, 4], [21, 0], [19, 3]], W, { edge: true });
+      h.ellipse(16, 6, 4, 3.5, W, { edge: true }); h.ellipse(16, 3, 3.5, 2, W.l, { edge: true });
+      t.ellipse(16, 23, 1.6, 1.6, W, { edge: true });
+      return;
+    }
+    leg(legA, 10); leg(legB, 19);                                                                // legs
+    t.ellipse(24, 20, 1.5, 1.5, W, { edge: true });                                              // tail tuft
+    b.ellipse(16, 21, 8, 5.5, W, { edge: true }); b.ellipse(9, 20, 2.5, 2.5, W); b.ellipse(23, 20, 2.5, 2.5, W);   // thick fluffy body
+    b.ellipse(16, 13, 3.5, 6, W, { edge: true });                                                // long neck
+    b.rect(13, 15, 6, 1, COL);                                                                   // red collar
+    bell(16, 17);                                                                                // brass bell, glowing blue
+    earA.poly([[11, 4], [11, 0], [13, 3]], W, { edge: true }); earB.poly([[21, 4], [21, 0], [19, 3]], W, { edge: true });
+    h.ellipse(16, 6, 4, 3.5, W, { edge: true });                                                 // head
+    h.ellipse(16, 3, 3.5, 2, W.l, { edge: true });                                               // woolly tuft
+    rigEyes(h, Q, 32, 13, 6, 2, () => { h.rectM(13, 6, 2, 1, OUTLINE); h.pxM(13, 7, '#3a2a1a'); });   // calm, half-lidded eyes
+    h.ellipse(16, 8.5, 1.8, 1.2, MZ);
+    rigMouth(h, Q, 15, 9, 2, () => h.px(16, 9, OUTLINE));
+  },
+  // Smouldox (r48, from the owner's pick): a hulking charcoal calf with a heap of glowing coals on
+  // its back, an ember glow from its belly, small horns, eyes like embers, head held low, smoke
+  // curling off it.
+  smouldox(g, v = 'front') {
+    const K = P('#3a3236', '#221c20', '#5a5056'), CO = P('#2a2226', '#140e12', '#4a3e44'), MZ = P('#6a5a5a', '#4a3e3e', '#8a7a78'), HN = '#9a9098';
+    const EMB = '#ff7a1c', HOT = '#ffd34a', EYE = '#ff9a3a', HOOF = '#141012', SMOKE = '#8a8088';
+    const { Q, b, h, t, earA, earB, legA, legB } = rigParts(g, v);
+    const coals = pts => { for (const [x, y] of pts) { b.ellipse(x, y, 2, 1.6, CO, { edge: true }); b.px(x, y, EMB); b.px(x - 1, y + 1, HOT); } };
+    const smoke = pts => { for (const [x, y] of pts) t.px(x, y, SMOKE); };
+    const leg = (p, x) => { p.ellipse(x, 27.5, 2.4, 2.6, K, { edge: true }); p.ellipse(x, 30, 2.4, 1, HOOF); };
+    if (v === 'side') {
+      t.rect(4, 18, 1, 4, K.s); t.ellipse(4, 23, 1.5, 1.5, K, { edge: true });                  // thin tail with a tuft
+      leg(legA, 8); leg(legB, 18);
+      b.ellipse(14, 21, 10, 6, K, { edge: true });
+      b.ellipse(15, 26, 6, 1.4, EMB);                                                            // ember glow underneath
+      coals([[8, 15], [12, 14], [16, 14.5], [19, 16]]);
+      leg(legB, 10.5); leg(legA, 20.5);
+      earA.ellipse(21, 16, 2, 1.2, K, { edge: true });
+      h.ellipse(24, 19, 4.5, 4, K, { edge: true });                                              // head held low
+      h.poly([[22, 15], [23, 12], [24, 15]], HN);                                                // horn
+      h.ellipse(27.5, 21, 2.4, 1.8, MZ, { edge: true });
+      rigEye(h, Q, 24, 18, () => h.rect(24, 18, 2, 1, EYE));
+      h.px(23, 17, OUTLINE).px(24, 17, OUTLINE);
+      h.px(28, 21, OUTLINE);
+      rigMouth(h, Q, 26, 23, 2);
+      smoke([[12, 10], [13, 8], [12, 6], [16, 9], [17, 7]]);
+      return;
+    }
+    if (v === 'back') {
+      leg(legA, 10.5); leg(legB, 21.5);
+      b.ellipse(16, 21, 10, 6.5, K, { edge: true });
+      coals([[10, 16], [14, 15], [18, 15], [22, 16], [12, 19], [20, 19], [16, 18]]);
+      earA.ellipse(9.5, 13, 2, 1.2, K, { edge: true }); earB.ellipse(22.5, 13, 2, 1.2, K, { edge: true });
+      h.ellipse(16, 13, 4, 2.5, K, { edge: true });
+      h.poly([[12, 12], [11, 9], [13, 11]], HN); h.poly([[20, 12], [21, 9], [19, 11]], HN);
+      t.rect(16, 23, 1, 4, K.s); t.ellipse(16.5, 27.5, 1.5, 1.5, K, { edge: true });
+      return;
+    }
+    leg(legA, 10.5); leg(legB, 21.5);                                                            // sturdy legs, dark hooves
+    b.ellipse(16, 21, 10, 6.5, K, { edge: true });                                               // hulking body
+    b.ellipse(16, 25.5, 6, 1.6, EMB);                                                            // ember glow from the belly
+    coals([[9, 15], [12.5, 13.5], [19.5, 13.5], [23, 15]]);                                      // the heap of coals on its back
+    earA.ellipse(9.5, 14, 2, 1.2, K, { edge: true }); earB.ellipse(22.5, 14, 2, 1.2, K, { edge: true });
+    h.poly([[11, 12], [10, 9], [12, 11]], HN); h.poly([[21, 12], [22, 9], [20, 11]], HN);       // small horns
+    h.ellipse(16, 15.5, 5, 4.5, K, { edge: true });                                              // head held low
+    h.ellipse(16, 19, 3, 2, MZ, { edge: true });                                                 // muzzle
+    h.px(15, 19, OUTLINE).px(17, 19, OUTLINE);                                                   // nostrils
+    rigEyes(h, Q, 32, 12, 15, 2, () => h.rectM(12, 15, 2, 1, EYE));                              // eyes like embers
+    h.pxM(12, 14, OUTLINE).pxM(13, 14, OUTLINE);                                                 // a hard brow
+    rigMouth(h, Q, 15, 21, 2);
+  },
 };
 
 // Diagonal views, facing right like 'side' (flipped by face for left):
@@ -1747,29 +1853,25 @@ const MONSTER_ART_DIAG = {
   },
 
   lumawool(g, v) {
-    const W = P('#fff3d6', '#d9c39a', '#ffffff'), Y = P('#ffd84a', '#e0a722', '#fff3a0');
+    const W = P('#3e4458', '#2a2e3e', '#5a627a'), Fc = P('#4a4c58', '#30323c', '#6a6c78'), H = P('#7a7e8a', '#4a4e5a', '#a8acb8');
+    const LEG = '#2a2a34', HOOF = '#141418', BOLT = '#ffe066', GLOW = '#fff2a0';
     const { Q, b, h, t, earA, earB, legA, legB } = rigParts(g, v);
-    const wool = dx => { b.ellipse(9, 20, 6, 6, W); b.ellipse(20 + dx, 20, 5.5 + dx * 0.5, 6, W); b.ellipse(15, 15, 7, 6, W); b.ellipse(15, 23, 8, 6, W); };
-    const head = () => {
-      earB.poly([[14, 11], [8, 13], [13, 15]], Y); earA.poly([[22, 11], [26, 12], [22, 15]], Y);   // ears
-      h.ellipse(18, 12, 5, 5, Y, { edge: true });
-      h.rect(15, 6, 1, 3, '#2a2230'); h.rect(21, 6, 1, 3, '#2a2230');                            // little horns
-    };
-    if (v === 'bside') {
-      legB.rect(10, 26, 2, 4, '#2a2230'); legA.rect(19, 26, 2, 4, '#2a2230');
-      wool(1);
-      head();
-      t.rect(12, 24, 1, 4, OUTLINE); t.ellipse(12.5, 28, 2.5, 2.5, '#ff4a3a');                   // tail orb
-      return;
-    }
-    t.rect(5, 22, 1, 4, OUTLINE); t.ellipse(4, 21, 2.5, 2.5, '#ff4a3a');                         // tail orb
-    legB.rect(10, 26, 2, 4, '#2a2230'); legA.rect(19, 26, 2, 4, '#2a2230');
-    wool(0);
-    head();
-    rigEye(h, Q, 15, 11, () => { h.rect(15, 11, 2, 2, DARK_EYE); h.px(15, 11, '#ffffff'); });
-    rigEye(h, Q, 20, 11, () => { h.rect(20, 11, 2, 2, DARK_EYE); h.px(20, 11, '#ffffff'); });
-    h.ellipse(18, 8, 1.5, 1.5, '#ff4a3a');
-    rigMouth(h, Q, 18, 15, 2);
+    const leg = (p, x) => { p.rect(x, 25, 2, 5, LEG); p.rect(x, 29, 2, 1, HOOF); };
+    const horn = (p, cx, cy) => { p.ellipse(cx, cy, 3, 3, H, { edge: true }); p.ellipse(cx, cy, 1.4, 1.4, H.s); p.px(cx, cy - 2, H.l); };
+    const bolts = pts => { for (const [x, y] of pts) b.px(x, y, BOLT).px(x + 1, y - 1, BOLT).px(x + 2, y, BOLT); };
+    leg(legB, 10); leg(legA, 20);
+    for (const [x, y, r] of [[15.5, 21, 9], [8.5, 18, 4.5], [22.5, 18, 4], [11, 13, 4], [21, 13, 4], [16, 11, 5]]) b.ellipse(x, y, r, r * 0.8, W, { edge: true });
+    bolts([[8, 19], [20, 21], [14, 24]]);
+    t.px(3, 15, BOLT).px(4, 14, BOLT).px(4, 16, '#bfe8ff'); t.px(28, 22, BOLT).px(29, 21, BOLT).px(28, 23, '#bfe8ff');
+    horn(earB, 10, 11); horn(earA, 23, 11);
+    if (v === 'bside') return;
+    h.poly([[15, 11], [21, 11], [21, 19], [18.5, 21], [16, 19]], Fc, { edge: true });           // face, turned its way
+    h.ellipse(18.5, 19, 2, 1.2, Fc.l);
+    rigEye(h, Q, 15, 14, () => h.rect(15, 14, 2, 1, GLOW));
+    rigEye(h, Q, 19, 14, () => h.rect(19, 14, 2, 1, GLOW));
+    h.px(15, 13, OUTLINE).px(16, 13, OUTLINE); h.px(19, 13, OUTLINE).px(20, 13, OUTLINE);
+    h.px(18, 18, OUTLINE).px(20, 18, OUTLINE);
+    rigMouth(h, Q, 17, 20, 2);
   },
 
   brawlix(g, v) {
@@ -2064,6 +2166,64 @@ const MONSTER_ART_DIAG = {
     rigEye(h, Q, 11, 13, () => { h.ellipse(12, 14, 2.2, 2.4, EYE, { edge: true }); h.rect(12, 13, 1, 3, DARK_EYE); h.px(11, 13, '#ffffff'); }, 3);
     rigEye(h, Q, 22, 13, () => { h.ellipse(23, 14, 2.6, 2.6, EYE, { edge: true }); h.rect(23, 13, 1, 3, DARK_EYE); h.px(22, 13, '#ffffff'); }, 3);
     rigMouth(h, Q, 16, 17, 6, () => h.rect(15, 17, 8, 1, OUTLINE));
+  },
+  bellpaca(g, v) {
+    const W = P('#f4ead2', '#d6c6a0', '#ffffff'), MZ = '#ece0c4', HOOF = '#5a4a3a', COL = '#a83030', BELL = P('#e0b048', '#a07828', '#fff0a0'), GLOW = '#9af0ff';
+    const { Q, b, h, t, earA, earB, legA, legB } = rigParts(g, v);
+    const leg = (p, x) => { p.rect(x, 25, 3, 5, W.s); p.rect(x, 29, 3, 1, HOOF); };
+    if (v === 'bside') {
+      leg(legB, 10); leg(legA, 19);
+      b.ellipse(15, 21, 8, 5.5, W, { edge: true }); b.ellipse(8, 20, 2.5, 2.5, W);
+      b.ellipse(17, 13, 3.5, 6, W, { edge: true });
+      earB.poly([[12, 4], [12, 0], [14, 3]], W, { edge: true }); earA.poly([[22, 4], [22, 0], [20, 3]], W, { edge: true });
+      h.ellipse(17, 6, 4, 3.5, W, { edge: true }); h.ellipse(17, 3, 3.5, 2, W.l, { edge: true });
+      t.ellipse(12, 23, 1.6, 1.6, W, { edge: true });
+      return;
+    }
+    leg(legB, 10); leg(legA, 19);
+    t.ellipse(8, 20, 1.5, 1.5, W, { edge: true });
+    b.ellipse(15, 21, 8, 5.5, W, { edge: true }); b.ellipse(22, 20, 2.5, 2.5, W);
+    b.ellipse(17, 13, 3.5, 6, W, { edge: true });
+    b.rect(14, 15, 6, 1, COL);
+    b.ellipse(17.5, 16, 3, 2, '#d8fcff'); b.ellipse(17.5, 17.5, 1.6, 1.8, BELL, { edge: true }); b.px(17, 19, GLOW);
+    earB.poly([[12, 4], [12, 0], [14, 3]], W, { edge: true }); earA.poly([[22, 4], [22, 0], [20, 3]], W, { edge: true });
+    h.ellipse(17, 6, 4, 3.5, W, { edge: true }); h.ellipse(17, 3, 3.5, 2, W.l, { edge: true });
+    rigEye(h, Q, 14, 6, () => { h.rect(14, 6, 2, 1, OUTLINE); h.px(15, 7, '#3a2a1a'); });
+    rigEye(h, Q, 19, 6, () => { h.rect(19, 6, 2, 1, OUTLINE); h.px(19, 7, '#3a2a1a'); });
+    h.ellipse(18, 8.5, 1.8, 1.2, MZ);
+    rigMouth(h, Q, 17, 9, 2, () => h.px(18, 9, OUTLINE));
+  },
+  smouldox(g, v) {
+    const K = P('#3a3236', '#221c20', '#5a5056'), CO = P('#2a2226', '#140e12', '#4a3e44'), MZ = P('#6a5a5a', '#4a3e3e', '#8a7a78'), HN = '#9a9098';
+    const EMB = '#ff7a1c', HOT = '#ffd34a', EYE = '#ff9a3a', HOOF = '#141012', SMOKE = '#8a8088';
+    const { Q, b, h, t, earA, earB, legA, legB } = rigParts(g, v);
+    const coals = pts => { for (const [x, y] of pts) { b.ellipse(x, y, 2, 1.6, CO, { edge: true }); b.px(x, y, EMB); b.px(x - 1, y + 1, HOT); } };
+    const leg = (p, x) => { p.ellipse(x, 27.5, 2.4, 2.6, K, { edge: true }); p.ellipse(x, 30, 2.4, 1, HOOF); };
+    if (v === 'bside') {
+      leg(legB, 10); leg(legA, 21);
+      b.ellipse(15.5, 21, 10, 6.5, K, { edge: true });
+      coals([[9, 16], [13, 15], [17, 15], [21, 16], [11, 19], [19, 19], [15, 18]]);
+      earB.ellipse(11, 13, 2, 1.2, K, { edge: true }); earA.ellipse(23.5, 13, 2, 1.2, K, { edge: true });
+      h.ellipse(18, 13, 4, 2.5, K, { edge: true });
+      h.poly([[14, 12], [13, 9], [15, 11]], HN); h.poly([[22, 12], [23, 9], [21, 11]], HN);
+      t.rect(11, 23, 1, 4, K.s); t.ellipse(11.5, 27.5, 1.5, 1.5, K, { edge: true });
+      t.px(8, 11, SMOKE).px(9, 9, SMOKE).px(8, 7, SMOKE);
+      return;
+    }
+    t.rect(5, 19, 1, 4, K.s); t.ellipse(5, 24, 1.5, 1.5, K, { edge: true });
+    leg(legB, 10); leg(legA, 21);
+    b.ellipse(15, 21, 10, 6.5, K, { edge: true });
+    b.ellipse(16, 25.5, 6, 1.6, EMB);
+    coals([[8, 15], [11.5, 13.5], [16, 13], [20, 14.5]]);
+    earB.ellipse(11.5, 14, 2, 1.2, K, { edge: true }); earA.ellipse(24.5, 14, 2, 1.2, K, { edge: true });
+    h.poly([[13, 12], [12, 9], [14, 11]], HN); h.poly([[23, 12], [24, 9], [22, 11]], HN);
+    h.ellipse(18, 15.5, 5, 4.5, K, { edge: true });
+    h.ellipse(19.5, 19, 3, 2, MZ, { edge: true });
+    h.px(18, 19, OUTLINE).px(21, 19, OUTLINE);
+    rigEye(h, Q, 14, 15, () => h.rect(14, 15, 2, 1, EYE));
+    rigEye(h, Q, 20, 15, () => h.rect(20, 15, 2, 1, EYE));
+    h.px(14, 14, OUTLINE).px(15, 14, OUTLINE); h.px(21, 14, OUTLINE).px(20, 14, OUTLINE);
+    rigMouth(h, Q, 18, 21, 2);
   },
 };
 

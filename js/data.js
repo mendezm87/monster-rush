@@ -257,6 +257,11 @@ const ROSTER = [
     moves: ['discharge', 'shadowBall', 'thunder', 'staticSiphon'] },
   { id: 'coilizard', name: 'COILIZARD', types: ['electric', 'rock'], hp: 1080, atk: 1.12, def: 1.12, spd: 92, size: 'M', item: 'ironPlate',
     moves: ['rollout', 'thunderbolt', 'rockSlide', 'thunder'] },
+  // a calm lantern-belled alpaca (a sturdy guardian that heals) and a smouldering coal calf (a tank)
+  { id: 'bellpaca', name: 'BELLPACA', types: ['electric', 'normal'], hp: 1150, atk: 1.0, def: 1.12, spd: 80, size: 'M', item: 'snackPouch',
+    moves: ['bodySlam', 'staticSiphon', 'voltCannon', 'wish'] },
+  { id: 'smouldox', name: 'SMOULDOX', types: ['fire', 'rock'], hp: 1300, atk: 1.12, def: 1.2, spd: 64, size: 'M', item: 'emberStone',
+    moves: ['flameWheel', 'rockSlide', 'fireBlast', 'heavyStomp'] },
 ];
 
 // Evolved forms: a starter becomes one of these at `evolve.level` (see `evolve` on the base
