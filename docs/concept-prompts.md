@@ -104,7 +104,7 @@ baseball cap" and try again. Ask for a back view too ("front and back view, char
 once you've picked one.
 
 **T1 · Scarf tamer**
-> A scrappy teenage monster tamer, messy dark hair with a few red streaks, a long red scarf trailing in the wind, aviator goggles pushed up on the forehead, a short cropped bomber jacket with patches, fingerless gloves, a belt of little capture capsules, cargo shorts over leggings, chunky hiking boots, a cocky grin, 1990s TV anime cel art, hand-inked line art with varying line weight, flat cel colours with one hard-edged shadow tone, soft airbrushed highlights, plain light grey background, full body, standing in a confident three-quarter pose, slight film grain, original character design, no text
+> A scrappy teenage monster tamer, messy dark hair with a few red streaks, a long red scarf trailing in the wind, aviator goggles pushed up on the forehead, a short cropped bomber jacket with patches, fingerless gloves, a belt of small glowing crystal charms in brass cages (no balls or spheres), cargo shorts over leggings, chunky hiking boots, a cocky grin, 1990s TV anime cel art, hand-inked line art with varying line weight, flat cel colours with one hard-edged shadow tone, soft airbrushed highlights, plain light grey background, full body, standing in a confident three-quarter pose, slight film grain, original character design, no text
 
 **T2 · Field researcher**
 > A young field researcher who studies wild monsters, round glasses, short choppy hair under a wide-brimmed explorer's hat with a red band, a rolled-sleeve khaki field coat with lots of pockets, a leather satchel stuffed with notes and a glowing monster-scanner, a red neckerchief, cuffed trousers and sturdy boots, curious determined expression, 1990s TV anime cel art, hand-inked line art with varying line weight, flat cel colours with one hard-edged shadow tone, soft airbrushed highlights, plain light grey background, full body, standing in a confident three-quarter pose, slight film grain, original character design, no text
@@ -114,6 +114,23 @@ once you've picked one.
 
 **T4 · Shiba-spirited trainer**
 > A cheerful but tough young trainer whose look nods to a Shiba Inu: a ginger-and-cream hooded jacket with little pointed ear shapes on the hood, a curled cream tassel on the zip, a smug half-lidded grin, a red tracksuit stripe down the trousers, white sneakers, a bum bag with dog-bone charms, hands in pockets, 1990s TV anime cel art, hand-inked line art with varying line weight, flat cel colours with one hard-edged shadow tone, soft airbrushed highlights, plain light grey background, full body, standing in a confident three-quarter pose, slight film grain, original character design, no text
+
+**No ball-shaped capture devices** in any trainer art (the owner: we're replacing those). Where a
+prompt needs gear on the belt, it says "a belt of small glowing crystal charms in brass cages (no balls or spheres)" until the new capture device is decided.
+
+**Female counterparts** (same four trainers, a choice of look):
+
+**T1F · Scarf tamer**
+> A scrappy teenage girl monster tamer, wild shoulder-length dark hair with red streaks tied back loosely, a long red scarf trailing in the wind, aviator goggles pushed up on the forehead, a short cropped bomber jacket covered in patches, fingerless gloves, a belt of small glowing crystal charms in brass cages (no balls or spheres), cargo shorts over leggings, chunky hiking boots, a cocky grin, 1990s TV anime cel art, hand-inked line art with varying line weight, flat cel colours with one hard-edged shadow tone, soft airbrushed highlights, plain light grey background, full body, standing in a confident three-quarter pose, slight film grain, original character design, no text
+
+**T2F · Field researcher**
+> A young woman field researcher who studies wild monsters, round glasses, a short bob under a wide-brimmed explorer's hat with a red band, a rolled-sleeve khaki field coat with lots of pockets, a leather satchel stuffed with notes and a glowing monster-scanner, a red neckerchief, cuffed trousers and sturdy boots, curious determined smile, 1990s TV anime cel art, hand-inked line art with varying line weight, flat cel colours with one hard-edged shadow tone, soft airbrushed highlights, plain light grey background, full body, standing in a confident three-quarter pose, slight film grain, original character design, no text
+
+**T3F · Dungeon diver**
+> A daring young woman dungeon diver, a hooded crimson coat with a torn hem over light armour plates, a lantern hanging from the belt, a coil of rope over one shoulder, a scuffed metal gauntlet on one hand, a long dark braid falling out of the hood, a bandage across the nose, a fierce grin, tall travel boots, 1990s TV anime cel art, hand-inked line art with varying line weight, flat cel colours with one hard-edged shadow tone, soft airbrushed highlights, plain light grey background, full body, standing in a confident three-quarter pose, slight film grain, original character design, no text
+
+**T4F · Shiba-spirited trainer**
+> A cheerful but tough young woman trainer whose look nods to a Shiba Inu: a ginger-and-cream hooded jacket with little pointed ear shapes on the hood, ginger hair in two short tufts, a curled cream tassel on the zip, a smug half-lidded grin, black track pants with a red stripe, white sneakers, a bum bag with dog-bone charms, one hand on her hip, 1990s TV anime cel art, hand-inked line art with varying line weight, flat cel colours with one hard-edged shadow tone, soft airbrushed highlights, plain light grey background, full body, standing in a confident three-quarter pose, slight film grain, original character design, no text
 
 ## A cannon turtle (new monster; the owner loves Blastoise's design, so an original take on "a turtle with cannons")
 
