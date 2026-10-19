@@ -229,7 +229,7 @@ class Battle {
     m.x = clamp(pos.x, F.x0 + m.r, F.x1 - m.r); m.y = clamp(pos.y, F.y0 + m.r, F.y1 - 2);
     m.face = 1;
     // a deploy: the beam reaches the ground (`beam` s), then the monster assembles pixel by pixel (see updateBalls)
-    this.balls.push({ from: { x: t.x, y: t.y - 14 }, to: { x: m.x, y: m.y - 2 }, t: 0, beam: 0.16, color: TYPES[m.def.types[0]].color });
+    this.balls.push({ from: { x: t.x, y: t.y - 24 }, to: { x: m.x, y: m.y - 2 }, t: 0, beam: 0.16, color: TYPES[m.def.types[0]].color });
     this.trainerAct('deploy', m);
     this.ui.onSendOut('player', m);
     Sfx.play('deploy');
@@ -331,9 +331,9 @@ class Battle {
         this.particles.push({ x: m.x, y: m.y - 2, r0: 4, r1: 30, life: 0.4, max: 0.4, color: '#ffe066', kind: 'ring', w: 2 });
       } else {
         const t = this.trainer;
-        this.text(t.x, t.y - 34, `${m.def.name} LV ${m.level}`, '#ffe9a0');
+        this.text(t.x, t.y - 50, `${m.def.name} LV ${m.level}`, '#ffe9a0');
       }
-      if (ev.learned) this.text(m === this.P ? m.x : this.trainer.x, (m === this.P ? m.y - m.h : this.trainer.y - 34) - 24, `LEARNED ${MOVES[ev.learned].name.toUpperCase()}!`, TYPES[MOVES[ev.learned].type].fx[1]);
+      if (ev.learned) this.text(m === this.P ? m.x : this.trainer.x, (m === this.P ? m.y - m.h : this.trainer.y - 50) - 24, `LEARNED ${MOVES[ev.learned].name.toUpperCase()}!`, TYPES[MOVES[ev.learned].type].fx[1]);
       Sfx.play('levelUp');
     }
     if (this.state === 'explore') this.evolveReady();

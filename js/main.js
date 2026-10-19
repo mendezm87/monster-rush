@@ -2,7 +2,7 @@
 
 // Shown on the title screen so players can tell whether their browser has the latest
 // build (GitHub Pages lets browsers cache files for up to 10 minutes). Bump on every release.
-const VERSION = '2026.10.19-r73';
+const VERSION = '2026.10.19-r74';
 
 const App = {
   endless: false,   // the mode picked on the title screen
@@ -202,10 +202,10 @@ function drawTrainerPick() {
   for (const [id, T] of Object.entries(TRAINERS)) {
     const have = Save.hasTrainer(id), card = document.createElement('div');
     card.className = 'card' + (id === TrainerPick.id ? ' sel' : '') + (have ? '' : ' locked');
-    const cv = document.createElement('canvas'); cv.width = 64; cv.height = 64;
+    const cv = document.createElement('canvas'); cv.width = 84; cv.height = 84;
     const c = cv.getContext('2d'); c.imageSmoothingEnabled = false;
-    const img = trainerCanvas(trainerLook(id, TrainerPick.look), 'front'); c.drawImage(img, (64 - img.width * 2) / 2, 64 - img.height * 2, img.width * 2, img.height * 2);
-    if (!have) { c.globalCompositeOperation = 'source-atop'; c.fillStyle = 'rgba(10,8,18,.85)'; c.fillRect(0, 0, 64, 64); }
+    const img = trainerCanvas(trainerLook(id, TrainerPick.look), 'front'); c.drawImage(img, (84 - img.width * 2) / 2, 84 - img.height * 2, img.width * 2, img.height * 2);
+    if (!have) { c.globalCompositeOperation = 'source-atop'; c.fillStyle = 'rgba(10,8,18,.85)'; c.fillRect(0, 0, 84, 84); }
     card.appendChild(cv);
     card.insertAdjacentHTML('beforeend', `<div class="c-name">${have ? T.name : '???'}</div><div class="c-pow">${have ? T.power : 'Locked'}</div>`);
     card.onclick = () => { Sfx.play(have ? 'select' : 'back'); if (have) { TrainerPick.id = id; drawTrainerPick(); } else UI.banner('LOCKED'); };

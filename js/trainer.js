@@ -33,7 +33,7 @@ const TRAINER_ACTS = {
   slump:   { frames: [['slump', 99]] },
   look:    { frames: [['lookL', 0.7], ['idle', 0.4], ['lookR', 0.7]] },
 };
-const TP_X = 4, TP_Y = 10, TP_W = TW + 2 * TP_X, TP_H = TH + TP_Y;   // the posed picture: the map with room for raised arms
+const TP_X = 4, TP_Y = 10, TP_W = TW + 2 * TP_X, TP_H = TH + TP_Y;   // TW, TH and the rows below: trainers.js   // the posed picture: the map with room for raised arms
 
 // One pose of one look in one view, as a picture (cached). Bottom-centred like the plain trainer, but bigger.
 const _tposes = {};
@@ -50,12 +50,15 @@ function trainerPose(look, view, poseName) {
   const legs = map.slice(TR_LEGS + c);
   legs.forEach((row, i) => [...row].forEach((ch, x) => put(x + TP_X, TP_Y + TH - legs.length + i, ch)));
   for (let y = TR_BODY; y < TR_LEGS; y++) [...map[y]].forEach((ch, x) => put(x + TP_X, TP_Y + y + c, ch));   // body, sunk by the crouch
-  for (let y = 0; y < TR_BODY; y++) [...map[y]].forEach((ch, x) => put(x + TP_X + hx, TP_Y + y + c + hy, P.mouth === 'open' && ch === 'K' ? 'k' : ch));   // head
+  for (let y = 0; y < TR_BODY; y++) [...map[y]].forEach((ch, x) => {   // head (an open mouth: teeth and the lip below go dark)
+    const open = P.mouth === 'open' && (ch === '3' || ch === 'K' || ((ch === 's' || ch === 'S') && map[y - 1] && map[y - 1][x] === 'K'));
+    put(x + TP_X + hx, TP_Y + y + c + hy, open ? 'K' : ch);
+  });
   // the moving arms, drawn from the shoulder out, then inked round
   const armPx = [];
   for (const k of ['L', 'R']) {
     if (!moving(k)) continue;
-    for (const [x, y, ch] of trainerArmPx(arms[k], P['arm' + k], trainerArmCols(look, k), TP_X, TP_Y + c)) { put(x, y, ch); armPx.push([x, y]); }
+    for (const [x, y, ch] of trainerArmPx(arms[k], P['arm' + k], trainerArmCols(look, k), TP_X + TOX, TP_Y + c)) { put(x, y, ch); armPx.push([x, y]); }
   }
   for (const [x, y] of armPx) for (const [ox, oy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
     const nx = x + ox, ny = y + oy;
