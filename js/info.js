@@ -20,7 +20,7 @@ function drawInfo() {
   if (!run) return;
   if (Info.tab === 'relics') {
     const T = run.T;
-    const tc = document.createElement('canvas'); tc.width = tc.height = 48; { const c = tc.getContext('2d'), im = trainerCanvas(T.outfit, 'front'); c.imageSmoothingEnabled = false; c.drawImage(im, 12, 0, im.width * 2, im.height * 2); }
+    const tc = document.createElement('canvas'); tc.width = tc.height = 48; { const c = tc.getContext('2d'), im = trainerCanvas(trainerLook(run.trainer, run.look), 'front'); c.imageSmoothingEnabled = false; c.drawImage(im, 14, 2, im.width * 1.5, im.height * 1.5); }
     row(tc, `<b>${T.name}</b> <span class="tag elem">${T.power}</span><br>${T.desc}${T.drawback ? `<br><span class="lbl">Drawback</span> ${T.drawback}` : ''}`);
     if (!run.relics.length) body.insertAdjacentHTML('beforeend', '<div class="hint">No relics yet. Treasure rooms, the shop and room rewards have them. They help your whole party for the rest of the run.</div>');
     for (const id of run.relics) {

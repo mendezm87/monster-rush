@@ -99,7 +99,7 @@ $('#game').addEventListener('load', async () => {
         if (!px) bad.push(`${m.id}/${v}`);
       }
     }
-    for (const v of G('TRAINER_VIEWS')) if (!w.trainerCanvas('crimson', v).width) bad.push('trainer/' + v);
+    for (const look of Object.keys(G('TRAINER_OUTFITS'))) for (const v of G('TRAINER_VIEWS')) if (!w.trainerCanvas(look, v).width || !w.trainerWalk(look, v)[1].width) bad.push('trainer/' + look + '/' + v);
     const n = G('ALL_MONS()').length;
     check('Sprites', !bad.length, bad.length ? 'missing or empty: ' + bad.join(', ') : `${n} monsters × ${VIEWS.length} views, plus the trainer`);
   } catch (e) { check('Sprites', false, e.message); }

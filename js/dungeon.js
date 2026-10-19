@@ -340,20 +340,19 @@ Save.load();
 // Everything that lasts for one run.
 // The trainers, chosen before the starter. Every trainer wears the bracer that holds monsters as
 // data; each brings a starting power, and the stronger powers come with a drawback (like Isaac's
-// characters). look: 'm' or 'f' (one sprite for both until the new trainer art; outfit is a
-// TRAINER_OUTFITS colourway as a stand-in). perk works like a relic that can't be lost (bonus,
+// characters). look: 'm' or 'f' (him or her; pixel.js TRAINER_LOOKS draws each). perk works like a relic that can't be lost (bonus,
 // mods, on); the rest are read by RunState. unlock: how it's earned (trainerUnlocks in main.js).
 const TRAINERS = {
-  scarf: { name: 'SCARF TAMER', outfit: 'crimson', power: 'Tag Team',
+  scarf: { name: 'SCARF TAMER', power: 'Tag Team',
     desc: 'Swapping recharges twice as fast, and a monster you swap in hits 25% harder for 4 seconds.', drawback: null, unlock: null,
     perk: { mods: { swapCdMul: 0.5 }, on: { swapIn(b, m) { m.buffs.push({ stat: 'atk', mul: 1.25, t: 4 }); } } } },
-  researcher: { name: 'FIELD RESEARCHER', outfit: 'forest', power: 'Field Notes',
+  researcher: { name: 'FIELD RESEARCHER', power: 'Field Notes',
     desc: 'Your party earns 30% more XP, and recruit rooms offer 4 monsters instead of 3.', drawback: 'Your monsters deal 10% less damage.',
     unlock: 'Recruit 10 different monsters.', perk: { bonus: { atk: 0.9 } }, xpMul: 1.3, offers: 4 },
-  diver: { name: 'DUNGEON DIVER', outfit: 'scarlet', power: 'Delver',
+  diver: { name: 'DUNGEON DIVER', power: 'Delver',
     desc: 'Starts with a random relic, and the lantern shows the whole map of every floor.', drawback: 'An old salvaged bracer: only 4 party slots.',
     unlock: 'Reach floor 4.', partyMax: 4, reveal: true, startRelic: true },
-  shiba: { name: 'SHIBA TRAINER', outfit: 'ember', power: 'Pack Leader',
+  shiba: { name: 'SHIBA TRAINER', power: 'Pack Leader',
     desc: 'Toshi (Smugshi) joins your run as a free extra monster.', drawback: 'Wild monsters drop 30% fewer coins.',
     unlock: 'Win a run with Smugshi in your party.', perk: { mods: { coinMul: 0.7 } }, companion: 'smugshi' },
 };

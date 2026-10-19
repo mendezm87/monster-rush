@@ -25,7 +25,7 @@ class Battle {
     this.ground = built.canvas; this.stage = built.stage;
     if (!room.decal) { room.decal = document.createElement('canvas'); room.decal.width = room.w; room.decal.height = room.h; }
     this.decal = room.decal; this.dctx = this.decal.getContext('2d');
-    this.outfit = run.T ? run.T.outfit : TRAINER_OUTFIT;
+    this.outfit = trainerLook(run.trainer, run.look);   // pixel.js: which of the 8 trainer looks
     this.trainerImg = Object.fromEntries(TRAINER_VIEWS.map(v => [v, trainerCanvas(this.outfit, v)]));
     this.trainerWalk = Object.fromEntries(TRAINER_VIEWS.map(v => [v, trainerWalk(this.outfit, v)]));
     this.projectiles = []; this.zones = []; this.particles = []; this.floats = []; this.texts = []; this.balls = [];

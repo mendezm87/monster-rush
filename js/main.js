@@ -2,7 +2,7 @@
 
 // Shown on the title screen so players can tell whether their browser has the latest
 // build (GitHub Pages lets browsers cache files for up to 10 minutes). Bump on every release.
-const VERSION = '2026.10.19-r70';
+const VERSION = '2026.10.19-r71';
 
 const App = {
   endless: false,   // the mode picked on the title screen
@@ -204,7 +204,7 @@ function drawTrainerPick() {
     card.className = 'card' + (id === TrainerPick.id ? ' sel' : '') + (have ? '' : ' locked');
     const cv = document.createElement('canvas'); cv.width = 64; cv.height = 64;
     const c = cv.getContext('2d'); c.imageSmoothingEnabled = false;
-    const img = trainerCanvas(T.outfit, 'front'); c.drawImage(img, (64 - img.width * 2.5) / 2, 64 - img.height * 2.5, img.width * 2.5, img.height * 2.5);
+    const img = trainerCanvas(trainerLook(id, TrainerPick.look), 'front'); c.drawImage(img, (64 - img.width * 2) / 2, 64 - img.height * 2, img.width * 2, img.height * 2);
     if (!have) { c.globalCompositeOperation = 'source-atop'; c.fillStyle = 'rgba(10,8,18,.85)'; c.fillRect(0, 0, 64, 64); }
     card.appendChild(cv);
     card.insertAdjacentHTML('beforeend', `<div class="c-name">${have ? T.name : '???'}</div><div class="c-pow">${have ? T.power : 'Locked'}</div>`);
@@ -215,8 +215,7 @@ function drawTrainerPick() {
   $('#trainer-detail').innerHTML = `<div><div class="d-name">${T.name} <span class="t-pow">${T.power}</span></div>
     <div class="d-desc">${T.desc}</div>
     ${T.drawback ? `<div class="d-desc t-down">Drawback: ${T.drawback}</div>` : '<div class="d-desc t-up">No drawback: a good first pick.</div>'}
-    <div class="t-looks">Look: <button data-look="m" class="${TrainerPick.look === 'm' ? 'on' : ''}">Him</button><button data-look="f" class="${TrainerPick.look === 'f' ? 'on' : ''}">Her</button>
-      <span class="hint">(new trainer art is on the way; both use this sprite for now)</span></div>
+    <div class="t-looks">Look: <button data-look="m" class="${TrainerPick.look === 'm' ? 'on' : ''}">Him</button><button data-look="f" class="${TrainerPick.look === 'f' ? 'on' : ''}">Her</button></div>
     <div class="hint">${Object.entries(TRAINERS).filter(([id]) => !Save.hasTrainer(id)).map(([, t]) => `Unlock ${t.name}: ${t.unlock}`).join('<br>')}</div></div>`;
   $('#trainer-detail').querySelectorAll('[data-look]').forEach(b => { b.onclick = () => { Sfx.play('select'); TrainerPick.look = b.dataset.look; drawTrainerPick(); }; });
 }
