@@ -63,8 +63,8 @@ function trArm(P, a, arm) {
   const px = trainerArmPx(a, 0, arm);
   for (const [x, y, c] of px) P.px(x, y, c);
   if (!a.over) return;
-  const own = new Set(px.map(([x, y]) => x + ',' + y));   // over the body: ink its sides
-  for (const [x, y] of px) for (const [ox, oy] of [[1, 0], [-1, 0], [0, 1]]) {
+  const own = new Set(px.map(([x, y]) => x + ',' + y));   // over the body: ink its front edge and the hand (the back edge melts into the body)
+  for (const [x, y] of px) for (const [ox, oy] of [[1, 0], [0, 1]]) {
     const nx = x + ox, ny = y + oy;
     if (!own.has(nx + ',' + ny) && ny > a.sy && P.at(nx, ny) !== '.') P.px(nx, ny, 'k');
   }
@@ -113,12 +113,12 @@ const TRAINER_LOOKS = {
         '.khhkgYyyggggYyygkhk',
         '.khhhkkkkkhhkkkkkhhk',
         'khhhhHhhhhhhhhHhhhhk',
-        'khhhhsshssshssshhhhk',
-        'khhhkHHsssssHHsSkhhk',
+        'khhhhHshssshsssHhhhk',
+        'khhhksHHsssssHHSkhhk',
         'khhhkSrrsssssrrSkhhk',
-        'khhhkswisssssiwSkhhk',
-        '.khhksssssSssssSkhk.',
-        '..khkssK333KssSkhk..',
+        'khhhkssisssssisSkhhk',
+        '.khhksssssSsKssSkhk.',
+        '..khksssKKKKssSkhk..',
         '...khkSssssssSkhk...',
       ] },
       side: { x: 1, lash: [[16, 12]], rows: [
@@ -133,11 +133,11 @@ const TRAINER_LOOKS = {
         'khhhhhhhhhhhhhkkkkk.',
         'khhhhhhhhhhhhHhhhhk.',
         '.khhhhhhhhhhhshhsshk',
-        '.khhhhhhhSSsssHHsssk',
+        '.khhhhhhhSSssssHHssk',
         '.khhhhhhSSssssrrsssk',
-        '..khhhhhSssssiwssssk',
-        '..khhhhhhsssssssssk.',
-        '...khhhkSssssK33Sk..',
+        '..khhhhhSsssssissssk',
+        '..khhhhhhssssssssKk.',
+        '...khhhkSsssssKKsk..',
         '....kk.kSSssssssk...',
       ] },
       back: { x: 2, rows: [
@@ -233,7 +233,7 @@ const TRAINER_LOOKS = {
       if (back) { P.rect(13, 19, 14, 24, 'a'); P.col(14, 19, 24, 'A'); P.pts([[13, 25], [14, 26]], 'a'); streamer(18, 1); }
       else { P.rect(8, 19, 9, 23, 'a'); P.col(9, 19, 23, 'A'); P.pts([[8, 24], [9, 25]], 'a'); streamer(6, -1); }
       if (f) {   // her: long locks over the shoulders and a high ponytail
-        if (back) { P.rect(10 + sx, 3, 13 + sx, 15, 'h'); P.rect(10 + sx, 16, 12 + sx, 21, 'h'); P.pts([[11, 5], [12, 8], [11, 11], [12, 14], [11, 18]].map(([x, y]) => [x + sx, y]), 'e'); P.col(13 + sx, 5, 12, 'R'); P.pts([[10, 4], [13, 4]].map(([x, y]) => [x + sx, y]), 'a'); }
+        if (back) { P.rect(10 + sx, 3, 13 + sx, 15, 'h'); P.rect(10 + sx, 16, 12 + sx, 21, 'h'); P.pts([[11, 5], [12, 8], [11, 11], [12, 14], [11, 18]].map(([x, y]) => [x + sx, y]), 'e'); P.pts([[12, 5], [12, 6], [13, 7], [13, 8], [12, 9], [12, 10], [13, 11], [13, 12], [12, 13]].map(([x, y]) => [x + sx, y]), 'R'); P.pts([[10, 4], [13, 4]].map(([x, y]) => [x + sx, y]), 'a'); }
         else {
           P.pts([[3, 1], [2, 0], [4, 0]].map(([x, y]) => [x + sx, y]), 'h');
           for (let y = 13; y <= 18; y++) { P.px(2 + sx, y, 'h'); P.px(3 + sx, y, y % 2 ? 'h' : 'e'); if (!sx) { P.px(21, y, 'h'); P.px(20, y, y % 2 ? 'h' : 'e'); } }
@@ -266,7 +266,7 @@ const TRAINER_LOOKS = {
         '..khsmmssssssmmshk..',
         '..khmrymmmmmmyrmhk..',
         '..khsmmssssssmmShk..',
-        '..khssssssSssssShk..',
+        '..khssssssSKsssShk..',
         '...kssssKKKsssSk....',
         '....kkSssssssSkk....',
       ] },
@@ -285,7 +285,7 @@ const TRAINER_LOOKS = {
         '..khhhhhSSssmmsssk..',
         '..khhhhhSSsmyrmssk..',
         '...khhhhhSssmmsssk..',
-        '...khhhhhssssssssk..',
+        '...khhhhhssssssKsk..',
         '....khhhkSsssKKsk...',
         '.....kkk.kSSsssk....',
       ] },
@@ -389,12 +389,12 @@ const TRAINER_LOOKS = {
         '..kcccxhhhhhhxcccCk.',
         '.kcccxhhhHhhhhxcccCk',
         '.kccxhhHhhhhHhhxccCk',
-        '.kccxhshhhhhhhshxcCk',
-        '.kccxsHHsssssHHsxcCk',
+        '.kccxhHhhhhhhhHhxcCk',
+        '.kccxssHsssssHssxcCk',
         '.kccxsrrsssssrrsxcCk',
-        '.kccxswisssssiwsxcCk',
-        '.kccxszzssSsssssxcCk',
-        '.kccxssK3333KssSxcCk',
+        '.kccxssisssssissxcCk',
+        '.kccxszzssSsKsssxcCk',
+        '.kccxsssKKKKsssSxcCk',
         '.kcccxSsssssssSxccCk',
         '..kcccxxSSSSSSxxcCk.',
         '..kccccccccccccccCk.',
@@ -408,12 +408,12 @@ const TRAINER_LOOKS = {
         'kcccccccccccxhhxCk..',
         'kccccccccccxhhHhxk..',
         'kccccccccccxhhhhssk.',
-        'kcccccccccxhhhHHssk.',
-        'kcccccccccxssssHHsk.',
+        'kcccccccccxhhhHHHsk.',
+        'kcccccccccxssssssHk.',
         'kCccccccccxSsssssrrk',
-        'kCccccccccxSsssssiwk',
-        '.kCcccccccxSzzsssssk',
-        '.kCcccccccxSssssK33k',
+        'kCccccccccxSsssssisk',
+        '.kCcccccccxSzzssssKk',
+        '.kCcccccccxSsssssKKk',
         '..kCccccccxxSsssssk.',
         '..kCCcccccccxSSSSk..',
         '...kCCccccccccccCk..',
@@ -445,11 +445,13 @@ const TRAINER_LOOKS = {
       const side = v === 'side', back = v === 'back' || v === 'bside', sx = v === 'fside' || v === 'bside' ? 1 : 0;
       if (side) {
         P.rect(6, 19, 15, 28, 'j'); P.col(6, 19, 28, 'I'); P.col(15, 19, 28, 'J'); P.rect(13, 20, 15, 25, 'm'); P.col(13, 20, 22, 'W'); P.row(25, 13, 15, 'M');
-        P.row(28, 6, 15, 'b'); P.rect(3, 29, 9, 36, 'j'); P.col(3, 29, 36, 'I'); P.pts([[3, 36], [5, 36], [7, 36]], '.'); P.pts([[2, 35], [4, 37], [6, 37]], 'j');
+        P.row(28, 6, 15, 'b');
+        [[29, 5], [30, 4], [31, 4], [32, 3], [33, 3], [34, 2], [35, 2], [36, 2]].forEach(([y, x0]) => { P.row(y, x0, 9, 'j'); P.px(x0, y, 'I'); });   // the coat tail swept back
+        P.pts([[2, 37], [4, 37], [5, 38], [7, 37], [9, 37]], 'j'); P.pts([[3, 36], [6, 36]], '.'); P.rect(15, 29, 16, 33, 'j'); P.col(16, 29, 33, 'J'); P.px(16, 34, 'j');
         P.rect(10, 29, 15, 33, 'p'); P.col(15, 29, 33, 'P'); P.rect(12, 32, 15, 33, 'm');
         P.pts([[14, 29], [14, 30]], 'M'); P.rect(13, 31, 15, 33, 'y'); P.pts([[13, 31], [15, 31], [13, 33], [15, 33]], 'M'); P.px(14, 34, 'M'); P.px(14, 32, 'Y');
-        P.rect(8, 34, 11, 40, 'F'); P.rect(12, 34, 16, 40, 'f'); P.row(36, 12, 16, 'B'); P.row(39, 12, 16, 'B'); P.row(37, 8, 11, 'B');
-        P.row(41, 7, 11, 'V'); P.row(41, 12, 17, 'V'); P.px(17, 40, 'f');
+        P.rect(8, 34, 10, 40, 'F'); P.rect(12, 34, 15, 40, 'f'); P.col(15, 34, 38, 'F'); P.row(36, 12, 15, 'B'); P.row(38, 12, 15, 'B'); P.row(37, 8, 10, 'B');
+        P.row(39, 7, 10, 'F'); P.row(40, 7, 10, 'F'); P.rect(12, 39, 16, 40, 'f'); P.row(41, 7, 10, 'V'); P.row(41, 12, 16, 'V');
         P.head(this.heads.side.rows, this.heads.side.x);
         P.rect(4, 16, 15, 19, 'c'); P.row(19, 4, 15, 'C'); P.pts([[4, 20], [6, 20], [9, 20], [11, 20]], 'C');
         P.pts([[8, 16], [9, 17], [10, 17], [11, 18], [12, 18], [9, 19], [10, 19]], 'n'); P.pts([[10, 18], [11, 19]], 'N');
@@ -512,12 +514,12 @@ const TRAINER_LOOKS = {
         '.kcccccccccccccccCk.',
         '.kcccchhhhhhhhccccCk',
         'kcchhhhHhhhHhhhhccCk',
-        'kcchhhshhhhhshhhhcCk',
-        'kcchsHHsssssHHsshcCk',
+        'kcchhCshhhhhshChhcCk',
+        'kcchssCssssssCsshcCk',
         'kcchsrrssssssrrShcCk',
-        'kcchsiissssssiiShcCk',
-        'kcchssssssSssssShcCk',
-        'kcchsssK3333KssShcCk',
+        'kcchssissssssisShcCk',
+        'kcchssssssSsKssShcCk',
+        'kcchssssKKKKsssShcCk',
         '.kcchSssssssssShccCk',
         '.kccchSSSSSSSShccCk.',
         '..kccccSSSSSScccCk..',
@@ -532,11 +534,11 @@ const TRAINER_LOOKS = {
         '.kcccccccccchhhhcCk.',
         '.kccccccccchhhHhhck.',
         'kccccccccchhhhhhssk.',
-        'kcccccccchSsssHHssk.',
+        'kcccccccchSsssssCsk.',
         'kccccccccSSsssssrrk.',
         'kCcccccccSSsssssisk.',
-        'kCccccccchssssssssk.',
-        '.kCcccccchSsssK33k..',
+        'kCccccccchsssssssKk.',
+        '.kCcccccchSssssKKk..',
         '.kCccccccchSssssk...',
         '..kCCcccccchSSSk....',
         '...kCCcccccSSSSk....',
@@ -583,7 +585,7 @@ const TRAINER_LOOKS = {
       for (let y = 21; y <= 28; y++) { P.px(5, y, 'k'); P.px(18, y, 'k'); }
       P.row(27, 6, 17, 'c'); P.row(28, 6, 17, 'C');
       if (back) {
-        P.rect(9, 21, 14, 25, 'c'); P.rect(10, 22, 13, 24, 'w'); P.pts([[12, 23], [11, 23]], 'c'); P.px(13, 22, 'C');   // the curly tail
+        P.pts([[10, 21], [11, 21], [12, 21], [9, 22], [13, 22], [9, 23], [11, 23], [13, 23], [9, 24], [11, 24], [12, 24], [10, 25], [9, 26]], 'c'); P.pts([[13, 23], [12, 24], [9, 26]], 'C');   // the curly tail
         P.row(29, 6, 17, 'b');
       } else {
         P.pts([[11, 19], [12, 19]], 't'); P.col(11, 20, 26, 'W'); P.pts([[9, 20], [9, 21], [14, 20], [14, 21]], 'W'); P.pts([[9, 22], [14, 22]], 'u');
