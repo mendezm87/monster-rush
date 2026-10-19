@@ -70,16 +70,20 @@ class Battle {
   // does this monster's side have the relic? (relics only help your party)
   relic(m, id) { return m.side === 'player' && this.run.relics.includes(id); }
   // a number from the relics you hold (RELICS[id].mods): ...Mul names multiply, others add; m = null for the party as a whole
+  // (plus, for a monster, the relics fused into it at the altar)
   mod(m, key, base = key.endsWith('Mul') ? 1 : 0) {
     if (m && m.side !== 'player') return base;
     let v = base;
-    for (const id of this.run.relics) { const x = RELICS[id].mods && RELICS[id].mods[key]; if (x !== undefined) v = key.endsWith('Mul') ? v * x : v + x; }
+    const add = mods => { const x = mods && mods[key]; if (x !== undefined) v = key.endsWith('Mul') ? v * x : v + x; };
+    for (const id of this.run.relics) add(RELICS[id].mods);
+    if (m) for (const id of m.fused || []) add(RELICS[id].fused.mods);
     return v;
   }
   // tell the relics something happened (RELICS[id].on[event]); only your side's relics act
   emit(event, m, ...args) {
     if (m && m.side !== 'player') return;
-    for (const id of this.run.relics) { const f = RELICS[id].on && RELICS[id].on[event]; if (f) f(this, m, ...args); }
+    if (event !== 'clear' || !m) for (const id of this.run.relics) { const f = RELICS[id].on && RELICS[id].on[event]; if (f) f(this, m, ...args); }
+    if (m) for (const id of m.fused || []) { const f = RELICS[id].fused.on && RELICS[id].fused.on[event]; if (f) f(this, m, ...args); }
   }
 
   // Who a monster attacks: wild monsters go for you, your moves aim at the nearest wild monster.
@@ -120,6 +124,8 @@ class Battle {
   clearRoom() {
     this.room.cleared = true;
     this.run.stats.rooms++;
+    this.emit('clear', null);   // e.g. Rain Bell
+    for (const m of this.run.party) if (m.fused && m.fused.length) this.emit('clear', m, true);
     this.evolveReady();
     if (this.boss && this.hooks.bossBeaten) this.hooks.bossBeaten(this.boss.id);
     this.state = 'explore'; this.stateT = 0;
@@ -183,6 +189,7 @@ class Battle {
   // its element picked (LEGENDS in data.js). Its moves change slot by slot, like any evolution.
   altarEvolve(m, def, relics) {
     this.run.relics = this.run.relics.filter(id => !relics.includes(id));
+    m.fused = [...(m.fused || []), ...relics];   // they live on inside it, stronger
     const from = m.def.name;
     m.setDef(def); m.hp = m.maxHp;
     this.run.applyRelics();   // stat bonuses and gear, without what was offered

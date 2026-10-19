@@ -37,30 +37,70 @@ function wildSpec(id, floorN, kind) {
 }
 
 // Relics last for the whole run and help the whole party. Each relic is one self-contained entry:
-//   tag    its element (fire, storm, iron, life, wind, luck), for the evolution altar to come
-//   gear   where the party wears it (head, eyes, neck, feet; the piece is GEAR_ART[id] in gear.js)
+//   tag    its element (RELIC_TAGS), for the evolution altar's recipes
+//   gear   where the party wears it (head, eyes, neck, feet; the piece is GEAR_ART[id] in gear.js), or
+//   aura   an effect around the monster instead, for relics that aren't a thing you'd wear (RELIC_AURA in render.js)
 //   bonus  stat multipliers for the whole party (atk, def, spd, cd)
 //   mods   numbers the game asks for by name (Battle.mod): names ending in Mul multiply, the rest add up
 //   on     things it does when something happens (Battle.emit): hit(b, src, tgt, mv, mult) after a hit
-//          lands, dash(b, m, action, dt) every frame of a dash
-// A new relic is an entry here, an icon (ICON_ART in render.js) and a piece of gear (GEAR_ART in gear.js);
-// test.html checks every relic has all three.
-const RELICS = {
-  leechLens:   { name: 'LEECH LENS', desc: 'Beams also drain: your monster heals 15% of the damage its beams deal.', tag: 'life', gear: 'eyes', mods: { beamDrain: 0.15 } },
-  emberTracks: { name: 'EMBER TRACKS', desc: 'Dashes leave a trail of fire behind them.', tag: 'fire', gear: 'neck',
-    on: { dash(b, m, a, dt) { if ((a.trailT = (a.trailT || 0) - dt) <= 0) { a.trailT = 0.07; b.zones.push({ x: m.x, y: m.y, r: 13, t: 0, delay: 0, mv: EMBER_MV, owner: m, done: true, tick: 0.15, id: _uid++ }); } } } },
-  muscleCharm: { name: 'MUSCLE CHARM', desc: '+15% attack for your whole party.', tag: 'iron', gear: 'head', bonus: { atk: 1.15 } },
-  ironShell:   { name: 'IRON SHELL', desc: '+15% defence for your whole party.', tag: 'iron', gear: 'head', bonus: { def: 1.15 } },
-  swiftBoots:  { name: 'SWIFT BOOTS', desc: '+12% speed for your whole party.', tag: 'wind', gear: 'feet', bonus: { spd: 1.12 } },
-  hourglass:   { name: 'HOURGLASS', desc: 'Moves recharge 15% faster.', tag: 'wind', gear: 'neck', bonus: { cd: 0.85 } },
-  luckyCoin:   { name: 'LUCKY COIN', desc: 'Wild monsters drop 50% more coins.', tag: 'luck', gear: 'neck', mods: { coinMul: 1.5 } },
-  berryBasket: { name: 'BERRY BASKET', desc: 'Berries drop more often and heal 40% instead of 25%.', tag: 'life', gear: 'head', mods: { berryOddsMul: 25 / 12, berryHealMul: 1.6, roomBerries: 1 } },
-  splitShot:   { name: 'SPLIT SHOT', desc: 'Shots fire one extra projectile.', tag: 'storm', gear: 'eyes', mods: { extraShots: 1 } },
-  staticCharm: { name: 'STATIC CHARM', desc: 'Every hit has a 10% chance to paralyze.', tag: 'storm', gear: 'head',
-    on: { hit(b, src, tgt, mv, mult) { if (mult >= 1 && Math.random() < 0.1) b.applyStatus(tgt, 'par'); } } },
-  blastCore:   { name: 'BLAST CORE', desc: 'Blasts and strikes from above are 25% bigger.', tag: 'fire', gear: 'neck', mods: { blastMul: 1.25 } },
+//          lands, dash(b, m, action, dt) every frame of a dash, clear(b, m) when a room is cleared
+//   fused  what it becomes when it's offered at the evolution altar: fused into that one monster for
+//          good (its own name, desc, bonus, mods, on), usually a stronger or mutated version
+// A new relic is an entry here, an icon (ICON_ART in render.js) and its gear (GEAR_ART) or aura (RELIC_AURA);
+// test.html checks every relic has them, and that every mod and event is one the game really uses.
+const STORM_MV = { id: 'stormArc', name: 'Storm Coil', type: 'electric', kind: 'projectile', power: 70, chained: true };
+// a bolt jumps from the monster just hit to the nearest other one (Storm Coil)
+function chainBolt(b, src, tgt, mult) {
+  const o = b.foes(src).filter(f => f !== tgt && f.visible && !f.fainted).sort((p, q) => Math.hypot(p.x - tgt.x, p.y - tgt.y) - Math.hypot(q.x - tgt.x, q.y - tgt.y))[0];
+  if (!o || Math.hypot(o.x - tgt.x, o.y - tgt.y) > 180) return;
+  b.particles.push({ kind: 'strike', x: o.x, y: o.cy, x2: tgt.x, y2: tgt.cy, seed: Math.random(), life: 0.22, max: 0.22, color: '#7af0ff' });
+  b.hit(src, o, STORM_MV, mult);
+}
+const healBy = (b, m, k) => {
+  if (!m || m.fainted) return;
+  const heal = Math.round(Math.min(m.maxHp * k, m.maxHp - m.hp));
+  if (heal <= 0) return;
+  m.hp += heal;
+  if (m === b.P) b.number(m, heal, null, '#b6ff9a', '#4fae2e', '+');
 };
-const RELIC_TAGS = ['fire', 'storm', 'iron', 'life', 'wind', 'luck'];
+const RELICS = {
+  leechLens:   { name: 'LEECH LENS', desc: 'Beams also drain: your monster heals 15% of the damage its beams deal.', tag: 'life', gear: 'eyes', mods: { beamDrain: 0.15 },
+    fused: { name: 'LEECH SIGHT', desc: 'All its attacks drain 12% of their damage, and its beams 30%.', mods: { drainAll: 0.12, beamDrain: 0.3 } } },
+  emberTracks: { name: 'EMBER TRACKS', desc: 'Dashes leave a trail of fire behind them.', tag: 'fire', aura: 'embers',
+    on: { dash(b, m, a, dt) { if ((a.trailT = (a.trailT || 0) - dt) <= 0) { a.trailT = 0.07; b.zones.push({ x: m.x, y: m.y, r: 13, t: 0, delay: 0, mv: EMBER_MV, owner: m, done: true, tick: 0.15, id: _uid++ }); } } },
+    fused: { name: 'MAGMA TRAILS', desc: 'Its dashes leave a wider trail of magma that burns harder.',
+      on: { dash(b, m, a, dt) { if ((a.magmaT = (a.magmaT || 0) - dt) <= 0) { a.magmaT = 0.05; b.zones.push({ x: m.x, y: m.y, r: 19, t: 0, delay: 0, mv: EMBER_MV, owner: m, done: true, tick: 0.3, id: _uid++ }); } } } } },
+  muscleCharm: { name: 'MUSCLE CHARM', desc: '+15% attack for your whole party.', tag: 'iron', gear: 'head', bonus: { atk: 1.15 },
+    fused: { name: 'IRON MUSCLE', desc: '+35% attack for this monster.', bonus: { atk: 1.35 } } },
+  ironShell:   { name: 'IRON SHELL', desc: '+15% defence for your whole party.', tag: 'iron', gear: 'head', bonus: { def: 1.15 },
+    fused: { name: 'IRON HIDE', desc: '+35% defence for this monster.', bonus: { def: 1.35 } } },
+  swiftBoots:  { name: 'SWIFT BOOTS', desc: '+12% speed for your whole party.', tag: 'wind', gear: 'feet', bonus: { spd: 1.12 },
+    fused: { name: 'GALE STEP', desc: '+28% speed for this monster.', bonus: { spd: 1.28 } } },
+  hourglass:   { name: 'HOURGLASS', desc: 'Moves recharge 15% faster.', tag: 'wind', gear: 'neck', bonus: { cd: 0.85 },
+    fused: { name: 'TIME SHARD', desc: "This monster's moves recharge 30% faster.", bonus: { cd: 0.7 } } },
+  luckyCoin:   { name: 'LUCKY COIN', desc: 'Wild monsters drop 50% more coins.', tag: 'luck', gear: 'neck', mods: { coinMul: 1.5 },
+    fused: { name: 'MIDAS TOUCH', desc: 'Its hits sometimes knock a coin out of wild monsters.',
+      on: { hit(b, src, tgt, mv, mult) { if (mult >= 1 && !mv.chained && Math.random() < 0.15) b.spawnPickup('coin', tgt.x, tgt.y); } } } },
+  berryBasket: { name: 'BERRY BASKET', desc: 'Berries drop more often and heal 40% instead of 25%.', tag: 'life', aura: 'berries', mods: { berryOddsMul: 25 / 12, berryHealMul: 1.6, roomBerries: 1 },
+    fused: { name: 'BERRY HEART', desc: 'It heals 15% of its HP whenever a room is cleared.', on: { clear(b, m) { healBy(b, m, 0.15); } } } },
+  splitShot:   { name: 'SPLIT SHOT', desc: 'Shots fire one extra projectile.', tag: 'wind', gear: 'eyes', mods: { extraShots: 1 },
+    fused: { name: 'SCATTER SHOT', desc: 'Its shots fire two extra projectiles.', mods: { extraShots: 2 } } },
+  staticCharm: { name: 'STATIC CHARM', desc: 'Every hit has a 10% chance to paralyze.', tag: 'storm', aura: 'static',
+    on: { hit(b, src, tgt, mv, mult) { if (mult >= 1 && Math.random() < 0.1) b.applyStatus(tgt, 'par'); } },
+    fused: { name: 'LIVING STATIC', desc: 'Its hits paralyze 25% of the time.', on: { hit(b, src, tgt, mv, mult) { if (mult >= 1 && Math.random() < 0.25) b.applyStatus(tgt, 'par'); } } } },
+  blastCore:   { name: 'BLAST CORE', desc: 'Blasts and strikes from above are 25% bigger.', tag: 'fire', gear: 'neck', mods: { blastMul: 1.25 },
+    fused: { name: 'NOVA CORE', desc: 'Its blasts and strikes from above are 50% bigger.', mods: { blastMul: 1.5 } } },
+  tideCharm:   { name: 'TIDE CHARM', desc: 'Water moves hit 20% harder.', tag: 'water', aura: 'tide', mods: { waterMul: 1.2 },
+    fused: { name: 'RIPTIDE', desc: "This monster's water moves hit 45% harder.", mods: { waterMul: 1.45 } } },
+  rainBell:    { name: 'RAIN BELL', desc: 'Clearing a room heals your whole party a little (8%).', tag: 'water', gear: 'neck',
+    on: { clear(b) { for (const m of b.run.party) healBy(b, m, 0.08); } },
+    fused: { name: 'STORM BELL', desc: 'It heals 20% of its HP whenever a room is cleared.', on: { clear(b, m) { healBy(b, m, 0.2); } } } },
+  stormCoil:   { name: 'STORM COIL', desc: 'Hits have a 15% chance to arc lightning to another wild monster.', tag: 'storm', gear: 'head',
+    on: { hit(b, src, tgt, mv, mult) { if (mult >= 1 && !mv.chained && Math.random() < 0.15) chainBolt(b, src, tgt, 0.6); } },
+    fused: { name: 'TESLA HEART', desc: 'Its hits arc lightning to another wild monster 35% of the time, harder.',
+      on: { hit(b, src, tgt, mv, mult) { if (mult >= 1 && !mv.chained && Math.random() < 0.35) chainBolt(b, src, tgt, 1); } } } },
+};
+const RELIC_TAGS = ['fire', 'water', 'storm', 'iron', 'life', 'wind', 'luck'];
 // Shop goods that are used up straight away.
 const GOODS = {
   bigBerry: { name: 'BIG BERRY', desc: 'Heals your active monster by 50%.', price: 5 },
@@ -320,13 +360,16 @@ class RunState {
   applyRelics() {
     const b = { atk: 1, def: 1, spd: 1, cd: 1 };
     for (const id of this.relics) for (const [k, v] of Object.entries(RELICS[id].bonus || {})) b[k] *= v;
-    for (const m of this.party) m.bonus = { ...b };
+    for (const m of this.party) {
+      m.bonus = { ...b };
+      for (const id of m.fused || []) for (const [k, v] of Object.entries(RELICS[id].fused.bonus || {})) m.bonus[k] *= v;   // relics fused into it at the altar
+    }
     this.dress();
   }
   // everyone in the party wears the relics' gear (js/gear.js); drawn now, while things are calm
   dress() {
     const gear = typeof gearFor === 'function' ? gearFor(this.relics) : [];
-    for (const m of this.party) { m.gear = gear; monSprite(m); }
+    for (const m of this.party) { m.gear = m.fused && m.fused.length ? gearFor([...this.relics, ...m.fused]) : gear; monSprite(m); }
   }
   // Use a shop good; returns false if it would do nothing.
   useGood(id, dry = false) {

@@ -2,7 +2,7 @@
 
 // Shown on the title screen so players can tell whether their browser has the latest
 // build (GitHub Pages lets browsers cache files for up to 10 minutes). Bump on every release.
-const VERSION = '2026.10.18-r59';
+const VERSION = '2026.10.18-r60';
 
 const App = {
   endless: false,   // the mode picked on the title screen
@@ -338,55 +338,61 @@ $('#btn-recruit-yes').onclick = () => {
   closeOffer(true);
 };
 
-// ---------- the evolution altar: offer two relics, one of the branch's element ----------
-const TAG_NAMES = { fire: 'FIRE', storm: 'STORM', iron: 'IRON', life: 'LIFE', wind: 'WIND', luck: 'LUCK' };
-const Altar = { ped: null, mon: -1, tag: null, picks: [] };
+// ---------- the evolution altar: offer two relics, one of each element in the branch's recipe ----------
+const TAG_NAMES = { fire: 'FIRE', water: 'WATER', storm: 'STORM', iron: 'IRON', life: 'LIFE', wind: 'WIND', luck: 'LUCK' };
+const Altar = { ped: null, mon: -1, branch: null, picks: [] };
 const altarMons = () => App.run.party.map((m, i) => ({ m, i })).filter(o => o.m.def.branches && !o.m.fainted);
+const recipeText = r => r.map(t => TAG_NAMES[t]).join(' + ');
 function openAltar(ped) {
   const list = altarMons();
-  Object.assign(Altar, { ped, mon: list.length === 1 ? list[0].i : -1, tag: null, picks: [] });
+  Object.assign(Altar, { ped, mon: list.length === 1 ? list[0].i : -1, branch: null, picks: [] });
   drawAltar();
   App.paused = true;
   UI.show('altar');
 }
 function drawAltar() {
-  const run = App.run, list = altarMons(), m = run.party[Altar.mon];
+  const run = App.run, list = altarMons(), m = run.party[Altar.mon], recipe = m && Altar.branch && m.def.branches[Altar.branch];
   $('#altar-hint').textContent = !list.length
     ? 'The altar is quiet. A monster at its last stage (like Garrishell) can change here, if you offer it two relics.'
     : run.relics.length < 2 ? 'Offer two relics here to change a monster at its last stage. You need two.'
-    : !m ? 'Who will change?' : !Altar.tag ? 'Pick what it becomes. The element you offer decides.'
-    : `Offer two relics, at least one ${TAG_NAMES[Altar.tag]}. They're gone for good.`;
+    : !m ? 'Who will change?' : !recipe ? 'Pick what it becomes. Each needs two elements.'
+    : `Offer one ${recipeText(recipe).replace(' + ', ' and one ')} relic. They fuse into it for good.`;
   UI.partyCards($('#altar-mons'), list.map(o => o.m), {
     mark: k => (list[k].i === Altar.mon ? 'sel' : ''),
-    onPick: k => { Sfx.play('select'); Object.assign(Altar, { mon: list[k].i, tag: null, picks: [] }); drawAltar(); },
+    onPick: k => { Sfx.play('select'); Object.assign(Altar, { mon: list[k].i, branch: null, picks: [] }); drawAltar(); },
   });
   const box = $('#altar-branches'); box.innerHTML = '';
-  if (m) for (const [tag, id] of Object.entries(m.def.branches)) {
+  if (m) for (const [id, rec] of Object.entries(m.def.branches)) {
     const b = document.createElement('button');
-    b.className = Altar.tag === tag ? 'sel' : '';
-    b.innerHTML = `${Save.hasFound(id) ? ROSTER_BY_ID[id].name : '???'} <span>${TAG_NAMES[tag]}</span>`;
-    b.onclick = () => { Sfx.play('select'); Altar.tag = tag; drawAltar(); };
+    b.className = Altar.branch === id ? 'sel' : '';
+    b.innerHTML = `${Save.hasFound(id) ? ROSTER_BY_ID[id].name : '???'} <span>${recipeText(rec)}</span>`;
+    b.onclick = () => { Sfx.play('select'); Object.assign(Altar, { branch: id, picks: [] }); drawAltar(); };
     box.appendChild(b);
   }
   const rb = $('#altar-relics'); rb.innerHTML = '';
-  if (m && Altar.tag) for (const id of run.relics) {
+  if (recipe) for (const id of run.relics) {
+    const fits = recipe.includes(RELICS[id].tag);
     const b = document.createElement('button');
-    b.className = (Altar.picks.includes(id) ? 'sel ' : '') + (RELICS[id].tag === Altar.tag ? 'match' : '');
+    b.className = (Altar.picks.includes(id) ? 'sel ' : '') + (fits ? 'match' : 'off');
+    b.disabled = !fits;
     const cv = document.createElement('canvas'); cv.width = 14; cv.height = 14;
     const c = cv.getContext('2d'); c.imageSmoothingEnabled = false; c.drawImage(itemIcon(id), 0, 0);
     b.appendChild(cv);
     b.insertAdjacentHTML('beforeend', `${RELICS[id].name} <span>${TAG_NAMES[RELICS[id].tag]}</span>`);
-    b.onclick = () => {
+    b.onclick = () => {   // one relic per element: picking another of the same element swaps it
       Sfx.play('select');
-      Altar.picks = Altar.picks.includes(id) ? Altar.picks.filter(x => x !== id) : [...Altar.picks, id].slice(-2);
+      Altar.picks = Altar.picks.includes(id) ? Altar.picks.filter(x => x !== id) : [...Altar.picks.filter(x => RELICS[x].tag !== RELICS[id].tag), id];
       drawAltar();
     };
     rb.appendChild(b);
   }
-  const ok = !!(m && Altar.tag && Altar.picks.length === 2 && Altar.picks.some(id => RELICS[id].tag === Altar.tag));
+  // what each offered relic becomes once fused
+  const fz = $('#altar-fuse');
+  fz.innerHTML = Altar.picks.map(id => `<div><b>${RELICS[id].name} → ${RELICS[id].fused.name}</b> ${RELICS[id].fused.desc}</div>`).join('');
+  const ok = !!(recipe && Altar.picks.length === 2 && recipe.every(t => Altar.picks.some(id => RELICS[id].tag === t)));
   const yes = $('#btn-altar-yes');
   yes.disabled = !ok;
-  yes.textContent = ok ? 'OFFER AND EVOLVE' : !m || !Altar.tag ? 'EVOLVE' : `PICK 2 (1 ${TAG_NAMES[Altar.tag]})`;
+  yes.textContent = ok ? 'OFFER AND EVOLVE' : recipe ? `PICK ${recipeText(recipe)}` : 'EVOLVE';
 }
 function closeAltar(took) {
   const b = App.battle, ped = Altar.ped;
@@ -399,10 +405,9 @@ function closeAltar(took) {
 $('#btn-altar-no').onclick = () => { Sfx.play('back'); closeAltar(false); };
 $('#btn-altar-yes').onclick = () => {
   const run = App.run, b = App.battle, m = run && run.party[Altar.mon];
-  if (!b || !m || !Altar.tag || Altar.picks.length !== 2) return;
-  const id = m.def.branches[Altar.tag];
-  b.altarEvolve(m, ROSTER_BY_ID[id], Altar.picks);
-  Save.noteFound(id);
+  if (!b || !m || !Altar.branch || Altar.picks.length !== 2) return;
+  b.altarEvolve(m, ROSTER_BY_ID[Altar.branch], Altar.picks);
+  Save.noteFound(Altar.branch);
   UI.hudCache = {};
   closeAltar(true);
 };
@@ -434,7 +439,8 @@ function drawParty() {
     return;
   }
   const m = run.party[Party.sel];
-  UI.fillDetail($('#party-detail'), m.def, ` · Lv ${m.level} · ${m.fainted ? 'FAINTED' : `${Math.ceil(m.hp)} / ${m.maxHp} HP`}`);
+  const fused = (m.fused || []).map(id => RELICS[id].fused.name).join(', ');
+  UI.fillDetail($('#party-detail'), m.def, ` · Lv ${m.level} · ${m.fainted ? 'FAINTED' : `${Math.ceil(m.hp)} / ${m.maxHp} HP`}${fused ? ` · Fused: ${fused}` : ''}`);
   $('#party-detail .d-moves').outerHTML = movesEditorHtml(m);
   btn.disabled = !canRelease(Party.sel);
   btn.textContent = Party.confirm ? `Really release ${m.def.name}?` : 'Release';

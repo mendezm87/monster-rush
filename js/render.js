@@ -94,6 +94,9 @@ function doorSign(room) {
 
 // 14px icons for relics and shop goods.
 const ICON_ART = {
+  tideCharm(g) { g.ellipse(7, 7, 5.5, 5.5, P('#4a90e8', '#2a5ab0', '#a8d8ff')); g.poly([[3, 8], [6, 5], [8, 7], [11, 4], [11, 8], [8, 10], [5, 9]], '#e6f6ff'); },
+  rainBell(g) { g.poly([[5, 3], [9, 3], [11, 10], [3, 10]], P('#e0b040', '#a07a20', '#fff0a0')); g.rect(2, 10, 10, 2, '#a07a20'); g.rect(6, 12, 2, 2, '#6a4a10'); g.px(4, 1, '#7ad0f0').px(10, 1, '#7ad0f0').px(12, 4, '#7ad0f0'); },
+  stormCoil(g) { for (let y = 3; y < 13; y += 2) { g.rect(4, y, 6, 1, '#d87a3a'); g.rect(4, y + 1, 6, 1, '#8a4a1a'); } g.rect(6, 0, 2, 3, '#e8e8f0'); g.px(3, 1, '#7af0ff').px(11, 0, '#7af0ff').px(12, 2, '#d0faff'); },
   leechLens(g) { g.ellipse(6.5, 6.5, 5.5, 5.5, P('#c8d6ff', '#8a9ad0', '#ffffff')); g.ellipse(6.5, 6.5, 3, 3, P('#e8435a', '#a82a40', '#ffb0c0')); g.poly([[10, 10], [13, 13], [12, 14], [9, 11]], '#8a6a4a'); },
   emberTracks(g) { g.poly([[2, 5], [6, 5], [6, 9], [12, 9], [12, 13], [2, 13]], P('#8a5a3a', '#5a3a22', '#b07a52')); g.poly([[9, 0], [13, 5], [11, 8], [8, 6]], P('#ff7a1c', '#e2401a', '#ffd34a')); },
   muscleCharm(g) { g.ellipse(7, 7, 5.5, 5, P('#d9a066', '#a8703e', '#f2c896')); g.rect(3, 5, 8, 1, '#a8703e'); g.rect(3, 8, 8, 1, '#a8703e'); g.rect(2, 11, 10, 2, '#d23a3a'); },
@@ -122,6 +125,56 @@ function itemIcon(id) {
   g.outline();
   return (_icons[id] = g.toCanvas());
 }
+
+// Relic auras: little pixel effects around a monster (Y = its feet). Drawn in whole sprite pixels
+// (SPR_SCALE) so they match the art. Cheap: a handful of squares a frame.
+const auraPx = (ctx, x, y, col, n = 1) => { ctx.fillStyle = col; ctx.fillRect(Math.round(x / SPR_SCALE) * SPR_SCALE, Math.round(y / SPR_SCALE) * SPR_SCALE, SPR_SCALE * n, SPR_SCALE * n); };
+const RELIC_AURA = {
+  // Static Charm: short zigzag sparks crackling over its body, jumping to new spots every few frames
+  static(ctx, b, m, X, Y) {
+    const step = Math.floor(b.time / 0.07), seed = (step * 9301 + (m.uid || (m.uid = _uid++)) * 49297) % 233280;
+    let r = seed; const rnd = () => (r = (r * 9301 + 49297) % 233280) / 233280;
+    const cy = Y - m.h * 0.45, rx = Math.max(m.r + 4, m.h * 0.42), ry = m.h * 0.5;
+    for (let k = 0; k < 6; k++) {   // jagged sparks hugging its outline
+      if (rnd() < 0.25) continue;
+      const a = rnd() * TAU; let x = X + Math.cos(a) * rx, y = cy + Math.sin(a) * ry;
+      const dx = -Math.sin(a), dy = Math.cos(a);   // run along the outline, zigzagging in and out
+      for (let s = 0; s < 6; s++) {
+        auraPx(ctx, x, y, s % 3 === 1 ? '#ffffff' : s % 2 ? '#7af0ff' : '#fff59a');
+        const j = (s % 2 ? 1 : -1) * SPR_SCALE * 1.4;
+        x += dx * 3 + Math.cos(a) * j; y += dy * 3 + Math.sin(a) * j;
+      }
+    }
+    if (rnd() < 0.5) {   // now and then a bolt arcs over the top
+      let x = X - m.r * 0.7, y = cy - ry * 0.9;
+      for (let s = 0; s < 8; s++) { auraPx(ctx, x, y, s % 2 ? '#7af0ff' : '#fff59a'); x += m.r * 0.2; y += (s < 4 ? -1 : 1) * SPR_SCALE * (rnd() < 0.5 ? 1 : 0.5); }
+    }
+  },
+  // Ember Tracks: embers drifting up off its feet (more while it runs)
+  embers(ctx, b, m, X, Y, moving) {
+    const n = moving ? 10 : 5;
+    for (let i = 0; i < n; i++) {
+      const ph = (b.time * 0.9 + i / n + (m.x0 || 0)) % 1, sx = Math.sin(i * 2.7 + Math.floor(b.time * 0.9 + i / n) * 1.9);
+      auraPx(ctx, X + sx * m.r * 0.9, Y - 2 - ph * 16, ph < 0.4 ? '#ffd34a' : ph < 0.75 ? '#ff7a1c' : '#c8401a');
+    }
+  },
+  // Berry Basket: three berries circling it
+  berries(ctx, b, m, X, Y) {
+    for (let i = 0; i < 3; i++) {
+      const a = b.time * 1.6 + i * TAU / 3, x = X + Math.cos(a) * Math.max(m.r + 6, m.h * 0.45), y = Y - m.h * 0.45 + Math.sin(a) * 5;
+      auraPx(ctx, x, y, Math.sin(a) < 0 ? '#a01a3a' : '#e83a5a', 2); auraPx(ctx, x + SPR_SCALE, y - SPR_SCALE, '#4ab04a');
+    }
+  },
+  // Tide Charm: a ring of water swirling round its feet
+  tide(ctx, b, m, X, Y) {
+    for (let i = 0; i < 12; i++) {
+      const a = b.time * 1.8 + i * TAU / 12;
+      auraPx(ctx, X + Math.cos(a) * Math.max(m.r + 4, m.h * 0.38), Y + Math.sin(a) * (m.r * 0.4 + 2), i % 3 ? '#4a9ae8' : '#e6f6ff');
+    }
+    const ph = (b.time * 1.2) % 1;
+    auraPx(ctx, X + m.r * 0.6, Y - 3 - ph * 10, '#a8d8ff');
+  },
+};
 
 // Lazily tinted sprite variants (freeze / burn / paralysis / buff glow).
 const _tint = {};
@@ -495,6 +548,13 @@ mixInto(Battle, class {
     if (tint) { ctx.globalAlpha = ta * alpha; ctx.drawImage(tintOf(pic, tint), dx, dy, pw, ph); }
     ctx.restore();
     ctx.globalAlpha = 1;
+
+    // relic auras (relics that are an effect rather than something worn), from the party's and its own fused relics
+    if (m.side === 'player' && !m.fainted && this.run) {
+      const kinds = new Set();
+      for (const id of [...this.run.relics, ...(m.fused || [])]) if (RELICS[id] && RELICS[id].aura) kinds.add(RELICS[id].aura);
+      for (const k of kinds) RELIC_AURA[k](ctx, this, m, X, Math.round(Y + sink - hover), moving);
+    }
 
     if (m.status === 'frz' && !m.fainted) {
       ctx.strokeStyle = 'rgba(220,250,255,0.9)'; ctx.fillStyle = 'rgba(160,230,255,0.25)';

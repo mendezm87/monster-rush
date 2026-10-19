@@ -284,3 +284,11 @@ kbd { background: #2b2540; border: 0.3cqh solid #555; border-bottom-width: 0.8cq
 .altar-row button.sel { border-color: #c87aff; background: #3a2a52; }
 .altar-row button.match { box-shadow: inset 0 0 0 0.4cqh #ffe066; }
 .altar-row canvas { width: 5cqh; height: 5cqh; image-rendering: pixelated; }
+.altar-row button.off { opacity: .35; cursor: default; }
+.altar-fuse { font: 700 2.6cqh/1.4 system-ui, sans-serif; max-width: 120cqh; text-align: center; }
+.altar-fuse b { font: 900 2.8cqh var(--font); color: #e0b0ff; }
+#screen-altar { gap: 1.6cqh; }
+#screen-altar h2 { margin: 0; }
+#screen-altar .party-list .card { width: 14cqh; padding: 0.8cqh; }
+#screen-altar .card .c-types, #screen-altar .card .c-hp { display: none; }
+#screen-altar .card .c-name { font-size: 2.4cqh; }

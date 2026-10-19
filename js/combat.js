@@ -120,7 +120,7 @@ mixInto(Battle, class {
     const stab = src.def.types.includes(mv.type) ? 1.3 : 1;
     const itemMul = src.item.boostType === mv.type ? src.item.mul : 1;
     const crit = mult >= 1 && Math.random() < (mv.crit || 0.06);
-    let dmg = DMG_SCALE * mv.power * mult * (src.atk() / tgt.defense()) * stab * eff * itemMul * (crit ? 1.5 : 1) * rand(0.9, 1.05);
+    let dmg = DMG_SCALE * mv.power * mult * (src.atk() / tgt.defense()) * stab * eff * itemMul * (crit ? 1.5 : 1) * (mv.type === 'water' ? this.mod(src, 'waterMul') : 1) * rand(0.9, 1.05);
     dmg = Math.max(1, Math.round(dmg));
     tgt.hp = Math.max(0, tgt.hp - dmg);
     src.dmgDealt += dmg;
@@ -150,7 +150,7 @@ mixInto(Battle, class {
     this.emit('hit', src, tgt, mv, mult);
     if (mv.slow) tgt.slowT = Math.max(tgt.slowT, mv.slow);
     // drain: the attacker heals for part of the damage it dealt
-    const drain = (mv.drain || 0) + (mv.kind === 'beam' ? this.mod(src, 'beamDrain') : 0);
+    const drain = (mv.drain || 0) + (mv.kind === 'beam' ? this.mod(src, 'beamDrain') : 0) + (mv.chained ? 0 : this.mod(src, 'drainAll'));
     if (drain && !src.fainted && src.hp > 0) {
       const heal = Math.round(Math.min(dmg * drain, src.maxHp - src.hp));
       if (heal > 0) {

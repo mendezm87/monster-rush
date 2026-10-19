@@ -291,18 +291,19 @@ const EVOLVED = [
   { id: 'maelstrisk', name: 'MAELSTRISK', types: ['water', 'dragon'], hp: 1560, atk: 1.16, def: 1.22, spd: 88, size: 'L', item: 'mysticDrop',
     moves: ['tidalCannon', 'bubbleBeam', 'dragonPulse', 'maelstrom'], from: 'tidalisk' },
 ];
-// Legendary 4th stages: made at an evolution altar from a monster at its last stage by offering
-// relics; the element offered (`tag`, see RELIC_TAGS) picks which one. Not in the wild or recruit pool.
-// A monster's branches come from here (def.branches = { tag: id }).
+// Legendary 4th stages: made at an evolution altar from a monster at its last stage by offering two
+// relics, one of each element in its `recipe` (RELIC_TAGS); any relic of those elements works, and
+// each one fuses into the monster as a stronger version (RELICS[id].fused). Not in the wild or recruit pool.
+// A monster's branches come from here (def.branches = { id: recipe }).
 const LEGENDS = [
   { id: 'magmabastion', name: 'MAGMA BASTION', types: ['water', 'fire'], hp: 2300, atk: 1.32, def: 1.5, spd: 46, size: 'L', item: 'emberStone',
-    moves: ['geyserVent', 'steamEruption', 'magmaWave', 'ironDefense'], from: 'garrishell', tag: 'fire' },
+    moves: ['geyserVent', 'steamEruption', 'magmaWave', 'ironDefense'], from: 'garrishell', recipe: ['fire', 'water'] },
   { id: 'railwarden', name: 'RAILWARDEN', types: ['water', 'electric'], hp: 1550, atk: 1.42, def: 1.1, spd: 108, size: 'L', item: 'quickCharm',
-    moves: ['railShot', 'hydroCannon', 'lanceCharge', 'towerShield'], from: 'garrishell', tag: 'storm' },
+    moves: ['railShot', 'hydroCannon', 'lanceCharge', 'towerShield'], from: 'garrishell', recipe: ['storm', 'iron'] },
   { id: 'citadrone', name: 'CITADRONE', types: ['water', 'steel'], hp: 1900, atk: 1.28, def: 1.42, spd: 72, size: 'L', item: 'ironPlate',
-    moves: ['droneSwarm', 'hydroCannon', 'magnetStorm', 'ironDefense'], from: 'garrishell', tag: 'iron' },
+    moves: ['droneSwarm', 'hydroCannon', 'magnetStorm', 'ironDefense'], from: 'garrishell', recipe: ['iron', 'wind'] },
 ];
-for (const l of LEGENDS) { const base = ROSTER.find(m => m.id === l.from); (base.branches = base.branches || {})[l.tag] = l.id; }
+for (const l of LEGENDS) { const base = ROSTER.find(m => m.id === l.from); (base.branches = base.branches || {})[l.id] = l.recipe; }
 const EVOLVE_LEVEL = 6;
 for (const e of EVOLVED) ROSTER.find(m => m.id === e.from).evolve = { to: e.id, level: EVOLVE_LEVEL };
 const ALL_MONS = () => [...ROSTER, ...EVOLVED, ...LEGENDS];

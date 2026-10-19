@@ -110,7 +110,7 @@ $('#game').addEventListener('load', async () => {
     const AREA = G('AREA_MONS'), BYID = G('ROSTER_BY_ID'), ALL = G('ALL_MONS()');
     const found = new Set([...G('STARTERS'), ...G('EVOLVED').map(e => e.id)]);
     for (const a of Object.values(AREA)) for (const id of [...a.natives, ...a.bosses]) found.add(id);
-    for (let grew = true; grew;) { grew = false; for (const m of ALL) if (found.has(m.id)) for (const to of [m.evolve && m.evolve.to, ...Object.values(m.branches || {})]) if (to && !found.has(to)) { found.add(to); grew = true; } }   // what they evolve into (levels and altar branches)
+    for (let grew = true; grew;) { grew = false; for (const m of ALL) if (found.has(m.id)) for (const to of [m.evolve && m.evolve.to, ...Object.keys(m.branches || {})]) if (to && !found.has(to)) { found.add(to); grew = true; } }   // what they evolve into (levels and altar branches)
     for (const m of ALL) {
       const say = s => bad.push(`${m.id}: ${s}`);
       if (!G('MONSTER_ART')[m.id] || !G('MONSTER_ART_DIAG')[m.id]) say('art is missing a set of views');
@@ -121,7 +121,7 @@ $('#game').addEventListener('load', async () => {
       if (m.types.some(t => !TYPES[t])) say('unknown type');
       if (!ITEMS[m.item]) say('unknown item ' + m.item);
       if (m.evolve && (!BYID[m.evolve.to] || !(m.evolve.level > 0))) say('bad evolution');
-      for (const [tag, to] of Object.entries(m.branches || {})) if (!BYID[to] || !G('RELIC_TAGS').includes(tag)) say(`bad altar branch ${tag} -> ${to}`);
+      for (const [to, recipe] of Object.entries(m.branches || {})) if (!BYID[to] || recipe.length !== 2 || recipe.some(t => !G('RELIC_TAGS').includes(t))) say(`bad altar branch ${to}`);
       if (!found.has(m.id)) say('never appears in the game (no area, starter or evolution)');
       for (const v of VIEWS5) {   // gear spots: on the picture, and in a sensible order
         const a = w.gearAnchors(m.id, v, S), inside = (x, y) => x >= 0 && y >= 0 && x < S && y < S;
@@ -144,14 +144,18 @@ $('#game').addEventListener('load', async () => {
       const say = s => bad.push(`${id}: ${s}`);
       if (!r.name || !r.desc) say('name or description missing');
       if (!TAGS.includes(r.tag)) say('no element tag');
-      if (!['head', 'eyes', 'neck', 'feet'].includes(r.gear) || !GEAR[id]) say('no gear');
+      if (r.aura ? !G('RELIC_AURA')[r.aura] || r.gear : !['head', 'eyes', 'neck', 'feet'].includes(r.gear) || !GEAR[id]) say('needs gear or an aura (not both)');
+      const f = r.fused;
+      if (!f || !f.name || !f.desc || (!f.bonus && !f.mods && !f.on)) say('no fused version for the altar');
+      for (const k of Object.keys((f && f.mods) || {})) if (!MODS.has(k)) say(`fused: the game never asks for '${k}'`);
+      for (const k of Object.keys((f && f.on) || {})) if (!EVENTS.has(k)) say(`fused: the game never sends '${k}'`);
       if (!ICONS[id]) say('no icon');
       if (!r.bonus && !r.mods && !r.on) say('does nothing');
       for (const k of Object.keys(r.bonus || {})) if (!['atk', 'def', 'spd', 'cd'].includes(k)) say('unknown stat ' + k);
       for (const k of Object.keys(r.mods || {})) if (!MODS.has(k)) say(`the game never asks for '${k}'`);
       for (const k of Object.keys(r.on || {})) if (!EVENTS.has(k)) say(`the game never sends '${k}'`);
     }
-    check('Relics', !bad.length, bad.length ? bad.join('; ') : `${Object.keys(RELICS).length} relics: effect, element tag, gear and icon (mods the game uses: ${[...MODS].join(', ')}; events: ${[...EVENTS].join(', ')})`);
+    check('Relics', !bad.length, bad.length ? bad.join('; ') : `${Object.keys(RELICS).length} relics: effect, element tag, gear or aura, icon and fused version (mods the game uses: ${[...MODS].join(', ')}; events: ${[...EVENTS].join(', ')})`);
   } catch (e) { check('Relics', false, e.message); }
 
   // ---------- pictures: every monster's art compared with the saved fingerprints ----------
@@ -212,10 +216,9 @@ $('#game').addEventListener('load', async () => {
     realOffer(ped);
     if (ped.kind === 'altar') {   // evolve whoever can, offering a matching relic and one more
       const A = G('Altar'), run = App.run, i = run.party.findIndex(m => m.def.branches && !m.fainted);
-      const tag = i >= 0 && Object.keys(run.party[i].def.branches).find(t => run.relics.some(id => RELICS[id].tag === t));
-      if (tag && run.relics.length >= 2) {
-        const first = run.relics.find(id => RELICS[id].tag === tag);
-        Object.assign(A, { mon: i, tag, picks: [first, run.relics.find(id => id !== first)] });
+      const br = i >= 0 && Object.entries(run.party[i].def.branches).find(([, rec]) => rec.every(t => run.relics.some(id => RELICS[id].tag === t)));
+      if (br) {
+        Object.assign(A, { mon: i, branch: br[0], picks: br[1].map(t => run.relics.find(id => RELICS[id].tag === t)) });
         w.drawAltar();
       }
       (btn('btn-altar-yes').disabled ? btn('btn-altar-no') : btn('btn-altar-yes')).onclick();

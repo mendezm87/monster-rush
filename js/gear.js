@@ -132,30 +132,19 @@ const GEAR_ART = {
     if (isSide(v)) g.rect(x - 3, y - 3, 3, 1, '#4a4e58'); else g.rect(x + w + 1, y - 3, 2, 1, '#4a4e58');   // the handle
     g.px(x + 2, y - 3, '#ffffff');
   },
-  // Berry Basket: a leafy cap with berries on it
-  berryBasket(g, a, v, big) {
-    const w = big ? 10 : 8, x = r0(a.topX - w / 2 + 0.5), y = Math.max(a.crown, 3) + 1;
-    g.ellipse(x + w / 2, y - 1, w / 2, 2.2, GP.leaf, { edge: true });
-    g.rect(r0(x + w / 2), y - 4, 1, 2, '#6a4a2a');                                 // stalk
-    for (const [dx, dy] of [[1.5, -1], [w - 2.5, -1], [w / 2 - 0.5, -2]]) { g.ellipse(x + dx + 0.5, y + dy, 1.4, 1.4, P('#e83a5a', '#a01a3a', '#ff9aaa'), { edge: true }); }
-  },
-  // Static Charm: a lightning-bolt hair clip standing up off the head
-  staticCharm(g, a, v, big) {
-    const x = r0(a.topX) + (isSide(v) ? -1 : 2), y = Math.max(a.crown, 6);
-    g.poly([[x, y - 6], [x + 3, y - 6], [x + 1, y - 3], [x + 3, y - 3], [x - 1, y + 1], [x, y - 2], [x - 2, y - 2]], P('#ffe040', '#d0a010', '#fff8b0'), { edge: true });
-  },
   // Leech Lens: red-lensed goggles
   leechLens(g, a, v, big) { glasses(g, a, v, big, '#ff4a6a'); },
   // Split Shot: 3D glasses, one red lens and one blue
   splitShot(g, a, v, big) { glasses(g, a, v, big, a.lenses.length > 1 ? ['#ff3a4a', '#3ad0ff'] : '#3ad0ff', GP.white, true); },
-  // Ember Tracks: a flame-orange scarf, its end trailing out behind
-  emberTracks(g, a, v, big) {
-    if (!a.neck) return;
-    const w = Math.max(6, Math.min(a.w - 2, big ? 14 : 10)), x = r0(a.neckX - w / 2 + 0.5), y = a.bottom - 1;
-    g.poly([[x, y], [x + w, y], [x + w, y + 2], [x, y + 2]], GP.ember, { edge: true });
-    if (isSide(v)) g.poly([[x + 1, y + 1], [x - 4, y + 2], [x - 5, y + 4], [x + 1, y + 3]], GP.ember, { edge: true });
-    else g.poly([[x + w - 3, y + 1], [x + w - 1, y + 1], [x + w, y + 5], [x + w - 3, y + 5]], GP.ember, { edge: true });
-    g.rect(x + 1, y + 1, w - 2, 1, '#ffd06a');
+  // Rain Bell: a little brass bell on a collar
+  rainBell(g, a, v, big) {
+    pendant(g, a, v, big, (x, y) => { g.poly([[x - 1, y], [x + 2, y], [x + 3, y + 3], [x - 2, y + 3]], GP.gold, { edge: true }); g.px(x, y + 4, '#a07a20'); g.px(x, y + 1, '#fff0a0'); });
+  },
+  // Storm Coil: a copper coil antenna standing up off the head, sparking at the tip
+  stormCoil(g, a, v, big) {
+    const x = r0(a.topX) + (isSide(v) ? -2 : 2), y = Math.max(a.crown, 7);
+    for (let k = 0; k < 3; k++) { g.rect(x - 1, y - 2 - k * 2, 3, 1, '#d87a3a'); g.rect(x - 1, y - 3 - k * 2, 3, 1, '#8a4a1a'); }
+    g.px(x, y - 8, '#e8e8f0'); g.px(x - 1, y - 9, '#7af0ff'); g.px(x + 1, y - 10, '#d0faff');
   },
   hourglass(g, a, v, big) {
     pendant(g, a, v, big, (x, y) => {

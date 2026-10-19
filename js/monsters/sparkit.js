@@ -9,8 +9,18 @@ Object.assign(MONSTER_ART, {
     const Cu = P('#e08a3a', '#a85a1e', '#ffc07a'), MASK = '#1e4a46', EYE = '#c8b0ff', SCAR = '#f0d0c8', PINK = '#f0a0a8';
     const { Q, b, h, t, earA, earB, legA, legB, armA, armB } = rigParts(g, v);
     const plug = (x, y) => { t.rect(x, y, 5, 4, Cu.b); t.rect(x, y + 3, 5, 1, Cu.s); t.rect(x, y - 3, 1, 3, '#ffd08a'); t.rect(x + 3, y - 3, 1, 3, '#ffd08a'); t.px(x + 1, y - 4, '#bff6ff'); t.px(x + 4, y - 5, '#bff6ff'); };
+    // one smooth tapering tail along a curve (w0 thick at the base, w1 at the tip)
+    const tail = (pts, w0 = 2.2, w1 = 1.3) => {
+      const L = [], R = [];
+      pts.forEach(([x, y], i) => {
+        const [ax, ay] = pts[Math.max(i - 1, 0)], [bx, by] = pts[Math.min(i + 1, pts.length - 1)], d = Math.hypot(bx - ax, by - ay) || 1;
+        const w = w0 + (w1 - w0) * i / (pts.length - 1), nx = -(by - ay) / d * w, ny = (bx - ax) / d * w;
+        L.push([x + nx, y + ny]); R.push([x - nx, y - ny]);
+      });
+      t.poly([...L, ...R.reverse()], T, { edge: true });
+    };
     if (v === 'side') {
-      t.ellipse(8, 23, 2, 2, T, { edge: true }); t.ellipse(6.5, 19, 1.8, 2.4, T, { edge: true }); t.ellipse(6, 14.5, 1.6, 2.2, T, { edge: true });   // tail curving up behind
+      tail([[9, 25], [7, 21], [6.3, 17], [6.5, 13]]);                                            // tail curving up behind
       plug(4, 9);
       legB.ellipse(13, 27.5, 2.2, 2.6, T.s); legB.ellipse(13.5, 30, 2.4, 1.2, T.s);
       b.ellipse(15, 21, 5, 6.5, T, { edge: true });
@@ -37,11 +47,11 @@ Object.assign(MONSTER_ART, {
       earA.ellipse(10.5, 6.5, 2, 2, T, { edge: true }); earB.ellipse(21.5, 6.5, 2, 2, T, { edge: true });
       h.ellipse(16, 11, 6.5, 5, T, { edge: true });
       h.poly([[10, 8], [11, 1], [13, 5], [16, 0], [19, 5], [21, 1], [22, 8]], W, { edge: true });
-      t.ellipse(12, 25, 2, 2, T, { edge: true }); t.ellipse(8.5, 22.5, 2, 2.2, T, { edge: true }); t.ellipse(6.5, 18.5, 1.8, 2.2, T, { edge: true }); t.ellipse(6, 14.5, 1.6, 2, T, { edge: true });   // tail curling up to one side
+      tail([[12.5, 25.5], [9, 23], [6.8, 19], [6, 15], [5.8, 12]]);                              // tail curling up to one side
       plug(3, 8);
       return;
     }
-    t.ellipse(21, 25, 2, 2, T, { edge: true }); t.ellipse(24, 22, 2, 2.2, T, { edge: true }); t.ellipse(25.5, 18, 1.8, 2.2, T, { edge: true }); t.ellipse(26, 14, 1.6, 2, T, { edge: true });   // tail behind
+    tail([[20.5, 25.5], [24, 22.5], [25.6, 18.5], [26, 15], [25.6, 12]]);                       // tail behind
     plug(23, 8);                                                                                 // the crackling plug
     legA.ellipse(12.5, 27.5, 2.2, 2.6, T, { edge: true }); legB.ellipse(19.5, 27.5, 2.2, 2.6, T, { edge: true });
     legA.ellipse(12, 30, 2.6, 1.2, T, { edge: true }); legB.ellipse(20, 30, 2.6, 1.2, T, { edge: true });   // feet
@@ -67,6 +77,16 @@ Object.assign(MONSTER_ART_DIAG, {
     const Cu = P('#e08a3a', '#a85a1e', '#ffc07a'), MASK = '#1e4a46', EYE = '#c8b0ff', SCAR = '#f0d0c8', PINK = '#f0a0a8';
     const { Q, b, h, t, earA, earB, legA, legB, armA, armB } = rigParts(g, v);
     const plug = (x, y) => { t.rect(x, y, 5, 4, Cu.b); t.rect(x, y + 3, 5, 1, Cu.s); t.rect(x, y - 3, 1, 3, '#ffd08a'); t.rect(x + 3, y - 3, 1, 3, '#ffd08a'); t.px(x + 1, y - 4, '#bff6ff'); t.px(x + 4, y - 5, '#bff6ff'); };
+    // one smooth tapering tail along a curve (w0 thick at the base, w1 at the tip)
+    const tail = (pts, w0 = 2.2, w1 = 1.3) => {
+      const L = [], R = [];
+      pts.forEach(([x, y], i) => {
+        const [ax, ay] = pts[Math.max(i - 1, 0)], [bx, by] = pts[Math.min(i + 1, pts.length - 1)], d = Math.hypot(bx - ax, by - ay) || 1;
+        const w = w0 + (w1 - w0) * i / (pts.length - 1), nx = -(by - ay) / d * w, ny = (bx - ax) / d * w;
+        L.push([x + nx, y + ny]); R.push([x - nx, y - ny]);
+      });
+      t.poly([...L, ...R.reverse()], T, { edge: true });
+    };
     const crest = () => h.poly([[11, 8], [12, 1], [14, 5], [17, 0], [20, 5], [22, 1], [23, 8]], W, { edge: true });
     if (v === 'bside') {
       legB.ellipse(12.5, 27.5, 2.2, 2.6, T, { edge: true }); legA.ellipse(19.5, 27.5, 2, 2.4, T, { edge: true });
@@ -77,11 +97,11 @@ Object.assign(MONSTER_ART_DIAG, {
       h.ellipse(17, 11, 6.5, 5, T, { edge: true });
       h.ellipse(23.5, 12.5, 1.4, 1.4, T, { edge: true });                                       // snout peeking out
       crest();
-      t.ellipse(11, 25, 2, 2, T, { edge: true }); t.ellipse(7.5, 22, 2, 2.2, T, { edge: true }); t.ellipse(5.5, 18, 1.8, 2.2, T, { edge: true }); t.ellipse(5, 14, 1.6, 2, T, { edge: true });
+      tail([[11.5, 25.5], [8, 22.5], [5.8, 18.5], [5, 15], [4.8, 12]]);
       plug(2, 8);
       return;
     }
-    t.ellipse(10, 24, 2, 2, T, { edge: true }); t.ellipse(7.5, 20.5, 1.8, 2.4, T, { edge: true }); t.ellipse(6.5, 16, 1.6, 2.2, T, { edge: true });   // tail behind, on the left
+    tail([[10.5, 25], [8, 21], [6.6, 17], [6.5, 13]]);                                          // tail behind, on the left
     plug(4, 9);
     legB.ellipse(12.5, 27.5, 2.2, 2.6, T, { edge: true }); legA.ellipse(19.5, 27.5, 2.2, 2.6, T, { edge: true });
     legB.ellipse(12, 30, 2.4, 1.2, T, { edge: true }); legA.ellipse(20.5, 30, 2.6, 1.2, T, { edge: true });

@@ -27,6 +27,7 @@ class Mon {
     this.aiKind = opts.ai || null;
     this.level = 1; this.xp = 0;
     this.bonus = { atk: 1, def: 1, spd: 1, cd: 1 };   // from relics (player side)
+    this.fused = [];   // relics fused into it at the evolution altar (their `fused` versions, for this monster only)
     this.setDef(def);
     this.hp = this.maxHp;
     this.fainted = false;
