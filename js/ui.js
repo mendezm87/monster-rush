@@ -217,7 +217,7 @@ const UI = {
     if (c.name !== name) { root.querySelector('.mon-name').innerHTML = name; c.name = name; }
     root.querySelector('.xpbar div').style.width = (mon.xp / XP_NEED(mon.level) * 100) + '%';
     const tags = mon.def.types.map(t => this.typeTag(t)).join('') +
-      (mon.status ? `<span class="tag status ${mon.status}">${mon.status.toUpperCase()}</span>` : `<span class="tag item">${mon.item.name || ''}</span>`);
+      (mon.status ? `<span class="tag status ${mon.status}" data-tip="status:${mon.status}">${mon.status.toUpperCase()}</span>` : `<span class="tag item" data-tip="item:${mon.def.item}">${mon.item.name || ''}</span>`);
     if (c.tags !== tags) { root.querySelector('.tags').innerHTML = tags; c.tags = tags; }
 
     const pct = mon.hp / mon.maxHp;

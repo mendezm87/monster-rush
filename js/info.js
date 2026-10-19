@@ -159,7 +159,15 @@ const TIPS = {
     for (const d of Object.keys(TYPES)) { const e = typeEffect(t, [d]); if (e > 1) good.push(TYPES[d].name); else if (e < 1) bad.push(TYPES[d].name); }
     return `<b>${TYPES[t].name}</b><i>${t} moves are…</i>Strong vs ${good.join(', ') || 'nothing'}<br>Weak vs ${bad.join(', ') || 'nothing'}`;
   },
+  status: s => `<b>${STATUS_TIPS[s][0]}</b><i>Status · wears off after ${STATUS_TIPS[s][1]} s</i>${STATUS_TIPS[s][2]}`,
   text: s => s,
+};
+// what each status does (see Battle.update's status ticks and Mon.speed / atk)
+const STATUS_TIPS = {
+  par: ['PARALYZED', 8, 'Moves at about half speed, and now and then seizes up for a moment.'],
+  brn: ['BURNED', 6, 'Loses 3% of its HP every second, and its attack is down 25%.'],
+  psn: ['POISONED', 8, 'Loses 2.5% of its HP every second.'],
+  frz: ['FROZEN', 1.6, "Can't move or attack until it thaws out."],
 };
 const tipEl = document.createElement('div');
 tipEl.id = 'tip';
