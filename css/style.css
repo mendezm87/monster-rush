@@ -292,3 +292,22 @@ kbd { background: #2b2540; border: 0.3cqh solid #555; border-bottom-width: 0.8cq
 #screen-altar .party-list .card { width: 14cqh; padding: 0.8cqh; }
 #screen-altar .card .c-types, #screen-altar .card .c-hp { display: none; }
 #screen-altar .card .c-name { font-size: 2.4cqh; }
+
+/* move descriptions and the Info screen */
+.mv-desc, .d-mvdesc { font: 700 2.6cqh/1.35 system-ui, sans-serif; text-align: left; max-width: 120cqh; opacity: .92; }
+.mv-desc span, .d-mvdesc span { opacity: .7; font-size: 2.3cqh; }
+.d-move { cursor: pointer; }
+.d-move.sel { outline: 0.4cqh solid #fff; }
+#relics { pointer-events: auto; cursor: pointer; }
+.info-tabs { display: flex; gap: 1cqh; }
+.info-tabs button { font: 900 3.2cqh var(--font); padding: 1cqh 3cqh; border-radius: 2cqh; border: 0.6cqh solid var(--ink); background: #2b2540; color: #ccc; cursor: pointer; }
+.info-tabs button.on { background: #ffd23f; color: var(--ink); }
+.info-body { width: 100%; max-width: 130cqh; display: flex; flex-direction: column; gap: 1cqh; text-align: left; }
+.info-body h3 { margin: 1.4cqh 0 0; color: #ffe066; font-size: 3.4cqh; }
+.info-row { display: flex; align-items: center; gap: 2cqh; background: var(--panel); border-radius: 1.6cqh; padding: 1cqh 1.6cqh; font: 700 2.7cqh/1.45 system-ui, sans-serif; }
+.info-row canvas { width: 7cqh; height: 7cqh; image-rendering: pixelated; flex: none; }
+.info-row b { font: 900 3cqh var(--font); }
+.info-row b.fz { color: #e0b0ff; font-size: 2.8cqh; }
+.info-row .tag { display: inline-block; margin: 0.2cqh 0; }
+.info-row .tag.elem { background: #4a3a6a; }
+.info-row .lbl { opacity: .7; font-size: 2.4cqh; margin-right: 0.6cqh; }

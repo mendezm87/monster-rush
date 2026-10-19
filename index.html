@@ -147,8 +147,16 @@
       <h2>Paused</h2>
       <button class="big-btn" id="btn-resume">Resume</button>
       <button class="small-btn" id="btn-party">Party</button>
+      <button class="small-btn" id="btn-info">Info</button>
       <button class="small-btn" id="btn-settings2">Settings</button>
       <button class="small-btn" id="btn-quit">Give up run</button>
+    </div>
+
+    <div class="screen hidden dim" id="screen-info">
+      <h2>Info</h2>
+      <div id="info-tabs" class="info-tabs"><button data-tab="relics">Relics</button><button data-tab="items">Held items</button><button data-tab="types">Types</button></div>
+      <div id="info-body" class="info-body"></div>
+      <div class="row"><button class="big-btn" id="btn-info-back">Back</button></div>
     </div>
 
     <div class="screen hidden dim" id="screen-settings">
@@ -202,5 +210,6 @@
   <script src="js/dungeon.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/main.js"></script>
+  <script src="js/info.js"></script>
 </body>
 </html>

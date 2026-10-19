@@ -2,7 +2,7 @@
 
 // Shown on the title screen so players can tell whether their browser has the latest
 // build (GitHub Pages lets browsers cache files for up to 10 minutes). Bump on every release.
-const VERSION = '2026.10.18-r61';
+const VERSION = '2026.10.18-r62';
 
 const App = {
   endless: false,   // the mode picked on the title screen
@@ -474,12 +474,15 @@ function slotLabel(i) {
 }
 function moveBtn(k, attrs, cls = '', label = '') {
   const mv = MOVES[k];
-  return `<button class="mv ${cls}" ${attrs} style="background:${TYPES[mv.type].color}">${label ? `<i>${label}</i>` : ''}${mv.name}<small>${TYPES[mv.type].name} ${mv.kind}${mv.power ? ' ' + mv.power : ''}</small></button>`;
+  return `<button class="mv ${cls}" ${attrs} title="${moveDesc(mv)}" style="background:${TYPES[mv.type].color}">${label ? `<i>${label}</i>` : ''}${mv.name}<small>${TYPES[mv.type].name} · ${KIND_NAMES[mv.kind]}${mv.power ? ' · ' + mv.power : ''}</small></button>`;
 }
+// the selected move's full description (or a hint)
+const moveDescHtml = k => `<div class="mv-desc">${k ? `<b>${MOVES[k].name}</b> <span>${moveStats(MOVES[k])}</span><br>${moveDesc(MOVES[k])}` : 'Tap a move to see what it does.'}</div>`;
 function movesEditorHtml(m) {
   const ids = m.moves.map(x => x.id), spare = m.known.filter(k => !ids.includes(k)), fresh = m.newMoves || [];
   return `<div class="mv-ed"><div class="mv-head">Moves <span>${MovesEd.slot >= 0 || MovesEd.mv ? 'now tap where it goes' : 'tap one, then a slot or move to swap'}</span></div>
     <div class="mv-slots">${ids.map((k, i) => moveBtn(k, `data-slot="${i}"`, i === MovesEd.slot ? 'sel' : '', slotLabel(i))).join('')}</div>
+    ${moveDescHtml(MovesEd.mv || (MovesEd.slot >= 0 ? ids[MovesEd.slot] : null))}
     ${spare.length ? `<div class="mv-head">Also knows</div><div class="mv-known">${spare.map(k => moveBtn(k, `data-mv="${k}"`, (k === MovesEd.mv ? 'sel ' : '') + (fresh.includes(k) ? 'new' : ''))).join('')}</div>`
       : `<div class="hint">It learns a new move at every 2nd level.</div>`}</div>`;
 }
@@ -525,7 +528,7 @@ function drawLearn() {
   const { mon: m, id } = Learn.cur, mv = MOVES[id];
   $('#learn-title').textContent = `${m.def.name} learned ${mv.name}!`;
   UI.fillDetail($('#learn-detail'), m.def, ` · Lv ${m.level}`);
-  $('#learn-detail .d-moves').outerHTML = `<div class="mv-ed"><div class="mv-new">${moveBtn(id, 'disabled', 'big')}</div>
+  $('#learn-detail .d-moves').outerHTML = `<div class="mv-ed"><div class="mv-new">${moveBtn(id, 'disabled', 'big')}</div>${moveDescHtml(id)}
     <div class="mv-head">Put it in place of <span>(the old move stays known: swap back any time in Pause, Party)</span></div>
     <div class="mv-slots">${m.moves.map((x, i) => moveBtn(x.id, `data-slot="${i}"`, '', slotLabel(i))).join('')}</div></div>`;
 }

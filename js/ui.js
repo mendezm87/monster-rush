@@ -3,7 +3,7 @@
 const $ = sel => document.querySelector(sel);
 
 const UI = {
-  screens: ['title', 'help', 'starter', 'recruit', 'party', 'pick', 'pause', 'result', 'settings', 'learn', 'altar'],
+  screens: ['title', 'help', 'starter', 'recruit', 'party', 'pick', 'pause', 'result', 'settings', 'learn', 'altar', 'info'],
 
   show(name) {
     for (const s of this.screens) $('#screen-' + s).classList.toggle('hidden', s !== name);
@@ -23,7 +23,8 @@ const UI = {
     return `<canvas width="88" height="88"></canvas><div>
       <div class="d-name">${def.name} ${def.types.map(t => this.typeTag(t)).join(' ')}</div>
       <div class="d-stats">HP ${def.hp} · ATK ${Math.round(def.atk * 100)} · DEF ${Math.round(def.def * 100)} · SPD ${def.spd} · ${ITEMS[def.item].name}${extra}</div>
-      <div class="d-moves">${def.moves.map(k => `<div class="d-move" style="background:${TYPES[MOVES[k].type].color}">${MOVES[k].name}</div>`).join('')}</div></div>`;
+      <div class="d-moves">${def.moves.map(k => `<div class="d-move" data-mv="${k}" title="${moveDesc(MOVES[k])}" style="background:${TYPES[MOVES[k].type].color}">${MOVES[k].name}</div>`).join('')}</div>
+      <div class="d-mvdesc">Tap a move to see what it does.</div></div>`;
   },
   // A relic or shop good: icon, name, what it does.
   fillItem(el, id, note) {
@@ -39,7 +40,7 @@ const UI = {
     if (box.dataset.key === key) return;
     box.dataset.key = key; box.innerHTML = '';
     for (const id of run.relics) {
-      const cv = document.createElement('canvas'); cv.width = cv.height = 16; cv.title = RELICS[id].name + ': ' + RELICS[id].desc;
+      const cv = document.createElement('canvas'); cv.width = cv.height = 16; cv.title = RELICS[id].name + ': ' + RELICS[id].desc + ' (tap for details)';
       const c = cv.getContext('2d'); c.imageSmoothingEnabled = false; c.drawImage(itemIcon(id), 0, 0);
       box.appendChild(cv);
     }
@@ -47,6 +48,12 @@ const UI = {
   fillDetail(el, def, extra) {
     el.innerHTML = this.detailHtml(def, extra);
     drawPortrait(el.querySelector('canvas'), def.id);
+    el.querySelectorAll('.d-move').forEach(c => { c.onclick = e => {   // tap a move: what it does
+      e.stopPropagation();
+      const mv = MOVES[c.dataset.mv], box = el.querySelector('.d-mvdesc');
+      el.querySelectorAll('.d-move').forEach(o => o.classList.toggle('sel', o === c));
+      if (box) box.innerHTML = `<b>${mv.name}</b> <span>${moveStats(mv)}</span><br>${moveDesc(mv)}`;
+    }; });
   },
 
   // A row of party cards. onPick(i) on tap; mark(i) returns extra classes.
