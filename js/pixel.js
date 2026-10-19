@@ -131,6 +131,8 @@ class PixGrid {
   }
 }
 
+// Give a canvas's memory back right away (phones count it against a cap until it's collected).
+function freeCanvas(c) { if (c && c.width !== undefined) { c.width = 0; c.height = 0; } }
 const _rgbCache = {};
 function hexRgb(hex) {
   if (_rgbCache[hex]) return _rgbCache[hex];
@@ -157,7 +159,20 @@ const DIGITS = {
 };
 
 // Renders a number as chunky outlined pixels: fill colour with a darker bottom row.
+// Number pictures are cached: phones (iPhone Safari above all) free thrown-away canvases late and
+// cap the memory all canvases may use, so a new picture every frame (the coin counter, price tags)
+// eventually makes new pictures come out blank. Kept to the 400 most recently used.
+const _numbers = new Map();
 function numberCanvas(text, fill = '#fff6c8', shade = '#e0b040') {
+  const key = text + '|' + fill + '|' + shade;
+  let cv = _numbers.get(key);
+  if (cv) { _numbers.delete(key); _numbers.set(key, cv); return cv; }
+  cv = drawNumber(text, fill, shade);
+  _numbers.set(key, cv);
+  if (_numbers.size > 400) _numbers.delete(_numbers.keys().next().value);
+  return cv;
+}
+function drawNumber(text, fill, shade) {
   const chars = String(text).split('').filter(c => DIGITS[c]);
   const w = chars.length * 4 + 1, h = 7;
   const g = new PixGrid(w + 2, h + 2);
@@ -336,12 +351,18 @@ function trainerStep(map, leg) {
     return leg === 0 ? up.slice(0, 8) + row.slice(8) : row.slice(0, 8) + up.slice(8);
   });
 }
+// trainer pictures are made once per outfit and view (every room used to make its own)
+const _trainer = {};
 function trainerWalk(outfit = TRAINER_OUTFIT, view = 'front') {
+  const key = 'w' + outfit + view;
+  if (_trainer[key]) return _trainer[key];
   const map = TRAINER_MAPS[view] || TRAINER_FRONT, pal = { ...TRAINER_BASE, ...(TRAINER_OUTFITS[outfit] || TRAINER_OUTFITS[TRAINER_OUTFIT]) };
   const still = gridFromMap(map, pal).toCanvas();
-  return [still, gridFromMap(trainerStep(map, 0), pal).toCanvas(), still, gridFromMap(trainerStep(map, 1), pal).toCanvas()];
+  return (_trainer[key] = [still, gridFromMap(trainerStep(map, 0), pal).toCanvas(), still, gridFromMap(trainerStep(map, 1), pal).toCanvas()]);
 }
 function trainerCanvas(outfit = TRAINER_OUTFIT, view = 'front') {
+  const key = 'c' + outfit + view;
+  if (_trainer[key]) return _trainer[key];
   const map = TRAINER_MAPS[view] || TRAINER_FRONT;
-  return gridFromMap(map, { ...TRAINER_BASE, ...(TRAINER_OUTFITS[outfit] || TRAINER_OUTFITS[TRAINER_OUTFIT]) }).toCanvas();
+  return _trainer[key] = gridFromMap(map, { ...TRAINER_BASE, ...(TRAINER_OUTFITS[outfit] || TRAINER_OUTFITS[TRAINER_OUTFIT]) }).toCanvas();
 }

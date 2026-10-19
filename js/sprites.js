@@ -210,6 +210,18 @@ function _warmTick() {   // about 4 ms of drawing at a time, between the game's 
   }
   if (_warm.length) _warmT = setTimeout(_warmTick, 16);
 }
+// Let monsters' pictures go (Monster Rush, on a new floor: everyone not in the party or on the
+// floor). Their canvases are freed now; SPRITES[id] draws them again if they're needed later.
+function forgetSprites(keep) {
+  const views = vs => { if (!vs) return; for (const k of Object.keys(vs)) freeCanvas(vs[k]); views(vs.flapped); };
+  for (const id of Object.keys(SPRITE_STORE)) {
+    if (keep.has(id)) continue;
+    const sp = SPRITE_STORE[id];
+    views(sp.views); views(sp.flap);
+    for (const f of Object.values(sp.frames || {})) [].concat(f).forEach(views);
+    delete SPRITE_STORE[id];
+  }
+}
 // Kept for the pages that call it: monsters now draw themselves on first use.
 function buildSprites() {}
 

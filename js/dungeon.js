@@ -346,6 +346,8 @@ class RunState {
     this.newFloor(1);
   }
   newFloor(n) {
+    // the old floor's room pictures and scorch marks: freed now (phones cap canvas memory)
+    if (this.floor) for (const r of this.floor.rooms) { freeCanvas(r.canvas); freeCanvas(r.decal); delete r.canvas; delete r.decal; }
     this.floorN = n;
     this.floor = genFloor(n, this.party.map(m => m.def.from || m.id), this.relics, !this.endless && n === RUN_FLOORS);
     this.warm();
@@ -397,8 +399,9 @@ class RunState {
   // draw this floor's monsters (and what the party evolves into) in the background, a little at a time
   warm() {
     const ids = [];
-    for (const m of this.party) { ids.push(m.id); if (m.def.evolve) ids.push(m.def.evolve.to); }
+    for (const m of this.party) { ids.push(m.id); if (m.def.evolve) ids.push(m.def.evolve.to); ids.push(...Object.keys(m.def.branches || {})); }   // and what it can become
     for (const r of this.floor.rooms) { for (const e of r.enemies) ids.push(e.id); if (r.offer) ids.push(...r.offer); }
+    forgetSprites(new Set(ids));   // everyone else's pictures go (drawn again if they turn up)
     warmSprites(ids);
   }
   addRelic(id) { if (!this.relics.includes(id)) this.relics.push(id); this.applyRelics(); }
@@ -416,6 +419,7 @@ class RunState {
   dress() {
     const gear = typeof gearFor === 'function' ? gearFor(this.relics) : [];
     for (const m of this.party) { m.gear = m.fused && m.fused.length ? gearFor([...this.relics, ...m.fused]) : gear; monSprite(m); }
+    if (typeof forgetGear === 'function') forgetGear(new Set(this.party.filter(m => m.gear && m.gear.length).map(m => m.id + '|' + m.gear.join(','))));
   }
   // Use a shop good; returns false if it would do nothing.
   useGood(id, dry = false) {

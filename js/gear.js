@@ -208,21 +208,22 @@ const GEAR_SETS = {};
 function gearSprites(id, gear) {
   const key = id + '|' + gear.join(','), sp = SPRITES[id];
   if (GEAR_SETS[key]) return GEAR_SETS[key];
-  const layers = {};
+  const layers = {}, own = [];   // own: the canvases made here (faint frames are the plain monster's, shared)
   const layer = v => {
     const Q = rig(), k = v + Q.head.join() + (Q.legs || [0, 0]).join();
     if (layers[k]) return layers[k];
     const g = new PixGrid(sp.size, sp.size);
     drawGear(g, id, v, gear);
     g.outline();
-    return layers[k] = g.toCanvas();
+    own.push(layers[k] = g.toCanvas());
+    return layers[k];
   };
   const dress = views => {
     const out = {};
     for (const v of Object.keys(views)) {
       const c = document.createElement('canvas'); c.width = views[v].width; c.height = views[v].height;
       const x = c.getContext('2d'); x.drawImage(views[v], 0, 0); x.drawImage(layer(v), 0, 0);
-      out[v] = c;
+      out[v] = c; own.push(c);
     }
     if (views.flapped) flapped(out, dress(views.flapped));
     return out;
@@ -241,5 +242,14 @@ function gearSprites(id, gear) {
     }
   }
   RIG = keep;
+  Object.defineProperty(out, 'own', { value: own });
   return GEAR_SETS[key] = out;
+}
+// Free every dressed set no party member wears now (relics changed, someone left or evolved).
+function forgetGear(inUse) {
+  for (const [key, set] of Object.entries(GEAR_SETS)) {
+    if (inUse.has(key)) continue;
+    for (const c of set.own || []) freeCanvas(c);
+    delete GEAR_SETS[key];
+  }
 }
