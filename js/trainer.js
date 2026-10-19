@@ -58,11 +58,14 @@ function trainerPose(look, view, poseName) {
   const armPx = [];
   for (const k of ['L', 'R']) {
     if (!moving(k)) continue;
-    for (const [x, y, ch] of trainerArmPx(arms[k], P['arm' + k], trainerArmCols(look, k), TP_X + TOX, TP_Y + c)) { put(x, y, ch); armPx.push([x, y]); }
+    for (const [x, y, ch, far] of trainerArmPx(arms[k], P['arm' + k], trainerArmCols(look, k), TP_X + TOX, TP_Y + c)) { put(x, y, ch); armPx.push([x, y, far]); }
   }
-  for (const [x, y] of armPx) for (const [ox, oy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+  // ink round the arms: on empty pixels, and past the shoulder also where it crosses the body or face
+  const own = new Set(armPx.map(([x, y]) => x + ',' + y));
+  for (const [x, y, far] of armPx) for (const [ox, oy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
     const nx = x + ox, ny = y + oy;
-    if (nx >= 0 && ny >= 0 && nx < TP_W && ny < TP_H && grid[ny][nx] === '.') grid[ny][nx] = 'k';
+    if (nx < 0 || ny < 0 || nx >= TP_W || ny >= TP_H || own.has(nx + ',' + ny)) continue;
+    if (grid[ny][nx] === '.' || far) grid[ny][nx] = 'k';
   }
   return (_tposes[key] = gridFromMap(grid.map(r => r.join('')), trainerPal(look)).toCanvas());
 }

@@ -44,19 +44,23 @@ function trInk(g) {
   }
   for (const [x, y] of add) g[y][x] = 'k';
 }
-// An arm as pixels [x, y, key] (body coordinates plus ox/oy): from the shoulder at `deg`
-// (0 = hanging, 90 = straight out, 180 = straight up); cols[t] = the keys across the arm at step t
-// (outer edge first), fist = the hand's last row.
+// An arm as pixels [x, y, key] (body coordinates plus ox/oy), drawn as a thick limb from the
+// shoulder at `deg` (0 = hanging, 90 = straight out, 180 = straight up): every pixel within 1.45
+// of the line from the shoulder is arm, coloured by how far along it is (arm.cols[t] = the keys
+// across the arm at step t, outer edge first, so its light and dark edges stay at any angle), with
+// a rounded shoulder that joins the body and a chunky hand (arm.fist) at the end. A pixel's 4th
+// value says it's past the shoulder (where the arm gets an outline even over the body).
 function trainerArmPx(a, deg, arm, ox = 0, oy = 0) {
   const ang = deg * Math.PI / 180, dx = Math.sin(ang) * a.side, dy = Math.cos(ang);
-  const nx = -a.side * Math.round(Math.abs(dy)), ny = Math.round(Math.abs(dx));   // toward the body
-  const out = [], lay = (x, y, cs) => [...cs].forEach((c, j) => {
-    out.push([x + nx * j, y + ny * j, c]);
-    if (nx && ny && j) out.push([x + nx * j, y + ny * (j - 1), c]);   // no gaps on a slant
-  });
-  let x = 0, y = 0;
-  arm.cols.forEach((cs, t) => { x = Math.round(a.sx + ox + dx * t); y = Math.round(a.sy + oy + dy * t); lay(x, y, cs); });
-  lay(Math.round(x + dx), Math.round(y + dy), arm.fist);
+  const nx = dy * a.side, ny = -dx * a.side;   // across the arm, pointing to its outer edge
+  const cx = a.sx - a.side + ox, cy = a.sy + oy, L = arm.cols.length - 1;
+  const out = [], pick = (cs, d) => cs[d > 0.5 ? 0 : d < -0.5 ? 2 : 1];
+  for (let y = Math.floor(cy - L - 4); y <= cy + L + 4; y++) for (let x = Math.floor(cx - L - 4); x <= cx + L + 4; x++) {
+    const px = x - cx, py = y - cy, t = px * dx + py * dy, d = px * nx + py * ny;
+    if (t > L + 0.5 && t <= L + 2 && Math.abs(d) <= 1.6) out.push([x, y, pick(arm.fist, d), true]);   // the hand
+    else if (t >= -0.5 && t <= L + 0.5 && Math.abs(d) <= 1.45) out.push([x, y, pick(arm.cols[Math.max(0, Math.min(L, Math.round(t)))], d), t > 2.5]);
+    else if (px * px + py * py <= 2.3) out.push([x, y, pick(arm.cols[0], d)]);   // the round of the shoulder
+  }
   return out;
 }
 function trArm(P, a, arm) {
