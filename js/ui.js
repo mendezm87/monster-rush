@@ -16,14 +16,14 @@ const UI = {
     if (!on) { $('#callouts').innerHTML = ''; $('#banner').className = ''; }
   },
 
-  typeTag(t) { return `<span class="tag" style="background:${TYPES[t].color}">${TYPES[t].name}</span>`; },
+  typeTag(t) { return `<span class="tag" data-tip="type:${t}" style="background:${TYPES[t].color}">${TYPES[t].name}</span>`; },
 
   // A monster's portrait, name, types, stats and moves (team cards, recruit offers).
   detailHtml(def, extra = '') {
     return `<canvas width="88" height="88"></canvas><div>
       <div class="d-name">${def.name} ${def.types.map(t => this.typeTag(t)).join(' ')}</div>
-      <div class="d-stats">HP ${def.hp} · ATK ${Math.round(def.atk * 100)} · DEF ${Math.round(def.def * 100)} · SPD ${def.spd} · ${ITEMS[def.item].name}${extra}</div>
-      <div class="d-moves">${def.moves.map(k => `<div class="d-move" data-mv="${k}" title="${moveDesc(MOVES[k])}" style="background:${TYPES[MOVES[k].type].color}">${MOVES[k].name}</div>`).join('')}</div>
+      <div class="d-stats">HP ${def.hp} · ATK ${Math.round(def.atk * 100)} · DEF ${Math.round(def.def * 100)} · SPD ${def.spd} · <span class="tipped" data-tip="item:${def.item}">${ITEMS[def.item].name}</span>${extra}</div>
+      <div class="d-moves">${def.moves.map(k => `<div class="d-move" data-mv="${k}" data-tip="mv:${k}" style="background:${TYPES[MOVES[k].type].color}">${MOVES[k].name}</div>`).join('')}</div>
       <div class="d-mvdesc">Tap a move to see what it does.</div></div>`;
   },
   // A relic or shop good: icon, name, what it does.
@@ -40,7 +40,7 @@ const UI = {
     if (box.dataset.key === key) return;
     box.dataset.key = key; box.innerHTML = '';
     for (const id of run.relics) {
-      const cv = document.createElement('canvas'); cv.width = cv.height = 16; cv.title = RELICS[id].name + ': ' + RELICS[id].desc + ' (tap for details)';
+      const cv = document.createElement('canvas'); cv.width = cv.height = 16; cv.dataset.tip = 'relic:' + id;
       const c = cv.getContext('2d'); c.imageSmoothingEnabled = false; c.drawImage(itemIcon(id), 0, 0);
       box.appendChild(cv);
     }
@@ -157,7 +157,7 @@ const UI = {
       const col = TYPES[mv.type].color;
       b.style.background = `linear-gradient(${col}, ${shadeHex(col, -0.25)})`;
       const key = `${i >= 2 ? '<b>⇧</b>' : ''}${mouseIcon(i % 2 === 0 ? 'left' : 'right')}`;
-      b.title = keys[i].replace('⇧', 'Shift +') + ' or ' + Input.keyName(Input.keysFor('move' + (i + 1))[0]);
+      b.dataset.tip = 'mv:' + mv.id;
       b.innerHTML = `<span class="key">${key}</span><span class="nm">${mv.name}</span><div class="cd"></div>`;
       Input.bindMoveButton(b, i, 0);
       box.appendChild(b);

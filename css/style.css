@@ -311,3 +311,13 @@ kbd { background: #2b2540; border: 0.3cqh solid #555; border-bottom-width: 0.8cq
 .info-row .tag { display: inline-block; margin: 0.2cqh 0; }
 .info-row .tag.elem { background: #4a3a6a; }
 .info-row .lbl { opacity: .7; font-size: 2.4cqh; margin-right: 0.6cqh; }
+
+/* hover tooltips (mouse only) */
+#tip { position: fixed; z-index: 100; max-width: 300px; pointer-events: none; opacity: 0; transition: opacity .08s;
+  background: rgba(18, 14, 30, .96); border: 2px solid #ffd23f; border-radius: 10px; padding: 7px 10px; color: #fff;
+  font: 600 13px/1.4 system-ui, sans-serif; box-shadow: 0 4px 0 rgba(0,0,0,.4); }
+#tip.show { opacity: 1; }
+#tip b { display: block; font: 900 15px "Lilita One", "Arial Black", Arial, sans-serif; color: #ffe066; }
+#tip i { display: block; font-style: normal; font-size: 11.5px; opacity: .7; margin-bottom: 3px; }
+.tipped { text-decoration: underline dotted; cursor: help; }
+#hud .tag, #hud .tipped { pointer-events: auto; }

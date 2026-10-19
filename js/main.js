@@ -2,7 +2,7 @@
 
 // Shown on the title screen so players can tell whether their browser has the latest
 // build (GitHub Pages lets browsers cache files for up to 10 minutes). Bump on every release.
-const VERSION = '2026.10.18-r62';
+const VERSION = '2026.10.18-r63';
 
 const App = {
   endless: false,   // the mode picked on the title screen
@@ -377,7 +377,7 @@ function drawAltar() {
     b.disabled = !fits;
     const cv = document.createElement('canvas'); cv.width = 14; cv.height = 14;
     const c = cv.getContext('2d'); c.imageSmoothingEnabled = false; c.drawImage(itemIcon(id), 0, 0);
-    b.appendChild(cv);
+    b.appendChild(cv); b.dataset.tip = 'relic:' + id;
     b.insertAdjacentHTML('beforeend', `${RELICS[id].name} <span>${TAG_NAMES[RELICS[id].tag]}</span>`);
     b.onclick = () => {   // one relic per element: picking another of the same element swaps it
       Sfx.play('select');
@@ -442,6 +442,7 @@ function drawParty() {
   const fused = (m.fused || []).map(id => RELICS[id].fused.name).join(', ');
   UI.fillDetail($('#party-detail'), m.def, ` · Lv ${m.level} · ${m.fainted ? 'FAINTED' : `${Math.ceil(m.hp)} / ${m.maxHp} HP`}${fused ? ` · Fused: ${fused}` : ''}`);
   $('#party-detail .d-moves').outerHTML = movesEditorHtml(m);
+  $('#party-detail .d-mvdesc').remove();   // the editor has its own description line
   btn.disabled = !canRelease(Party.sel);
   btn.textContent = Party.confirm ? `Really release ${m.def.name}?` : 'Release';
 }
@@ -474,7 +475,7 @@ function slotLabel(i) {
 }
 function moveBtn(k, attrs, cls = '', label = '') {
   const mv = MOVES[k];
-  return `<button class="mv ${cls}" ${attrs} title="${moveDesc(mv)}" style="background:${TYPES[mv.type].color}">${label ? `<i>${label}</i>` : ''}${mv.name}<small>${TYPES[mv.type].name} · ${KIND_NAMES[mv.kind]}${mv.power ? ' · ' + mv.power : ''}</small></button>`;
+  return `<button class="mv ${cls}" ${attrs} data-tip="mv:${k}" style="background:${TYPES[mv.type].color}">${label ? `<i>${label}</i>` : ''}${mv.name}<small>${TYPES[mv.type].name} · ${KIND_NAMES[mv.kind]}${mv.power ? ' · ' + mv.power : ''}</small></button>`;
 }
 // the selected move's full description (or a hint)
 const moveDescHtml = k => `<div class="mv-desc">${k ? `<b>${MOVES[k].name}</b> <span>${moveStats(MOVES[k])}</span><br>${moveDesc(MOVES[k])}` : 'Tap a move to see what it does.'}</div>`;
@@ -531,6 +532,7 @@ function drawLearn() {
   $('#learn-detail .d-moves').outerHTML = `<div class="mv-ed"><div class="mv-new">${moveBtn(id, 'disabled', 'big')}</div>${moveDescHtml(id)}
     <div class="mv-head">Put it in place of <span>(the old move stays known: swap back any time in Pause, Party)</span></div>
     <div class="mv-slots">${m.moves.map((x, i) => moveBtn(x.id, `data-slot="${i}"`, '', slotLabel(i))).join('')}</div></div>`;
+  $('#learn-detail .d-mvdesc').remove();
 }
 function closeLearn(kept) {
   if (!Learn.cur) return;

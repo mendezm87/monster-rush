@@ -81,7 +81,7 @@ function typeMatchups(types) {
   return { weak: weak.sort((a, b) => b[1] - a[1]), resist: resist.sort((a, b) => a[1] - b[1]) };
 }
 const mult = e => (e >= 4 ? '×4' : e >= 2 ? '×2' : e <= 0.0625 ? '×1/16' : e <= 0.125 ? '×⅛' : e <= 0.25 ? '×¼' : '×½');
-const typeChip = (t, extra = '') => `<span class="tag" style="background:${TYPES[t].color}">${TYPES[t].name}${extra ? ' ' + extra : ''}</span>`;
+const typeChip = (t, extra = '') => `<span class="tag" data-tip="type:${t}" style="background:${TYPES[t].color}">${TYPES[t].name}${extra ? ' ' + extra : ''}</span>`;
 const iconCanvas = id => { const cv = document.createElement('canvas'); cv.width = cv.height = 14; const c = cv.getContext('2d'); c.imageSmoothingEnabled = false; c.drawImage(itemIcon(id), 0, 0); return cv; };
 
 // ---------- the Info screen ----------
@@ -104,16 +104,16 @@ function drawInfo() {
     if (!run.relics.length) body.insertAdjacentHTML('beforeend', '<div class="hint">No relics yet. Treasure rooms, the shop and room rewards have them. They help your whole party for the rest of the run.</div>');
     for (const id of run.relics) {
       const r = RELICS[id];
-      row(iconCanvas(id), `<b>${r.name}</b> <span class="tag elem">${TAG_LABEL(id)}</span><br>${r.desc}`);
+      row(Object.assign(iconCanvas(id), { title: '' }), `<b data-tip="relic:${id}">${r.name}</b> <span class="tag elem">${TAG_LABEL(id)}</span><br>${r.desc}`);
     }
     const fused = run.party.filter(m => m.fused && m.fused.length);
     if (fused.length) {
       body.insertAdjacentHTML('beforeend', '<h3>Fused at the altar</h3>');
-      for (const m of fused) row(portrait(m), `<b>${m.def.name}</b><br>${m.fused.map(id => `<b class="fz">${RELICS[id].fused.name}</b> ${RELICS[id].fused.desc}`).join('<br>')}`);
+      for (const m of fused) row(portrait(m), `<b>${m.def.name}</b><br>${m.fused.map(id => `<b class="fz" data-tip="fused:${id}">${RELICS[id].fused.name}</b> ${RELICS[id].fused.desc}`).join('<br>')}`);
     }
   } else if (Info.tab === 'items') {
     body.insertAdjacentHTML('beforeend', '<div class="hint">Each monster holds one item of its own; it always has it.</div>');
-    for (const m of run.party) row(portrait(m), `<b>${m.def.name}</b> holds <b>${ITEMS[m.def.item].name}</b><br>${itemDesc(ITEMS[m.def.item])}`);
+    for (const m of run.party) row(portrait(m), `<b>${m.def.name}</b> holds <b data-tip="item:${m.def.item}">${ITEMS[m.def.item].name}</b><br>${itemDesc(ITEMS[m.def.item])}`);
   } else {
     body.insertAdjacentHTML('beforeend', '<div class="hint">A move of the same type as its user hits 30% harder. ×2 means double damage, ×½ half.</div>');
     for (const m of run.party) {
@@ -145,3 +145,49 @@ $('#relics').addEventListener('click', () => {
   Input.reset();
   openInfo('relics', 'game');
 });
+
+// ---------- hover tooltips (mouse only; on a phone you tap instead) ----------
+// Anything with data-tip="kind:id" shows a styled tooltip straight away (no browser delay):
+// mv (a move), relic, fused (a relic fused at the altar), item (a held item), type, text.
+const TIPS = {
+  mv: id => { const mv = MOVES[id]; return `<b>${mv.name}</b><i>${moveStats(mv)}</i>${moveDesc(mv)}`; },
+  relic: id => `<b>${RELICS[id].name}</b><i>${TAG_LABEL(id)} relic · tap for all your relics</i>${RELICS[id].desc}`,
+  fused: id => `<b>${RELICS[id].fused.name}</b><i>Fused from ${RELICS[id].name}</i>${RELICS[id].fused.desc}`,
+  item: id => `<b>${ITEMS[id].name}</b><i>Held item</i>${itemDesc(ITEMS[id])}`,
+  type: t => {
+    const good = [], bad = [];
+    for (const d of Object.keys(TYPES)) { const e = typeEffect(t, [d]); if (e > 1) good.push(TYPES[d].name); else if (e < 1) bad.push(TYPES[d].name); }
+    return `<b>${TYPES[t].name}</b><i>${t} moves are…</i>Strong vs ${good.join(', ') || 'nothing'}<br>Weak vs ${bad.join(', ') || 'nothing'}`;
+  },
+  text: s => s,
+};
+const tipEl = document.createElement('div');
+tipEl.id = 'tip';
+document.body.appendChild(tipEl);
+let tipOn = null;
+const hideTip = () => { tipOn = null; tipEl.className = ''; };
+function placeTip(e) {
+  const w = tipEl.offsetWidth, h = tipEl.offsetHeight, W = window.innerWidth, H = window.innerHeight;
+  let x = e.clientX + 14, y = e.clientY + 18;
+  if (x + w > W - 6) x = e.clientX - w - 14;
+  if (y + h > H - 6) y = e.clientY - h - 12;
+  tipEl.style.left = Math.max(6, x) + 'px'; tipEl.style.top = Math.max(6, y) + 'px';
+}
+document.addEventListener('pointerover', e => {
+  if (e.pointerType !== 'mouse') return;
+  const t = e.target.closest && e.target.closest('[data-tip]');
+  if (t === tipOn) return;
+  if (!t) return hideTip();
+  const i = t.dataset.tip.indexOf(':'), f = TIPS[t.dataset.tip.slice(0, i)];
+  if (!f) return hideTip();
+  tipOn = t;
+  tipEl.innerHTML = f(t.dataset.tip.slice(i + 1));
+  tipEl.className = 'show';
+  placeTip(e);
+});
+document.addEventListener('pointermove', e => {
+  if (!tipOn) return;
+  if (!tipOn.isConnected || !tipOn.offsetParent) return hideTip();   // its screen closed under the mouse
+  placeTip(e);
+});
+document.addEventListener('pointerleave', hideTip);
