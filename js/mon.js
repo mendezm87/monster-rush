@@ -50,7 +50,7 @@ class Mon {
     this.item = ITEMS[def.item] || {};
     this.maxHp = this.calcMaxHp(); this.hp = Math.round(this.maxHp * share);
     this.r = (def.size === 'L' ? 17 : 12) * this.scale;
-    this.h = SPRITES[def.id].size * SPR_SCALE * this.scale;
+    this.h = (def.size === 'L' ? 44 : 32) * SPR_SCALE * this.scale;
     // Moves: `moves` are the 4 in use (slot order = left click, right click, Shift + left,
     // Shift + right); `known` is every move it has learned, to swap in (movesets.js, RunState).
     // Evolving upgrades each of the old form's own moves in place, so custom choices stay.
@@ -104,7 +104,7 @@ class Mon {
   // Turn to look along (dx, dy): the back when heading up the screen, the front when
   // heading down, the side or a diagonal (flipped by face) otherwise. See viewFor.
   look(dx, dy) {
-    const v = viewFor(dx, dy, this.view, SPRITES[this.id].diag);
+    const v = viewFor(dx, dy, this.view, !!MONSTER_ART_DIAG[this.id]);
     if (!v) return;
     this.view = v;
     if (isSideView(v) && Math.abs(dx) > 0.001) this.face = Math.sign(dx);

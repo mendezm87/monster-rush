@@ -37,8 +37,8 @@ mixInto(Battle, class {
 
     switch (mv.kind) {
       case 'projectile': {
-        const split = this.relic(m, 'splitShot') && !mv.boomerang;
-        const n = (mv.count || 1) + (split ? 1 : 0), sp = split ? Math.max(mv.spread || 0, 0.22) : mv.spread || 0;
+        const extra = mv.boomerang ? 0 : this.mod(m, 'extraShots');
+        const n = (mv.count || 1) + extra, sp = extra ? Math.max(mv.spread || 0, 0.22) : mv.spread || 0;
         for (let k = 0; k < n; k++) {
           const a = dir + (n > 1 ? (k / (n - 1) - 0.5) * sp : 0);
           this.projectiles.push({
@@ -66,7 +66,7 @@ mixInto(Battle, class {
         Sfx.move(mv, 'cast');
         break;
       case 'burst':
-        m.action = { kind: 'burst', t: 0, mv, dir, lock: true, done: false, r: mv.r * (this.relic(m, 'blastCore') ? 1.25 : 1), id: _uid++ };
+        m.action = { kind: 'burst', t: 0, mv, dir, lock: true, done: false, r: mv.r * this.mod(m, 'blastMul'), id: _uid++ };
         Sfx.move(mv, 'cast');   // see KIND_SFX / MOVE_SFX in audio.js
         break;
       case 'zone': {
@@ -77,7 +77,7 @@ mixInto(Battle, class {
           this.zones.push({
             x: clamp(foe.x + Math.cos(a) * rr, F.x0 + 8, F.x1 - 8),
             y: clamp(foe.y + Math.sin(a) * rr, F.y0 + 8, F.y1 - 8),
-            r: mv.r * (this.relic(m, 'blastCore') ? 1.25 : 1), t: 0, delay: mv.delay + k * 0.18, mv, owner: m, done: false, tick: 0, id: _uid++,
+            r: mv.r * this.mod(m, 'blastMul'), t: 0, delay: mv.delay + k * 0.18, mv, owner: m, done: false, tick: 0, id: _uid++,
           });
         }
         m.action = { kind: 'cast', t: 0, dur: 0.25, lock: true, mv, pose: 'throw' };
@@ -147,10 +147,10 @@ mixInto(Battle, class {
     if (mult >= 1 && dmg > 150) this.hitstop = Math.min(0.09, 0.03 + dmg / 6000);
 
     if (mv.status && Math.random() < mv.status[1] * Math.min(1, mult * 3)) this.applyStatus(tgt, mv.status[0]);
-    if (mult >= 1 && this.relic(src, 'staticCharm') && Math.random() < 0.1) this.applyStatus(tgt, 'par');
+    this.emit('hit', src, tgt, mv, mult);
     if (mv.slow) tgt.slowT = Math.max(tgt.slowT, mv.slow);
     // drain: the attacker heals for part of the damage it dealt
-    const drain = (mv.drain || 0) + (mv.kind === 'beam' && this.relic(src, 'leechLens') ? 0.15 : 0);
+    const drain = (mv.drain || 0) + (mv.kind === 'beam' ? this.mod(src, 'beamDrain') : 0);
     if (drain && !src.fainted && src.hp > 0) {
       const heal = Math.round(Math.min(dmg * drain, src.maxHp - src.hp));
       if (heal > 0) {
@@ -248,10 +248,7 @@ mixInto(Battle, class {
           if (a.t < 0.03) { const f = this.foe(m); if (f) { a.tgt = f; a.dir = this.aim(m, f, mv); } }
           break;
         }
-        if (this.relic(m, 'emberTracks') && (a.trailT = (a.trailT || 0) - dt) <= 0) {
-          a.trailT = 0.07;   // a pool of fire left along the dash
-          this.zones.push({ x: m.x, y: m.y, r: 13, t: 0, delay: 0, mv: EMBER_MV, owner: m, done: true, tick: 0.15, id: _uid++ });
-        }
+        this.emit('dash', m, a, dt);   // e.g. Ember Tracks leaves fire behind
         m.ghostT -= dt;
         if (m.ghostT <= 0) { m.ghostT = 0.03; m.ghosts.push({ x: m.x, y: m.y, face: m.face, view: m.view, t: 0.22, color: fx[1] }); }
         if (Math.random() < 0.7) this.particles.push({ x: m.x + rand(-6, 6), y: m.cy + rand(-6, 6), vx: -m.vx * 0.2, vy: -m.vy * 0.2, life: 0.3, max: 0.3, size: 2, color: fx[rand() < 0.5 ? 0 : 1], kind: 'sq' });

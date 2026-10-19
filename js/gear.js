@@ -7,17 +7,12 @@
 // head's and legs' nudge in each animation frame, so it bobs and steps along (gearSprites).
 // Laying it over is cheap, so a monster can be dressed the moment you pick up a relic.
 
-// Which relic is which piece of gear, and where it's worn. One piece per spot: the newest wins.
-const RELIC_GEAR = {
-  muscleCharm: 'head', ironShell: 'head', berryBasket: 'head', staticCharm: 'head',
-  leechLens: 'eyes', splitShot: 'eyes',
-  emberTracks: 'neck', hourglass: 'neck', luckyCoin: 'neck', blastCore: 'neck',
-  swiftBoots: 'feet',
-};
+// Where each relic is worn is its `gear` in RELICS (dungeon.js). One piece per spot: the newest wins.
+const relicGear = id => typeof RELICS !== 'undefined' && RELICS[id] ? RELICS[id].gear : null;
 const GEAR_ORDER = ['feet', 'neck', 'head', 'eyes'];   // drawing order: goggles over a helmet's brim
 function gearFor(relics) {
   const at = {};
-  for (const id of relics) if (RELIC_GEAR[id]) at[RELIC_GEAR[id]] = id;
+  for (const id of relics) if (relicGear(id)) at[relicGear(id)] = id;
   return GEAR_ORDER.filter(s => at[s]).map(s => at[s]);
 }
 

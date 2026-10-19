@@ -32,11 +32,12 @@
   <script src="js/data.js"></script>
   <script src="js/pixel.js"></script>
   <script src="js/sprites.js"></script>
+  <script src="js/monsters.js"></script>
   <script src="js/dungeon.js"></script>
   <script src="js/gear.js"></script>
   <script>
     buildSprites();
-    const ALL = Object.keys(RELIC_GEAR);
+    const ALL = Object.keys(RELICS).filter(relicGear);
     let owned = ['muscleCharm', 'leechLens', 'luckyCoin', 'swiftBoots'];   // in the order picked up
     const VIEWS5 = ['front', 'fside', 'side', 'bside', 'back'];
     const pick = document.getElementById('pick'), grid = document.getElementById('grid');
@@ -46,7 +47,7 @@
       for (const k of ALL) {
         const b = document.createElement('button');
         b.textContent = RELICS[k].name.toLowerCase(); b.className = owned.includes(k) ? 'on' : '';
-        b.title = RELIC_GEAR[k];
+        b.title = relicGear(k);
         b.onclick = () => { owned = owned.includes(k) ? owned.filter(x => x !== k) : [...owned, k]; chips(); dressAll(); };
         pick.appendChild(b);
       }

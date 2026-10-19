@@ -69,6 +69,18 @@ class Battle {
   get boss() { return this.e.find(m => m.boss) || null; }
   // does this monster's side have the relic? (relics only help your party)
   relic(m, id) { return m.side === 'player' && this.run.relics.includes(id); }
+  // a number from the relics you hold (RELICS[id].mods): ...Mul names multiply, others add; m = null for the party as a whole
+  mod(m, key, base = key.endsWith('Mul') ? 1 : 0) {
+    if (m && m.side !== 'player') return base;
+    let v = base;
+    for (const id of this.run.relics) { const x = RELICS[id].mods && RELICS[id].mods[key]; if (x !== undefined) v = key.endsWith('Mul') ? v * x : v + x; }
+    return v;
+  }
+  // tell the relics something happened (RELICS[id].on[event]); only your side's relics act
+  emit(event, m, ...args) {
+    if (m && m.side !== 'player') return;
+    for (const id of this.run.relics) { const f = RELICS[id].on && RELICS[id].on[event]; if (f) f(this, m, ...args); }
+  }
 
   // Who a monster attacks: wild monsters go for you, your moves aim at the nearest wild monster.
   foe(m) {
@@ -307,10 +319,10 @@ class Battle {
   // ---------------------------------------------------------- loot
   dropLoot(m) {
     let coins = m.boss ? 8 + this.run.floorN * 2 : m.scale > 1 ? 2 : (Math.random() < 0.5 ? 1 : 0);   // rooms give the rest (spawnReward)
-    if (this.run.relics.includes('luckyCoin')) coins = Math.round(coins * 1.5 + Math.random() * 0.5);
+    const cm = this.mod(null, 'coinMul');
+    if (cm !== 1) coins = Math.round(coins * cm + Math.random() * 0.5);
     for (let i = 0; i < coins; i++) this.spawnPickup('coin', m.x, m.y);
-    const basket = this.run.relics.includes('berryBasket');
-    if (m.boss || Math.random() < (basket ? 0.25 : 0.12)) this.spawnPickup('berry', m.x, m.y);
+    if (m.boss || Math.random() < 0.12 * this.mod(null, 'berryOddsMul')) this.spawnPickup('berry', m.x, m.y);
     if (m.champ === 'shiny') { for (let i = 0; i < 10; i++) this.spawnPickup('coin', m.x, m.y); this.spawnPickup('chest', m.x, m.y); }
   }
 
@@ -318,7 +330,7 @@ class Battle {
   spawnReward(kind) {
     const F = this.F, x = (F.x0 + F.x1) / 2, y = (F.y0 + F.y1) / 2;
     if (kind === 'coins') for (let i = 0; i < 5 + this.run.floorN; i++) this.spawnPickup('coin', x, y);
-    if (kind === 'berries') { this.spawnPickup('berry', x, y); this.spawnPickup('berry', x, y); if (this.run.relics.includes('berryBasket')) this.spawnPickup('berry', x, y); }
+    if (kind === 'berries') for (let i = 0; i < 2 + this.mod(null, 'roomBerries'); i++) this.spawnPickup('berry', x, y);
     if (kind === 'xp') this.spawnPickup('candy', x, y);
     if (kind === 'move') this.spawnPickup('disc', x, y);
     if (kind === 'chest') this.spawnPickup('chest', x, y);
@@ -372,7 +384,7 @@ class Battle {
       this.sparks(k.x, k.y - 4, 10, '#ffe066');
       Sfx.play('levelUp');
     } else {
-      const heal = Math.round(Math.min(P.maxHp * (this.run.relics.includes('berryBasket') ? 0.4 : BERRY_HEAL), P.maxHp - P.hp));
+      const heal = Math.round(Math.min(P.maxHp * BERRY_HEAL * this.mod(null, 'berryHealMul'), P.maxHp - P.hp));
       P.hp = Math.min(P.maxHp, P.hp + heal);
       this.number(P, heal, null, '#b6ff9a', '#4fae2e', '+');
       this.burst(P.x, P.cy, ['#4fae2e', '#b6ff9a', '#ffffff'], 14, 50, -50);

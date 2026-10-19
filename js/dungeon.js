@@ -36,20 +36,31 @@ function wildSpec(id, floorN, kind) {
   return { id, hpMul: 0.3 + 0.15 * f, atkMul: 0.36 + 0.11 * f, ai: 'wild' };
 }
 
-// Relics last for the whole run and help the whole party. bonus multiplies stats.
+// Relics last for the whole run and help the whole party. Each relic is one self-contained entry:
+//   tag    its element (fire, storm, iron, life, wind, luck), for the evolution altar to come
+//   gear   where the party wears it (head, eyes, neck, feet; the piece is GEAR_ART[id] in gear.js)
+//   bonus  stat multipliers for the whole party (atk, def, spd, cd)
+//   mods   numbers the game asks for by name (Battle.mod): names ending in Mul multiply, the rest add up
+//   on     things it does when something happens (Battle.emit): hit(b, src, tgt, mv, mult) after a hit
+//          lands, dash(b, m, action, dt) every frame of a dash
+// A new relic is an entry here, an icon (ICON_ART in render.js) and a piece of gear (GEAR_ART in gear.js);
+// test.html checks every relic has all three.
 const RELICS = {
-  leechLens:   { name: 'LEECH LENS', desc: 'Beams also drain: your monster heals 15% of the damage its beams deal.' },
-  emberTracks: { name: 'EMBER TRACKS', desc: 'Dashes leave a trail of fire behind them.' },
-  muscleCharm: { name: 'MUSCLE CHARM', desc: '+15% attack for your whole party.', bonus: { atk: 1.15 } },
-  ironShell:   { name: 'IRON SHELL', desc: '+15% defence for your whole party.', bonus: { def: 1.15 } },
-  swiftBoots:  { name: 'SWIFT BOOTS', desc: '+12% speed for your whole party.', bonus: { spd: 1.12 } },
-  hourglass:   { name: 'HOURGLASS', desc: 'Moves recharge 15% faster.', bonus: { cd: 0.85 } },
-  luckyCoin:   { name: 'LUCKY COIN', desc: 'Wild monsters drop 50% more coins.' },
-  berryBasket: { name: 'BERRY BASKET', desc: 'Berries drop more often and heal 40% instead of 25%.' },
-  splitShot:   { name: 'SPLIT SHOT', desc: 'Shots fire one extra projectile.' },
-  staticCharm: { name: 'STATIC CHARM', desc: 'Every hit has a 10% chance to paralyze.' },
-  blastCore:   { name: 'BLAST CORE', desc: 'Blasts and strikes from above are 25% bigger.' },
+  leechLens:   { name: 'LEECH LENS', desc: 'Beams also drain: your monster heals 15% of the damage its beams deal.', tag: 'life', gear: 'eyes', mods: { beamDrain: 0.15 } },
+  emberTracks: { name: 'EMBER TRACKS', desc: 'Dashes leave a trail of fire behind them.', tag: 'fire', gear: 'neck',
+    on: { dash(b, m, a, dt) { if ((a.trailT = (a.trailT || 0) - dt) <= 0) { a.trailT = 0.07; b.zones.push({ x: m.x, y: m.y, r: 13, t: 0, delay: 0, mv: EMBER_MV, owner: m, done: true, tick: 0.15, id: _uid++ }); } } } },
+  muscleCharm: { name: 'MUSCLE CHARM', desc: '+15% attack for your whole party.', tag: 'iron', gear: 'head', bonus: { atk: 1.15 } },
+  ironShell:   { name: 'IRON SHELL', desc: '+15% defence for your whole party.', tag: 'iron', gear: 'head', bonus: { def: 1.15 } },
+  swiftBoots:  { name: 'SWIFT BOOTS', desc: '+12% speed for your whole party.', tag: 'wind', gear: 'feet', bonus: { spd: 1.12 } },
+  hourglass:   { name: 'HOURGLASS', desc: 'Moves recharge 15% faster.', tag: 'wind', gear: 'neck', bonus: { cd: 0.85 } },
+  luckyCoin:   { name: 'LUCKY COIN', desc: 'Wild monsters drop 50% more coins.', tag: 'luck', gear: 'neck', mods: { coinMul: 1.5 } },
+  berryBasket: { name: 'BERRY BASKET', desc: 'Berries drop more often and heal 40% instead of 25%.', tag: 'life', gear: 'head', mods: { berryOddsMul: 25 / 12, berryHealMul: 1.6, roomBerries: 1 } },
+  splitShot:   { name: 'SPLIT SHOT', desc: 'Shots fire one extra projectile.', tag: 'storm', gear: 'eyes', mods: { extraShots: 1 } },
+  staticCharm: { name: 'STATIC CHARM', desc: 'Every hit has a 10% chance to paralyze.', tag: 'storm', gear: 'head',
+    on: { hit(b, src, tgt, mv, mult) { if (mult >= 1 && Math.random() < 0.1) b.applyStatus(tgt, 'par'); } } },
+  blastCore:   { name: 'BLAST CORE', desc: 'Blasts and strikes from above are 25% bigger.', tag: 'fire', gear: 'neck', mods: { blastMul: 1.25 } },
 };
+const RELIC_TAGS = ['fire', 'storm', 'iron', 'life', 'wind', 'luck'];
 // Shop goods that are used up straight away.
 const GOODS = {
   bigBerry: { name: 'BIG BERRY', desc: 'Heals your active monster by 50%.', price: 5 },
@@ -285,12 +296,20 @@ class RunState {
   newFloor(n) {
     this.floorN = n;
     this.floor = genFloor(n, this.party.map(m => m.def.from || m.id), this.relics, !this.endless && n === RUN_FLOORS);
+    this.warm();
     // fainted monsters get back up at 30% for the new floor
     for (const m of this.party) if (m.fainted) { m.fainted = false; m.hp = Math.round(m.maxHp * REVIVE_HP); m.status = null; }
     if (this.party[this.pi].fainted) this.pi = this.party.findIndex(m => !m.fainted);
     this.room = this.floor.start;
   }
   get stageKey() { return this.floor.stage; }
+  // draw this floor's monsters (and what the party evolves into) in the background, a little at a time
+  warm() {
+    const ids = [];
+    for (const m of this.party) { ids.push(m.id); if (m.def.evolve) ids.push(m.def.evolve.to); }
+    for (const r of this.floor.rooms) { for (const e of r.enemies) ids.push(e.id); if (r.offer) ids.push(...r.offer); }
+    warmSprites(ids);
+  }
   addRelic(id) { if (!this.relics.includes(id)) this.relics.push(id); this.applyRelics(); }
   // stat relics multiply into every party member's bonus
   applyRelics() {
@@ -350,6 +369,7 @@ class RunState {
     if (releaseIdx >= 0) this.release(releaseIdx, m);
     else this.party.push(m);
     this.dress();
+    if (m.def.evolve) warmSprites([m.def.evolve.to]);
     return m;
   }
   // Remove a party member (optionally putting a new one in its slot).

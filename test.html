@@ -28,7 +28,7 @@
 <body>
   <h1>Monster Rush tests</h1>
   <p class="hint">Bots play the real game (muted) in the box below, and your saved progress is never touched. Options in the address bar:
-    <code>?runs=10</code> normal runs per starter, <code>&amp;endless=2</code> endless runs per starter (stopped at floor <code>&amp;maxfloor=6</code>), <code>&amp;starter=smugshi</code> to test just one, <code>&amp;learn=0</code> to keep bots from learning moves.
+    <code>?runs=10</code> normal runs per starter, <code>&amp;endless=2</code> endless runs per starter (stopped at floor <code>&amp;maxfloor=6</code>), <code>&amp;starter=smugshi</code> to test just one, <code>&amp;learn=0</code> to keep bots from learning moves, <code>?quick</code> for the checks plus one run per starter (about a minute).
     <a href="gallery.html">Gallery</a> · <a href="./">Game</a></p>
   <div id="verdict" class="run">Running…</div>
   <div class="wrap">
@@ -44,7 +44,8 @@
 
 <script>
 const q = new URLSearchParams(location.search);
-const RUNS = +(q.get('runs') ?? 10), ENDLESS = +(q.get('endless') ?? 2), MAX_FLOOR = +(q.get('maxfloor') ?? 6), LEARN = q.get('learn') !== '0';
+const QUICK = q.has('quick');   // ?quick: the checks plus one run per starter
+const RUNS = +(q.get('runs') ?? (QUICK ? 1 : 10)), ENDLESS = +(q.get('endless') ?? (QUICK ? 0 : 2)), MAX_FLOOR = +(q.get('maxfloor') ?? 6), LEARN = q.get('learn') !== '0';
 const $ = s => document.querySelector(s);
 const logEl = $('#log');
 const log = s => { logEl.textContent += s + '\n'; logEl.scrollTop = logEl.scrollHeight; };
@@ -54,6 +55,10 @@ function check(name, ok, details = '') {
   if (!ok) { checksOk = false; problems.push(name + ': ' + details); }
   $('#checks').insertAdjacentHTML('beforeend', `<tr><td>${name}</td><td class="${ok ? 'ok' : 'bad'}">${ok ? 'PASS' : 'FAIL'}</td><td>${details}</td></tr>`);
 }
+// a heads-up that doesn't fail the tests (e.g. a monster's art changed: fine if it was meant to)
+function note(name, details) {
+  $('#checks').insertAdjacentHTML('beforeend', `<tr><td>${name}</td><td class="warn">CHANGED</td><td>${details}</td></tr>`);
+}
 $('#again').onclick = () => location.reload();
 const tick = () => new Promise(r => setTimeout(r, 0));
 
@@ -62,6 +67,9 @@ const tick = () => new Promise(r => setTimeout(r, 0));
 (async () => {
   const html = await (await fetch('index.html', { cache: 'reload' })).text();
   const files = [...html.matchAll(/(?:src|href)="((?:js|css)\/[^"]+)"/g)].map(m => m[1]);
+  // the monster art files listed in js/monsters.js
+  const list = await (await fetch('js/monsters.js', { cache: 'reload' })).text();
+  for (const m of (list.match(/MONSTER_FILES = \[([^\]]*)\]/) || [, ''])[1].matchAll(/'(\w+)'/g)) files.push(`js/monsters/${m[1]}.js`);
   await Promise.all(files.map(f => fetch(f, { cache: 'reload' })));
   $('#game').src = 'index.html?test=' + Date.now();
 })();
@@ -94,6 +102,77 @@ $('#game').addEventListener('load', async () => {
     const n = G('ALL_MONS()').length;
     check('Sprites', !bad.length, bad.length ? 'missing or empty: ' + bad.join(', ') : `${n} monsters × ${VIEWS.length} views, plus the trainer`);
   } catch (e) { check('Sprites', false, e.message); }
+
+  // ---------- every monster: art, animations, gear spots, moves, evolution, and where it lives ----------
+  const VIEWS5 = ['front', 'fside', 'side', 'bside', 'back'];
+  try {
+    const bad = [], MOVES = G('MOVES'), ITEMS = G('ITEMS'), TYPES = G('TYPES'), RIGGED = G('RIGGED'), RIG_FRAMES = G('RIG_FRAMES');
+    const AREA = G('AREA_MONS'), BYID = G('ROSTER_BY_ID'), ALL = G('ALL_MONS()');
+    const found = new Set([...G('STARTERS'), ...G('EVOLVED').map(e => e.id)]);
+    for (const a of Object.values(AREA)) for (const id of [...a.natives, ...a.bosses]) found.add(id);
+    for (let grew = true; grew;) { grew = false; for (const m of ALL) if (found.has(m.id) && m.evolve && !found.has(m.evolve.to)) { found.add(m.evolve.to); grew = true; } }   // what they evolve into
+    for (const m of ALL) {
+      const say = s => bad.push(`${m.id}: ${s}`);
+      if (!G('MONSTER_ART')[m.id] || !G('MONSTER_ART_DIAG')[m.id]) say('art is missing a set of views');
+      if (!RIG_FRAMES[RIGGED[m.id]]) say('no body type in RIGGED');
+      const sp = G('SPRITES')[m.id], S = sp.size;
+      if (!sp.frames || !sp.frames.walk || !sp.frames.faint) say('animation frames missing');
+      if (m.moves.length !== 4 || m.moves.some(k => !MOVES[k])) say('moves: ' + (m.moves.filter(k => !MOVES[k]).join(', ') || 'not 4'));
+      if (m.types.some(t => !TYPES[t])) say('unknown type');
+      if (!ITEMS[m.item]) say('unknown item ' + m.item);
+      if (m.evolve && (!BYID[m.evolve.to] || !(m.evolve.level > 0))) say('bad evolution');
+      if (!found.has(m.id)) say('never appears in the game (no area, starter or evolution)');
+      for (const v of VIEWS5) {   // gear spots: on the picture, and in a sensible order
+        const a = w.gearAnchors(m.id, v, S), inside = (x, y) => x >= 0 && y >= 0 && x < S && y < S;
+        if (!inside(a.topX, a.top) || !inside(a.neckX, a.bottom) || a.bottom < a.top) say(`gear: head spot off in ${v}`);
+        for (const l of a.lenses) if (!inside(l.x, l.y) || l.y < a.top - 1 || l.y > a.bottom + 1) say(`gear: eyes off in ${v}`);
+        for (const f of a.feet) if (f && !inside(f.x, f.y)) say(`gear: feet off in ${v}`);
+      }
+    }
+    check('Monsters', !bad.length, bad.length ? bad.slice(0, 12).join('; ') + (bad.length > 12 ? ` (and ${bad.length - 12} more)` : '')
+      : `${ALL.length} monsters: art, animations, gear spots, moves, types, items, evolutions, and each one appears somewhere`);
+  } catch (e) { check('Monsters', false, e.message); }
+
+  // ---------- every relic: effect, element tag, gear, icon; mods and events the game really uses ----------
+  try {
+    const bad = [], RELICS = G('RELICS'), TAGS = G('RELIC_TAGS'), GEAR = G('GEAR_ART'), ICONS = G('ICON_ART');
+    // the mod names and events the game asks for, read straight from its code
+    const code = (await Promise.all(['js/battle.js', 'js/combat.js'].map(async f => (await fetch(f, { cache: 'reload' })).text()))).join('\n');
+    const MODS = new Set([...code.matchAll(/\.mod\([^,]*, '(\w+)'/g)].map(m => m[1])), EVENTS = new Set([...code.matchAll(/\.emit\('(\w+)'/g)].map(m => m[1]));
+    for (const [id, r] of Object.entries(RELICS)) {
+      const say = s => bad.push(`${id}: ${s}`);
+      if (!r.name || !r.desc) say('name or description missing');
+      if (!TAGS.includes(r.tag)) say('no element tag');
+      if (!['head', 'eyes', 'neck', 'feet'].includes(r.gear) || !GEAR[id]) say('no gear');
+      if (!ICONS[id]) say('no icon');
+      if (!r.bonus && !r.mods && !r.on) say('does nothing');
+      for (const k of Object.keys(r.bonus || {})) if (!['atk', 'def', 'spd', 'cd'].includes(k)) say('unknown stat ' + k);
+      for (const k of Object.keys(r.mods || {})) if (!MODS.has(k)) say(`the game never asks for '${k}'`);
+      for (const k of Object.keys(r.on || {})) if (!EVENTS.has(k)) say(`the game never sends '${k}'`);
+    }
+    check('Relics', !bad.length, bad.length ? bad.join('; ') : `${Object.keys(RELICS).length} relics: effect, element tag, gear and icon (mods the game uses: ${[...MODS].join(', ')}; events: ${[...EVENTS].join(', ')})`);
+  } catch (e) { check('Relics', false, e.message); }
+
+  // ---------- pictures: every monster's art compared with the saved fingerprints ----------
+  try {
+    const hash = cv => { const d = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data; let h = 2166136261; for (let i = 0; i < d.length; i++) h = Math.imul(h ^ d[i], 16777619); return h >>> 0; };
+    const sets = (vs, out) => { for (const v of Object.keys(vs).sort()) out.push(hash(vs[v])); if (vs.flapped) sets(vs.flapped, out); };
+    const now = {};
+    for (const m of G('ALL_MONS()')) {
+      const sp = G('SPRITES')[m.id], hs = [];
+      sets(sp.views, hs);
+      for (const k of Object.keys(sp.frames || {}).sort()) for (const vs of [].concat(sp.frames[k])) sets(vs, hs);
+      now[m.id] = (hs.reduce((h, x) => Math.imul(h ^ x, 16777619), 2166136261) >>> 0).toString(16) + ':' + hs.length;
+    }
+    let saved = null;
+    try { saved = await (await fetch('tests/sprite-hashes.json', { cache: 'reload' })).json(); } catch (e) {}
+    const changed = saved ? Object.keys(now).filter(id => saved[id] && saved[id] !== now[id]) : [];
+    const added = saved ? Object.keys(now).filter(id => !saved[id]) : Object.keys(now);
+    window.spriteHashes = JSON.stringify(now, null, 1);   // the new fingerprints, to save when art changed on purpose
+    if (!changed.length && !added.length) check('Pictures', true, `every picture of all ${Object.keys(now).length} monsters matches the saved fingerprints`);
+    else note('Pictures', (changed.length ? `art changed: ${changed.join(', ')}. ` : '') + (added.length ? `new: ${added.join(', ')}. ` : '') +
+      'Fine if that was meant; then save the new fingerprints (window.spriteHashes) to tests/sprite-hashes.json.');
+  } catch (e) { check('Pictures', false, e.message); }
 
   // ---------- saves: an old save upgrades step by step to the current version ----------
   try {
