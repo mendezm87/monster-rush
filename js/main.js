@@ -2,7 +2,7 @@
 
 // Shown on the title screen so players can tell whether their browser has the latest
 // build (GitHub Pages lets browsers cache files for up to 10 minutes). Bump on every release.
-const VERSION = '2026.10.18-r63';
+const VERSION = '2026.10.18-r64';
 
 const App = {
   endless: false,   // the mode picked on the title screen
@@ -60,6 +60,12 @@ const Backdrop = {
 Backdrop.init();
 
 // ---------- title ----------
+function updateContinue() {
+  const d = Save.loadRun(), btn = $('#btn-continue');
+  btn.classList.toggle('hidden', !d);
+  if (d) { const m = d.party[d.pi] || d.party[0]; btn.innerHTML = `CONTINUE<small>${d.endless ? 'Endless floor ' + d.floorN : `Floor ${d.floorN}/${RUN_FLOORS}`} · ${ROSTER_BY_ID[m.id] ? ROSTER_BY_ID[m.id].name : ''} Lv ${m.level}</small>`; }
+}
+$('#btn-continue').onclick = () => { Sfx.init(); Sfx.play('select'); continueRun(); };
 $('#btn-play').onclick = () => { Sfx.init(); Sfx.play('select'); App.endless = false; openStarter(); };
 $('#btn-endless').onclick = () => { Sfx.init(); Sfx.play('select'); App.endless = true; openStarter(); };
 $('#btn-help').onclick = () => { Sfx.init(); Sfx.play('select'); UI.show('help'); };
@@ -187,16 +193,32 @@ $('#btn-starter-go').onclick = () => { if (App.starter) { Sfx.play('select'); st
 // ---------- the run ----------
 Input.bindStick($('#stick-zone'), $('#stick'), $('#knob'), 0);
 
+// Save the run now (out of a fight, or on entering a room), so a refresh can continue it.
+function saveRun() { if (App.run && !App.run.over) Save.saveRun(App.run.toSave()); }
 function startRun(starterId) {
   App.run = new RunState(starterId, App.endless);
+  beginRun();
+  enterRoom(App.run.room, null);
+  UI.banner(...floorBanner(App.run));
+}
+// Carry on with the run saved before a refresh (title screen, CONTINUE).
+function continueRun() {
+  const d = Save.loadRun();
+  let run = null;
+  try { run = d && RunState.fromSave(d); } catch (e) { run = null; }
+  if (!run) { Save.clearRun(); updateContinue(); return; }
+  App.run = run; App.endless = run.endless;
+  beginRun();
+  enterRoom(run.room, null);
+  UI.banner('WELCOME BACK', floorBanner(run).join(' · '));
+}
+function beginRun() {
   UI.hideScreens();
   UI.setRunChrome(true);
   Input.mouse = true;
   Input.reset();
   Sfx.init(); Sfx.resume();
   App.paused = false;
-  enterRoom(App.run.room, null);
-  UI.banner(...floorBanner(App.run));
 }
 
 const roomHooks = {
@@ -212,7 +234,7 @@ const roomHooks = {
   },
   offer(ped) { openOffer(ped); },
   bossBeaten(id) { if (Save.unlockStarter(id)) setTimeout(() => UI.banner(`NEW STARTER: ${ROSTER_BY_ID[id].name}!`), 2000); },
-  end(result) { const record = Save.endRun(App.run.floorN, result === 'win', App.run.endless); showResult(result, record); },
+  end(result) { App.run.over = true; Save.clearRun(); const record = Save.endRun(App.run.floorN, result === 'win', App.run.endless); showResult(result, record); },
 };
 
 function enterRoom(room, entry) {
@@ -223,6 +245,7 @@ function enterRoom(room, entry) {
   UI.closeSwap();
   UI.buildMoveButtons(App.battle.P);
   UI.drawRelics(App.run);
+  saveRun();
 }
 
 // A quick fade to black between rooms.
@@ -238,11 +261,12 @@ function titleStats() {
 }
 
 function leaveRun(to) {
+  if (to !== 'keep') Save.clearRun();   // giving up, or done: the saved run goes too
   App.battle = null; App.run = null; App.paused = false;
   Sfx.resume(); Sfx.music.stop();
   UI.setRunChrome(false);
   Input.mouse = false;
-  titleStats();
+  titleStats(); updateContinue();
   if (to === 'title') UI.show('title'); else if (to === 'starter') openStarter();
 }
 
@@ -594,6 +618,7 @@ function frame(now) {
     if (!App.paused && b.state !== 'pick') b.update(dt);
     // a move learned on a level-up waits for a calm moment between fights
     if (!App.paused && b.state === 'explore' && App.run && App.run.learnQueue.length) openLearn();
+    if (!App.paused && b.state === 'explore' && (App.savedAt === undefined || clockT - App.savedAt > 3)) { App.savedAt = clockT; saveRun(); }
     b.render(ctx);
     UI.updateHud(b);
   } else {
@@ -603,7 +628,7 @@ function frame(now) {
 }
 requestAnimationFrame(frame);
 $('#version').textContent = 'version ' + VERSION;
-titleStats();
+titleStats(); updateContinue();
 UI.show('title');
 
 // Debug / testing hook

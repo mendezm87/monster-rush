@@ -271,7 +271,9 @@ function tryFloor(floorN, partyIds, relics, last) {
 // The save carries a version number. When its shape changes, bump SAVE_VERSION and add a
 // step to SAVE_UPGRADES that turns version n into n + 1, so older saves keep working after an
 // update. Before upgrading, the old save is copied to a backup key.
-const SAVE_KEY = 'monsterRush.save.v1';   // the storage key stays the same; the version lives inside
+const SAVE_KEY = 'monsterRush.save.v1';
+const RUN_KEY = 'monsterRush.run';   // the run in progress (Save.saveRun); RUN_SAVE_VERSION is bumped when its shape changes
+const RUN_SAVE_VERSION = 1;   // the storage key stays the same; the version lives inside
 const SAVE_VERSION = 2;
 const SAVE_UPGRADES = {
   // 1 -> 2: settings get their own section (the lighting switch moves into it)
@@ -311,6 +313,11 @@ const Save = {
   // altar evolutions you've made (named on the altar; the rest show as ???)
   hasFound(id) { return (this.data.found || []).includes(id); },
   noteFound(id) { if (!this.hasFound(id)) { (this.data.found = this.data.found || []).push(id); this.write(); } },
+  // The run in progress, so a refresh (or closing the app) can carry on where you were. Kept under
+  // its own key; RunState.toSave / fromSave turn a run into plain data and back.
+  saveRun(d) { try { localStorage.setItem(RUN_KEY, JSON.stringify(d)); } catch (e) { /* storage full or blocked: no continue */ } },
+  loadRun() { try { const d = JSON.parse(localStorage.getItem(RUN_KEY)); return d && d.v === RUN_SAVE_VERSION ? d : null; } catch (e) { return null; } },
+  clearRun() { try { localStorage.removeItem(RUN_KEY); } catch (e) { /* ignore */ } },
   noteRecruit(id) { if (!this.data.recruited.includes(id)) { this.data.recruited.push(id); this.write(); } },
   // returns true if it's a new endless record
   endRun(floorN, win, endless) {
@@ -348,6 +355,45 @@ class RunState {
     this.room = this.floor.start;
   }
   get stageKey() { return this.floor.stage; }
+  // The whole run as plain data (Save.saveRun): the party, relics, coins, stats, and the floor with
+  // every room's state; rooms point to each other by index. Room pictures are redrawn from their seed.
+  toSave() {
+    const rooms = this.floor.rooms, at = r => rooms.indexOf(r);
+    const SKIP = new Set(['doors', 'canvas', 'torches', 'decal']);
+    return {
+      v: RUN_SAVE_VERSION, endless: this.endless, pi: this.pi, coins: this.coins, relics: this.relics, stats: this.stats, floorN: this.floorN,
+      room: at(this.room),
+      party: this.party.map(m => ({ id: m.id, level: m.level, xp: m.xp, hp: Math.round(m.hp), fainted: m.fainted,
+        moves: m.moves.map(x => x.id), known: m.known, newMoves: m.newMoves || [], fused: m.fused || [] })),
+      learnQueue: this.learnQueue.map(q => ({ mon: this.party.indexOf(q.mon), id: q.id })).filter(q => q.mon >= 0),
+      floor: { n: this.floor.n, last: this.floor.last, stage: this.floor.stage, start: at(this.floor.start), boss: at(this.floor.boss),
+        rooms: rooms.map(r => {
+          const o = {};
+          for (const [k, val] of Object.entries(r)) if (!SKIP.has(k)) o[k] = val;
+          o.doors = Object.fromEntries(Object.entries(r.doors).map(([dir, to]) => [dir, at(to)]));
+          return o;
+        }) },
+    };
+  }
+  static fromSave(d) {
+    const run = Object.create(RunState.prototype);
+    Object.assign(run, { endless: d.endless, pi: d.pi, coins: d.coins, relics: d.relics, stats: d.stats, floorN: d.floorN, swapCd: 0 });
+    run.party = d.party.map(o => {
+      const m = new Mon(ROSTER_BY_ID[o.id], 'player');
+      m.setLevel(o.level); m.xp = o.xp;
+      m.known = o.known; m.setMoves(o.moves); m.newMoves = o.newMoves; m.fused = o.fused;
+      m.hp = Math.min(m.maxHp, o.hp); m.fainted = o.fainted;
+      return m;
+    });
+    run.learnQueue = d.learnQueue.map(q => ({ mon: run.party[q.mon], id: q.id }));
+    const rooms = d.floor.rooms.map(o => ({ ...o, doors: {} }));
+    d.floor.rooms.forEach((o, i) => { for (const [dir, j] of Object.entries(o.doors)) rooms[i].doors[dir] = rooms[j]; });
+    run.floor = { n: d.floor.n, last: d.floor.last, stage: d.floor.stage, rooms, start: rooms[d.floor.start], boss: rooms[d.floor.boss] };
+    run.room = rooms[d.room];
+    run.applyRelics();
+    run.warm();
+    return run;
+  }
   // draw this floor's monsters (and what the party evolves into) in the background, a little at a time
   warm() {
     const ids = [];

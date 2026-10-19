@@ -321,3 +321,5 @@ kbd { background: #2b2540; border: 0.3cqh solid #555; border-bottom-width: 0.8cq
 #tip i { display: block; font-style: normal; font-size: 11.5px; opacity: .7; margin-bottom: 3px; }
 .tipped { text-decoration: underline dotted; cursor: help; }
 #hud .tag, #hud .tipped { pointer-events: auto; }
+
+#btn-continue small { display: block; font: 800 2.4cqh system-ui, sans-serif; opacity: .85; }

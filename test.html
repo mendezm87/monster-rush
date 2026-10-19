@@ -85,6 +85,7 @@ $('#game').addEventListener('load', async () => {
   // Never touch the real save, and keep the sound off.
   const Save = G('Save'), Sfx = G('Sfx');
   Save.write = () => {};
+  Save.saveRun = () => {}; Save.clearRun = () => {}; Save.loadRun = () => null;   // and never the owner's saved run either
   if (!Sfx.muted) w.toggleMute();
 
   // ---------- sprites: every monster and the trainer, in every view ----------
@@ -178,6 +179,20 @@ $('#game').addEventListener('load', async () => {
     else note('Pictures', (changed.length ? `art changed: ${changed.join(', ')}. ` : '') + (added.length ? `new: ${added.join(', ')}. ` : '') +
       'Fine if that was meant; then save the new fingerprints (window.spriteHashes) to tests/sprite-hashes.json.');
   } catch (e) { check('Pictures', false, e.message); }
+
+  // ---------- a run in progress saves and loads back the same (refresh, then CONTINUE) ----------
+  try {
+    const RS = G('RunState'), run = new RS('smugshi', false);
+    run.recruit('garrishell'); run.recruit('sparkit');
+    for (const r of ['emberTracks', 'tideCharm', 'luckyCoin']) run.addRelic(r);
+    run.party[1].fused = ['muscleCharm']; run.coins = 42; run.party[0].hp = 123;
+    run.floor.rooms[1].cleared = true; run.floor.rooms[1].visited = true; run.room = run.floor.rooms[1];
+    run.learnQueue.push({ mon: run.party[2], id: run.party[2].known[0] });
+    const a = JSON.stringify(run.toSave()), back = RS.fromSave(JSON.parse(a)), b = JSON.stringify(back.toSave());
+    const doorsOk = back.floor.rooms.every(r => Object.values(r.doors).every(o => back.floor.rooms.includes(o)));
+    check('Run save', a === b && doorsOk && back.room === back.floor.rooms[1] && back.party[1].bonus.atk > 1,
+      `a run (party, relics, fused relics, coins, rooms, doors, current room, moves waiting to be learned) saves and loads back the same (${Math.round(a.length / 1024)} KB)`);
+  } catch (e) { check('Run save', false, e.message); }
 
   // ---------- saves: an old save upgrades step by step to the current version ----------
   try {
