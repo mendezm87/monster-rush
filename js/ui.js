@@ -3,7 +3,7 @@
 const $ = sel => document.querySelector(sel);
 
 const UI = {
-  screens: ['title', 'help', 'starter', 'recruit', 'party', 'pick', 'pause', 'result', 'settings', 'learn', 'altar', 'info'],
+  screens: ['title', 'help', 'starter', 'recruit', 'party', 'pick', 'pause', 'result', 'settings', 'learn', 'altar', 'info', 'trainer'],
 
   show(name) {
     for (const s of this.screens) $('#screen-' + s).classList.toggle('hidden', s !== name);
@@ -168,7 +168,7 @@ const UI = {
 
   hudCache: {},
   updateHud(battle) {
-    this.updateSide('#hud-p', battle.P, battle.p, battle.pi);
+    this.updateSide('#hud-p', battle.P, battle.p, battle.pi, battle.run ? battle.run.partyMax : 6);
     this.drawRelics(battle.run);
     const floor = floorLabel(battle.run);
     if (this.hudCache.floor !== floor) { $('#floor-label').textContent = floor; this.hudCache.floor = floor; }
@@ -205,7 +205,7 @@ const UI = {
     });
   },
 
-  updateSide(sel, mon, team, idx) {
+  updateSide(sel, mon, team, idx, slots = 6) {
     const root = $(sel);
     const c = this.hudCache.p || (this.hudCache.p = { ghost: mon.hp });
     if (c.id !== mon.id + idx) {
@@ -229,7 +229,9 @@ const UI = {
     const hpText = `${Math.ceil(mon.hp)} / ${mon.maxHp}`;
     if (c.hp !== hpText) { root.querySelector('.hpnum').textContent = hpText; c.hp = hpText; }
 
-    const balls = team.map((m, i) => `<div class="ball${m.fainted ? ' out' : ''}${i === idx && !m.fainted ? ' active' : ''}"></div>`).join('');
+    // the bracer's slots: each holds a monster's data, lit in its type colour (empty ones dark)
+    const balls = Array.from({ length: Math.max(slots, team.length) }, (_, i) => { const m = team[i];
+      return m ? `<div class="slot${m.fainted ? ' out' : ''}${i === idx && !m.fainted ? ' active' : ''}" style="--c:${TYPES[m.def.types[0]].color}"></div>` : '<div class="slot empty"></div>'; }).join('');
     if (c.balls !== balls) { root.querySelector('.balls').innerHTML = balls; c.balls = balls; }
   },
 };

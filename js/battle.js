@@ -25,8 +25,9 @@ class Battle {
     this.ground = built.canvas; this.stage = built.stage;
     if (!room.decal) { room.decal = document.createElement('canvas'); room.decal.width = room.w; room.decal.height = room.h; }
     this.decal = room.decal; this.dctx = this.decal.getContext('2d');
-    this.trainerImg = Object.fromEntries(TRAINER_VIEWS.map(v => [v, trainerCanvas(TRAINER_OUTFIT, v)]));
-    this.trainerWalk = Object.fromEntries(TRAINER_VIEWS.map(v => [v, trainerWalk(TRAINER_OUTFIT, v)]));
+    this.outfit = run.T ? run.T.outfit : TRAINER_OUTFIT;
+    this.trainerImg = Object.fromEntries(TRAINER_VIEWS.map(v => [v, trainerCanvas(this.outfit, v)]));
+    this.trainerWalk = Object.fromEntries(TRAINER_VIEWS.map(v => [v, trainerWalk(this.outfit, v)]));
     this.projectiles = []; this.zones = []; this.particles = []; this.floats = []; this.texts = []; this.balls = [];
     this.pickups = room.pickups;
     this.weather = Array.from({ length: 70 }, () => this.newFlake(true));
@@ -76,13 +77,17 @@ class Battle {
     let v = base;
     const add = mods => { const x = mods && mods[key]; if (x !== undefined) v = key.endsWith('Mul') ? v * x : v + x; };
     for (const id of this.run.relics) add(RELICS[id].mods);
+    if (this.run.perk) add(this.run.perk.mods);   // the trainer's power
     if (m) for (const id of m.fused || []) add(RELICS[id].fused.mods);
     return v;
   }
   // tell the relics something happened (RELICS[id].on[event]); only your side's relics act
   emit(event, m, ...args) {
     if (m && m.side !== 'player') return;
-    if (event !== 'clear' || !m) for (const id of this.run.relics) { const f = RELICS[id].on && RELICS[id].on[event]; if (f) f(this, m, ...args); }
+    if (event !== 'clear' || !m) {
+      for (const id of this.run.relics) { const f = RELICS[id].on && RELICS[id].on[event]; if (f) f(this, m, ...args); }
+      const tp = this.run.perk && this.run.perk.on && this.run.perk.on[event]; if (tp) tp(this, m, ...args);   // the trainer's power
+    }
     if (m) for (const id of m.fused || []) { const f = RELICS[id].fused.on && RELICS[id].fused.on[event]; if (f) f(this, m, ...args); }
   }
 
@@ -153,7 +158,7 @@ class Battle {
     const room = this.room, F = this.F, cx = (F.x0 + F.x1) / 2, cy = (F.y0 + F.y1) / 2;
     this.pedestals = [];
     if (room.type === 'recruit' && !room.recruited)
-      this.pedestals = room.offer.map((id, i) => ({ kind: 'mon', id, x: cx + (i - 1) * 120, y: cy - 6, cool: 0 }));
+      this.pedestals = room.offer.map((id, i) => ({ kind: 'mon', id, x: cx + (i - (room.offer.length - 1) / 2) * (room.offer.length > 3 ? 100 : 120), y: cy - 6, cool: 0 }));
     if (room.type === 'shop')
       room.stock.forEach((it, i) => { if (!it.sold) this.pedestals.push({ kind: 'shop', item: it, id: it.id, x: cx + (i - 1.5) * 100, y: cy - 6, cool: 0 }); });
     if (room.type === 'altar' && !room.used)
@@ -215,7 +220,7 @@ class Battle {
     if (kind === 'close') this.addShake(3);
   }
 
-  // Throw the active monster out of the ball (after a faint), next to the trainer.
+  // Beam the active monster out of the trainer's bracer (on arrival, after a faint, on a swap), next to the trainer.
   sendOut(at) {
     const m = this.P;
     m.reset();
@@ -223,10 +228,11 @@ class Battle {
     const pos = at || { x: t.x + (t.x < (F.x0 + F.x1) / 2 ? 24 : -24), y: t.y + (t.y < (F.y0 + F.y1) / 2 ? 18 : -18) };
     m.x = clamp(pos.x, F.x0 + m.r, F.x1 - m.r); m.y = clamp(pos.y, F.y0 + m.r, F.y1 - 2);
     m.face = 1;
-    this.balls.push({ from: { x: t.x, y: t.y - 14 }, to: { x: m.x, y: m.y - 6 }, t: 0, dur: 0.55 });
-    this.trainerAct('throw', m);
+    // a deploy: the beam reaches the ground (`beam` s), then the monster assembles pixel by pixel (see updateBalls)
+    this.balls.push({ from: { x: t.x, y: t.y - 14 }, to: { x: m.x, y: m.y - 2 }, t: 0, beam: 0.16, color: TYPES[m.def.types[0]].color });
+    this.trainerAct('deploy', m);
     this.ui.onSendOut('player', m);
-    Sfx.play('ball');
+    Sfx.play('deploy');
   }
 
   // Mid-fight swap: the fight keeps running while the new monster is thrown in,
@@ -241,17 +247,26 @@ class Battle {
     const out = this.P;
     const at = { x: out.x, y: out.y };
     out.action = null; out.visible = false; out.ghosts = [];
-    const tp = this.trainer;
-    this.particles.push({ x: tp.x, y: tp.y - 14, g: tp.y, x2: out.x, y2: out.cy, k2: out.y - out.cy, life: 0.3, max: 0.3, color: '#ff5a4a', kind: 'line' });
-    this.particles.push({ x: out.x, y: out.y - 4, r0: 22, r1: 2, life: 0.3, max: 0.3, color: '#ffffff', kind: 'ring', w: 3 });
-    this.burst(out.x, out.cy, ['#ff5a4a', '#ffffff'], 14, 60);
+    this.recall(out);
     this.pi = idx;
     // out of a fight, swapping is free
-    this.run.swapCd = this.state === 'fight' ? 8 : 0.5;
+    this.run.swapCd = (this.state === 'fight' ? 8 : 0.5) * this.mod(null, 'swapCdMul');
     const inc = this.P;
     this.ui.callout('player', `Go, ${inc.def.name}`, inc.def.types[0]);
     this.sendOut(at);
+    this.emit('swapIn', inc);   // e.g. the Scarf Tamer's Tag Team
     return true;
+  }
+
+  // A monster turns back into data and streams into the trainer's bracer.
+  recall(m) {
+    const tp = this.trainer, col = TYPES[m.def.types[0]].color, bx = tp.x, by = tp.y - 14;
+    this.particles.push({ x: bx, y: by, g: tp.y, x2: m.x, y2: m.cy, k2: m.y - m.cy, life: 0.3, max: 0.3, color: col, kind: 'line' });
+    for (let i = 0; i < 22; i++) {
+      const x = m.x + rand(-m.r, m.r), y = m.cy + rand(-m.h * 0.45, m.h * 0.45), k = rand(2.4, 3.4);
+      this.particles.push({ kind: 'sq', x, y, vx: (bx - x) * k, vy: (by - y) * k, life: 0.32, max: 0.32, size: 2, color: i % 3 ? col : '#ffffff' });
+    }
+    Sfx.play('recall');
   }
 
   // The active monster was changed from a menu (recruit swap-in, release): put the new one where the old one stood.
@@ -267,6 +282,9 @@ class Battle {
     if (m.fainted) return;
     m.fainted = true; m.hp = 0; m.action = null; m.fadeT = 0;
     Sfx.play('faint');
+    // it comes apart into its data: pixels lifting off
+    const fc = TYPES[m.def.types[0]].color;
+    for (let i = 0; i < 18; i++) this.particles.push({ kind: 'sq', x: m.x + rand(-m.r, m.r), y: m.cy + rand(-m.h * 0.4, m.h * 0.4), vx: rand(-12, 12), vy: rand(-60, -25), life: 0.8, max: 0.8, size: 2, color: i % 3 ? fc : '#ffffff' });
     this.burst(m.x, m.cy, ['#ffffff', '#cfd6e6'], 26, 90);
     if (m.side === 'enemy') {
       this.run.stats.kos++;
@@ -536,7 +554,7 @@ class Battle {
   // The trainer acts something out (trainer.js TRAINER_ACTS), turned toward `at` (a monster or point).
   // A stronger reaction isn't cut short by a weaker one (a faint isn't replaced by a point).
   trainerAct(name, at = null) {
-    const PRI = { look: 0, point: 1, brace: 2, wince: 2, throw: 3, cheer: 3, crouch: 4, victory: 5, slump: 5 };
+    const PRI = { look: 0, point: 1, brace: 2, wince: 2, deploy: 3, cheer: 3, crouch: 4, victory: 5, slump: 5 };
     const t = this.trainer, cur = t.act && trainerActFrame(t.act, this.time - t.actT) ? t.act : null;
     if (cur && PRI[cur] > PRI[name]) return;
     t.act = name; t.actT = this.time;

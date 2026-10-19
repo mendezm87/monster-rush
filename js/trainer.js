@@ -1,7 +1,7 @@
 // The trainer's poses (Monster Rush). The trainer is drawn from the hand-made pixel maps in
 // pixel.js; a pose takes the arms off the body and redraws them at any angle from the shoulder,
 // lets the body crouch (the legs fold), turns or drops the head, and can open the mouth. So one
-// small rig gives throws, pointing, bracing, wincing, cheering and the rest in every view, and
+// small rig gives the bracer deploy, pointing, bracing, wincing, cheering and the rest in every view, and
 // the same rig carries over to a redesigned trainer (new maps, new arm spots).
 
 // Per view, the arms a pose can move: the columns and rows they cover in the map (taken out when
@@ -23,8 +23,8 @@ const TRAINER_POSES = {
   lookL: { head: [-1, 0] },
   lookR: { head: [1, 0] },
   point: { armR: 95 },
-  throw1: { armR: 165, armL: 25 },             // wind-up, arm back over the shoulder
-  throw2: { armR: 65, armL: 20, head: [1, 0] },  // the release
+  deploy1: { armR: 130, armL: 20 },              // the bracer arm comes up...
+  deploy2: { armR: 88, armL: 15, head: [1, 0] },   // ...and thrusts out to beam the monster in
   brace: { armL: 40, armR: 40, body: 1 },
   wince: { armL: 15, armR: 15, head: [0, 1] },
   cheer1: { armR: 175, mouth: 'open' },
@@ -35,7 +35,7 @@ const TRAINER_POSES = {
 };
 // What the trainer acts out: frames [pose, seconds, hop] (the last frame holds unless loop).
 const TRAINER_ACTS = {
-  throw:   { frames: [['throw1', 0.16], ['throw2', 0.34]] },
+  deploy:  { frames: [['deploy1', 0.12], ['deploy2', 0.45]] },
   point:   { frames: [['point', 0.7]] },
   brace:   { frames: [['brace', 0.9]] },
   wince:   { frames: [['wince', 0.4]] },

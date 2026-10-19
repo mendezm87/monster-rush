@@ -1,5 +1,5 @@
 // Battle's moves: using them, aiming, hits and damage, statuses, and the moves in
-// flight (dashes, beams, bursts, projectiles, zones, thrown balls). See battle.js.
+// flight (dashes, beams, bursts, projectiles, zones, deploys from the bracer). See battle.js.
 
 mixInto(Battle, class {
   // ---------------------------------------------------------- moves
@@ -487,16 +487,25 @@ mixInto(Battle, class {
     this.zones = this.zones.filter(z => z.t < z.delay + (z.mv.linger || 0) + 0.05);
   }
 
+  // Deploys (this.balls, from the days of thrown balls): the bracer's beam reaches the ground, the
+  // monster assembles pixel by pixel (m.assembleT 0 -> 1, drawn in drawMon), then snaps solid.
   updateBalls(dt) {
     for (const b of this.balls) {
       b.t += dt;
-      if (b.t >= b.dur && !b.done) {
-        b.done = true;
-        const m = this.P;
-        m.visible = true; m.flash = 0.35; m.invuln = 0.4;
-        this.particles.push({ x: b.to.x, y: b.to.y, r0: 2, r1: 26, life: 0.35, max: 0.35, color: '#ffffff', kind: 'ring', w: 3 });
-        this.burst(b.to.x, b.to.y, ['#ffffff', '#ffe9a0', '#ffffff'], 20, 90);
-        Sfx.play('pop');
+      const m = this.P;
+      if (!b.landed && b.t >= b.beam) {
+        b.landed = true;
+        m.visible = true; m.assembleT = 0; m.invuln = 0.6;
+        this.particles.push({ x: b.to.x, y: b.to.y, r0: 2, r1: 20, life: 0.3, max: 0.3, color: b.color, kind: 'ring', w: 2 });
+      }
+      if (b.landed && !b.done) {
+        m.assembleT = Math.min(1, m.assembleT + dt / 0.34);
+        if (m.assembleT >= 1) {
+          b.done = true; m.assembleT = undefined; m.flash = 0.12;
+          this.particles.push({ x: b.to.x, y: b.to.y, r0: 4, r1: 28, life: 0.3, max: 0.3, color: '#ffffff', kind: 'ring', w: 3 });
+          this.burst(m.x, m.cy, [b.color, '#ffffff', b.color], 16, 80);
+          Sfx.play('pop');
+        }
       }
     }
     this.balls = this.balls.filter(b => !b.done);

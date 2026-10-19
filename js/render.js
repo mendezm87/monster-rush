@@ -1,13 +1,34 @@
 // Drawing: sprite tints and item icons, and Battle's effects (shake, particles,
 // numbers, weather) and rendering of a room. See battle.js.
 
-const BALL_IMG = gridFromMap([
-  '.kkkk.',
-  'krrrrk',
-  'kkwwkk',
-  'kwwwwk',
-  '.kkkk.',
-], { k: OUTLINE, r: '#e8433a', w: '#f6f2ee' }).toCanvas();
+// an ancient data crystal (the recruit room's sign: a monster's pattern waiting to be taken in)
+const CRYSTAL_IMG = gridFromMap([
+  '..k..',
+  '.kck.',
+  'kcwck',
+  'kccck',
+  'kcdck',
+  '.kdk.',
+  '..k..',
+], { k: OUTLINE, c: '#5ad8ff', w: '#e6fbff', d: '#2a8ab8' }).toCanvas();
+// One reused scratch canvas for monsters assembling out of data (never a new canvas per frame).
+const _assemble = document.createElement('canvas'); _assemble.width = _assemble.height = 96;
+const _assembleCtx = _assemble.getContext('2d');
+// Draw `pic` with only some of its pixels there yet (k 0 -> 1), plus a bright scan line at the edge.
+function drawAssembling(ctx, pic, dx, dy, pw, ph, k, color) {
+  const w = pic.width, h = pic.height;
+  _assembleCtx.clearRect(0, 0, w + 2, h + 2);
+  _assembleCtx.drawImage(pic, 0, 0);
+  const scan = Math.round(h * (1 - k));   // it builds from the feet up, scattered pixels ahead of the line
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const n = ((x * 73856093) ^ (y * 19349663)) >>> 0;
+    if (y < scan - 2 - (n % 7) || (y < scan + 2 && (n % 100) / 100 > k)) _assembleCtx.clearRect(x, y, 1, 1);
+  }
+  ctx.drawImage(_assemble, 0, 0, w, h, dx, dy, pw, ph);
+  ctx.globalAlpha = 0.85; ctx.fillStyle = color;
+  ctx.fillRect(dx, dy + ph * (scan / h), pw, Math.max(1, ph / h));
+  ctx.globalAlpha = 1;
+}
 
 const COIN_IMG = gridFromMap([
   '.kkk.',
@@ -88,7 +109,7 @@ function doorSign(room) {
   if (room.type === 'shop') return { img: COIN_IMG, c: '#ffd23f' };
   if (room.type === 'treasure') return room.taken ? null : { img: CHEST_IMG, c: '#ffffff' };
   if (room.type === 'altar') return room.used ? null : { img: ALTAR_IMG, c: '#c87aff' };
-  if (room.type === 'recruit') return room.recruited ? null : { img: BALL_IMG, c: '#5aa0ff' };
+  if (room.type === 'recruit') return room.recruited ? null : { img: CRYSTAL_IMG, c: '#5ad8ff' };
   return null;
 }
 
@@ -319,12 +340,23 @@ mixInto(Battle, class {
     // attacks and effects: chunky pixel art in their own layer (see fx.js)
     this.drawAttacks(FXLayer.begin(Math.round(this.cam.x) - shx, Math.round(this.cam.y) - shy));
     FXLayer.end(ctx);
+    // the bracer's deploy beam: it shoots to the ground, then fades while the monster assembles
     for (const b of this.balls) {
-      const k = Math.min(1, b.t / b.dur);
-      const x = b.from.x + (b.to.x - b.from.x) * k;
-      const y = b.from.y + (b.to.y - b.from.y) * k - Math.sin(Math.PI * k) * 46;
-      ctx.save(); ctx.translate(Math.round(x), Math.round(y)); ctx.rotate(k * 10);
-      ctx.drawImage(BALL_IMG, -4.5, -3.75, 9, 7.5); ctx.restore();
+      const reach = Math.min(1, b.t / b.beam), fade = b.landed ? Math.max(0, 1 - (b.t - b.beam) / 0.25) : 1;
+      if (fade <= 0) continue;
+      const ex = b.from.x + (b.to.x - b.from.x) * reach, ey = b.from.y + (b.to.y - b.from.y) * reach;
+      const n = Math.max(1, Math.round(Math.hypot(ex - b.from.x, ey - b.from.y) / SPR_SCALE));
+      ctx.globalAlpha = fade;
+      for (let i = 0; i <= n; i++) {
+        const x = Math.round((b.from.x + (ex - b.from.x) * i / n) / SPR_SCALE) * SPR_SCALE, y = Math.round((b.from.y + (ey - b.from.y) * i / n) / SPR_SCALE) * SPR_SCALE;
+        ctx.fillStyle = b.color; ctx.fillRect(x - SPR_SCALE, y - SPR_SCALE, SPR_SCALE * 2, SPR_SCALE * 2);
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(x - SPR_SCALE / 2, y - SPR_SCALE / 2, SPR_SCALE, SPR_SCALE);
+      }
+      if (b.landed) {   // a glowing pad on the ground where it's building
+        ctx.strokeStyle = b.color; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.ellipse(Math.round(b.to.x), Math.round(b.to.y + 2), 14, 5, 0, 0, TAU); ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
     }
     this.drawDoorSigns(ctx);
     this.drawBars(ctx);
@@ -472,7 +504,7 @@ mixInto(Battle, class {
     const f = Math.floor(t.walkT / 10) % 4;
     // standing: acting something out (trainer.js) or just standing
     const act = !t.moving && t.act ? trainerActFrame(t.act, this.time - t.actT) : null;
-    const pic = t.moving ? this.trainerWalk[t.view][f] : act ? trainerPose(TRAINER_OUTFIT, t.view, act.pose) : img;
+    const pic = t.moving ? this.trainerWalk[t.view][f] : act ? trainerPose(this.outfit, t.view, act.pose) : img;
     const bob = t.moving && f % 2 ? -1 : act && act.hop ? -act.hop : 0;
     const w = pic.width * SPR_SCALE, h = pic.height * SPR_SCALE;
     ctx.save(); ctx.translate(px, 0); if (isSideView(t.view) && t.face < 0) ctx.scale(-1, 1);
@@ -538,7 +570,8 @@ mixInto(Battle, class {
     }
     const pic = posed(img, pose.sq, pose.sh), k = S / sp.size, pw = pic.width * k, ph = pic.height * k;
     const dx = -pw / 2, dy = 3 - ph;
-    ctx.drawImage(pic, dx, dy, pw, ph);
+    if (m.assembleT !== undefined && m.assembleT < 1) drawAssembling(ctx, pic, dx, dy, pw, ph, m.assembleT, TYPES[m.def.types[0]].color);   // beamed in from the bracer
+    else ctx.drawImage(pic, dx, dy, pw, ph);
     let tint = null, ta = 0;
     if (m.flash > 0) { tint = '#ffffff'; ta = Math.min(1, m.flash * 8); }
     else if (m.fainted) { tint = '#ffffff'; ta = Math.min(0.8, m.fadeT); }
@@ -687,7 +720,7 @@ mixInto(Battle, class {
   // Top-right: the rooms you've seen on this floor, and your coins.
   drawMinimap(ctx) {
     const rooms = this.run.floor.rooms;
-    const seen = r => r.visited || Object.values(r.doors).some(o => o.visited);
+    const seen = r => this.run.reveal || r.visited || Object.values(r.doors).some(o => o.visited);   // the Dungeon Diver's lantern shows it all
     const shown = rooms.filter(seen);
     const cw = 13, ch = 9, gap = 2;
     const gxs = shown.map(r => r.gx), gys = shown.map(r => r.gy);

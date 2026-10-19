@@ -181,15 +181,15 @@ function makeWave(floorN, sizeKey, stage) {
 }
 
 // last: the last floor of a normal run (its boss is the final boss)
-function genFloor(floorN, partyIds, relics = [], last = false) {
+function genFloor(floorN, partyIds, relics = [], last = false, offers = 3) {
   for (let tries = 0; tries < 2000; tries++) {
-    const f = tryFloor(floorN, partyIds, relics, last);
+    const f = tryFloor(floorN, partyIds, relics, last, offers);
     if (f) return f;
   }
   throw new Error('could not build a floor');
 }
 
-function tryFloor(floorN, partyIds, relics, last) {
+function tryFloor(floorN, partyIds, relics, last, offers = 3) {
   const stage = FLOOR_STAGES[(floorN - 1) % FLOOR_STAGES.length];
   const G = 9, target = 10 + Math.min(floorN, 4) + ((Math.random() * 2) | 0);
   const grid = new Map(), key = (x, y) => x + ',' + y;
@@ -251,7 +251,7 @@ function tryFloor(floorN, partyIds, relics, last) {
     }
     if (r.type === 'recruit') {   // two of the area's monsters and one from anywhere
       const local = shuffle(AREA_MONS[stage].natives.filter(id => !partyIds.includes(id))).slice(0, 2);
-      r.offer = [...local, ...shuffle(ids.filter(id => !partyIds.includes(id) && !local.includes(id)))].slice(0, 3);
+      r.offer = [...local, ...shuffle(ids.filter(id => !partyIds.includes(id) && !local.includes(id)))].slice(0, offers);
     }
   }
   // a relic in the treasure room, two more (and two goods) in the shop
@@ -284,7 +284,7 @@ const SAVE_UPGRADES = {
 };
 const DEFAULT_SETTINGS = { lighting: true, music: 0.8, sfx: 0.8, keys: {} };   // keys: action -> key code (see Input)
 const Save = {
-  data: { version: SAVE_VERSION, starters: [...STARTERS], runs: 0, wins: 0, bestFloor: 0, bestEndless: 0, recruited: [], found: [], settings: { ...DEFAULT_SETTINGS } },
+  data: { version: SAVE_VERSION, starters: [...STARTERS], runs: 0, wins: 0, bestFloor: 0, bestEndless: 0, recruited: [], found: [], trainers: ['scarf'], settings: { ...DEFAULT_SETTINGS } },
   load() {
     let d = null;
     try { d = JSON.parse(localStorage.getItem(SAVE_KEY)); } catch (e) { /* storage blocked or broken: play without it */ }
@@ -311,6 +311,12 @@ const Save = {
     this.data.starters.push(id); this.write(); return true;
   },
   // altar evolutions you've made (named on the altar; the rest show as ???)
+  unlockTrainer(id) {
+    const have = this.data.trainers = this.data.trainers || ['scarf'];
+    if (!TRAINERS[id] || have.includes(id)) return false;
+    have.push(id); this.write(); return true;
+  },
+  hasTrainer(id) { return id === 'scarf' || (this.data.trainers || []).includes(id); },
   hasFound(id) { return (this.data.found || []).includes(id); },
   noteFound(id) { if (!this.hasFound(id)) { (this.data.found = this.data.found || []).push(id); this.write(); } },
   // The run in progress, so a refresh (or closing the app) can carry on where you were. Kept under
@@ -332,11 +338,32 @@ const Save = {
 Save.load();
 
 // Everything that lasts for one run.
+// The trainers, chosen before the starter. Every trainer wears the bracer that holds monsters as
+// data; each brings a starting power, and the stronger powers come with a drawback (like Isaac's
+// characters). look: 'm' or 'f' (one sprite for both until the new trainer art; outfit is a
+// TRAINER_OUTFITS colourway as a stand-in). perk works like a relic that can't be lost (bonus,
+// mods, on); the rest are read by RunState. unlock: how it's earned (trainerUnlocks in main.js).
+const TRAINERS = {
+  scarf: { name: 'SCARF TAMER', outfit: 'crimson', power: 'Tag Team',
+    desc: 'Swapping recharges twice as fast, and a monster you swap in hits 25% harder for 4 seconds.', drawback: null, unlock: null,
+    perk: { mods: { swapCdMul: 0.5 }, on: { swapIn(b, m) { m.buffs.push({ stat: 'atk', mul: 1.25, t: 4 }); } } } },
+  researcher: { name: 'FIELD RESEARCHER', outfit: 'forest', power: 'Field Notes',
+    desc: 'Your party earns 30% more XP, and recruit rooms offer 4 monsters instead of 3.', drawback: 'Your monsters deal 10% less damage.',
+    unlock: 'Recruit 10 different monsters.', perk: { bonus: { atk: 0.9 } }, xpMul: 1.3, offers: 4 },
+  diver: { name: 'DUNGEON DIVER', outfit: 'scarlet', power: 'Delver',
+    desc: 'Starts with a random relic, and the lantern shows the whole map of every floor.', drawback: 'An old salvaged bracer: only 4 party slots.',
+    unlock: 'Reach floor 4.', partyMax: 4, reveal: true, startRelic: true },
+  shiba: { name: 'SHIBA TRAINER', outfit: 'ember', power: 'Pack Leader',
+    desc: 'Toshi (Smugshi) joins your run as a free extra monster.', drawback: 'Wild monsters drop 30% fewer coins.',
+    unlock: 'Win a run with Smugshi in your party.', perk: { mods: { coinMul: 0.7 } }, companion: 'smugshi' },
+};
 class RunState {
   // endless: floors never stop (the boss always opens stairs); the run ends when the party faints
-  constructor(starterId, endless = false) {
+  constructor(starterId, endless = false, trainer = 'scarf', look = 'm') {
     this.endless = endless;
+    this.trainer = TRAINERS[trainer] ? trainer : 'scarf'; this.look = look;
     this.party = [new Mon(ROSTER_BY_ID[starterId], 'player')];
+    if (this.T.companion) this.party.push(new Mon(ROSTER_BY_ID[this.T.companion], 'player'));   // the Shiba trainer's Toshi
     this.pi = 0;
     this.coins = 0;
     this.swapCd = 0;
@@ -344,12 +371,18 @@ class RunState {
     this.learnQueue = [];   // new moves waiting to be offered between fights: [{ mon, id }]
     this.stats = { rooms: 0, kos: 0, time: 0, floors: 0 };
     this.newFloor(1);
+    if (this.T.startRelic) { const free = Object.keys(RELICS); this.addRelic(free[(Math.random() * free.length) | 0]); }
+    this.applyRelics();
   }
+  get T() { return TRAINERS[this.trainer] || TRAINERS.scarf; }
+  get perk() { return this.T.perk || null; }
+  get partyMax() { return this.T.partyMax || 6; }   // the bracer's slots
+  get reveal() { return !!this.T.reveal; }
   newFloor(n) {
     // the old floor's room pictures and scorch marks: freed now (phones cap canvas memory)
     if (this.floor) for (const r of this.floor.rooms) { freeCanvas(r.canvas); freeCanvas(r.decal); delete r.canvas; delete r.decal; }
     this.floorN = n;
-    this.floor = genFloor(n, this.party.map(m => m.def.from || m.id), this.relics, !this.endless && n === RUN_FLOORS);
+    this.floor = genFloor(n, this.party.map(m => m.def.from || m.id), this.relics, !this.endless && n === RUN_FLOORS, this.T.offers || 3);
     this.warm();
     // fainted monsters get back up at 30% for the new floor
     for (const m of this.party) if (m.fainted) { m.fainted = false; m.hp = Math.round(m.maxHp * REVIVE_HP); m.status = null; }
@@ -363,7 +396,7 @@ class RunState {
     const rooms = this.floor.rooms, at = r => rooms.indexOf(r);
     const SKIP = new Set(['doors', 'canvas', 'torches', 'decal']);
     return {
-      v: RUN_SAVE_VERSION, endless: this.endless, pi: this.pi, coins: this.coins, relics: this.relics, stats: this.stats, floorN: this.floorN,
+      v: RUN_SAVE_VERSION, endless: this.endless, trainer: this.trainer, look: this.look, pi: this.pi, coins: this.coins, relics: this.relics, stats: this.stats, floorN: this.floorN,
       room: at(this.room),
       party: this.party.map(m => ({ id: m.id, level: m.level, xp: m.xp, hp: Math.round(m.hp), fainted: m.fainted,
         moves: m.moves.map(x => x.id), known: m.known, newMoves: m.newMoves || [], fused: m.fused || [] })),
@@ -379,7 +412,7 @@ class RunState {
   }
   static fromSave(d) {
     const run = Object.create(RunState.prototype);
-    Object.assign(run, { endless: d.endless, pi: d.pi, coins: d.coins, relics: d.relics, stats: d.stats, floorN: d.floorN, swapCd: 0 });
+    Object.assign(run, { endless: d.endless, trainer: d.trainer || 'scarf', look: d.look || 'm', pi: d.pi, coins: d.coins, relics: d.relics, stats: d.stats, floorN: d.floorN, swapCd: 0 });
     run.party = d.party.map(o => {
       const m = new Mon(ROSTER_BY_ID[o.id], 'player');
       m.setLevel(o.level); m.xp = o.xp;
@@ -409,6 +442,7 @@ class RunState {
   applyRelics() {
     const b = { atk: 1, def: 1, spd: 1, cd: 1 };
     for (const id of this.relics) for (const [k, v] of Object.entries(RELICS[id].bonus || {})) b[k] *= v;
+    for (const [k, v] of Object.entries((this.perk && this.perk.bonus) || {})) b[k] *= v;   // the trainer's power
     for (const m of this.party) {
       m.bonus = { ...b };
       for (const id of m.fused || []) for (const [k, v] of Object.entries(RELICS[id].fused.bonus || {})) m.bonus[k] *= v;   // relics fused into it at the altar
@@ -435,7 +469,7 @@ class RunState {
     const ups = [];
     this.party.forEach((m, i) => {
       if (m.fainted) return;
-      m.xp += Math.round(amount * (i === this.pi ? 1 : XP_BENCH));
+      m.xp += Math.round(amount * (i === this.pi ? 1 : XP_BENCH) * (this.T.xpMul || 1));
       while (m.xp >= XP_NEED(m.level)) {
         m.xp -= XP_NEED(m.level);
         m.setLevel(m.level + 1);

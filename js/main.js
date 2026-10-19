@@ -2,7 +2,7 @@
 
 // Shown on the title screen so players can tell whether their browser has the latest
 // build (GitHub Pages lets browsers cache files for up to 10 minutes). Bump on every release.
-const VERSION = '2026.10.18-r68';
+const VERSION = '2026.10.19-r69';
 
 const App = {
   endless: false,   // the mode picked on the title screen
@@ -66,8 +66,8 @@ function updateContinue() {
   if (d) { const m = d.party[d.pi] || d.party[0]; btn.innerHTML = `CONTINUE<small>${d.endless ? 'Endless floor ' + d.floorN : `Floor ${d.floorN}/${RUN_FLOORS}`} · ${ROSTER_BY_ID[m.id] ? ROSTER_BY_ID[m.id].name : ''} Lv ${m.level}</small>`; }
 }
 $('#btn-continue').onclick = () => { Sfx.init(); Sfx.play('select'); continueRun(); };
-$('#btn-play').onclick = () => { Sfx.init(); Sfx.play('select'); App.endless = false; openStarter(); };
-$('#btn-endless').onclick = () => { Sfx.init(); Sfx.play('select'); App.endless = true; openStarter(); };
+$('#btn-play').onclick = () => { Sfx.init(); Sfx.play('select'); App.endless = false; openTrainer(); };
+$('#btn-endless').onclick = () => { Sfx.init(); Sfx.play('select'); App.endless = true; openTrainer(); };
 $('#btn-help').onclick = () => { Sfx.init(); Sfx.play('select'); UI.show('help'); };
 $('#btn-help-back').onclick = () => { Sfx.play('back'); UI.show('title'); };
 const muteBtn = $('#btn-mute');
@@ -187,7 +187,54 @@ function openStarter() {
   $('#btn-starter-go').disabled = true;
   UI.show('starter');
 }
-$('#btn-starter-back').onclick = () => { Sfx.play('back'); UI.show('title'); };
+$('#btn-starter-back').onclick = () => { Sfx.play('back'); openTrainer(); };
+
+// ---------- trainer select (before the starter): a trainer, a look, a power ----------
+const TrainerPick = { id: 'scarf', look: 'm' };
+function openTrainer() {
+  const last = Save.data.lastTrainer || {};
+  if (last.id && Save.hasTrainer(last.id)) Object.assign(TrainerPick, last);
+  drawTrainerPick();
+  UI.show('trainer');
+}
+function drawTrainerPick() {
+  const list = $('#trainer-list'); list.innerHTML = '';
+  for (const [id, T] of Object.entries(TRAINERS)) {
+    const have = Save.hasTrainer(id), card = document.createElement('div');
+    card.className = 'card' + (id === TrainerPick.id ? ' sel' : '') + (have ? '' : ' locked');
+    const cv = document.createElement('canvas'); cv.width = 64; cv.height = 64;
+    const c = cv.getContext('2d'); c.imageSmoothingEnabled = false;
+    const img = trainerCanvas(T.outfit, 'front'); c.drawImage(img, (64 - img.width * 2.5) / 2, 64 - img.height * 2.5, img.width * 2.5, img.height * 2.5);
+    if (!have) { c.globalCompositeOperation = 'source-atop'; c.fillStyle = 'rgba(10,8,18,.85)'; c.fillRect(0, 0, 64, 64); }
+    card.appendChild(cv);
+    card.insertAdjacentHTML('beforeend', `<div class="c-name">${have ? T.name : '???'}</div><div class="c-pow">${have ? T.power : 'Locked'}</div>`);
+    card.onclick = () => { Sfx.play(have ? 'select' : 'back'); if (have) { TrainerPick.id = id; drawTrainerPick(); } else UI.banner('LOCKED'); };
+    list.appendChild(card);
+  }
+  const T = TRAINERS[TrainerPick.id];
+  $('#trainer-detail').innerHTML = `<div><div class="d-name">${T.name} <span class="t-pow">${T.power}</span></div>
+    <div class="d-desc">${T.desc}</div>
+    ${T.drawback ? `<div class="d-desc t-down">Drawback: ${T.drawback}</div>` : '<div class="d-desc t-up">No drawback: a good first pick.</div>'}
+    <div class="t-looks">Look: <button data-look="m" class="${TrainerPick.look === 'm' ? 'on' : ''}">Him</button><button data-look="f" class="${TrainerPick.look === 'f' ? 'on' : ''}">Her</button>
+      <span class="hint">(new trainer art is on the way; both use this sprite for now)</span></div>
+    <div class="hint">${Object.entries(TRAINERS).filter(([id]) => !Save.hasTrainer(id)).map(([, t]) => `Unlock ${t.name}: ${t.unlock}`).join('<br>')}</div></div>`;
+  $('#trainer-detail').querySelectorAll('[data-look]').forEach(b => { b.onclick = () => { Sfx.play('select'); TrainerPick.look = b.dataset.look; drawTrainerPick(); }; });
+}
+$('#btn-trainer-back').onclick = () => { Sfx.play('back'); UI.show('title'); };
+$('#btn-trainer-go').onclick = () => {
+  Sfx.play('select');
+  Save.data.lastTrainer = { ...TrainerPick }; Save.write();
+  App.trainer = TrainerPick.id; App.look = TrainerPick.look;
+  openStarter();
+};
+// Trainers earned by playing (shown as a banner); called after recruiting, going down stairs, and at the end of a run.
+function trainerUnlocks(run, won = false) {
+  const got = [];
+  if ((Save.data.recruited || []).length >= 10 && Save.unlockTrainer('researcher')) got.push('researcher');
+  if (run && run.floorN >= 4 && Save.unlockTrainer('diver')) got.push('diver');
+  if (won && run && run.party.some(m => m.id === 'smugshi' || m.id === 'smugshogun') && Save.unlockTrainer('shiba')) got.push('shiba');
+  got.forEach((id, i) => setTimeout(() => UI.banner(`NEW TRAINER: ${TRAINERS[id].name}!`), 1600 + i * 2200));
+}
 $('#btn-starter-go').onclick = () => { if (App.starter) { Sfx.play('select'); startRun(App.starter); } };
 
 // ---------- the run ----------
@@ -196,7 +243,7 @@ Input.bindStick($('#stick-zone'), $('#stick'), $('#knob'), 0);
 // Save the run now (out of a fight, or on entering a room), so a refresh can continue it.
 function saveRun() { if (App.run && !App.run.over) Save.saveRun(App.run.toSave()); }
 function startRun(starterId) {
-  App.run = new RunState(starterId, App.endless);
+  App.run = new RunState(starterId, App.endless, App.trainer || 'scarf', App.look || 'm');
   beginRun();
   enterRoom(App.run.room, null);
   UI.banner(...floorBanner(App.run));
@@ -228,13 +275,14 @@ const roomHooks = {
       const run = App.run;
       run.stats.floors++;
       run.newFloor(run.floorN + 1);
+      trainerUnlocks(run);
       enterRoom(run.room, null);
       UI.banner(...floorBanner(run));
     });
   },
   offer(ped) { openOffer(ped); },
   bossBeaten(id) { if (Save.unlockStarter(id)) setTimeout(() => UI.banner(`NEW STARTER: ${ROSTER_BY_ID[id].name}!`), 2000); },
-  end(result) { App.run.over = true; Save.clearRun(); const record = Save.endRun(App.run.floorN, result === 'win', App.run.endless); showResult(result, record); },
+  end(result) { App.run.over = true; Save.clearRun(); trainerUnlocks(App.run, result === 'win'); const record = Save.endRun(App.run.floorN, result === 'win', App.run.endless); showResult(result, record); },
 };
 
 function enterRoom(room, entry) {
@@ -292,7 +340,7 @@ function openOffer(ped) {
   if (ped.kind === 'altar') return openAltar(ped);
   const run = App.run;
   Offer.ped = ped; Offer.release = -1;
-  const yes = $('#btn-recruit-yes'), full = ped.kind === 'mon' && run.party.length >= 6;
+  const yes = $('#btn-recruit-yes'), full = ped.kind === 'mon' && run.party.length >= run.partyMax;
   $('#recruit-full').classList.toggle('hidden', !full);
   if (ped.kind === 'mon') {
     const def = ROSTER_BY_ID[ped.id];
@@ -342,11 +390,12 @@ $('#btn-recruit-yes').onclick = () => {
   const run = App.run, b = App.battle, ped = Offer.ped;
   if (!run || !b || !ped) return;
   if (ped.kind === 'mon') {
-    if (run.party.length >= 6 && Offer.release < 0) return;
+    if (run.party.length >= run.partyMax && Offer.release < 0) return;
     const before = b.P, at = { x: before.x, y: before.y };
-    const m = run.recruit(ped.id, run.party.length >= 6 ? Offer.release : -1);
+    const m = run.recruit(ped.id, run.party.length >= run.partyMax ? Offer.release : -1);
     if (b.P !== before) b.replaceActive(at);
     Save.noteRecruit(ped.id);
+    trainerUnlocks(run);
     UI.hudCache = {};
     closeOffer(true);
     UI.banner(`${m.def.name} JOINED!`);

@@ -241,7 +241,7 @@ $('#game').addEventListener('load', async () => {
     }
     const run = App.run;
     let take = false;
-    if (ped.kind === 'mon') take = run.party.length < 6;
+    if (ped.kind === 'mon') take = run.party.length < run.partyMax;
     else if (ped.kind === 'relic') take = true;
     else take = run.coins >= ped.item.price && (!!RELICS[ped.id] || run.useGood(ped.id, true));
     (take ? btn('btn-recruit-yes') : btn('btn-recruit-no')).onclick();

@@ -323,3 +323,22 @@ kbd { background: #2b2540; border: 0.3cqh solid #555; border-bottom-width: 0.8cq
 #hud .tag, #hud .tipped { pointer-events: auto; }
 
 #btn-continue small { display: block; font: 800 2.4cqh system-ui, sans-serif; opacity: .85; }
+
+/* the bracer's slots in the HUD (one per monster, lit in its type colour) */
+.balls .slot { width: 2.6cqh; height: 2.6cqh; transform: rotate(45deg); border: 0.4cqh solid var(--ink); border-radius: 0.5cqh;
+  background: linear-gradient(135deg, #ffffff 0 18%, var(--c) 18% 100%); box-shadow: 0 0 0.8cqh var(--c); margin: 0 0.3cqh; }
+.balls .slot.active { outline: 0.4cqh solid var(--gold); outline-offset: 0.2cqh; }
+.balls .slot.out { background: #3a3646; box-shadow: none; opacity: .6; }
+.balls .slot.empty { background: rgba(255,255,255,.06); box-shadow: none; border-style: dashed; opacity: .6; }
+
+/* trainer select */
+#trainer-list { display: flex; flex-wrap: wrap; justify-content: center; gap: 2cqh; max-width: 150cqh; }
+#trainer-list .card { width: 22cqh; text-align: center; }
+#trainer-list .card.locked { opacity: .55; }
+#trainer-list .c-pow { font: 800 2.3cqh system-ui, sans-serif; opacity: .8; }
+#trainer-detail .t-pow { font-size: 3cqh; color: #ffe066; margin-left: 1cqh; }
+#trainer-detail .t-down { color: #ffa08a; }
+#trainer-detail .t-up { color: #a8f0a0; }
+.t-looks { display: flex; align-items: center; gap: 1cqh; font: 800 2.6cqh system-ui, sans-serif; margin: 1cqh 0; }
+.t-looks button { font: 900 2.8cqh var(--font); padding: 0.6cqh 2.4cqh; border-radius: 1.6cqh; border: 0.5cqh solid var(--ink); background: #2b2540; color: #ccc; cursor: pointer; }
+.t-looks button.on { background: #ffd23f; color: var(--ink); }

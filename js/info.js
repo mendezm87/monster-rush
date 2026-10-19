@@ -19,6 +19,9 @@ function drawInfo() {
   const portrait = m => { const cv = document.createElement('canvas'); cv.width = cv.height = 48; drawPortrait(cv, m.id, { fainted: m.fainted }); return cv; };
   if (!run) return;
   if (Info.tab === 'relics') {
+    const T = run.T;
+    const tc = document.createElement('canvas'); tc.width = tc.height = 48; { const c = tc.getContext('2d'), im = trainerCanvas(T.outfit, 'front'); c.imageSmoothingEnabled = false; c.drawImage(im, 12, 0, im.width * 2, im.height * 2); }
+    row(tc, `<b>${T.name}</b> <span class="tag elem">${T.power}</span><br>${T.desc}${T.drawback ? `<br><span class="lbl">Drawback</span> ${T.drawback}` : ''}`);
     if (!run.relics.length) body.insertAdjacentHTML('beforeend', '<div class="hint">No relics yet. Treasure rooms, the shop and room rewards have them. They help your whole party for the rest of the run.</div>');
     for (const id of run.relics) {
       const r = RELICS[id];
