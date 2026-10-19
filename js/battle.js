@@ -42,10 +42,10 @@ class Battle {
     const P = this.P;
     P.reset(); P.visible = true;
     const F = this.F;
-    let px = (F.x0 + F.x1) / 2, py = (F.y0 + F.y1) / 2 + 20, tx = px, ty = py + 30;
+    let px = (F.x0 + F.x1) / 2, py = (F.y0 + F.y1) / 2 + 20, tx = px - 46, ty = py - 8;   // the trainer stands beside and a little behind
     if (entry) {
       const d = doorPos(room, entry), [dx, dy] = DOOR_DIRS[entry];
-      px = d.x - dx * 26; py = d.y - dy * 26 + (dy === 0 ? 10 : 0) + (entry === 'n' ? P.r : 0);
+      px = d.x - dx * 46; py = d.y - dy * 46 + (dy === 0 ? 10 : 0) + (entry === 'n' ? P.r : 0);
       tx = d.x - dx * 4; ty = d.y - dy * 4 + (dy === 0 ? 10 : 0) + (entry === 'n' ? P.r : 0);
       P.face = dx !== 0 ? -dx : 1;
       P.look(-dx, -dy);
@@ -172,14 +172,16 @@ class Battle {
     this.stairs = { x: (F.x0 + F.x1) / 2, y: (F.y0 + F.y1) / 2 };
   }
 
-  // Starters that reached their level transform (between fights, so moves don't change mid-combo).
+  // Monsters that reached their level transform (between fights, so moves don't change mid-combo).
+  // In the world's story they're living data from a fallen civilization: leveling up recovers more of
+  // their lost data, until they're whole enough to take back a stronger form.
   evolveReady() {
     for (const m of this.p) {
       if (!m.canEvolve) continue;
       const from = m.def.name, to = ROSTER_BY_ID[m.def.evolve.to];
       m.setDef(to);
       m.hp = Math.min(m.maxHp, m.hp + Math.round(m.maxHp * 0.25));
-      this.ui.banner(`${from} EVOLVED!`);
+      this.ui.banner(`${from} TRANSFORMED!`, `Its lost data came back: it's ${to.name} again`);
       this.run.stats.evolved = (this.run.stats.evolved || 0) + 1;
       Sfx.play('evolve');
       if (m === this.P) {
@@ -567,7 +569,9 @@ class Battle {
   updateTrainer(dt) {
     const t = this.trainer, P = this.P, F = this.F;
     const dx = P.x - t.x, dy = P.y - t.y, d = Math.hypot(dx, dy);
-    const gap = 34;
+    // how far behind: more when the monster is above the trainer on screen, since the trainer
+    // (about as tall as a big monster) is drawn in front of it then
+    const gap = 46 + (dy < 0 ? 22 * -dy / (d || 1) : 0);
     t.moving = false;
     if (d > gap && this.state !== 'pick') {
       const step = Math.min(d - gap, Math.max(70, (d - gap) * 5) * dt);
