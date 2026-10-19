@@ -8,7 +8,8 @@
 // toward the way they're heading (`turnHead`), or a cheek peeks out from behind.
 // The arms are separate so the pose rig (trainer.js) can swing them: TRAINER_ARMS says where
 // they hang, each look's `arm(k)` gives their colours from shoulder to hand (3 wide), and
-// trainerArmPx lays them at any angle. Everyone wears the Arcbracer (band 1, screen 2) on arm R.
+// trainerArmPx lays them at any angle. Everyone wears the Arcbracer on arm R: a slim bracelet at
+// the wrist (band 1) with a glowing Arc-core set in it (2); the phone is its screen.
 // A look key is trainerLook(id, 'm' | 'f'), e.g. 'diver-f'.
 const TW = 34, TH = 42, TOX = 6;
 const TR_BODY = 17, TR_LEGS = 30, TR_FEET = 38, TR_SPLIT = 12 + TOX;   // head rows 0-16, body 17-29, legs 30-41
@@ -165,7 +166,7 @@ const TRAINER_LOOKS = {
       ] },
     },
     arm: k => k === 'R'
-      ? { cols: ['jjj', 'Jjj', 'Jjj', 'Jjj', 'Jjj', 'Jjj', '121', '121', 'lll', 'Lll'], fist: 'sss' }
+      ? { cols: ['jjj', 'Jjj', 'Jjj', 'Jjj', 'Jjj', 'Jjj', 'JJJ', '121', 'lll', 'Lll'], fist: 'sss' }
       : { cols: ['jjj', 'Ijj', 'Ijj', 'Ijj', 'Ijj', 'Ijj', 'JJJ', 'lll', 'lll', 'Lll'], fist: 'sss' },
     body(P, v, f) {
       const side = v === 'side', back = v === 'back' || v === 'bside';
@@ -314,7 +315,7 @@ const TRAINER_LOOKS = {
       ] },
     },
     arm: k => k === 'R'
-      ? { cols: ['jjj', 'Jjj', 'Jjj', 'Jjj', 'Jjj', 'III', '121', '121', 'ggg', 'Ggg'], fist: 'ggg' }
+      ? { cols: ['jjj', 'Jjj', 'Jjj', 'Jjj', 'Jjj', 'III', 'sss', '121', 'ggg', 'Ggg'], fist: 'ggg' }
       : { cols: ['jjj', 'Ijj', 'Ijj', 'Ijj', 'Ijj', 'III', 'sss', 'Sss', 'ggg', 'ggG'], fist: 'ggg' },
     body(P, v, f) {
       const side = v === 'side', back = v === 'back' || v === 'bside', sx = v === 'fside' || v === 'bside' ? 1 : 0;
@@ -443,7 +444,7 @@ const TRAINER_LOOKS = {
       ] },
     },
     arm: k => k === 'R'
-      ? { cols: ['jjj', 'Jjj', 'Jjj', 'Jjj', 'Jjj', 'Jjj', '121', '121', 'ggg', 'Ggg'], fist: 'sss' }
+      ? { cols: ['jjj', 'Jjj', 'Jjj', 'Jjj', 'Jjj', 'Jjj', 'Jjj', '121', 'ggg', 'Ggg'], fist: 'sss' }
       : { cols: ['jjj', 'Ijj', 'Ijj', 'Ijj', 'WmM', 'Wmm', 'mmM', 'myM', 'mmM', 'mmM'], fist: 'WmM' },
     body(P, v, f) {
       const side = v === 'side', back = v === 'back' || v === 'bside', sx = v === 'fside' || v === 'bside' ? 1 : 0;
@@ -568,7 +569,7 @@ const TRAINER_LOOKS = {
       ] },
     },
     arm: k => k === 'R'
-      ? { cols: ['ccc', 'Ccc', 'Ccc', 'Ccc', 'Ccc', 'Ccc', '121', '121', 'sss', 'Sss'], fist: 'sss' }
+      ? { cols: ['ccc', 'Ccc', 'Ccc', 'Ccc', 'Ccc', 'Ccc', 'CCC', '121', 'sss', 'Sss'], fist: 'sss' }
       : { cols: ['ccc', 'ecc', 'ecc', 'ecc', 'ecc', 'ecc', 'CCC', 'sss', 'sss', 'sSs'], fist: 'sss' },
     body(P, v, f) {
       const side = v === 'side', back = v === 'back' || v === 'bside', sx = v === 'fside' || v === 'bside' ? 1 : 0;

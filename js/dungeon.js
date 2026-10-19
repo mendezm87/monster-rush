@@ -350,7 +350,7 @@ const TRAINERS = {
     desc: 'Your party earns 30% more XP, and recruit rooms offer 4 monsters instead of 3.', drawback: 'Your monsters deal 10% less damage.',
     unlock: 'Recruit 10 different monsters.', perk: { bonus: { atk: 0.9 } }, xpMul: 1.3, offers: 4 },
   diver: { name: 'DUNGEON DIVER', power: 'Delver',
-    desc: 'Starts with a random relic, and the lantern shows the whole map of every floor.', drawback: 'An old salvaged bracer: only 4 party slots.',
+    desc: 'Starts with a random relic, and the lantern shows the whole map of every floor.', drawback: 'An old salvaged Arcbracer: only 4 Arc-core slots.',
     unlock: 'Reach floor 4.', partyMax: 4, reveal: true, startRelic: true },
   shiba: { name: 'SHIBA TRAINER', power: 'Pack Leader',
     desc: 'Toshi (Smugshi) joins your run as a free extra monster.', drawback: 'Wild monsters drop 30% fewer coins.',

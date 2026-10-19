@@ -1,7 +1,7 @@
 // Drawing: sprite tints and item icons, and Battle's effects (shake, particles,
 // numbers, weather) and rendering of a room. See battle.js.
 
-// an ancient data crystal (the recruit room's sign: a monster's pattern waiting to be taken in)
+// an Arc-core (Archive Core): an ancient data crystal, the recruit room's sign (a monster waiting to be taken in)
 const CRYSTAL_IMG = gridFromMap([
   '..k..',
   '.kck.',
@@ -56,14 +56,17 @@ function sceneBuffer() {
   return _scene.getContext('2d');
 }
 
-// Room rewards (see ROOM_REWARDS): XP candy, a move disc, a treasure chest; a skull marks the boss's door.
-const CANDY_IMG = gridFromMap([
-  '.k.kkk.k.',
-  'kpkpwpkpk',
-  'kpppppppk',
-  'kpkpppkpk',
-  '.k.kkk.k.',
-], { k: OUTLINE, p: '#ff7ab0', w: '#ffffff' }).toCanvas();
+// Room rewards (see ROOM_REWARDS): an Arc-core Shard (XP), a move disc, a treasure chest; a skull marks the boss's door.
+const CANDY_IMG = gridFromMap([   // an Arc-core Shard (XP): a sliver of a broken Archive Core, glowing with leftover data
+  '..k..',
+  '.kwk.',
+  'kwaAk',
+  'kaaAk',
+  'kaaAk',
+  'kaAAk',
+  '.kAk.',
+  '..k..',
+], { k: OUTLINE, a: '#ffd84a', A: '#e0961e', w: '#fff8d0' }).toCanvas();
 const DISC_IMG = gridFromMap([
   '..kkk..',
   '.kbbbk.',

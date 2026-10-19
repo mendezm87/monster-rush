@@ -421,7 +421,7 @@ class Battle {
       this.sparks(k.x, k.y - 4, 4, '#ffe066');
       Sfx.play('coin');
     } else if (k.kind === 'candy') {   // XP for the party (the monster that's out gets it all)
-      this.ui.banner('XP CANDY!');
+      this.ui.banner('ARC-CORE SHARD!', 'Scraps of old data: XP for the party');
       Sfx.play('levelUp');
       this.giveXp(15 + 3 * this.run.floorN);
     } else if (k.kind === 'disc') {    // the monster that's out learns a new move
