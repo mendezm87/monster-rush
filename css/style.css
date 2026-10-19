@@ -275,3 +275,12 @@ kbd { background: #2b2540; border: 0.3cqh solid #555; border-bottom-width: 0.8cq
     font: 900 6vw var(--font); color: #ffe066; text-align: center; padding: 10vw; }
   #game { width: 100vw; }
 }
+
+/* evolution altar: branches and the relics to offer */
+.altar-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.4cqh; max-width: 130cqh; }
+.altar-row button { font: 900 3cqh var(--font); color: #fff; background: #241e38; border: 0.6cqh solid #3a3358; border-radius: 2cqh;
+  padding: 1cqh 2cqh; cursor: pointer; display: flex; align-items: center; gap: 1cqh; }
+.altar-row button span { font: 700 2.4cqh system-ui, sans-serif; opacity: .8; }
+.altar-row button.sel { border-color: #c87aff; background: #3a2a52; }
+.altar-row button.match { box-shadow: inset 0 0 0 0.4cqh #ffe066; }
+.altar-row canvas { width: 5cqh; height: 5cqh; image-rendering: pixelated; }

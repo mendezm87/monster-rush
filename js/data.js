@@ -102,6 +102,14 @@ const MOVES = {
   aquaJet:      { name: 'Aqua Jet', type: 'water', kind: 'dash', power: 115, cd: 2.2, speed: 410, dur: 0.25 },
   spoutShot:    { name: 'Spout Shot', type: 'water', kind: 'projectile', power: 100, cd: 1.6, speed: 260, r: 4 },
   cuffCannon:   { name: 'Cuff Cannon', type: 'water', kind: 'projectile', power: 150, cd: 2, speed: 270, r: 5 },
+  // the turtle line's legendary 4th stages (evolution altar)
+  geyserVent:   { name: 'Geyser Vent', type: 'water', kind: 'burst', power: 260, cd: 4.5, r: 72, delay: 0.4, status: ['brn', 0.2] },
+  steamEruption: { name: 'Steam Eruption', type: 'fire', kind: 'zone', power: 200, cd: 6.5, r: 28, delay: 0.85, count: 3, scatter: 50, linger: 2.4, tick: 0.25, status: ['brn', 0.3] },
+  magmaWave:    { name: 'Magma Wave', type: 'fire', kind: 'burst', power: 300, cd: 6.5, r: 120, delay: 0.5, cone: 0.6, blow: 0.5, status: ['brn', 0.3] },
+  railShot:     { name: 'Rail Shot', type: 'electric', kind: 'beam', power: 360, cd: 5, charge: 0.4, dur: 0.3, width: 7, len: 380, status: ['par', 0.25] },
+  lanceCharge:  { name: 'Lance Charge', type: 'electric', kind: 'dash', power: 230, cd: 3, speed: 470, dur: 0.32, status: ['par', 0.2] },
+  towerShield:  { name: 'Tower Shield', type: 'steel', kind: 'buff', buff: { def: 1.8 }, dur: 6, cd: 13 },
+  droneSwarm:   { name: 'Drone Swarm', type: 'steel', kind: 'projectile', power: 85, cd: 2.4, speed: 200, r: 4, count: 4, spread: 1.4, homing: 3 },
   twinCannon:   { name: 'Twin Cannon', type: 'water', kind: 'projectile', power: 95, cd: 2.2, speed: 270, r: 5, count: 2, spread: 0.14 },
   whirlpool:    { name: 'Whirlpool', type: 'water', kind: 'vortex', power: 350, cd: 6, r: 100, dur: 1.4, pull: 115 },
   // grass
@@ -283,9 +291,21 @@ const EVOLVED = [
   { id: 'maelstrisk', name: 'MAELSTRISK', types: ['water', 'dragon'], hp: 1560, atk: 1.16, def: 1.22, spd: 88, size: 'L', item: 'mysticDrop',
     moves: ['tidalCannon', 'bubbleBeam', 'dragonPulse', 'maelstrom'], from: 'tidalisk' },
 ];
+// Legendary 4th stages: made at an evolution altar from a monster at its last stage by offering
+// relics; the element offered (`tag`, see RELIC_TAGS) picks which one. Not in the wild or recruit pool.
+// A monster's branches come from here (def.branches = { tag: id }).
+const LEGENDS = [
+  { id: 'magmabastion', name: 'MAGMA BASTION', types: ['water', 'fire'], hp: 2300, atk: 1.32, def: 1.5, spd: 46, size: 'L', item: 'emberStone',
+    moves: ['geyserVent', 'steamEruption', 'magmaWave', 'ironDefense'], from: 'garrishell', tag: 'fire' },
+  { id: 'railwarden', name: 'RAILWARDEN', types: ['water', 'electric'], hp: 1550, atk: 1.42, def: 1.1, spd: 108, size: 'L', item: 'quickCharm',
+    moves: ['railShot', 'hydroCannon', 'lanceCharge', 'towerShield'], from: 'garrishell', tag: 'storm' },
+  { id: 'citadrone', name: 'CITADRONE', types: ['water', 'steel'], hp: 1900, atk: 1.28, def: 1.42, spd: 72, size: 'L', item: 'ironPlate',
+    moves: ['droneSwarm', 'hydroCannon', 'magnetStorm', 'ironDefense'], from: 'garrishell', tag: 'iron' },
+];
+for (const l of LEGENDS) { const base = ROSTER.find(m => m.id === l.from); (base.branches = base.branches || {})[l.tag] = l.id; }
 const EVOLVE_LEVEL = 6;
 for (const e of EVOLVED) ROSTER.find(m => m.id === e.from).evolve = { to: e.id, level: EVOLVE_LEVEL };
-const ALL_MONS = () => [...ROSTER, ...EVOLVED];
+const ALL_MONS = () => [...ROSTER, ...EVOLVED, ...LEGENDS];
 const ROSTER_BY_ID = Object.fromEntries(ALL_MONS().map(m => [m.id, m]));
 
 const DIFFICULTY = {

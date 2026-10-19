@@ -188,10 +188,12 @@ function tryFloor(floorN, partyIds, relics, last) {
   const [boss, ...rest] = ends;
   shuffle(rest);
   const [recruit, shop, treasure] = rest;
+  // the evolution altar: from floor 3, when there's a spare dead end (relics are offered there to evolve a monster at its last stage)
+  const altar = floorN >= 3 && rest[3] && Math.random() < 0.65 ? rest[3] : null;
 
   const ids = ROSTER.map(m => m.id);
   for (const r of rooms) {
-    r.type = r === start ? 'start' : r === boss ? 'boss' : r === recruit ? 'recruit' : r === shop ? 'shop' : r === treasure ? 'treasure' : 'fight';
+    r.type = r === start ? 'start' : r === boss ? 'boss' : r === recruit ? 'recruit' : r === shop ? 'shop' : r === treasure ? 'treasure' : r === altar ? 'altar' : 'fight';
     const sizeKey = r.type === 'boss' ? 'boss' : r.type === 'fight' ? pickRand(['s', 's', 'wide', 'tall', 'big']) : 's';
     [r.w, r.h] = ROOM_SIZES[sizeKey];
     r.seed = (Math.random() * 1e9) | 0;
@@ -240,7 +242,7 @@ const SAVE_UPGRADES = {
 };
 const DEFAULT_SETTINGS = { lighting: true, music: 0.8, sfx: 0.8, keys: {} };   // keys: action -> key code (see Input)
 const Save = {
-  data: { version: SAVE_VERSION, starters: [...STARTERS], runs: 0, wins: 0, bestFloor: 0, bestEndless: 0, recruited: [], settings: { ...DEFAULT_SETTINGS } },
+  data: { version: SAVE_VERSION, starters: [...STARTERS], runs: 0, wins: 0, bestFloor: 0, bestEndless: 0, recruited: [], found: [], settings: { ...DEFAULT_SETTINGS } },
   load() {
     let d = null;
     try { d = JSON.parse(localStorage.getItem(SAVE_KEY)); } catch (e) { /* storage blocked or broken: play without it */ }
@@ -266,6 +268,9 @@ const Save = {
     if (this.data.starters.includes(id) || !ROSTER.some(m => m.id === id)) return false;
     this.data.starters.push(id); this.write(); return true;
   },
+  // altar evolutions you've made (named on the altar; the rest show as ???)
+  hasFound(id) { return (this.data.found || []).includes(id); },
+  noteFound(id) { if (!this.hasFound(id)) { (this.data.found = this.data.found || []).push(id); this.write(); } },
   noteRecruit(id) { if (!this.data.recruited.includes(id)) { this.data.recruited.push(id); this.write(); } },
   // returns true if it's a new endless record
   endRun(floorN, win, endless) {

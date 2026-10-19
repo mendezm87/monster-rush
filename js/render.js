@@ -68,6 +68,17 @@ const SKULL_IMG = gridFromMap([
   '.kwkwk.',
   '..kkk..',
 ], { k: OUTLINE, w: '#f6f2ee' }).toCanvas();
+const ALTAR_IMG = gridFromMap([
+  '...k...',
+  '..kpk..',
+  '.kpwpk.',
+  '.kpwpk.',
+  'kpwwwpk',
+  '.kpppk.',
+  'kkkkkkk',
+  'ksssssk',
+  'kkkkkkk',
+], { k: OUTLINE, p: '#b05aff', w: '#f0d0ff', s: '#7a6a8a' }).toCanvas();
 const PICKUP_IMG = { coin: COIN_IMG, berry: BERRY_IMG, candy: CANDY_IMG, disc: DISC_IMG, chest: CHEST_IMG };
 // the sign over a doorway: what's in the room behind it
 const REWARD_IMG = { coins: COIN_IMG, berries: BERRY_IMG, xp: CANDY_IMG, move: DISC_IMG, chest: CHEST_IMG };
@@ -76,6 +87,7 @@ function doorSign(room) {
   if (room.type === 'boss') return room.cleared ? null : { img: SKULL_IMG, c: '#e8433a' };
   if (room.type === 'shop') return { img: COIN_IMG, c: '#ffd23f' };
   if (room.type === 'treasure') return room.taken ? null : { img: CHEST_IMG, c: '#ffffff' };
+  if (room.type === 'altar') return room.used ? null : { img: ALTAR_IMG, c: '#c87aff' };
   if (room.type === 'recruit') return room.recruited ? null : { img: BALL_IMG, c: '#5aa0ff' };
   return null;
 }
@@ -343,10 +355,16 @@ mixInto(Battle, class {
     const X = Math.round(ped.x), Y = Math.round(ped.y);
     Lighting.shadow(ctx, X, Y + 4, 22, 7, 1.1);
     ctx.fillStyle = OUTLINE; ctx.fillRect(X - 19, Y - 7, 38, 13);
-    ctx.fillStyle = ped.kind === 'relic' ? '#e0c060' : '#b8b0c8'; ctx.fillRect(X - 18, Y - 6, 36, 5);
-    ctx.fillStyle = ped.kind === 'relic' ? '#a8862a' : '#7a7090'; ctx.fillRect(X - 18, Y - 1, 36, 6);
+    ctx.fillStyle = ped.kind === 'relic' ? '#e0c060' : ped.kind === 'altar' ? '#6a5a7a' : '#b8b0c8'; ctx.fillRect(X - 18, Y - 6, 36, 5);
+    ctx.fillStyle = ped.kind === 'relic' ? '#a8862a' : ped.kind === 'altar' ? '#44384e' : '#7a7090'; ctx.fillRect(X - 18, Y - 1, 36, 6);
     let name;
-    if (ped.kind === 'mon') {
+    if (ped.kind === 'altar') {   // a purple flame over dark stone
+      const bob = Math.round(Math.sin(this.time * 2.5) * 2), S = ALTAR_IMG.width * 2.5;
+      ctx.globalAlpha = 0.3 + Math.sin(this.time * 4) * 0.12; ctx.fillStyle = '#c87aff';
+      ctx.beginPath(); ctx.arc(X, Y - 22 + bob, 18, 0, TAU); ctx.fill(); ctx.globalAlpha = 1;
+      ctx.drawImage(ALTAR_IMG, Math.round(X - S / 2), Math.round(Y - 12 - ALTAR_IMG.height * 2.5 + bob), S, ALTAR_IMG.height * 2.5);
+      name = 'EVOLUTION ALTAR';
+    } else if (ped.kind === 'mon') {
       const def = ROSTER_BY_ID[ped.id], sp = SPRITES[ped.id], S = sp.size * SPR_SCALE;
       const bob = Math.sin(this.time * 3 + ped.x) > 0.6 ? -1 : 0;
       ctx.save(); ctx.translate(X, Y - 6 + bob); if (ped.x > this.P.x) ctx.scale(-1, 1);

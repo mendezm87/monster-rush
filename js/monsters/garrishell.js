@@ -388,3 +388,352 @@ Object.assign(MONSTER_ART_DIAG, {
   },
 });
 Object.assign(RIGGED, { shellmet: 'quad', bulwarden: 'biped', garrishell: 'biped' });
+
+// Garrishell's legendary 4th stages, made at the evolution altar by offering relics (the owner's
+// generated art): the element offered picks the branch. Each keeps the family's green scales and
+// one glowing eye behind a visor; everything else changes.
+const LEGEND_PAL = {
+  M: P('#8a909c', '#5a606c', '#b4bac4'), D: P('#4a4e58', '#30333c', '#64687a'), BORE: '#1c2430',
+  STEAM: P('#eef0f4', '#c4c8d4', '#ffffff'), LAVA: P('#ff7a1c', '#c8401a', '#ffd34a'),
+};
+Object.assign(MONSTER_ART, {
+  // Magma Bastion (fire): a walking volcano island. Its shell is a whole volcano with a ruined
+  // castle on its slopes, erupting at the top; seawater pours off it and hisses into steam
+  // geysers (water/fire); four huge pillar legs cracked with magma; a small helm low at the front.
+  magmabastion(g, v = 'front') { // 44x44
+    const { M, BORE, STEAM, LAVA } = LEGEND_PAL;
+    const SK = P('#3a5a2e', '#24401c', '#527a3e'), ROCK = P('#4a3e38', '#2e2622', '#6a5a50'), SHELL = P('#3e4a2a', '#28321a', '#566440');
+    const L = '#ff7a1c', HOT = '#ffd34a', WATER = '#7ad0f0', CLAW = '#c8c0a0', EYE = '#fff4d0', EYE2 = '#ffb040', STONE = '#7a6a5a';
+    const { Q, b, h, t, legA, legB } = rigParts(g, v);
+    const cone = (x0, peakL, peakR, x1, base = 24) => {   // the volcano, with lava running down from its crater
+      b.poly([[x0, base], [peakL, 7], [peakR, 7], [x1, base]], ROCK, { edge: true });
+      b.rect(peakL, 6, peakR - peakL, 2, '#c8401a'); b.rect(peakL + 1, 6, peakR - peakL - 2, 1, L);
+      for (let y = 8; y < base - 1; y++) { b.px(peakL + 2 + ((y - 8) >> 2), y, y % 3 ? L : HOT); b.px(peakR - 2 + ((y - 8) >> 1), y, L); }
+    };
+    const castle = x => { b.rect(x, 15, 5, 4, STONE); b.px(x, 14, STONE).px(x + 2, 14, STONE).px(x + 4, 14, STONE); b.px(x + 2, 16, OUTLINE).px(x + 2, 17, OUTLINE); };
+    const shell = (cx, rx) => {
+      b.ellipse(cx, 25, rx, 7.5, SHELL, { edge: true });
+      for (const [x, y] of [[-12, 24], [-11, 25], [-10, 24], [-9, 26], [7, 23], [8, 24], [9, 25], [11, 24], [-3, 28], [-2, 29], [3, 28]]) b.px(cx + x, y, L);
+      b.px(cx - rx + 1, 27, WATER).px(cx - rx + 1, 28, WATER).px(cx + rx - 2, 27, WATER).px(cx + rx - 2, 28, WATER);   // seawater pouring off
+    };
+    const plume = (x) => {   // the eruption and the steam geysers (on the tail part, so they sway)
+      t.poly([[x - 3, 6], [x, 0], [x + 3, 6]], LAVA, { edge: true }); t.px(x, 2, HOT);
+    };
+    const geyser = (x, dir) => { for (const [dx, y, r] of [[0, 15, 2], [-1.5, 11, 2.8], [-2.5, 7, 3.4]]) t.ellipse(x + dir * dx, y, r, r * 0.85, STEAM, { edge: true }); t.px(x, 18, WATER).px(x + dir, 17, WATER); };   // a puffy steam geyser, seawater at its foot
+    const pillar = (p, x, big) => {
+      p.ellipse(x, 35, big ? 6 : 5, big ? 6.5 : 5.5, SK, { edge: true });
+      p.ellipse(x, 40, big ? 6.5 : 5.5, 2.5, SK, { edge: true });
+      p.px(x - 2, 33, L).px(x - 1, 34, L).px(x + 1, 36, L).px(x, 37, L).px(x + 2, 33, L);
+      p.px(x - 4, 42, CLAW).px(x - 1, 42, CLAW).px(x + 2, 42, CLAW);
+    };
+    if (v === 'side') {
+      plume(17); geyser(5, 1);
+      t.poly([[5, 30], [0, 33], [6, 33]], SK, { edge: true });                                  // stubby tail
+      pillar(legA, 10, false); pillar(legB, 28, false);                                         // far legs
+      cone(7, 14, 21, 30); castle(22);
+      shell(19, 17);
+      pillar(legB, 13, true); pillar(legA, 31, true);                                          // near legs
+      h.ellipse(33, 32, 4, 3, SK);                                                              // neck
+      h.ellipse(37, 32, 5, 4.5, SK, { edge: true });
+      h.poly([[32, 30], [34, 27], [39, 27], [42, 30], [42, 33], [33, 33]], M, { edge: true });   // small helm
+      h.rect(37, 29, 5, 2, BORE);
+      rigEye(h, Q, 39, 29, () => { h.rect(39, 29, 2, 2, EYE); h.px(40, 30, EYE2); }, 2);
+      h.px(35, 35, L).px(36, 36, L);
+      return;
+    }
+    if (v === 'back') {
+      pillar(legA, 10, true); pillar(legB, 34, true);
+      t.poly([[20, 31], [24, 31], [22, 38]], SK, { edge: true });                               // tail
+      plume(22); geyser(7, 1); geyser(37, -1);
+      cone(11, 18, 26, 33); castle(26);
+      shell(22, 20);
+      return;
+    }
+    plume(22); geyser(7, 1); geyser(37, -1);
+    cone(11, 18, 26, 33); castle(13);
+    shell(22, 20);
+    pillar(legA, 10, true); pillar(legB, 34, true);
+    h.ellipse(22, 33, 6.5, 5, SK, { edge: true });                                              // head, low at the front
+    h.poly([[16, 30], [18, 26], [26, 26], [28, 30], [28, 33], [16, 33]], M, { edge: true });     // helm
+    h.rect(18, 29, 8, 2, BORE);                                                                 // visor
+    rigEye(h, Q, 22, 29, () => { h.rect(22, 29, 3, 2, EYE); h.px(24, 30, EYE2); }, 3);           // one white-hot eye
+    h.px(19, 32, BORE).px(21, 32, BORE).px(23, 32, BORE).px(25, 32, BORE);                      // grille
+    h.ellipse(22, 36, 4, 2.2, SK, { edge: true });                                              // snout
+    h.px(20, 35, L).px(25, 36, L);
+  },
+
+  // Railwarden (storm): lean and upright like an armoured lancer. The shell is now a capacitor
+  // pack with three copper coil spires; one arm is a railgun lance glowing along its rails, the
+  // other holds a tower shield made from a shell plate; a narrow helm with one cyan eye.
+  railwarden(g, v = 'front') { // 44x44
+    const { M, D, BORE } = LEGEND_PAL;
+    const SK = P('#5a8a3a', '#3a6226', '#7aa856'), C = P('#b8c47a', '#8a9a52', '#d8e0a0'), RIM = P('#d8a838', '#a07220', '#f0cc68');
+    const E = '#7af0ff', E2 = '#d0faff', GOLD = '#d8a838', CLAW = '#c8c0a0';
+    const { Q, b, h, t, legA, legB, armA, armB } = rigParts(g, v);
+    const coil = (x, top) => { for (let y = top; y < 10; y += 2) { b.rect(x - 1, y, 3, 1, '#d87a3a'); b.rect(x - 1, y + 1, 3, 1, '#8a4a1a'); } b.px(x, top - 1, '#e8e8f0'); };
+    const arcs = pts => { for (const [x, y] of pts) t.px(x, y, (x + y) % 3 ? E : E2); };
+    const leg = (p, x, dir) => {
+      p.poly([[x - 3, 29], [x + 2, 29], [x + 1, 35], [x + 2 * dir, 41], [x - 3 * dir, 41], [x - 2, 35]], SK, { edge: true });
+      p.px(x - 3, 42, CLAW).px(x, 42, CLAW).px(x + 2, 42, CLAW);
+    };
+    const shieldKite = (p, x0) => {   // a tower shield made from a shell plate
+      p.poly([[x0, 14], [x0 + 14, 14], [x0 + 15, 28], [x0 + 8, 38], [x0, 30]], RIM, { edge: true });
+      p.poly([[x0 + 2, 16], [x0 + 12, 16], [x0 + 13, 27], [x0 + 8, 35], [x0 + 2, 29]], M);
+      p.px(x0 + 3, 17, D.s).px(x0 + 11, 17, D.s).px(x0 + 7, 25, D.s).px(x0 + 5, 20, M.l).px(x0 + 6, 19, M.l);
+    };
+    if (v === 'side') {
+      b.poly([[6, 10], [14, 10], [14, 24], [6, 24]], D, { edge: true }); b.rect(6, 10, 8, 1, GOLD);   // capacitor pack
+      coil(7, 3); coil(10, 1); coil(13, 3);
+      arcs([[8, 0], [9, 1], [11, 0], [12, 2], [14, 1], [15, 3], [5, 4], [4, 6]]);
+      t.poly([[13, 28], [6, 36], [9, 37], [15, 31]], SK, { edge: true }); t.rect(9, 32, 3, 2, D.b);   // tail with its cuff
+      armB.poly([[17, 14], [21, 14], [21, 31], [17, 31]], M, { edge: true }); armB.rect(20, 14, 1, 17, GOLD);   // the shield, edge on
+      leg(legB, 17, 1);
+      b.poly([[14, 12], [24, 12], [25, 26], [21, 31], [16, 31], [14, 24]], SK, { edge: true });   // lean body
+      b.poly([[21, 14], [25, 14], [25, 26], [22, 30]], C);
+      leg(legA, 21, 1);
+      h.poly([[17, 4], [20, 1], [25, 2], [28, 5], [28, 11], [18, 12]], M, { edge: true });        // narrow helm
+      h.rect(23, 6, 5, 2, BORE);
+      rigEye(h, Q, 25, 6, () => { h.rect(25, 6, 2, 2, E); h.px(25, 6, E2); }, 2);
+      h.px(25, 9, BORE).px(27, 9, BORE);
+      armA.ellipse(21, 16, 3, 3, SK, { edge: true });                                            // the railgun lance, levelled
+      armA.poly([[19, 17], [41, 17], [43, 19], [41, 21], [19, 21]], M, { edge: true });
+      armA.rect(23, 19, 17, 1, E); armA.rect(19, 17, 4, 4, D.b);
+      return;
+    }
+    if (v === 'back') {
+      shieldKite(armB, 1);                                                                       // shield on this side from behind
+      leg(legA, 18, -1); leg(legB, 27, 1);
+      t.poly([[21, 28], [24, 28], [19, 38], [16, 37]], SK, { edge: true }); t.rect(18, 33, 3, 2, D.b);
+      b.poly([[15, 13], [29, 13], [27, 27], [24, 30], [20, 30], [17, 27]], SK, { edge: true });
+      h.poly([[19, 5], [21, 2], [23, 2], [25, 5], [25, 9], [19, 9]], M, { edge: true });           // top of the helm
+      b.poly([[13, 9], [31, 9], [31, 24], [13, 24]], D, { edge: true }); b.rect(13, 9, 18, 1, GOLD);   // capacitor pack
+      b.rect(16, 13, 12, 1, '#30333c'); b.rect(16, 17, 12, 1, '#30333c'); b.px(18, 20, E).px(26, 20, E);
+      coil(16, 3); coil(22, 1); coil(28, 3);
+      arcs([[17, 1], [18, 0], [20, 1], [21, 0], [24, 0], [25, 1], [27, 0], [29, 1], [31, 4], [32, 6], [12, 5], [11, 7]]);
+      armA.ellipse(31, 15, 3, 3, SK, { edge: true });                                            // the lance
+      armA.poly([[29, 17], [32, 15], [43, 38], [40, 40]], M, { edge: true });
+      for (let k = 0; k < 9; k++) armA.px(33 + k, 20 + k * 2, E);
+      return;
+    }
+    b.poly([[13, 10], [31, 10], [31, 22], [13, 22]], D, { edge: true }); b.rect(13, 10, 18, 1, GOLD);   // capacitor pack behind
+    coil(15, 3); coil(22, 1); coil(29, 3);
+    arcs([[16, 1], [17, 0], [19, 1], [20, 0], [24, 0], [25, 1], [27, 0], [28, 1], [31, 3], [32, 5], [12, 3], [11, 5]]);
+    leg(legA, 17, -1); leg(legB, 27, 1);
+    b.poly([[15, 13], [29, 13], [27, 26], [24, 30], [20, 30], [17, 26]], SK, { edge: true });     // lean torso
+    b.poly([[18, 15], [26, 15], [25, 26], [22, 29], [19, 26]], C);
+    b.rect(19, 19, 7, 1, C.s); b.rect(19, 23, 7, 1, C.s); b.rect(22, 15, 1, 13, C.s);
+    armA.ellipse(14, 15, 3, 3, SK, { edge: true });                                              // lance arm
+    armA.poly([[12, 16], [16, 18], [5, 40], [2, 38]], M, { edge: true });
+    armA.rect(11, 16, 4, 4, D.b);
+    for (let k = 0; k < 9; k++) armA.px(12 - k, 21 + Math.round(k * 2), E);                      // rails glowing
+    armA.poly([[2, 38], [5, 40], [1, 43]], M, { edge: true });
+    armB.ellipse(30, 15, 3, 3, SK, { edge: true });
+    shieldKite(armB, 27);
+    h.poly([[18, 5], [20, 2], [24, 2], [26, 5], [26, 13], [18, 13]], M, { edge: true });         // narrow knight's helm
+    h.rect(21, 1, 2, 4, M.l);
+    h.rect(19, 7, 6, 2, BORE);
+    rigEye(h, Q, 22, 7, () => { h.rect(22, 7, 2, 2, E); h.px(22, 7, E2); }, 2);                  // one cyan eye
+    h.px(20, 10, BORE).px(22, 10, BORE).px(24, 10, BORE).px(20, 11, BORE).px(22, 11, BORE).px(24, 11, BORE);
+  },
+
+  // Citadrone (iron): a flying citadel. The shell is a huge armoured disc with teal panel lines
+  // and a cockpit dome, hover engines underneath and no legs; the head and cannon arms poke out
+  // of hatches; small drone turrets fly alongside it.
+  citadrone(g, v = 'front') { // 44x44
+    const { D, BORE } = LEGEND_PAL;
+    const SK = P('#5a8a3a', '#3a6226', '#7aa856'), M = P('#7a8290', '#4e5462', '#a8b0bc'), HM = P('#8a909c', '#5a606c', '#b4bac4');
+    const T = '#4af0d8', T2 = '#c0fff4', JET = P('#4af0d8', '#20a090', '#c0fff4'), HATCH = '#2a2e38';
+    const { Q, b, h, t, earA, earB, armA, armB } = rigParts(g, v);
+    const drone = (p, x, y) => { p.ellipse(x, y, 3.5, 1.5, M, { edge: true }); p.ellipse(x, y - 1, 1.6, 1, P(T, '#20a090', T2)); p.px(x, y + 2, T); };
+    const jets = xs => { for (const x of xs) { t.poly([[x - 2, 30], [x + 2, 30], [x + 1, 39], [x - 1, 39]], JET); t.px(x, 32, T2); } };
+    const cannon = (p, x0, x1) => { p.poly([[x0, 24], [x1, 24], [x1, 29], [x0, 29]], D, { edge: true }); p.rect(Math.min(x0, x1) + 3, 24, 1, 5, T); };
+    const panels = (cx) => {
+      b.rect(cx - 19, 25, 38, 1, '#3a404c');
+      for (const [x, y] of [[-12, 15], [-11, 16], [-10, 17], [12, 15], [11, 16], [10, 17], [-6, 13], [6, 13], [-15, 22], [15, 22], [-2, 27], [2, 27]]) b.px(cx + x, y, T);
+      b.rect(cx - 8, 20, 4, 1, T); b.rect(cx + 5, 20, 4, 1, T);
+    };
+    if (v === 'side') {
+      drone(earA, 6, 5); drone(earB, 38, 3);
+      jets([14, 26]);
+      b.ellipse(22, 24, 20, 6, M, { edge: true });                                              // the disc, from the side
+      b.ellipse(19, 18, 13, 7, M, { edge: true });                                              // armoured dome
+      b.ellipse(20, 11, 3.5, 2, JET, { edge: true });                                           // cockpit
+      b.rect(3, 25, 38, 1, '#3a404c'); b.px(12, 15, T).px(13, 16, T).px(25, 14, T).px(26, 15, T).px(9, 22, T).px(30, 22, T);
+      b.ellipse(35, 22, 4, 4, HATCH);                                                           // front hatch
+      h.ellipse(36, 23, 3.5, 3, SK, { edge: true });
+      h.poly([[33, 21], [35, 18], [39, 18], [41, 21], [41, 23], [34, 23]], HM, { edge: true });
+      h.rect(37, 20, 4, 2, BORE);
+      rigEye(h, Q, 38, 20, () => { h.rect(38, 20, 2, 2, T); h.px(38, 20, T2); }, 2);
+      armA.ellipse(31, 27, 2.5, 2, SK, { edge: true });
+      cannon(armA, 31, 43);
+      return;
+    }
+    if (v === 'back') {
+      drone(earA, 5, 6); drone(earB, 39, 6);
+      jets([14, 22, 30]);
+      cannon(armA, 1, 9); cannon(armB, 35, 43);
+      b.ellipse(22, 24, 21, 7, M, { edge: true });
+      b.ellipse(22, 18, 14, 8, M, { edge: true });
+      b.ellipse(22, 11, 4, 2.5, JET, { edge: true });
+      panels(22);
+      b.ellipse(15, 26, 3, 1.6, JET); b.ellipse(29, 26, 3, 1.6, JET);                           // rear thrusters
+      return;
+    }
+    drone(earA, 5, 6); drone(earB, 39, 6);
+    jets([14, 22, 30]);
+    b.ellipse(22, 24, 21, 7, M, { edge: true });                                                // the citadel disc
+    b.ellipse(22, 18, 14, 8, M, { edge: true });                                                // armoured dome
+    b.ellipse(22, 11, 4, 2.5, JET, { edge: true });                                             // cockpit
+    panels(22);
+    b.ellipse(22, 22, 6, 5, HATCH);                                                             // hatch
+    armA.ellipse(9, 25, 3, 2.5, SK, { edge: true }); armB.ellipse(35, 25, 3, 2.5, SK, { edge: true });   // arms, half out
+    cannon(armA, 1, 8); cannon(armB, 36, 43);
+    armA.px(1, 26, BORE).px(1, 27, BORE); armB.px(42, 26, BORE).px(42, 27, BORE);
+    h.ellipse(22, 23, 4, 3.5, SK, { edge: true });                                              // head in the hatch
+    h.poly([[18, 21], [19, 18], [25, 18], [26, 21], [26, 24], [18, 24]], HM, { edge: true });
+    h.rect(19, 20, 6, 2, BORE);
+    rigEye(h, Q, 22, 20, () => { h.rect(22, 20, 2, 2, T); h.px(22, 20, T2); }, 2);               // one teal eye
+  },
+});
+Object.assign(MONSTER_ART_DIAG, {
+  magmabastion(g, v) {
+    const { M, BORE, STEAM, LAVA } = LEGEND_PAL;
+    const SK = P('#3a5a2e', '#24401c', '#527a3e'), ROCK = P('#4a3e38', '#2e2622', '#6a5a50'), SHELL = P('#3e4a2a', '#28321a', '#566440');
+    const L = '#ff7a1c', HOT = '#ffd34a', WATER = '#7ad0f0', CLAW = '#c8c0a0', EYE = '#fff4d0', EYE2 = '#ffb040', STONE = '#7a6a5a';
+    const { Q, b, h, t, legA, legB } = rigParts(g, v);
+    const cone = (x0, peakL, peakR, x1, base = 24) => {
+      b.poly([[x0, base], [peakL, 7], [peakR, 7], [x1, base]], ROCK, { edge: true });
+      b.rect(peakL, 6, peakR - peakL, 2, '#c8401a'); b.rect(peakL + 1, 6, peakR - peakL - 2, 1, L);
+      for (let y = 8; y < base - 1; y++) { b.px(peakL + 2 + ((y - 8) >> 2), y, y % 3 ? L : HOT); b.px(peakR - 2 + ((y - 8) >> 1), y, L); }
+    };
+    const castle = x => { b.rect(x, 15, 5, 4, STONE); b.px(x, 14, STONE).px(x + 2, 14, STONE).px(x + 4, 14, STONE); b.px(x + 2, 16, OUTLINE).px(x + 2, 17, OUTLINE); };
+    const shell = (cx, rx) => {
+      b.ellipse(cx, 25, rx, 7.5, SHELL, { edge: true });
+      for (const [x, y] of [[-12, 24], [-11, 25], [-10, 24], [-9, 26], [7, 23], [8, 24], [9, 25], [11, 24], [-3, 28], [-2, 29], [3, 28]]) b.px(cx + x, y, L);
+      b.px(cx - rx + 1, 27, WATER).px(cx - rx + 1, 28, WATER).px(cx + rx - 2, 27, WATER).px(cx + rx - 2, 28, WATER);
+    };
+    const plume = x => { t.poly([[x - 3, 6], [x, 0], [x + 3, 6]], LAVA, { edge: true }); t.px(x, 2, HOT); };
+    const geyser = (x, dir) => { for (const [dx, y, r] of [[0, 15, 2], [-1.5, 11, 2.8], [-2.5, 7, 3.4]]) t.ellipse(x + dir * dx, y, r, r * 0.85, STEAM, { edge: true }); t.px(x, 18, WATER).px(x + dir, 17, WATER); };   // a puffy steam geyser, seawater at its foot
+    const pillar = (p, x, big) => {
+      p.ellipse(x, 35, big ? 6 : 5, big ? 6.5 : 5.5, SK, { edge: true });
+      p.ellipse(x, 40, big ? 6.5 : 5.5, 2.5, SK, { edge: true });
+      p.px(x - 2, 33, L).px(x - 1, 34, L).px(x + 1, 36, L).px(x, 37, L).px(x + 2, 33, L);
+      p.px(x - 4, 42, CLAW).px(x - 1, 42, CLAW).px(x + 2, 42, CLAW);
+    };
+    if (v === 'bside') {
+      pillar(legB, 10, true); pillar(legA, 33, false);
+      t.poly([[17, 31], [21, 31], [14, 37]], SK, { edge: true });
+      plume(20); geyser(6, 1); geyser(35, -1);
+      h.poly([[34, 27], [37, 25], [41, 26], [43, 29], [42, 32], [35, 32]], M, { edge: true });    // the helm, peeking out past the shell
+      h.rect(41, 28, 2, 2, BORE); h.px(42, 28, EYE);
+      cone(9, 16, 24, 31); castle(24);
+      shell(20, 19);
+      return;
+    }
+    t.poly([[4, 30], [0, 33], [5, 33]], SK, { edge: true });
+    plume(20); geyser(6, 1); geyser(35, -1);
+    cone(8, 15, 23, 31); castle(10);
+    shell(20, 19);
+    pillar(legB, 9, false); pillar(legA, 34, true);
+    h.ellipse(26, 33, 6, 5, SK, { edge: true });
+    h.poly([[20, 30], [22, 26], [30, 26], [32, 30], [32, 33], [20, 33]], M, { edge: true });
+    h.rect(21, 27, 2, 6, M.s);                                                                 // its side
+    h.rect(23, 29, 8, 2, BORE);
+    rigEye(h, Q, 27, 29, () => { h.rect(27, 29, 3, 2, EYE); h.px(29, 30, EYE2); }, 3);
+    h.px(24, 32, BORE).px(26, 32, BORE).px(28, 32, BORE).px(30, 32, BORE);
+    h.ellipse(27, 36, 4, 2.2, SK, { edge: true });
+    h.px(25, 35, L);
+  },
+  railwarden(g, v) {
+    const { M, D, BORE } = LEGEND_PAL;
+    const SK = P('#5a8a3a', '#3a6226', '#7aa856'), C = P('#b8c47a', '#8a9a52', '#d8e0a0'), RIM = P('#d8a838', '#a07220', '#f0cc68');
+    const E = '#7af0ff', E2 = '#d0faff', GOLD = '#d8a838', CLAW = '#c8c0a0';
+    const { Q, b, h, t, legA, legB, armA, armB } = rigParts(g, v);
+    const coil = (x, top) => { for (let y = top; y < 10; y += 2) { b.rect(x - 1, y, 3, 1, '#d87a3a'); b.rect(x - 1, y + 1, 3, 1, '#8a4a1a'); } b.px(x, top - 1, '#e8e8f0'); };
+    const arcs = pts => { for (const [x, y] of pts) t.px(x, y, (x + y) % 3 ? E : E2); };
+    const leg = (p, x, dir) => {
+      p.poly([[x - 3, 29], [x + 2, 29], [x + 1, 35], [x + 2 * dir, 41], [x - 3 * dir, 41], [x - 2, 35]], SK, { edge: true });
+      p.px(x - 3, 42, CLAW).px(x, 42, CLAW).px(x + 2, 42, CLAW);
+    };
+    const shieldKite = (p, x0) => {
+      p.poly([[x0, 14], [x0 + 14, 14], [x0 + 15, 28], [x0 + 8, 38], [x0, 30]], RIM, { edge: true });
+      p.poly([[x0 + 2, 16], [x0 + 12, 16], [x0 + 13, 27], [x0 + 8, 35], [x0 + 2, 29]], M);
+      p.px(x0 + 3, 17, D.s).px(x0 + 11, 17, D.s).px(x0 + 7, 25, D.s).px(x0 + 5, 20, M.l).px(x0 + 6, 19, M.l);
+    };
+    if (v === 'bside') {
+      shieldKite(armB, 0);
+      leg(legB, 16, -1); leg(legA, 26, 1);
+      t.poly([[19, 28], [22, 28], [15, 38], [12, 37]], SK, { edge: true }); t.rect(15, 33, 3, 2, D.b);
+      b.poly([[14, 13], [28, 13], [26, 27], [23, 30], [19, 30], [16, 27]], SK, { edge: true });
+      h.poly([[21, 4], [24, 1], [28, 2], [30, 5], [30, 10], [22, 10]], M, { edge: true });
+      h.rect(29, 6, 2, 2, BORE); h.px(30, 6, E);
+      b.poly([[12, 9], [29, 9], [29, 24], [12, 24]], D, { edge: true }); b.rect(12, 9, 17, 1, GOLD);
+      b.rect(15, 13, 11, 1, '#30333c'); b.rect(15, 17, 11, 1, '#30333c'); b.px(17, 20, E).px(25, 20, E);
+      coil(15, 3); coil(21, 1); coil(27, 3);
+      arcs([[16, 1], [17, 0], [19, 1], [20, 0], [23, 0], [24, 1], [26, 0], [28, 1], [30, 4], [31, 6], [11, 5], [10, 7]]);
+      armA.ellipse(30, 15, 3, 3, SK, { edge: true });
+      armA.poly([[28, 17], [31, 15], [43, 36], [40, 38]], M, { edge: true });
+      for (let k = 0; k < 9; k++) armA.px(32 + k, 20 + k * 2, E);
+      return;
+    }
+    b.poly([[12, 10], [29, 10], [29, 22], [12, 22]], D, { edge: true }); b.rect(12, 10, 17, 1, GOLD);
+    coil(14, 3); coil(20, 1); coil(27, 3);
+    arcs([[15, 1], [16, 0], [18, 1], [19, 0], [22, 0], [23, 1], [25, 0], [26, 1], [29, 3], [30, 5], [11, 3], [10, 5]]);
+    t.poly([[18, 28], [21, 28], [14, 38], [11, 37]], SK, { edge: true }); t.rect(14, 33, 3, 2, D.b);   // tail, out to the left
+    leg(legB, 18, -1); leg(legA, 28, 1);
+    b.poly([[16, 13], [30, 13], [28, 26], [25, 30], [21, 30], [18, 26]], SK, { edge: true });
+    b.poly([[20, 15], [28, 15], [27, 26], [24, 29], [21, 26]], C);
+    b.rect(21, 19, 7, 1, C.s); b.rect(21, 23, 7, 1, C.s); b.rect(24, 15, 1, 13, C.s);
+    armB.ellipse(16, 15, 2.6, 2.6, SK, { edge: true });                                        // far arm: the shield, half hidden
+    armB.poly([[8, 14], [17, 14], [17, 28], [12, 35], [8, 29]], RIM, { edge: true });
+    armB.poly([[10, 16], [15, 16], [15, 27], [12, 32], [10, 28]], M);
+    armA.ellipse(31, 15, 3, 3, SK, { edge: true });                                             // near arm: the lance
+    armA.poly([[29, 17], [33, 15], [43, 38], [40, 40]], M, { edge: true });
+    armA.rect(29, 16, 4, 4, D.b);
+    for (let k = 0; k < 9; k++) armA.px(33 + k, 20 + k * 2, E);
+    h.poly([[20, 5], [22, 2], [26, 2], [28, 5], [28, 13], [20, 13]], M, { edge: true });
+    h.rect(20, 4, 2, 8, M.s);                                                                   // its side
+    h.rect(22, 7, 6, 2, BORE);
+    rigEye(h, Q, 25, 7, () => { h.rect(25, 7, 2, 2, E); h.px(25, 7, E2); }, 2);
+    h.px(23, 10, BORE).px(25, 10, BORE).px(27, 10, BORE).px(23, 11, BORE).px(25, 11, BORE).px(27, 11, BORE);
+  },
+  citadrone(g, v) {
+    const { D, BORE } = LEGEND_PAL;
+    const SK = P('#5a8a3a', '#3a6226', '#7aa856'), M = P('#7a8290', '#4e5462', '#a8b0bc'), HM = P('#8a909c', '#5a606c', '#b4bac4');
+    const T = '#4af0d8', T2 = '#c0fff4', JET = P('#4af0d8', '#20a090', '#c0fff4'), HATCH = '#2a2e38';
+    const { Q, b, h, t, earA, earB, armA, armB } = rigParts(g, v);
+    const drone = (p, x, y) => { p.ellipse(x, y, 3.5, 1.5, M, { edge: true }); p.ellipse(x, y - 1, 1.6, 1, P(T, '#20a090', T2)); p.px(x, y + 2, T); };
+    const jets = xs => { for (const x of xs) { t.poly([[x - 2, 30], [x + 2, 30], [x + 1, 39], [x - 1, 39]], JET); t.px(x, 32, T2); } };
+    const cannon = (p, x0, x1) => { p.poly([[x0, 24], [x1, 24], [x1, 29], [x0, 29]], D, { edge: true }); p.rect(Math.min(x0, x1) + 3, 24, 1, 5, T); };
+    drone(earA, 5, 6); drone(earB, 39, 5);
+    jets([13, 21, 29]);
+    if (v === 'bside') {
+      cannon(armB, 1, 8); cannon(armA, 35, 43);
+      h.poly([[30, 14], [33, 12], [37, 13], [38, 16], [37, 19], [31, 19]], HM, { edge: true });   // helm peeking over the front rim
+      h.rect(36, 15, 2, 2, BORE); h.px(37, 15, T);
+      b.ellipse(21, 24, 21, 7, M, { edge: true });
+      b.ellipse(20, 18, 14, 8, M, { edge: true });
+      b.ellipse(20, 11, 4, 2.5, JET, { edge: true });
+      b.rect(2, 25, 38, 1, '#3a404c');
+      for (const [x, y] of [[8, 15], [9, 16], [10, 17], [30, 15], [29, 16], [28, 17], [5, 22], [35, 22]]) b.px(x, y, T);
+      b.ellipse(13, 26, 3, 1.6, JET); b.ellipse(27, 26, 3, 1.6, JET);
+      return;
+    }
+    b.ellipse(21, 24, 21, 7, M, { edge: true });
+    b.ellipse(21, 18, 14, 8, M, { edge: true });
+    b.ellipse(21, 11, 4, 2.5, JET, { edge: true });
+    b.rect(2, 25, 38, 1, '#3a404c');
+    for (const [x, y] of [[9, 15], [10, 16], [11, 17], [31, 15], [30, 16], [29, 17], [15, 13], [27, 13], [6, 22], [36, 22]]) b.px(x, y, T);
+    b.ellipse(25, 22, 6, 5, HATCH);
+    armB.ellipse(10, 25, 2.5, 2.2, SK, { edge: true }); cannon(armB, 2, 9);
+    armA.ellipse(36, 25, 3, 2.5, SK, { edge: true }); cannon(armA, 36, 43);
+    armA.px(42, 26, BORE).px(42, 27, BORE);
+    h.ellipse(25, 23, 4, 3.5, SK, { edge: true });
+    h.poly([[21, 21], [22, 18], [28, 18], [29, 21], [29, 24], [21, 24]], HM, { edge: true });
+    h.rect(21, 19, 2, 5, HM.s);
+    h.rect(23, 20, 6, 2, BORE);
+    rigEye(h, Q, 26, 20, () => { h.rect(26, 20, 2, 2, T); h.px(26, 20, T2); }, 2);
+  },
+});
+Object.assign(RIGGED, { magmabastion: 'quad', railwarden: 'biped', citadrone: 'floater' });
+Object.assign(FLYERS, { citadrone: { hover: 8, flap: 0 } });

@@ -2,7 +2,7 @@
 
 // Shown on the title screen so players can tell whether their browser has the latest
 // build (GitHub Pages lets browsers cache files for up to 10 minutes). Bump on every release.
-const VERSION = '2026.10.18-r58';
+const VERSION = '2026.10.18-r59';
 
 const App = {
   endless: false,   // the mode picked on the title screen
@@ -265,6 +265,7 @@ $('#btn-title').onclick = () => { Sfx.play('back'); leaveRun('title'); };
 // ---------- offers: recruit rooms, the shop, treasure ----------
 const Offer = { ped: null, release: -1 };
 function openOffer(ped) {
+  if (ped.kind === 'altar') return openAltar(ped);
   const run = App.run;
   Offer.ped = ped; Offer.release = -1;
   const yes = $('#btn-recruit-yes'), full = ped.kind === 'mon' && run.party.length >= 6;
@@ -335,6 +336,75 @@ $('#btn-recruit-yes').onclick = () => {
   else { run.useGood(ped.id); UI.banner(GOODS[ped.id].name + '!'); }
   UI.hudCache = {};
   closeOffer(true);
+};
+
+// ---------- the evolution altar: offer two relics, one of the branch's element ----------
+const TAG_NAMES = { fire: 'FIRE', storm: 'STORM', iron: 'IRON', life: 'LIFE', wind: 'WIND', luck: 'LUCK' };
+const Altar = { ped: null, mon: -1, tag: null, picks: [] };
+const altarMons = () => App.run.party.map((m, i) => ({ m, i })).filter(o => o.m.def.branches && !o.m.fainted);
+function openAltar(ped) {
+  const list = altarMons();
+  Object.assign(Altar, { ped, mon: list.length === 1 ? list[0].i : -1, tag: null, picks: [] });
+  drawAltar();
+  App.paused = true;
+  UI.show('altar');
+}
+function drawAltar() {
+  const run = App.run, list = altarMons(), m = run.party[Altar.mon];
+  $('#altar-hint').textContent = !list.length
+    ? 'The altar is quiet. A monster at its last stage (like Garrishell) can change here, if you offer it two relics.'
+    : run.relics.length < 2 ? 'Offer two relics here to change a monster at its last stage. You need two.'
+    : !m ? 'Who will change?' : !Altar.tag ? 'Pick what it becomes. The element you offer decides.'
+    : `Offer two relics, at least one ${TAG_NAMES[Altar.tag]}. They're gone for good.`;
+  UI.partyCards($('#altar-mons'), list.map(o => o.m), {
+    mark: k => (list[k].i === Altar.mon ? 'sel' : ''),
+    onPick: k => { Sfx.play('select'); Object.assign(Altar, { mon: list[k].i, tag: null, picks: [] }); drawAltar(); },
+  });
+  const box = $('#altar-branches'); box.innerHTML = '';
+  if (m) for (const [tag, id] of Object.entries(m.def.branches)) {
+    const b = document.createElement('button');
+    b.className = Altar.tag === tag ? 'sel' : '';
+    b.innerHTML = `${Save.hasFound(id) ? ROSTER_BY_ID[id].name : '???'} <span>${TAG_NAMES[tag]}</span>`;
+    b.onclick = () => { Sfx.play('select'); Altar.tag = tag; drawAltar(); };
+    box.appendChild(b);
+  }
+  const rb = $('#altar-relics'); rb.innerHTML = '';
+  if (m && Altar.tag) for (const id of run.relics) {
+    const b = document.createElement('button');
+    b.className = (Altar.picks.includes(id) ? 'sel ' : '') + (RELICS[id].tag === Altar.tag ? 'match' : '');
+    const cv = document.createElement('canvas'); cv.width = 14; cv.height = 14;
+    const c = cv.getContext('2d'); c.imageSmoothingEnabled = false; c.drawImage(itemIcon(id), 0, 0);
+    b.appendChild(cv);
+    b.insertAdjacentHTML('beforeend', `${RELICS[id].name} <span>${TAG_NAMES[RELICS[id].tag]}</span>`);
+    b.onclick = () => {
+      Sfx.play('select');
+      Altar.picks = Altar.picks.includes(id) ? Altar.picks.filter(x => x !== id) : [...Altar.picks, id].slice(-2);
+      drawAltar();
+    };
+    rb.appendChild(b);
+  }
+  const ok = !!(m && Altar.tag && Altar.picks.length === 2 && Altar.picks.some(id => RELICS[id].tag === Altar.tag));
+  const yes = $('#btn-altar-yes');
+  yes.disabled = !ok;
+  yes.textContent = ok ? 'OFFER AND EVOLVE' : !m || !Altar.tag ? 'EVOLVE' : `PICK 2 (1 ${TAG_NAMES[Altar.tag]})`;
+}
+function closeAltar(took) {
+  const b = App.battle, ped = Altar.ped;
+  UI.hideScreens();
+  App.paused = false;
+  if (!b) return;
+  b.offerDone(ped, took);
+  if (!took) { const P = b.P, d = Math.hypot(P.x - ped.x, P.y - ped.y) || 1; P.x += (P.x - ped.x) / d * 14; P.y += (P.y - ped.y) / d * 14; }
+}
+$('#btn-altar-no').onclick = () => { Sfx.play('back'); closeAltar(false); };
+$('#btn-altar-yes').onclick = () => {
+  const run = App.run, b = App.battle, m = run && run.party[Altar.mon];
+  if (!b || !m || !Altar.tag || Altar.picks.length !== 2) return;
+  const id = m.def.branches[Altar.tag];
+  b.altarEvolve(m, ROSTER_BY_ID[id], Altar.picks);
+  Save.noteFound(id);
+  UI.hudCache = {};
+  closeAltar(true);
 };
 
 // ---------- party screen (from the pause menu) ----------

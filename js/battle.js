@@ -149,6 +149,8 @@ class Battle {
       this.pedestals = room.offer.map((id, i) => ({ kind: 'mon', id, x: cx + (i - 1) * 120, y: cy - 6, cool: 0 }));
     if (room.type === 'shop')
       room.stock.forEach((it, i) => { if (!it.sold) this.pedestals.push({ kind: 'shop', item: it, id: it.id, x: cx + (i - 1.5) * 100, y: cy - 6, cool: 0 }); });
+    if (room.type === 'altar' && !room.used)
+      this.pedestals = [{ kind: 'altar', id: 'altar', x: cx, y: cy - 6, cool: 0 }];
     if (room.type === 'treasure' && !room.taken)
       this.pedestals = [{ kind: 'relic', id: room.relic, x: cx, y: cy - 6, cool: 0 }];
   }
@@ -174,6 +176,25 @@ class Battle {
         this.burst(m.x, m.cy, ['#ffffff', '#ffe066', '#a8d0ff'], 40, 110, -40);
         this.ui.onSendOut('player', m);
       }
+    }
+  }
+
+  // The evolution altar: the offered relics are gone for good, and the monster becomes the legend
+  // its element picked (LEGENDS in data.js). Its moves change slot by slot, like any evolution.
+  altarEvolve(m, def, relics) {
+    this.run.relics = this.run.relics.filter(id => !relics.includes(id));
+    const from = m.def.name;
+    m.setDef(def); m.hp = m.maxHp;
+    this.run.applyRelics();   // stat bonuses and gear, without what was offered
+    this.ui.banner(`${from} BECAME ${def.name}!`);
+    this.run.stats.evolved = (this.run.stats.evolved || 0) + 1;
+    Sfx.play('evolve');
+    if (m === this.P) {
+      m.flash = 1.6;
+      for (let k = 0; k < 3; k++) this.particles.push({ x: m.x, y: m.y - 2, r0: 4 + k * 8, r1: 60 + k * 14, life: 0.7 + k * 0.15, max: 0.7 + k * 0.15, color: k ? '#c87aff' : '#ffffff', kind: 'ring', w: 3 });
+      this.burst(m.x, m.cy, ['#ffffff', '#c87aff', '#ffe066'], 60, 140, -40);
+      this.addShake(6);
+      this.ui.onSendOut('player', m);
     }
   }
 
@@ -495,6 +516,7 @@ class Battle {
     }
     if (ped.kind === 'shop') ped.item.sold = true;
     if (ped.kind === 'relic') this.room.taken = true;
+    if (ped.kind === 'altar') this.room.used = true;
     this.burst(ped.x, ped.y - 16, ['#ffe066', '#ffffff', '#ffd23f'], 20, 80);
     this.pedestals = this.pedestals.filter(o => o !== ped);
     Sfx.play(ped.kind === 'shop' ? 'coin' : 'buff');

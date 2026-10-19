@@ -110,7 +110,7 @@ $('#game').addEventListener('load', async () => {
     const AREA = G('AREA_MONS'), BYID = G('ROSTER_BY_ID'), ALL = G('ALL_MONS()');
     const found = new Set([...G('STARTERS'), ...G('EVOLVED').map(e => e.id)]);
     for (const a of Object.values(AREA)) for (const id of [...a.natives, ...a.bosses]) found.add(id);
-    for (let grew = true; grew;) { grew = false; for (const m of ALL) if (found.has(m.id) && m.evolve && !found.has(m.evolve.to)) { found.add(m.evolve.to); grew = true; } }   // what they evolve into
+    for (let grew = true; grew;) { grew = false; for (const m of ALL) if (found.has(m.id)) for (const to of [m.evolve && m.evolve.to, ...Object.values(m.branches || {})]) if (to && !found.has(to)) { found.add(to); grew = true; } }   // what they evolve into (levels and altar branches)
     for (const m of ALL) {
       const say = s => bad.push(`${m.id}: ${s}`);
       if (!G('MONSTER_ART')[m.id] || !G('MONSTER_ART_DIAG')[m.id]) say('art is missing a set of views');
@@ -121,6 +121,7 @@ $('#game').addEventListener('load', async () => {
       if (m.types.some(t => !TYPES[t])) say('unknown type');
       if (!ITEMS[m.item]) say('unknown item ' + m.item);
       if (m.evolve && (!BYID[m.evolve.to] || !(m.evolve.level > 0))) say('bad evolution');
+      for (const [tag, to] of Object.entries(m.branches || {})) if (!BYID[to] || !G('RELIC_TAGS').includes(tag)) say(`bad altar branch ${tag} -> ${to}`);
       if (!found.has(m.id)) say('never appears in the game (no area, starter or evolution)');
       for (const v of VIEWS5) {   // gear spots: on the picture, and in a sensible order
         const a = w.gearAnchors(m.id, v, S), inside = (x, y) => x >= 0 && y >= 0 && x < S && y < S;
@@ -209,6 +210,17 @@ $('#game').addEventListener('load', async () => {
   // the bot says yes to recruits (while there's room), relics and anything useful it can afford
   w.openOffer = ped => {
     realOffer(ped);
+    if (ped.kind === 'altar') {   // evolve whoever can, offering a matching relic and one more
+      const A = G('Altar'), run = App.run, i = run.party.findIndex(m => m.def.branches && !m.fainted);
+      const tag = i >= 0 && Object.keys(run.party[i].def.branches).find(t => run.relics.some(id => RELICS[id].tag === t));
+      if (tag && run.relics.length >= 2) {
+        const first = run.relics.find(id => RELICS[id].tag === tag);
+        Object.assign(A, { mon: i, tag, picks: [first, run.relics.find(id => id !== first)] });
+        w.drawAltar();
+      }
+      (btn('btn-altar-yes').disabled ? btn('btn-altar-no') : btn('btn-altar-yes')).onclick();
+      return;
+    }
     const run = App.run;
     let take = false;
     if (ped.kind === 'mon') take = run.party.length < 6;
