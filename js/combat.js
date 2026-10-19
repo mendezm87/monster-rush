@@ -30,6 +30,7 @@ mixInto(Battle, class {
       this.enemyAtkT = alive > 1 ? rand(0.5, 0.8) + 0.2 * (alive - 2) : 0;
     }
     this.ui.callout(m.side, mv.name, mv.type);
+    if (m === this.P) { if (mv.kind === 'beam') this.trainerAct('brace', foe); else if (mv.kind === 'burst' || mv.kind === 'zone' || mv.kind === 'vortex' || (mv.power || 0) >= 200) this.trainerAct('point', foe); }
     const dir = this.aim(m, foe, mv);
     if (Math.abs(Math.cos(dir)) > 0.2) m.face = Math.cos(dir) > 0 ? 1 : -1;
     m.look(Math.cos(dir), Math.sin(dir));
@@ -124,6 +125,7 @@ mixInto(Battle, class {
     dmg = Math.max(1, Math.round(dmg));
     tgt.hp = Math.max(0, tgt.hp - dmg);
     src.dmgDealt += dmg;
+    if (tgt === this.P && mult >= 1 && dmg >= tgt.maxHp * 0.1) this.trainerAct('wince', tgt);
     tgt.flash = 0.12;
     if (mult >= 1 && animSince(tgt, 'hurt') > 0.12) animMark(tgt, 'hurt');   // the hit pose: real hits only, not beam or burn ticks
 

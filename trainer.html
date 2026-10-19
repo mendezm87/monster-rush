@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Trainer Poses</title>
+  <link rel="stylesheet" href="css/fonts.css">
+  <style>
+    body { margin: 0; background: #0d0b14; color: #fff; font-family: "Lilita One", "Arial Black", Arial, sans-serif; padding: 16px; }
+    h1 { margin: 0 0 6px; font-size: 32px; color: #ffe066; }
+    h2 { font-size: 20px; color: #ffe066; margin: 18px 0 8px; }
+    .hint { font: 600 14px/1.4 system-ui, sans-serif; opacity: .75; max-width: 900px; }
+    .acts { display: flex; flex-wrap: wrap; gap: 10px; }
+    .act { background: #1c1730; border: 2px solid #3a3358; border-radius: 12px; padding: 6px 8px; text-align: center; font-size: 15px; }
+    canvas { image-rendering: pixelated; background: #5f7a4a; border-radius: 8px; display: block; }
+    table { border-collapse: separate; border-spacing: 6px; }
+    td, th { text-align: center; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <h1>Trainer poses</h1>
+  <div class="hint">The trainer acting things out in the game: throwing a monster's ball when you swap, pointing at the foe on big moves, bracing while a beam fires, wincing when your monster takes a big hit, crouching when it faints, cheering when a room is cleared, a victory dance for a boss, slumping when the run is lost, and looking around while it waits. Each one plays below, then every pose in every direction.</div>
+  <h2>In motion</h2>
+  <div class="acts" id="acts"></div>
+  <h2>Every pose</h2>
+  <table id="sheet"></table>
+
+  <script src="js/data.js"></script>
+  <script src="js/pixel.js"></script>
+  <script src="js/trainer.js"></script>
+  <script>
+    const K = 5, VIEWS = ['front', 'fside', 'side', 'bside', 'back'];
+    const paint = (cv, img, hop = 0) => {
+      const x = cv.getContext('2d'); x.imageSmoothingEnabled = false; x.clearRect(0, 0, cv.width, cv.height);
+      x.drawImage(img, (cv.width - img.width * K) / 2, cv.height - img.height * K - 4 - hop * K, img.width * K, img.height * K);
+    };
+    // acts, looping, in the three-quarter front view
+    const acts = Object.keys(TRAINER_ACTS).filter(a => a !== 'slump').concat('slump');
+    const boxes = acts.map(a => {
+      const el = document.createElement('div'); el.className = 'act';
+      const cv = document.createElement('canvas'); cv.width = TP_W * K + 10; cv.height = TP_H * K + 8;
+      el.appendChild(cv); el.insertAdjacentHTML('beforeend', a);
+      document.getElementById('acts').appendChild(el);
+      return { a, cv };
+    });
+    const t0 = performance.now();
+    (function tick() {
+      const t = (performance.now() - t0) / 1000;
+      for (const { a, cv } of boxes) {
+        const len = TRAINER_ACTS[a].frames.reduce((s, f) => s + Math.min(f[1], 2), 0) + 0.6;
+        const f = trainerActFrame(a, t % len) || { pose: 'idle', hop: 0 };
+        paint(cv, trainerPose(TRAINER_OUTFIT, 'fside', f.pose), f.hop);
+      }
+      requestAnimationFrame(tick);
+    })();
+    // the sheet
+    const sheet = document.getElementById('sheet');
+    sheet.innerHTML = '<tr><th></th>' + VIEWS.map(v => `<th>${v}</th>`).join('') + '</tr>';
+    for (const p of Object.keys(TRAINER_POSES)) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<th>${p}</th>`;
+      for (const v of VIEWS) {
+        const td = document.createElement('td'), cv = document.createElement('canvas');
+        cv.width = TP_W * 4; cv.height = TP_H * 4;
+        const x = cv.getContext('2d'); x.imageSmoothingEnabled = false;
+        const img = trainerPose(TRAINER_OUTFIT, v, p);
+        x.drawImage(img, 0, 0, img.width * 4, img.height * 4);
+        td.appendChild(cv); tr.appendChild(td);
+      }
+      sheet.appendChild(tr);
+    }
+  </script>
+</body>
+</html>

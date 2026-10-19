@@ -470,8 +470,10 @@ mixInto(Battle, class {
     Lighting.shadow(ctx, px, py, 9, 3.5, 0.9);
     // walking: a 4-frame step (pixel.js trainerWalk), a frame every 10 world units, up a pixel as a leg lifts
     const f = Math.floor(t.walkT / 10) % 4;
-    const pic = t.moving ? this.trainerWalk[t.view][f] : img;
-    const bob = t.moving && f % 2 ? -1 : 0;
+    // standing: acting something out (trainer.js) or just standing
+    const act = !t.moving && t.act ? trainerActFrame(t.act, this.time - t.actT) : null;
+    const pic = t.moving ? this.trainerWalk[t.view][f] : act ? trainerPose(TRAINER_OUTFIT, t.view, act.pose) : img;
+    const bob = t.moving && f % 2 ? -1 : act && act.hop ? -act.hop : 0;
     const w = pic.width * SPR_SCALE, h = pic.height * SPR_SCALE;
     ctx.save(); ctx.translate(px, 0); if (isSideView(t.view) && t.face < 0) ctx.scale(-1, 1);
     ctx.drawImage(pic, Math.round(-w / 2), Math.round(py - h + 1 + bob), w, h);

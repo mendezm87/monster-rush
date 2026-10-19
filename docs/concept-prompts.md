@@ -95,6 +95,26 @@ The shared style, already in every prompt:
 > highlights, hand-painted watercolour background of a windswept cliff at dusk, slight film grain,
 > 4:3 screenshot framing, original creature design, no text
 
+## The trainer (an original design to replace the cap-and-jacket one before release)
+
+Character sheets rather than scenes, so the sprite can be drawn from them. Keep red as an accent if
+you like it (the current trainer is red), but avoid a red cap with a white front, a vest over a black
+tee with blue jeans, or any logo. If one comes out looking like a famous anime trainer, add "not a
+baseball cap" and try again. Ask for a back view too ("front and back view, character turnaround")
+once you've picked one.
+
+**T1 · Scarf tamer**
+> A scrappy teenage monster tamer, messy dark hair with a few red streaks, a long red scarf trailing in the wind, aviator goggles pushed up on the forehead, a short cropped bomber jacket with patches, fingerless gloves, a belt of little capture capsules, cargo shorts over leggings, chunky hiking boots, a cocky grin, 1990s TV anime cel art, hand-inked line art with varying line weight, flat cel colours with one hard-edged shadow tone, soft airbrushed highlights, plain light grey background, full body, standing in a confident three-quarter pose, slight film grain, original character design, no text
+
+**T2 · Field researcher**
+> A young field researcher who studies wild monsters, round glasses, short choppy hair under a wide-brimmed explorer's hat with a red band, a rolled-sleeve khaki field coat with lots of pockets, a leather satchel stuffed with notes and a glowing monster-scanner, a red neckerchief, cuffed trousers and sturdy boots, curious determined expression, 1990s TV anime cel art, hand-inked line art with varying line weight, flat cel colours with one hard-edged shadow tone, soft airbrushed highlights, plain light grey background, full body, standing in a confident three-quarter pose, slight film grain, original character design, no text
+
+**T3 · Dungeon diver**
+> A daring dungeon diver, a hooded crimson coat with a torn hem over light armour plates, a lantern hanging from the belt, a coil of rope over one shoulder, a scuffed metal gauntlet on one hand used to throw capture orbs, short spiky hair falling out of the hood, a bandage on the cheek, a fierce grin, tall travel boots, 1990s TV anime cel art, hand-inked line art with varying line weight, flat cel colours with one hard-edged shadow tone, soft airbrushed highlights, plain light grey background, full body, standing in a confident three-quarter pose, slight film grain, original character design, no text
+
+**T4 · Shiba-spirited trainer**
+> A cheerful but tough young trainer whose look nods to a Shiba Inu: a ginger-and-cream hooded jacket with little pointed ear shapes on the hood, a curled cream tassel on the zip, a smug half-lidded grin, a red tracksuit stripe down the trousers, white sneakers, a bum bag with dog-bone charms, hands in pockets, 1990s TV anime cel art, hand-inked line art with varying line weight, flat cel colours with one hard-edged shadow tone, soft airbrushed highlights, plain light grey background, full body, standing in a confident three-quarter pose, slight film grain, original character design, no text
+
 ## A cannon turtle (new monster; the owner loves Blastoise's design, so an original take on "a turtle with cannons")
 
 Round 2: the first prompts came out as ordinary turtles, so these ask for a monster: a

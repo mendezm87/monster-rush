@@ -124,6 +124,7 @@ class Battle {
   clearRoom() {
     this.room.cleared = true;
     this.run.stats.rooms++;
+    this.trainerAct(this.boss ? 'victory' : 'cheer', this.P);
     this.emit('clear', null);   // e.g. Rain Bell
     for (const m of this.run.party) if (m.fused && m.fused.length) this.emit('clear', m, true);
     this.evolveReady();
@@ -223,6 +224,7 @@ class Battle {
     m.x = clamp(pos.x, F.x0 + m.r, F.x1 - m.r); m.y = clamp(pos.y, F.y0 + m.r, F.y1 - 2);
     m.face = 1;
     this.balls.push({ from: { x: t.x, y: t.y - 14 }, to: { x: m.x, y: m.y - 6 }, t: 0, dur: 0.55 });
+    this.trainerAct('throw', m);
     this.ui.onSendOut('player', m);
     Sfx.play('ball');
   }
@@ -274,6 +276,7 @@ class Battle {
       return;
     }
     this.ui.banner(`${m.def.name} FAINTED!`);
+    this.trainerAct('crouch', m);
     for (const e of this.e) e.action = null;
     this.projectiles = []; this.zones = [];
     this.state = 'faint'; this.stateT = 0;
@@ -294,6 +297,7 @@ class Battle {
     if (this.state === 'over') return;
     this.state = 'over';
     Sfx.music.stop(0.6);
+    this.trainerAct(result === 'win' ? 'victory' : 'slump');
     setTimeout(() => Sfx.play(result === 'win' ? 'win' : 'lose'), 500);
     if (this.hooks.end) this.hooks.end(result);
   }
@@ -529,6 +533,18 @@ class Battle {
     Sfx.play(ped.kind === 'shop' ? 'coin' : 'buff');
   }
 
+  // The trainer acts something out (trainer.js TRAINER_ACTS), turned toward `at` (a monster or point).
+  // A stronger reaction isn't cut short by a weaker one (a faint isn't replaced by a point).
+  trainerAct(name, at = null) {
+    const PRI = { look: 0, point: 1, brace: 2, wince: 2, throw: 3, cheer: 3, crouch: 4, victory: 5, slump: 5 };
+    const t = this.trainer, cur = t.act && trainerActFrame(t.act, this.time - t.actT) ? t.act : null;
+    if (cur && PRI[cur] > PRI[name]) return;
+    t.act = name; t.actT = this.time;
+    if (at) {
+      const dx = at.x - t.x, dy = at.y - t.y;
+      if (Math.hypot(dx, dy) > 4) { t.view = viewFor(dx, dy, null, true) || t.view; if (Math.abs(dx) > 1) t.face = Math.sign(dx); }
+    }
+  }
   // The trainer follows a step behind your monster.
   updateTrainer(dt) {
     const t = this.trainer, P = this.P, F = this.F;
@@ -543,6 +559,9 @@ class Battle {
       if (isSideView(t.view)) t.face = Math.sign(dx) || t.face;
     }
     t.x = clamp(t.x, F.x0 - 30, F.x1 + 30); t.y = clamp(t.y, F.y0 - 20, F.y1 + 30);
+    if (t.moving) { t.stillT = 0; if (t.act === 'look') t.act = null; }
+    else if ((t.stillT = (t.stillT || 0) + dt) > 4 && !t.act && this.state === 'explore' && Math.random() < dt * 0.25) this.trainerAct('look');
+    if (t.act && !trainerActFrame(t.act, this.time - t.actT)) t.act = null;
   }
 
   updateCamera(dt) {
