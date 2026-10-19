@@ -2,7 +2,7 @@
 
 // Shown on the title screen so players can tell whether their browser has the latest
 // build (GitHub Pages lets browsers cache files for up to 10 minutes). Bump on every release.
-const VERSION = '2026.10.19-r69';
+const VERSION = '2026.10.19-r70';
 
 const App = {
   endless: false,   // the mode picked on the title screen
@@ -631,7 +631,11 @@ $('#btn-party').onclick = () => { Sfx.play('select'); openParty(); };
 function setPaused(on) {
   App.paused = on;
   Input.reset();
-  if (on) { UI.show('pause'); Sfx.pause(); } else { UI.hideScreens(); Sfx.resume(); }
+  if (on) {   // the phone's clock and where you are
+    $('#phone-time').textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    if (App.run) $('#phone-sub').textContent = floorBanner(App.run).join(' · ');
+    UI.show('pause'); Sfx.pause();
+  } else { UI.hideScreens(); Sfx.resume(); }
 }
 function togglePause() {
   const b = App.battle;

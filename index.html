@@ -30,7 +30,7 @@
         <div class="hpbar"><div class="ghost"></div><div class="fill"></div></div>
       </div>
       <div id="floor-label"></div>
-      <button id="btn-pause" aria-label="Pause">II</button>
+      <button id="btn-pause" aria-label="Pause"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="4" y="1" width="8" height="14" fill="#fff"/><rect x="5" y="2" width="6" height="10" fill="#2a8ab8"/><rect x="6" y="3" width="2" height="2" fill="#7ad0f0"/><rect x="7" y="13" width="2" height="1" fill="#2a2536"/></svg></button>
     </div>
 
     <div id="callouts"></div>
@@ -155,12 +155,21 @@
     </div>
 
     <div class="screen hidden dim" id="screen-pause">
-      <h2>Paused</h2>
-      <button class="big-btn" id="btn-resume">Resume</button>
-      <button class="small-btn" id="btn-party">Party</button>
-      <button class="small-btn" id="btn-info">Info</button>
-      <button class="small-btn" id="btn-settings2">Settings</button>
-      <button class="small-btn" id="btn-quit">Give up run</button>
+      <!-- paused = the trainer checking their phone (paired with the Arcbracer) -->
+      <div class="phone">
+        <div class="phone-bar"><span id="phone-time">12:00</span><span class="phone-batt"></span></div>
+        <div class="phone-link">◆ ARCBRACER LINKED</div>
+        <div class="phone-title">Paused</div>
+        <div class="phone-sub" id="phone-sub"></div>
+        <div class="phone-apps">
+          <button class="app a-party" id="btn-party"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="2" y="4" width="4" height="4" fill="#fff"/><rect x="10" y="4" width="4" height="4" fill="#fff"/><rect x="6" y="2" width="4" height="5" fill="#ffe066"/><rect x="1" y="9" width="6" height="5" fill="#fff"/><rect x="9" y="9" width="6" height="5" fill="#fff"/><rect x="5" y="8" width="6" height="6" fill="#ffe066"/></svg>Party</button>
+          <button class="app a-info" id="btn-info"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="3" y="2" width="10" height="12" fill="#fff"/><rect x="5" y="4" width="6" height="1" fill="#3a46a8"/><rect x="5" y="7" width="6" height="1" fill="#3a46a8"/><rect x="5" y="10" width="4" height="1" fill="#3a46a8"/></svg>Info</button>
+          <button class="app a-gear" id="btn-settings2"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="7" y="1" width="2" height="14" fill="#fff"/><rect x="1" y="7" width="14" height="2" fill="#fff"/><rect x="3" y="3" width="10" height="10" fill="#fff"/><rect x="6" y="6" width="4" height="4" fill="#5a5e6e"/></svg>Settings</button>
+          <button class="app a-quit" id="btn-quit"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="3" y="2" width="2" height="13" fill="#fff"/><rect x="5" y="2" width="8" height="2" fill="#fff"/><rect x="5" y="4" width="6" height="2" fill="#fff"/><rect x="5" y="6" width="8" height="2" fill="#fff"/></svg>Give up</button>
+        </div>
+        <button class="big-btn" id="btn-resume">Resume</button>
+        <div class="phone-home"></div>
+      </div>
     </div>
 
     <div class="screen hidden dim" id="screen-info">

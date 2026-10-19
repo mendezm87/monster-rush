@@ -95,7 +95,8 @@ html, body {
   -webkit-text-stroke: 0.4cqh var(--ink); paint-order: stroke fill; display: none; }
 #btn-pause { position: absolute; left: 50%; transform: translateX(-50%); top: 1.5cqh; pointer-events: auto;
   width: 7cqh; height: 7cqh; border-radius: 50%; border: 0.4cqh solid rgba(255,255,255,.25); background: rgba(0,0,0,.4);
-  color: #fff; font: 900 3cqh var(--font); cursor: pointer; }
+  color: #fff; font: 900 3cqh var(--font); cursor: pointer; display: grid; place-items: center; padding: 0; }
+#btn-pause svg { width: 4.4cqh; height: 4.4cqh; }
 
 /* ---------- Callouts, banners, fades ---------- */
 #callouts { position: absolute; inset: 0; pointer-events: none; }
@@ -326,7 +327,11 @@ kbd { background: #2b2540; border: 0.3cqh solid #555; border-bottom-width: 0.8cq
 
 /* the bracer's slots in the HUD (one per monster, lit in its type colour) */
 .balls .slot { width: 2.6cqh; height: 2.6cqh; transform: rotate(45deg); border: 0.4cqh solid var(--ink); border-radius: 0.5cqh;
-  background: linear-gradient(135deg, #ffffff 0 18%, var(--c) 18% 100%); box-shadow: 0 0 0.8cqh var(--c); margin: 0 0.3cqh; }
+  /* filled from the bottom (the diamond's lower corner) up to its HP */
+  background: linear-gradient(to top left, var(--c) 0 var(--hp, 100%), #1c1828 var(--hp, 100%) 100%);
+  box-shadow: 0 0 0.8cqh var(--c), inset 0.3cqh 0.3cqh 0 rgba(255,255,255,.45); margin: 0 0.3cqh; }
+.balls .slot.low { animation: slotlow .7s steps(2) infinite; }
+@keyframes slotlow { 50% { box-shadow: 0 0 1.2cqh #ff4a3a, inset 0.3cqh 0.3cqh 0 rgba(255,255,255,.45); } }
 .balls .slot.active { outline: 0.4cqh solid var(--gold); outline-offset: 0.2cqh; }
 .balls .slot.out { background: #3a3646; box-shadow: none; opacity: .6; }
 .balls .slot.empty { background: rgba(255,255,255,.06); box-shadow: none; border-style: dashed; opacity: .6; }
@@ -342,3 +347,25 @@ kbd { background: #2b2540; border: 0.3cqh solid #555; border-bottom-width: 0.8cq
 .t-looks { display: flex; align-items: center; gap: 1cqh; font: 800 2.6cqh system-ui, sans-serif; margin: 1cqh 0; }
 .t-looks button { font: 900 2.8cqh var(--font); padding: 0.6cqh 2.4cqh; border-radius: 1.6cqh; border: 0.5cqh solid var(--ink); background: #2b2540; color: #ccc; cursor: pointer; }
 .t-looks button.on { background: #ffd23f; color: var(--ink); }
+
+/* the pause menu: the trainer's phone */
+#screen-pause { justify-content: center; }
+.phone { position: relative; width: 58cqh; max-height: 92cqh; padding: 2.4cqh 3.4cqh 2cqh; display: flex; flex-direction: column; align-items: center; gap: 1.6cqh;
+  background: radial-gradient(circle at 50% 0%, rgba(90,216,255,.2), transparent 60%), linear-gradient(#1e1a34, #100d1a);
+  border: 1.2cqh solid #2c2738; border-radius: 6cqh; box-shadow: 0 0 0 0.5cqh var(--ink), 0 2cqh 5cqh rgba(0,0,0,.55); }
+.phone::before { content: ""; position: absolute; top: 1.1cqh; left: 50%; transform: translateX(-50%); width: 13cqh; height: 2.4cqh; background: #0a0810; border-radius: 1.4cqh; }
+.phone-bar { width: 100%; display: flex; justify-content: space-between; align-items: center; font: 800 2.2cqh system-ui, sans-serif; opacity: .9; }
+.phone-batt { width: 3.8cqh; height: 1.8cqh; border: 0.3cqh solid #fff; border-radius: 0.5cqh; background: linear-gradient(90deg, #8af08a 0 72%, transparent 72%); }
+.phone-link { font: 800 2cqh system-ui, sans-serif; color: #5ad8ff; letter-spacing: .1em; }
+.phone-title { font-size: 6cqh; color: #ffe066; -webkit-text-stroke: 0.5cqh #3a1d05; paint-order: stroke fill; line-height: 1; }
+.phone-sub { font: 700 2.4cqh system-ui, sans-serif; opacity: .75; margin-top: -0.6cqh; }
+.phone-apps { display: grid; grid-template-columns: 1fr 1fr; gap: 2cqh 4cqh; margin: 1cqh 0; }
+.phone .app { display: flex; flex-direction: column; align-items: center; gap: 0.8cqh; background: none; border: none; color: #fff; font: 900 2.6cqh var(--font); cursor: pointer; padding: 0; }
+.phone .app svg { width: 11cqh; height: 11cqh; padding: 2.4cqh; border-radius: 3cqh; border: 0.5cqh solid var(--ink); box-shadow: 0 0.6cqh 0 var(--ink); }
+.phone .a-party svg { background: linear-gradient(#4fbe5a, #2c7a36); }
+.phone .a-info svg { background: linear-gradient(#5a8ae8, #3a52a8); }
+.phone .a-gear svg { background: linear-gradient(#8a8ea0, #5a5e6e); }
+.phone .a-quit svg { background: linear-gradient(#e8604a, #a83a2a); }
+.phone .app:active svg, .phone .app:hover svg { transform: translateY(0.3cqh); box-shadow: 0 0.3cqh 0 var(--ink); }
+.phone .big-btn { width: 100%; }
+.phone-home { width: 14cqh; height: 0.8cqh; border-radius: 1cqh; background: rgba(255,255,255,.4); }

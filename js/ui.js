@@ -231,7 +231,10 @@ const UI = {
 
     // the bracer's slots: each holds a monster's data, lit in its type colour (empty ones dark)
     const balls = Array.from({ length: Math.max(slots, team.length) }, (_, i) => { const m = team[i];
-      return m ? `<div class="slot${m.fainted ? ' out' : ''}${i === idx && !m.fainted ? ' active' : ''}" style="--c:${TYPES[m.def.types[0]].color}"></div>` : '<div class="slot empty"></div>'; }).join('');
+      // the crystal fills with its HP (in 5% steps, so the HUD isn't rebuilt every frame), and pulses when low
+      if (!m) return '<div class="slot empty"></div>';
+      const hp = m.fainted ? 0 : Math.max(5, Math.round(m.hp / m.maxHp * 20) * 5);
+      return m ? `<div class="slot${m.fainted ? ' out' : ''}${i === idx && !m.fainted ? ' active' : ''}${!m.fainted && hp <= 25 ? ' low' : ''}" style="--c:${TYPES[m.def.types[0]].color};--hp:${hp}%"></div>` : '<div class="slot empty"></div>'; }).join('');
     if (c.balls !== balls) { root.querySelector('.balls').innerHTML = balls; c.balls = balls; }
   },
 };
