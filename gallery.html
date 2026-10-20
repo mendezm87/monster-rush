@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0d0b14">
-  <title>Monster Rush Gallery</title>
+  <title>Deep Archive Gallery</title>
   <link rel="stylesheet" href="css/fonts.css">
   <style>
     :root { --ink: #15111f; --font: "Lilita One", "Arial Black", "Segoe UI Black", Arial, system-ui, sans-serif; }
@@ -39,7 +39,7 @@
     <div class="chips" id="bg"></div>
     <a href="./">Back to the game</a> <a href="test.html">Run the tests</a>
   </header>
-  <div class="hint">Every Coreature in front, side and back view plus the two diagonals, at 3 pixels per sprite pixel (the size they are in the game, doubled). The last box spins through the views the way the monster turns while it moves. Pick a floor theme above to see them on different ground.</div>
+  <div class="hint">Every Coreature in front, side and back view plus the two diagonals, at 3 pixels per sprite pixel (the size they are in the game, doubled). The last box spins through the views the way the Coreature turns while it moves. Pick a floor theme above to see them on different ground.</div>
   <div id="sections"></div>
 
   <script src="js/data.js"></script>
@@ -83,14 +83,14 @@
     section('Starters and their evolutions', starters.flatMap(id => [ROSTER_BY_ID[id], ROSTER_BY_ID[ROSTER_BY_ID[id].evolve.to]]));
     section('Everyone else', ROSTER.filter(m => !starters.includes(m.id)));
 
-    // the trainer, in each outfit
+    // the trainers, every look
     const trImgs = {};
-    const h = document.createElement('h2'); h.textContent = 'Trainer outfits';
+    const h = document.createElement('h2'); h.textContent = 'Trainers';
     const g = document.createElement('div'); g.className = 'grid';
-    for (const [key, o] of Object.entries(TRAINER_OUTFITS)) {
+    for (const [key, o] of Object.entries(TRAINER_LOOK_NAMES)) {
       trImgs[key] = Object.fromEntries(TRAINER_VIEWS.map(v => [v, trainerCanvas(key, v)]));
-      const tr = document.createElement('div'); tr.className = 'card' + (key === TRAINER_OUTFIT ? ' evo' : '');
-      tr.innerHTML = `<div class="top"><span class="name">TRAINER: ${o.name.toUpperCase()}</span></div>${viewBoxes(VIEWS6)}<div class="note">${key === TRAINER_OUTFIT ? 'The outfit used in the game right now.' : 'Another colour option.'}</div>`;
+      const tr = document.createElement('div'); tr.className = 'card' + (key === TRAINER_DEFAULT_LOOK ? ' evo' : '');
+      tr.innerHTML = `<div class="top"><span class="name">TRAINER: ${o.name.toUpperCase()}</span></div>${viewBoxes(VIEWS6)}<div class="note">${key === TRAINER_DEFAULT_LOOK ? 'The outfit used in the game right now.' : 'Another colour option.'}</div>`;
       tr.querySelectorAll('canvas').forEach(cv => canvases.push({ cv, trainer: key, v: cv.dataset.v }));
       g.appendChild(tr);
     }

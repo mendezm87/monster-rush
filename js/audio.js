@@ -63,7 +63,8 @@ const Sfx = (() => {
     buff() { tone(400, 0.25, 'triangle', 0.14, 500); },
     status() { tone(300, 0.08, 'square', 0.1); tone(300, 0.08, 'square', 0.1, 0, 0.12); },
     ball() { tone(380, 0.18, 'sine', 0.18, 500); },
-    // a monster's data beamed out of the bracer, and back in (Monster Rush)
+    blip() { tone(380, 0.18, 'sine', 0.18, 500); },   // Deep Archive's name for the same click (no balls there)
+    // a monster's data beamed out of the Arcbracer, and back in (Deep Archive)
     deploy() { tone(520, 0.06, 'square', 0.06, 260); tone(780, 0.06, 'square', 0.06, 390, 0.05); tone(1170, 0.14, 'triangle', 0.09, 700, 0.1); },
     recall() { tone(1240, 0.07, 'square', 0.05, -500, 0); tone(820, 0.1, 'triangle', 0.07, -420, 0.05); },
     pop() { noise(0.12, 0.25, 3000); tone(900, 0.08, 'square', 0.08); },

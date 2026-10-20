@@ -1,12 +1,10 @@
-# Monster Rush
+# Coreatures: Deep Archive
 
-### [▶ Play Monster Rush in your browser](https://mendezm87.github.io/monster-rush/)
+### [▶ Play in your browser](https://mendezm87.github.io/monster-rush/)
 
-Works on PC (mouse and keyboard or a gamepad) and on phones (turn the phone sideways). No install needed. [See all the monsters](https://mendezm87.github.io/monster-rush/gallery.html).
+Works on PC (mouse and keyboard or a gamepad) and on phones (turn the phone sideways). No install needed. [See all the Coreatures](https://mendezm87.github.io/monster-rush/gallery.html).
 
-A real-time pixel-art monster roguelike: pick a starter, rush down through floors of rooms full of wild monsters, recruit new ones, collect coins and items, and see how deep you get. Built on the combat of [Monster Battle Stadium](https://github.com/mendezm87/monster-battle-stadium). Plain HTML5 Canvas + JavaScript, no build step, no dependencies.
-
-**Status:** first playable. Pick a starter (Smugshi, Cinderox or Tidalisk), clear 3 floors of rooms with 1-3 wild monsters each, recruit monsters in recruit rooms, collect coins and berries, beat each floor's boss. Levels, starter evolutions, a shop and a treasure room on every floor, run-long relics, and starters unlocked by beating bosses (saved in the browser).
+A real-time pixel-art roguelike. Coreatures are living data left behind by a fallen civilization, sleeping in ancient crystals called Arc-cores. Pick a trainer and a starter, dive through six floors of ruins full of wild Coreatures, recruit new ones into your Arcbracer, collect relics, and watch your Coreatures regain their lost forms as they level up. Built on the combat of [Monster Battle Stadium](https://github.com/mendezm87/monster-battle-stadium). Plain HTML5 Canvas + JavaScript, no build step, no dependencies.
 
 ## Run it locally
 

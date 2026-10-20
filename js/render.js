@@ -1,8 +1,8 @@
 // Drawing: sprite tints and item icons, and Battle's effects (shake, particles,
 // numbers, weather) and rendering of a room. See battle.js.
 
-// an Arc-core (Archive Core): an ancient data crystal, the recruit room's sign (a monster waiting to be taken in)
-const CRYSTAL_IMG = gridFromMap([
+// an Arc-core (Archive Core): an ancient data crystal, the recruit room's sign (a Coreature waiting to be taken in)
+const ARC_CORE_IMG = gridFromMap([
   '..k..',
   '.kck.',
   'kcwck',
@@ -11,7 +11,7 @@ const CRYSTAL_IMG = gridFromMap([
   '.kdk.',
   '..k..',
 ], { k: OUTLINE, c: '#5ad8ff', w: '#e6fbff', d: '#2a8ab8' }).toCanvas();
-// One reused scratch canvas for monsters assembling out of data (never a new canvas per frame).
+// One reused scratch canvas for Coreatures assembling out of data (never a new canvas per frame).
 const _assemble = document.createElement('canvas'); _assemble.width = _assemble.height = 96;
 const _assembleCtx = _assemble.getContext('2d');
 // Draw `pic` with only some of its pixels there yet (k 0 -> 1), plus a bright scan line at the edge.
@@ -57,7 +57,7 @@ function sceneBuffer() {
 }
 
 // Room rewards (see ROOM_REWARDS): an Arc-core Shard (XP), a move disc, a treasure chest; a skull marks the boss's door.
-const CANDY_IMG = gridFromMap([   // an Arc-core Shard (XP): a sliver of a broken Archive Core, glowing with leftover data
+const SHARD_IMG = gridFromMap([   // an Arc-core Shard (XP): a sliver of a broken Archive Core, glowing with leftover data
   '..k..',
   '.kwk.',
   'kwaAk',
@@ -103,16 +103,16 @@ const ALTAR_IMG = gridFromMap([
   'ksssssk',
   'kkkkkkk',
 ], { k: OUTLINE, p: '#b05aff', w: '#f0d0ff', s: '#7a6a8a' }).toCanvas();
-const PICKUP_IMG = { coin: COIN_IMG, berry: BERRY_IMG, candy: CANDY_IMG, disc: DISC_IMG, chest: CHEST_IMG };
+const PICKUP_IMG = { coin: COIN_IMG, berry: BERRY_IMG, shard: SHARD_IMG, disc: DISC_IMG, chest: CHEST_IMG };
 // the sign over a doorway: what's in the room behind it
-const REWARD_IMG = { coins: COIN_IMG, berries: BERRY_IMG, xp: CANDY_IMG, move: DISC_IMG, chest: CHEST_IMG };
+const REWARD_IMG = { coins: COIN_IMG, berries: BERRY_IMG, xp: SHARD_IMG, move: DISC_IMG, chest: CHEST_IMG };
 function doorSign(room) {
   if (room.type === 'fight') return room.cleared ? null : { img: REWARD_IMG[room.reward], c: '#e8e0f0' };
   if (room.type === 'boss') return room.cleared ? null : { img: SKULL_IMG, c: '#e8433a' };
   if (room.type === 'shop') return { img: COIN_IMG, c: '#ffd23f' };
   if (room.type === 'treasure') return room.taken ? null : { img: CHEST_IMG, c: '#ffffff' };
   if (room.type === 'altar') return room.used ? null : { img: ALTAR_IMG, c: '#c87aff' };
-  if (room.type === 'recruit') return room.recruited ? null : { img: CRYSTAL_IMG, c: '#5ad8ff' };
+  if (room.type === 'recruit') return room.recruited ? null : { img: ARC_CORE_IMG, c: '#5ad8ff' };
   return null;
 }
 
@@ -150,7 +150,7 @@ function itemIcon(id) {
   return (_icons[id] = g.toCanvas());
 }
 
-// Relic auras: little pixel effects around a monster (Y = its feet). Drawn in whole sprite pixels
+// Relic auras: little pixel effects around a Coreature (Y = its feet). Drawn in whole sprite pixels
 // (SPR_SCALE) so they match the art. Cheap: a handful of squares a frame.
 const auraPx = (ctx, x, y, col, n = 1) => { ctx.fillStyle = col; ctx.fillRect(Math.round(x / SPR_SCALE) * SPR_SCALE, Math.round(y / SPR_SCALE) * SPR_SCALE, SPR_SCALE * n, SPR_SCALE * n); };
 const RELIC_AURA = {
@@ -215,7 +215,7 @@ function tinted(id, color, view = 'front') {
   return (_tint[key] = cv);
 }
 
-// ------------------------------------------------------------------ Monster
+// ------------------------------------------------------------------ Coreature
 
 mixInto(Battle, class {
   // ---------------------------------------------------------- fx helpers
@@ -323,7 +323,7 @@ mixInto(Battle, class {
     this.drawPickups(ctx);
     this.drawTelegraphs(ctx);
 
-    // trainer, monsters and pedestals, depth sorted by where they stand
+    // trainer, Coreatures and pedestals, depth sorted by where they stand
     const actors = [{ y: this.trainer.y, draw: () => this.drawTrainer(ctx) }];
     for (const m of this.mons) if (m.visible) actors.push({ y: m.y, draw: () => this.drawMon(ctx, m) });
     for (const ped of this.pedestals) actors.push({ y: ped.y, draw: () => this.drawPedestal(ctx, ped) });
@@ -343,8 +343,8 @@ mixInto(Battle, class {
     // attacks and effects: chunky pixel art in their own layer (see fx.js)
     this.drawAttacks(FXLayer.begin(Math.round(this.cam.x) - shx, Math.round(this.cam.y) - shy));
     FXLayer.end(ctx);
-    // the bracer's deploy beam: it shoots to the ground, then fades while the monster assembles
-    for (const b of this.balls) {
+    // the Arcbracer's deploy beam: it shoots to the ground, then fades while the Coreature assembles
+    for (const b of this.deploys) {
       const reach = Math.min(1, b.t / b.beam), fade = b.landed ? Math.max(0, 1 - (b.t - b.beam) / 0.25) : 1;
       if (fade <= 0) continue;
       const ex = b.from.x + (b.to.x - b.from.x) * reach, ey = b.from.y + (b.to.y - b.from.y) * reach;
@@ -479,7 +479,7 @@ mixInto(Battle, class {
     }
   }
 
-  // Each wild monster carries a small HP bar (the boss gets the big one in the HUD).
+  // Each wild Coreature carries a small HP bar (the boss gets the big one in the HUD).
   drawBars(ctx) {
     const STATUS_COL = { par: '#d6b21e', brn: '#e0582a', frz: '#4fb6d8', psn: '#9a3ab8' };
     for (const m of this.e) {
@@ -507,7 +507,7 @@ mixInto(Battle, class {
     const f = Math.floor(t.walkT / 10) % 4;
     // standing: acting something out (trainer.js) or just standing
     const act = !t.moving && t.act ? trainerActFrame(t.act, this.time - t.actT) : null;
-    const pic = t.moving ? this.trainerWalk[t.view][f] : act ? trainerPose(this.outfit, t.view, act.pose) : img;
+    const pic = t.moving ? this.trainerWalk[t.view][f] : act ? trainerPose(this.look, t.view, act.pose) : img;
     const bob = t.moving && f % 2 ? -1 : act && act.hop ? -act.hop : 0;
     const w = pic.width * SPR_SCALE, h = pic.height * SPR_SCALE;
     ctx.save(); ctx.translate(px, 0); if (isSideView(t.view) && t.face < 0) ctx.scale(-1, 1);
@@ -522,12 +522,12 @@ mixInto(Battle, class {
     if (alpha <= 0) return;
     const moving = Math.hypot(m.vx, m.vy) > 12;
     const X = Math.round(m.x), Y = Math.round(m.y);
-    // flying monsters hover above their shadow with a slow bob and flap their wings (they drop
+    // flying Coreatures hover above their shadow with a slow bob and flap their wings (they drop
     // to the ground when frozen or fainted)
     const fly = sp.fly, grounded = m.status === 'frz' || m.fainted, phase = (m.x0 ?? (m.x0 = Math.random() * 10));
     const hover = fly && !grounded ? Math.round(fly.hover + Math.sin(this.time * 2.4 + phase) * 1.5) : 0;
     m.hover = hover;
-    // how it looks right now (sprites.js monAnim): a rigged monster's animation frame, or a hop / dip
+    // how it looks right now (sprites.js monAnim): a rigged Coreature's animation frame, or a hop / dip
     const still = m.status === 'frz' || m.stunT > 0 || m.lift > 0.01;
     const pose = still && !m.fainted ? { views: sp.views, sq: 0, sh: 0, dy: 0 } : monAnim(m, phase, !!hover);
     const bob = -pose.dy;
@@ -573,7 +573,7 @@ mixInto(Battle, class {
     }
     const pic = posed(img, pose.sq, pose.sh), k = S / sp.size, pw = pic.width * k, ph = pic.height * k;
     const dx = -pw / 2, dy = 3 - ph;
-    if (m.assembleT !== undefined && m.assembleT < 1) drawAssembling(ctx, pic, dx, dy, pw, ph, m.assembleT, TYPES[m.def.types[0]].color);   // beamed in from the bracer
+    if (m.assembleT !== undefined && m.assembleT < 1) drawAssembling(ctx, pic, dx, dy, pw, ph, m.assembleT, TYPES[m.def.types[0]].color);   // beamed in from the Arcbracer
     else ctx.drawImage(pic, dx, dy, pw, ph);
     let tint = null, ta = 0;
     if (m.flash > 0) { tint = '#ffffff'; ta = Math.min(1, m.flash * 8); }
@@ -606,7 +606,7 @@ mixInto(Battle, class {
     const fill = () => { if (!outlines) ctx.fill(); };
     const pulse = 0.55 + Math.sin(this.time * 14) * 0.2;
     ctx.lineWidth = 1.5;
-    // a wild monster about to appear: a shadow growing on the ground
+    // a wild Coreature about to appear: a shadow growing on the ground
     for (const m of this.e) {
       if (m.spawnT <= 0) continue;
       const k = clamp(1 - m.spawnT / 0.7, 0, 1);

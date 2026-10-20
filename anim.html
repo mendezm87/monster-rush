@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Monster Rush Animations</title>
+  <title>Deep Archive Animations</title>
   <link rel="stylesheet" href="css/fonts.css">
   <style>
     body { margin: 0; background: #1c2e1a; color: #fff; font-family: 'Lilita One', 'Arial Black', Arial, sans-serif; }
@@ -37,12 +37,12 @@
   <script src="js/sprites.js"></script>
   <script src="js/monsters.js"></script>
   <script>
-    // Plays a monster's animations at real speed (or slowed, paused, stepped) in all five views,
+    // Plays a Coreature's animations at real speed (or slowed, paused, stepped) in all five views,
     // with the game's own frame picking (monAnim in sprites.js). "Frame sheet" lays every frame
-    // out side by side. Rigged monsters (RIGGED) have real frames; the rest just hop.
+    // out side by side. Rigged Coreatures (RIGGED) have real frames; the rest just hop.
     buildSprites();
     const SHOW_VIEWS = ['front', 'fside', 'side', 'bside', 'back'];
-    // what each button plays: an action the monster is doing, on a loop
+    // what each button plays: an action the Coreature is doing, on a loop
     const ANIMS = {
       Idle: () => null, Walk: () => null,
       Dash: t => ({ kind: 'dash', t: t % 0.5 }),

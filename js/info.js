@@ -1,5 +1,5 @@
-// Monster Rush's Info screen (pause > Info, or tap a relic icon under the HUD): your relics, your
-// monsters' held items and types. The descriptions and tooltips it uses are in describe.js.
+// Deep Archive's Info screen (pause > Info, or tap a relic icon under the HUD): your relics, your
+// Coreatures' held items and types. The descriptions and tooltips it uses are in describe.js.
 
 const iconCanvas = id => { const cv = document.createElement('canvas'); cv.width = cv.height = 14; const c = cv.getContext('2d'); c.imageSmoothingEnabled = false; c.drawImage(itemIcon(id), 0, 0); return cv; };
 

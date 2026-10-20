@@ -1,6 +1,6 @@
 // Redesign concepts, for the owner to pick from on redesign.html (not loaded by the game).
-// Monsters that read as a specific Pokemon get original replacements before release: each
-// concept keeps the monster's name, type and moves and changes only the look. A picked concept
+// Coreatures that read as a specific Pokemon get original replacements before release: each
+// concept keeps the Coreature's name, type and moves and changes only the look. A picked concept
 // moves into sprites.js (all five views, rigged) and leaves this file.
 // Each art function draws the front view into a 32x32 PixGrid (44x44 for size L), like MONSTER_ART.
 

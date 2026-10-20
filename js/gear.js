@@ -1,11 +1,11 @@
-// Relic gear: every relic you own shows up as something your monsters wear (Isaac-style;
+// Relic gear: every relic you own shows up as something your Coreatures wear (Isaac-style;
 // the owner: "if it's funny it's a win", as long as it never looks cheap or buggy).
-// Where gear goes comes from the rig, with no hand-placed points: drawing a monster with its
+// Where gear goes comes from the rig, with no hand-placed points: drawing a Coreature with its
 // head nudged a pixel shows which pixels are its head, ears nudged its ears and antennae,
 // blinking its eyes, legs lifted its feet (gearAnchors). Gear is drawn on its own pixel layer
-// (same pixel size, its own ink outline) and laid over the monster's pictures, following the
+// (same pixel size, its own ink outline) and laid over the Coreature's pictures, following the
 // head's and legs' nudge in each animation frame, so it bobs and steps along (gearSprites).
-// Laying it over is cheap, so a monster can be dressed the moment you pick up a relic.
+// Laying it over is cheap, so a Coreature can be dressed the moment you pick up a relic.
 
 // Where each relic is worn is its `gear` in RELICS (dungeon.js). One piece per spot: the newest wins.
 const relicGear = id => typeof RELICS !== 'undefined' && RELICS[id] ? RELICS[id].gear : null;
@@ -17,7 +17,7 @@ function gearFor(relics) {
 }
 
 const GEAR_CACHE = {};
-// Where a monster's head, eyes, neck and feet are in view v, at rest.
+// Where a Coreature's head, eyes, neck and feet are in view v, at rest.
 function gearAnchors(id, v, size) {
   const key = id + ':' + v;
   if (GEAR_CACHE[key]) return GEAR_CACHE[key];
@@ -50,7 +50,7 @@ function gearAnchors(id, v, size) {
     lenses.push(cur);
     lenses = lenses.map(c => ({ x: (Math.min(...c.map(p => p[0])) + Math.max(...c.map(p => p[0]))) / 2, y: (Math.min(...c.map(p => p[1])) + Math.max(...c.map(p => p[1]))) / 2 }));
   }
-  // Hats sit on the solid top of the monster above its head (a turret, a volcano, the head itself):
+  // Hats sit on the solid top of the Coreature above its head (a turret, a volcano, the head itself):
   // the first row where at least 5 of the 7 middle columns are filled, so thin spikes, crests and
   // antennae (and ears) don't hold a hat up in the air.
   const topX = mid(y => y <= H.y0 + 2), cx = Math.round(topX);
@@ -59,7 +59,7 @@ function gearAnchors(id, v, size) {
   let crown = H.y0, headTop = H.y0;
   for (let y = 0; y <= H.y1; y++) if (solid(y, () => true)) { crown = y; break; }
   for (let y = H.y0; y <= H.y1; y++) if (solid(y, i => headSet.has(i))) { headTop = y; break; }
-  // how wide the head (and the whole monster) is on each row, to fit bands and hats to it
+  // how wide the head (and the whole Coreature) is on each row, to fit bands and hats to it
   const span = (inSet, y) => { let x0 = -1, x1 = -1; for (let x = 0; x < size; x++) { const i = y * size + x; if (base[i] && !ears.has(i) && inSet(i)) { if (x0 < 0) x0 = x; x1 = x; } } return x0 < 0 ? null : [x0, x1]; };
   const headRows = [], bodyRows = [];
   for (let y = 0; y < size; y++) { headRows.push(span(i => headSet.has(i), y)); bodyRows.push(span(() => true, y)); }
@@ -119,7 +119,7 @@ function pendant(g, a, v, big, charm) {
   else { g.rect(cx - (w >> 1), y - 1, w, 1, '#d8b040'); return; }   // just the chain from behind
   charm(isSide(v) ? cx + 2 : cx, y + 1);
 }
-// Each piece: (g, a = anchors already moved with the head and legs, v, big = a 44px monster)
+// Each piece: (g, a = anchors already moved with the head and legs, v, big = a 44px Coreature)
 const GEAR_ART = {
   crown(g, a, v, big) {   // not a relic yet; kept for a boss or an unlock
     const w = big ? 9 : 7, x = r0(a.topX - w / 2 + 0.5), y = Math.max(a.crown, 4);
@@ -129,7 +129,7 @@ const GEAR_ART = {
   },
   // Muscle Charm: a sweatband round the forehead, its knot tails flying out behind
   muscleCharm(g, a, v, big) {
-    // round the forehead; on a monster without a separate head (a ball, a boulder), round the top of it
+    // round the forehead; on a Coreature without a separate head (a ball, a boulder), round the top of it
     let y = a.neck ? a.headTop + 1 : Math.max(a.crown, 2) + 1;
     if (a.lenses.length) y = Math.max(a.neck ? a.headTop : a.crown, Math.min(y, r0(Math.min(...a.lenses.map(l => l.y))) - (big ? 6 : 5)));   // above the eyes
     const cap = a.neck ? (big ? 16 : 12) : (big ? 12 : 9);   // no neck: just round the top, over the head
@@ -189,7 +189,7 @@ const GEAR_ART = {
   },
 };
 
-// Draw a monster's gear into g for view v in the current rig pose.
+// Draw a Coreature's gear into g for view v in the current rig pose.
 function drawGear(g, id, v, gear) {
   const big = g.w > 32, Q = rig(), side = isSide(v);
   const base = gearAnchors(id, v, g.w);
@@ -202,13 +202,13 @@ function drawGear(g, id, v, gear) {
   for (const k of gear) GEAR_ART[k] && GEAR_ART[k](g, a, v, big);
 }
 
-// A monster's whole sprite set with gear laid over it: views, flap frames and animation frames.
+// A Coreature's whole sprite set with gear laid over it: views, flap frames and animation frames.
 // Layers are shared between frames where the head and legs sit the same, so this is quick.
 const GEAR_SETS = {};
 function gearSprites(id, gear) {
   const key = id + '|' + gear.join(','), sp = SPRITES[id];
   if (GEAR_SETS[key]) return GEAR_SETS[key];
-  const layers = {}, own = [];   // own: the canvases made here (faint frames are the plain monster's, shared)
+  const layers = {}, own = [];   // own: the canvases made here (faint frames are the plain Coreature's, shared)
   const layer = v => {
     const Q = rig(), k = v + Q.head.join() + (Q.legs || [0, 0]).join();
     if (layers[k]) return layers[k];

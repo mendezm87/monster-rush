@@ -73,7 +73,7 @@ html, body {
 .xpbar { height: 1cqh; background: #2a2638; border-radius: 0.5cqh; overflow: hidden; margin-top: 0.4cqh; }
 .xpbar div { height: 100%; background: #5aa0ff; }
 .card .c-lv { position: absolute; top: 1cqh; right: 1.2cqh; font-size: 2.4cqh; color: #ffe066; -webkit-text-stroke: 0.3cqh var(--ink); paint-order: stroke fill; }
-.balls { grid-column: 1 / 3; display: flex; align-items: center; gap: 0.6cqh; }
+.slots { grid-column: 1 / 3; display: flex; align-items: center; gap: 0.6cqh; }
 .ball { width: 3.2cqh; height: 3.2cqh; border-radius: 50%; border: 0.4cqh solid var(--ink);
   background: linear-gradient(#e8433a 0 44%, var(--ink) 44% 56%, #f6f2ee 56%); position: relative; }
 .ball::after { content: ""; position: absolute; left: 50%; top: 50%; width: 1cqh; height: 1cqh;
@@ -189,7 +189,7 @@ body.no-touch #swap-tray { bottom: 27cqh; }
 .logo { line-height: .9; margin-bottom: 4cqh; transform: skewX(-8deg); }
 .logo div { -webkit-text-stroke: 1.4cqh #2a1205; paint-order: stroke fill; text-shadow: 0 1.6cqh 0 #2a1205; }
 .logo-top { font-size: 11cqh; color: #ff6a3a; }
-.logo-mid { font-size: 19cqh; color: #ffe066; }
+.logo-mid { font-size: 14cqh; color: #ffe066; }
 
 .big-btn { font: 900 6cqh var(--font); padding: 2.2cqh 8cqh; border-radius: 3cqh; border: 0.8cqh solid var(--ink);
   background: linear-gradient(#ff7a3a, #e2401a); color: #fff; cursor: pointer; -webkit-text-stroke: 0.5cqh var(--ink);
@@ -206,7 +206,7 @@ a.small-btn { text-decoration: none; display: inline-block; }
 .help li { margin-bottom: 1.2cqh; }
 kbd { background: #2b2540; border: 0.3cqh solid #555; border-bottom-width: 0.8cqh; border-radius: 1cqh; padding: 0 1cqh; font: 900 3cqh var(--font); }
 
-/* monster detail panel (starter, recruit, party) */
+/* Coreature detail panel (starter, recruit, party) */
 .detail { width: 100%; max-width: 130cqh; min-height: 24cqh; background: var(--panel); border-radius: 2.4cqh; padding: 2cqh;
   display: flex; gap: 2.4cqh; align-items: center; text-align: left; border: 0.4cqh solid rgba(255,255,255,.1); }
 .detail canvas { width: 20cqh; height: 20cqh; image-rendering: pixelated; flex: none; }
@@ -230,7 +230,7 @@ kbd { background: #2b2540; border: 0.3cqh solid #555; border-bottom-width: 0.8cq
 .mv.big { font-size: 3.6cqh; cursor: default; }
 .mv-new { display: flex; }
 
-/* monster cards */
+/* Coreature cards */
 #starter-list { display: flex; flex-wrap: wrap; justify-content: center; gap: 2cqh; max-width: 150cqh; }
 #starter-list .card { width: 22cqh; }
 .party-list { display: flex; flex-wrap: wrap; justify-content: center; gap: 2cqh; }
@@ -325,16 +325,16 @@ kbd { background: #2b2540; border: 0.3cqh solid #555; border-bottom-width: 0.8cq
 
 #btn-continue small { display: block; font: 800 2.4cqh system-ui, sans-serif; opacity: .85; }
 
-/* the bracer's slots in the HUD (one per monster, lit in its type colour) */
-.balls .slot { width: 2.6cqh; height: 2.6cqh; transform: rotate(45deg); border: 0.4cqh solid var(--ink); border-radius: 0.5cqh;
+/* the Arcbracer's slots in the HUD (one per Coreature, lit in its type colour) */
+.slots .slot { width: 2.6cqh; height: 2.6cqh; transform: rotate(45deg); border: 0.4cqh solid var(--ink); border-radius: 0.5cqh;
   /* filled from the bottom (the diamond's lower corner) up to its HP */
   background: linear-gradient(to top left, var(--c) 0 var(--hp, 100%), #1c1828 var(--hp, 100%) 100%);
   box-shadow: 0 0 0.8cqh var(--c), inset 0.3cqh 0.3cqh 0 rgba(255,255,255,.45); margin: 0 0.3cqh; }
-.balls .slot.low { animation: slotlow .7s steps(2) infinite; }
+.slots .slot.low { animation: slotlow .7s steps(2) infinite; }
 @keyframes slotlow { 50% { box-shadow: 0 0 1.2cqh #ff4a3a, inset 0.3cqh 0.3cqh 0 rgba(255,255,255,.45); } }
-.balls .slot.active { outline: 0.4cqh solid var(--gold); outline-offset: 0.2cqh; }
-.balls .slot.out { background: #3a3646; box-shadow: none; opacity: .6; }
-.balls .slot.empty { background: rgba(255,255,255,.06); box-shadow: none; border-style: dashed; opacity: .6; }
+.slots .slot.active { outline: 0.4cqh solid var(--gold); outline-offset: 0.2cqh; }
+.slots .slot.out { background: #3a3646; box-shadow: none; opacity: .6; }
+.slots .slot.empty { background: rgba(255,255,255,.06); box-shadow: none; border-style: dashed; opacity: .6; }
 
 /* trainer select */
 #trainer-list { display: flex; flex-wrap: wrap; justify-content: center; gap: 2cqh; max-width: 150cqh; }

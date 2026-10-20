@@ -2,7 +2,7 @@
 
 // Shown on the title screen so players can tell whether their browser has the latest
 // build (GitHub Pages lets browsers cache files for up to 10 minutes). Bump on every release.
-const VERSION = '2026.10.20-r79';
+const VERSION = '2026.10.20-r80';
 
 const App = {
   endless: false,   // the mode picked on the title screen
@@ -29,7 +29,7 @@ window.addEventListener('resize', fitScreen);   // also catches a change of scre
 if (window.ResizeObserver) new ResizeObserver(fitScreen).observe($('#game'));
 buildSprites();
 
-// ---------- menu backdrop: a meadow with a few idle monsters ----------
+// ---------- menu backdrop: a meadow with a few idle Coreatures ----------
 const Backdrop = {
   init() {
     this.stage = buildBackdrop('meadow', 12345);
@@ -183,7 +183,7 @@ function openStarter() {
     list.appendChild(card);
   }
   $('#starter-detail').innerHTML = `<div class="hint">Pick the Coreature you start the run with. You can recruit more along the way.<br>
-    Beat a monster as a boss to unlock it as a starter (${Save.data.starters.length} of ${ROSTER.length} unlocked).</div>`;
+    Beat a Coreature as a boss to unlock it as a starter (${Save.data.starters.length} of ${ROSTER.length} unlocked).</div>`;
   $('#btn-starter-go').disabled = true;
   UI.show('starter');
 }
@@ -324,7 +324,7 @@ function showResult(result, record = false) {
     $('#result-title').textContent = result === 'win' ? 'RUN CLEARED!' : run.endless ? (record ? 'NEW RECORD!' : 'ENDLESS OVER') : 'RUN OVER';
     const t = Math.floor(run.stats.time), ts = `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
     $('#result-stats').innerHTML = `Reached floor ${run.floorN}${run.endless ? ` (best ${Save.data.bestEndless})` : ` of ${RUN_FLOORS}, ${STAGES[run.floor.stage].name}`} &nbsp;·&nbsp; Time ${ts}<br>
-      Rooms cleared ${run.stats.rooms} &nbsp;·&nbsp; Wild monsters beaten ${run.stats.kos}<br>
+      Rooms cleared ${run.stats.rooms} &nbsp;·&nbsp; Wild Coreatures beaten ${run.stats.kos}<br>
       Coins ${run.coins} &nbsp;·&nbsp; Relics ${run.relics.length}<br>
       Party ${run.party.map(m => `${m.def.name} Lv ${m.level}`).join(', ')}`;
     UI.show('result');
@@ -494,7 +494,7 @@ function openParty() {
 function canRelease(i) {
   const run = App.run, b = App.battle;
   if (!run || run.party.length < 2) return false;
-  if (i === run.pi && b && b.state !== 'explore') return false;   // can't drop the monster that's out mid-fight
+  if (i === run.pi && b && b.state !== 'explore') return false;   // can't drop the Coreature that's out mid-fight
   return run.party.some((m, j) => j !== i && !m.fainted);
 }
 function drawParty() {
@@ -535,7 +535,7 @@ $('#party-detail').addEventListener('click', e => {
   if (m && movesEditorTap(m, e.target)) drawParty();
 });
 
-// ---------- moves: the 4 in use (in click order) and the others a monster knows ----------
+// ---------- moves: the 4 in use (in click order) and the others a Coreature knows ----------
 // Tap a slot, then another slot (to change which click it's on) or a known move (to swap it in);
 // or tap a known move first, then the slot to put it in.
 const MovesEd = { slot: -1, mv: null };
@@ -564,7 +564,7 @@ function movesEditorTap(m, el) {
   const b = el.closest('button');
   if (!b || !(b.dataset.slot !== undefined || b.dataset.mv)) return false;
   const put = (slot, id) => {
-    if (m.equip(slot, id)) { Sfx.play('ball'); if (m.newMoves) m.newMoves = m.newMoves.filter(k => k !== id); afterMovesChange(m); }
+    if (m.equip(slot, id)) { Sfx.play('blip'); if (m.newMoves) m.newMoves = m.newMoves.filter(k => k !== id); afterMovesChange(m); }
     else { Sfx.play('back'); UI.banner('KEEP ONE ATTACK'); }
     MovesEd.slot = -1; MovesEd.mv = null;
   };
@@ -619,7 +619,7 @@ $('#learn-detail').addEventListener('click', e => {
   if (!b || !Learn.cur) return;
   const { mon: m, id } = Learn.cur;
   if (!m.equip(+b.dataset.slot, id)) { Sfx.play('back'); UI.banner('KEEP ONE ATTACK'); return; }
-  Sfx.play('ball'); afterMovesChange(m); UI.banner(`${m.def.name} USES ${MOVES[id].name.toUpperCase()}!`);
+  Sfx.play('blip'); afterMovesChange(m); UI.banner(`${m.def.name} USES ${MOVES[id].name.toUpperCase()}!`);
   closeLearn(false);
 });
 $('#btn-learn-keep').onclick = () => { Sfx.play('back'); closeLearn(true); };
@@ -649,7 +649,7 @@ function cycleSwap() {
   if (!b || App.paused) return;
   for (let k = 1; k < b.p.length; k++) {
     const i = (b.pi + k) % b.p.length;
-    if (b.canSwap('player', i)) { b.swap('player', i); Sfx.play('ball'); return; }
+    if (b.canSwap('player', i)) { b.swap('player', i); Sfx.play('blip'); return; }
   }
 }
 Input.onSwap = cycleSwap;

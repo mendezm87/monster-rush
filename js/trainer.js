@@ -1,7 +1,7 @@
-// The trainer's poses (Monster Rush). The trainer is drawn in pixel.js (trainerMap: one shared
+// The trainer's poses (Deep Archive). The trainer is drawn in pixel.js (trainerMap: one shared
 // body, 8 looks); a pose leaves the arms off the body and redraws them at any angle from the shoulder,
 // lets the body crouch (the legs fold), turns or drops the head, and can open the mouth. So one
-// small rig gives the bracer deploy, pointing, bracing, wincing, cheering and the rest in every view
+// small rig gives the Arcbracer deploy, pointing, bracing, wincing, cheering and the rest in every view
 // for every look.
 
 // The poses. armL / armR: degrees from hanging down (90 = straight out, 180 = straight up);
@@ -11,8 +11,8 @@ const TRAINER_POSES = {
   lookL: { head: [-1, 0] },
   lookR: { head: [1, 0] },
   point: { armR: 95 },
-  deploy1: { armR: 130, armL: 20 },              // the bracer arm comes up...
-  deploy2: { armR: 88, armL: 15, head: [1, 0] },   // ...and thrusts out to beam the monster in
+  deploy1: { armR: 130, armL: 20 },              // the Arcbracer arm comes up...
+  deploy2: { armR: 88, armL: 15, head: [1, 0] },   // ...and thrusts out to beam the Coreature in
   brace: { armL: 40, armR: 40, body: 1 },
   wince: { armL: 15, armR: 15, head: [0, 1] },
   cheer1: { armR: 175, mouth: 'open' },

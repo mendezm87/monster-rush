@@ -1,7 +1,7 @@
-// One room of a run: your active monster against 0-3 wild monsters.
+// One room of a run: your active Coreature against 0-3 wild Coreatures.
 // The Battle class is spread over a few files, all plain scripts loaded in this order:
-//   mon.js     shared helpers and Mon (one monster)
-//   ai.js      AI, the CPU brain for wild monsters (and the test bots)
+//   mon.js     shared helpers and Mon (one Coreature)
+//   ai.js      AI, the CPU brain for wild Coreatures (and the test bots)
 //   battle.js  Battle: room flow, exploring, doors, loot, XP, the update loop, movement
 //   combat.js  Battle's moves: using them, hits, statuses, actions, projectiles, zones
 //   render.js  Battle's effects and drawing, plus sprite tints and item icons
@@ -15,7 +15,7 @@ function mixInto(target, src) {
 }
 
 // ------------------------------------------------------------------ Room
-// One room of a floor. The player's party lives on the run; wild monsters are made
+// One room of a floor. The player's party lives on the run; wild Coreatures are made
 // when an uncleared room is entered. hooks: exit(dir), stairs(), recruit(pedestal), end(result).
 class Battle {
   constructor({ run, room, entry = null, ui, hooks = {} }) {
@@ -25,10 +25,10 @@ class Battle {
     this.ground = built.canvas; this.stage = built.stage;
     if (!room.decal) { room.decal = document.createElement('canvas'); room.decal.width = room.w; room.decal.height = room.h; }
     this.decal = room.decal; this.dctx = this.decal.getContext('2d');
-    this.outfit = trainerLook(run.trainer, run.look);   // pixel.js: which of the 8 trainer looks
-    this.trainerImg = Object.fromEntries(TRAINER_VIEWS.map(v => [v, trainerCanvas(this.outfit, v)]));
-    this.trainerWalk = Object.fromEntries(TRAINER_VIEWS.map(v => [v, trainerWalk(this.outfit, v)]));
-    this.projectiles = []; this.zones = []; this.particles = []; this.floats = []; this.texts = []; this.balls = [];
+    this.look = trainerLook(run.trainer, run.look);   // pixel.js: which of the 8 trainer looks
+    this.trainerImg = Object.fromEntries(TRAINER_VIEWS.map(v => [v, trainerCanvas(this.look, v)]));
+    this.trainerWalk = Object.fromEntries(TRAINER_VIEWS.map(v => [v, trainerWalk(this.look, v)]));
+    this.projectiles = []; this.zones = []; this.particles = []; this.floats = []; this.texts = []; this.deploys = [];
     this.pickups = room.pickups;
     this.weather = Array.from({ length: 70 }, () => this.newFlake(true));
     this.state = 'explore'; this.stateT = 0; this.time = 0;
@@ -68,10 +68,10 @@ class Battle {
   get fighting() { return this.state === 'fight'; }
   get swapCd() { return { player: this.run.swapCd }; }
   get boss() { return this.e.find(m => m.boss) || null; }
-  // does this monster's side have the relic? (relics only help your party)
+  // does this Coreature's side have the relic? (relics only help your party)
   relic(m, id) { return m.side === 'player' && this.run.relics.includes(id); }
   // a number from the relics you hold (RELICS[id].mods): ...Mul names multiply, others add; m = null for the party as a whole
-  // (plus, for a monster, the relics fused into it at the altar)
+  // (plus, for a Coreature, the relics fused into it at the altar)
   mod(m, key, base = key.endsWith('Mul') ? 1 : 0) {
     if (m && m.side !== 'player') return base;
     let v = base;
@@ -91,7 +91,7 @@ class Battle {
     if (m) for (const id of m.fused || []) { const f = RELICS[id].fused.on && RELICS[id].fused.on[event]; if (f) f(this, m, ...args); }
   }
 
-  // Who a monster attacks: wild monsters go for you, your moves aim at the nearest wild monster.
+  // Who a Coreature attacks: wild Coreatures go for you, your moves aim at the nearest wild Coreature.
   foe(m) {
     if (m.side === 'enemy') return this.P;
     let best = null, bd = Infinity;
@@ -102,7 +102,7 @@ class Battle {
     }
     return best;
   }
-  // Everything a monster's attacks can hit.
+  // Everything a Coreature's attacks can hit.
   foes(m) { return m.side === 'enemy' ? (this.P.alive ? [this.P] : []) : this.e.filter(e => e.alive); }
 
   // ---------------------------------------------------------- flow
@@ -172,7 +172,7 @@ class Battle {
     this.stairs = { x: (F.x0 + F.x1) / 2, y: (F.y0 + F.y1) / 2 };
   }
 
-  // Monsters that reached their level transform (between fights, so moves don't change mid-combo).
+  // Coreatures that reached their level transform (between fights, so moves don't change mid-combo).
   // In the world's story they're living data from a fallen civilization: leveling up recovers more of
   // their lost data, until they're whole enough to take back a stronger form.
   evolveReady() {
@@ -193,7 +193,7 @@ class Battle {
     }
   }
 
-  // The evolution altar: the offered relics are gone for good, and the monster becomes the legend
+  // The evolution altar: the offered relics are gone for good, and the Coreature becomes the legend
   // its element picked (LEGENDS in data.js). Its moves change slot by slot, like any evolution.
   altarEvolve(m, def, relics) {
     this.run.relics = this.run.relics.filter(id => !relics.includes(id));
@@ -222,7 +222,7 @@ class Battle {
     if (kind === 'close') this.addShake(3);
   }
 
-  // Beam the active monster out of the trainer's bracer (on arrival, after a faint, on a swap), next to the trainer.
+  // Beam the active Coreature out of the trainer's Arcbracer (on arrival, after a faint, on a swap), next to the trainer.
   sendOut(at) {
     const m = this.P;
     m.reset();
@@ -230,18 +230,18 @@ class Battle {
     const pos = at || { x: t.x + (t.x < (F.x0 + F.x1) / 2 ? 24 : -24), y: t.y + (t.y < (F.y0 + F.y1) / 2 ? 18 : -18) };
     m.x = clamp(pos.x, F.x0 + m.r, F.x1 - m.r); m.y = clamp(pos.y, F.y0 + m.r, F.y1 - 2);
     m.face = 1;
-    // a deploy: the beam reaches the ground (`beam` s), then the monster assembles pixel by pixel (see updateBalls)
-    this.balls.push({ from: { x: t.x, y: t.y - 24 }, to: { x: m.x, y: m.y - 2 }, t: 0, beam: 0.16, color: TYPES[m.def.types[0]].color });
+    // a deploy: the beam reaches the ground (`beam` s), then the Coreature assembles pixel by pixel (see updateDeploys)
+    this.deploys.push({ from: { x: t.x, y: t.y - 24 }, to: { x: m.x, y: m.y - 2 }, t: 0, beam: 0.16, color: TYPES[m.def.types[0]].color });
     this.trainerAct('deploy', m);
     this.ui.onSendOut('player', m);
     Sfx.play('deploy');
   }
 
-  // Mid-fight swap: the fight keeps running while the new monster is thrown in,
+  // Mid-fight swap: the fight keeps running while the new Coreature is deployed,
   // so you are briefly open to attack.
   canSwap(side, idx) {
     return (this.state === 'fight' || this.state === 'explore') && this.run.swapCd <= 0 && idx !== this.pi &&
-      this.p[idx] && !this.p[idx].fainted && !this.balls.length && this.P.visible;
+      this.p[idx] && !this.p[idx].fainted && !this.deploys.length && this.P.visible;
   }
 
   swap(side, idx) {
@@ -260,7 +260,7 @@ class Battle {
     return true;
   }
 
-  // A monster turns back into data and streams into the trainer's bracer.
+  // A Coreature turns back into data and streams into the trainer's Arcbracer.
   recall(m) {
     const tp = this.trainer, col = TYPES[m.def.types[0]].color, bx = tp.x, by = tp.y - 14;
     this.particles.push({ x: bx, y: by, g: tp.y, x2: m.x, y2: m.cy, k2: m.y - m.cy, life: 0.3, max: 0.3, color: col, kind: 'line' });
@@ -271,7 +271,7 @@ class Battle {
     Sfx.play('recall');
   }
 
-  // The active monster was changed from a menu (recruit swap-in, release): put the new one where the old one stood.
+  // The active Coreature was changed from a menu (recruit swap-in, release): put the new one where the old one stood.
   replaceActive(at) {
     const m = this.P;
     m.reset(); m.visible = true;
@@ -383,7 +383,7 @@ class Battle {
     const F = this.F, x = (F.x0 + F.x1) / 2, y = (F.y0 + F.y1) / 2;
     if (kind === 'coins') for (let i = 0; i < 5 + this.run.floorN; i++) this.spawnPickup('coin', x, y);
     if (kind === 'berries') for (let i = 0; i < 2 + this.mod(null, 'roomBerries'); i++) this.spawnPickup('berry', x, y);
-    if (kind === 'xp') this.spawnPickup('candy', x, y);
+    if (kind === 'xp') this.spawnPickup('shard', x, y);
     if (kind === 'move') this.spawnPickup('disc', x, y);
     if (kind === 'chest') this.spawnPickup('chest', x, y);
   }
@@ -397,7 +397,7 @@ class Battle {
     const P = this.P, F = this.F;
     for (const k of this.pickups) {
       k.t += dt;
-      if (k.z > 0 || k.vz > 0) {   // bouncing out of the fainted monster
+      if (k.z > 0 || k.vz > 0) {   // bouncing out of the fainted Coreature
         k.vz -= 420 * dt; k.z += k.vz * dt;
         if (k.z <= 0) { k.z = 0; k.vz = k.vz < -60 ? -k.vz * 0.4 : 0; k.vx *= 0.6; k.vy *= 0.6; }
       } else { k.vx *= Math.exp(-dt * 6); k.vy *= Math.exp(-dt * 6); }
@@ -420,11 +420,11 @@ class Battle {
       this.run.coins++;
       this.sparks(k.x, k.y - 4, 4, '#ffe066');
       Sfx.play('coin');
-    } else if (k.kind === 'candy') {   // XP for the party (the monster that's out gets it all)
+    } else if (k.kind === 'shard') {   // XP for the party (the Coreature that's out gets it all)
       this.ui.banner('ARC-CORE SHARD!', 'Scraps of old data: XP for the party');
       Sfx.play('levelUp');
       this.giveXp(15 + 3 * this.run.floorN);
-    } else if (k.kind === 'disc') {    // the monster that's out learns a new move
+    } else if (k.kind === 'disc') {    // the Coreature that's out learns a new move
       const id = this.run.learnMove(P);
       if (id) { this.run.learnQueue.push({ mon: P, id }); this.ui.banner('MOVE DISC!'); }
       else { this.run.coins += 10; this.ui.banner('+10 COINS'); }
@@ -451,7 +451,7 @@ class Battle {
     this.shake *= Math.exp(-dt * 9);
     this.updateWeather(dt);
     this.updateParticles(dt);
-    this.updateBalls(dt);
+    this.updateDeploys(dt);
 
     switch (this.state) {
       case 'explore':
@@ -479,7 +479,7 @@ class Battle {
         this.updateZones(dt);
         if (this.state === 'faint') break;
         this.updatePickups(dt);
-        if (this.state === 'fight' && this.e.length && this.e.every(m => m.fainted) && this.balls.length === 0) this.clearRoom();
+        if (this.state === 'fight' && this.e.length && this.e.every(m => m.fainted) && this.deploys.length === 0) this.clearRoom();
         if (this.state === 'explore') this.checkExplore(dt);
         if (this.winT > 0 && (this.winT -= dt) <= 0) this.end('win');
         break;
@@ -542,7 +542,7 @@ class Battle {
       this.room.recruited = true;
       for (const o of this.pedestals) this.burst(o.x, o.y - 20, o === ped ? ['#ffe066', '#ffffff'] : ['#ffffff', '#cfd6e6'], 20, 80);
       this.pedestals = [];
-      Sfx.play('ball');
+      Sfx.play('blip');
       return;
     }
     if (ped.kind === 'shop') ped.item.sold = true;
@@ -553,7 +553,7 @@ class Battle {
     Sfx.play(ped.kind === 'shop' ? 'coin' : 'buff');
   }
 
-  // The trainer acts something out (trainer.js TRAINER_ACTS), turned toward `at` (a monster or point).
+  // The trainer acts something out (trainer.js TRAINER_ACTS), turned toward `at` (a Coreature or point).
   // A stronger reaction isn't cut short by a weaker one (a faint isn't replaced by a point).
   trainerAct(name, at = null) {
     const PRI = { look: 0, point: 1, brace: 2, wince: 2, deploy: 3, cheer: 3, crouch: 4, victory: 5, slump: 5 };
@@ -565,12 +565,12 @@ class Battle {
       if (Math.hypot(dx, dy) > 4) { t.view = viewFor(dx, dy, null, true) || t.view; if (Math.abs(dx) > 1) t.face = Math.sign(dx); }
     }
   }
-  // The trainer follows a step behind your monster.
+  // The trainer follows a step behind your Coreature.
   updateTrainer(dt) {
     const t = this.trainer, P = this.P, F = this.F;
     const dx = P.x - t.x, dy = P.y - t.y, d = Math.hypot(dx, dy);
-    // how far behind: more when the monster is above the trainer on screen, since the trainer
-    // (about as tall as a big monster) is drawn in front of it then
+    // how far behind: more when the Coreature is above the trainer on screen, since the trainer
+    // (about as tall as a big Coreature) is drawn in front of it then
     const gap = 46 + (dy < 0 ? 22 * -dy / (d || 1) : 0);
     t.moving = false;
     if (d > gap && this.state !== 'pick') {
@@ -593,7 +593,7 @@ class Battle {
     this.cam.x += (tx - this.cam.x) * k; this.cam.y += (ty - this.cam.y) * k;
   }
 
-  // keep monsters settling (knockback decay) while the fight is paused by a transition
+  // keep Coreatures settling (knockback decay) while the fight is paused by a transition
   idle(dt) {
     for (const m of this.mons) {
       if (!m.visible) continue;
@@ -606,7 +606,7 @@ class Battle {
     }
   }
 
-  // Where a monster's feet may go: the room floor, plus open doorways for the player.
+  // Where a Coreature's feet may go: the room floor, plus open doorways for the player.
   bounds(m) {
     const F = this.F;
     const B = { x0: F.x0 + m.r, x1: F.x1 - m.r, y0: F.y0 + m.r, y1: F.y1 - 2 };

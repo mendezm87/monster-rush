@@ -1,5 +1,5 @@
 // Battle's moves: using them, aiming, hits and damage, statuses, and the moves in
-// flight (dashes, beams, bursts, projectiles, zones, deploys from the bracer). See battle.js.
+// flight (dashes, beams, bursts, projectiles, zones, deploys from the Arcbracer). See battle.js.
 
 mixInto(Battle, class {
   // ---------------------------------------------------------- moves
@@ -487,10 +487,10 @@ mixInto(Battle, class {
     this.zones = this.zones.filter(z => z.t < z.delay + (z.mv.linger || 0) + 0.05);
   }
 
-  // Deploys (this.balls, from the days of thrown balls): the bracer's beam reaches the ground, the
-  // monster assembles pixel by pixel (m.assembleT 0 -> 1, drawn in drawMon), then snaps solid.
-  updateBalls(dt) {
-    for (const b of this.balls) {
+  // Deploys (this.deploys): the Arcbracer's beam reaches the ground, the
+  // Coreature assembles pixel by pixel (m.assembleT 0 -> 1, drawn in drawMon), then snaps solid.
+  updateDeploys(dt) {
+    for (const b of this.deploys) {
       b.t += dt;
       const m = this.P;
       if (!b.landed && b.t >= b.beam) {
@@ -508,6 +508,6 @@ mixInto(Battle, class {
         }
       }
     }
-    this.balls = this.balls.filter(b => !b.done);
+    this.deploys = this.deploys.filter(b => !b.done);
   }
 });

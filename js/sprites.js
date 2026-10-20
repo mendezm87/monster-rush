@@ -210,7 +210,7 @@ function _warmTick() {   // about 4 ms of drawing at a time, between the game's 
   }
   if (_warm.length) _warmT = setTimeout(_warmTick, 16);
 }
-// Let monsters' pictures go (Monster Rush, on a new floor: everyone not in the party or on the
+// Let monsters' pictures go (Deep Archive, on a new floor: everyone not in the party or on the
 // floor). Their canvases are freed now; SPRITES[id] draws them again if they're needed later.
 function forgetSprites(keep) {
   const views = vs => { if (!vs) return; for (const k of Object.keys(vs)) freeCanvas(vs[k]); views(vs.flapped); };
@@ -373,7 +373,7 @@ let ANIM_CLOCK = null;   // a page can run its own clock instead (anim.html: slo
 const animClock = () => (ANIM_CLOCK ? ANIM_CLOCK() : performance.now() / 1000);
 function animMark(m, what) { m[what + 'At'] = animClock(); }
 const animSince = (m, what) => animClock() - (m[what + 'At'] ?? -99);
-// The sprite set to draw a monster with: its own, or (Monster Rush) one with its relic gear on (js/gear.js).
+// The sprite set to draw a monster with: its own, or (Deep Archive) one with its relic gear on (js/gear.js).
 function monSprite(m) {
   if (m.gear && m.gear.length && typeof gearSprites === 'function') return gearSprites(m.id, m.gear);
   return SPRITES[m.id];

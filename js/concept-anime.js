@@ -65,7 +65,7 @@ const CONCEPT_ANIME = (() => {
   const focus = (col, n = 40) => { let s = ''; for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2 + (i % 3) * 0.02, w = 0.012 + (i % 4) * 0.006; s += `<path d="M${100 + Math.cos(a) * 78} ${100 + Math.sin(a) * 78} L${100 + Math.cos(a - w) * 220} ${100 + Math.sin(a - w) * 220} L${100 + Math.cos(a + w) * 220} ${100 + Math.sin(a + w) * 220} Z" fill="${col}" stroke="none"/>`; } return s; };
   const grain = () => [...Array(70)].map((_, i) => flat(C((i * 73) % 200, (i * 131) % 200, (i % 3) * 0.4 + 0.4), `rgba(255,255,255,${0.04 + (i % 4) * 0.02})`)).join('');
   const floor = col => `<path d="M0 178 L200 178 L200 200 L0 200 Z" fill="${col}" stroke="none"/><path d="M40 182 l12 4 l6 -3 l10 5 M140 184 l10 -3 l8 5 l9 -2" fill="none" stroke="rgba(0,0,0,.6)" stroke-width="1.6"/>`;
-  // a soft back-glow in the type's colour, so dark monsters stand out from dark backgrounds
+  // a soft back-glow in the type's colour, so dark Coreatures stand out from dark backgrounds
   const backlight = col => flat(E(100, 112, 92, 84), rad([[0, col], [1, 'rgba(0,0,0,0)']]));
   const BG = {
     electric: () => flat(R(0, 0, 200, 200, 0), rad([[0, '#3a4a8a'], [0.55, '#141a3a'], [1, '#05060e']], 0.5, 0.45, 0.8)) + backlight('rgba(110,160,255,.45)') + focus('rgba(150,200,255,.2)') + flat(R(0, 0, 200, 200, 0), screentone('rgba(0,0,0,.35)')) + floor('#0a0c18') + grain(),

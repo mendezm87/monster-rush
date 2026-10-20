@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0d0b14">
-  <title>Monster Rush Art Test</title>
+  <title>Deep Archive Art Test</title>
   <link rel="stylesheet" href="css/fonts.css">
   <style>
     :root { --ink: #15111f; --font: "Lilita One", "Arial Black", "Segoe UI Black", Arial, system-ui, sans-serif; }
@@ -24,7 +24,7 @@
 </head>
 <body>
   <h1>Art style test: Smugshi (Toshi)</h1>
-  <div class="hint">The same monster drawn three ways. The big box shows each one close up (front and side); the strip under it shows it at the size it would really be in a room, next to the trainer. They gently idle-bounce so you can see how each style moves. Nothing in the game has changed. <a href="./">Back to the game</a> · <a href="gallery.html">Gallery</a></div>
+  <div class="hint">The same Coreature drawn three ways. The big box shows each one close up (front and side); the strip under it shows it at the size it would really be in a room, next to the trainer. They gently idle-bounce so you can see how each style moves. Nothing in the game has changed. <a href="./">Back to the game</a> · <a href="gallery.html">Gallery</a></div>
   <div class="grid">
     <div class="col"><h2>Now: 32-pixel art</h2><p>What's in the game today, redrawn from Toshi's photos: ginger coat, big white bib and legs, white cheeks, the white ruff round his neck, smug half-shut eyes.</p>
       <canvas id="a-big" width="300" height="200"></canvas><div class="label">in-game size</div><canvas id="a-game" width="300" height="110"></canvas></div>
@@ -208,7 +208,7 @@
       const w = img.width * s, h = img.height * s;
       c.save(); c.translate(x, 0); c.scale(flip, 1); c.drawImage(img, Math.round(-w / 2), Math.round(y - h + bob), w, h); c.restore();
     }
-    const trainer = { front: trainerCanvas(TRAINER_OUTFIT, 'front') };
+    const trainer = { front: trainerCanvas(TRAINER_DEFAULT_LOOK, 'front') };
     const blinkAt = t => { const p = t % 3.2; return p < 0.12 ? Math.sin(p / 0.12 * Math.PI) : 0; };
 
     function frame(now) {

@@ -22,7 +22,7 @@
   <div class="hint">All eight trainers in every direction, walking on the right. Tap one to see its poses below.</div>
   <table id="looks"></table>
   <h2 id="pose-title">Poses</h2>
-  <div class="hint">The trainer acting things out in the game: beaming a monster out of the bracer when you swap, pointing at the foe on big moves, bracing while a beam fires, wincing when your monster takes a big hit, crouching when it faints, cheering when a room is cleared, a victory dance for a boss, slumping when the run is lost, and looking around while it waits. Each one plays below, then every pose in every direction.</div>
+  <div class="hint">The trainer acting things out in the game: beaming a Coreature out of the Arcbracer when you swap, pointing at the foe on big moves, bracing while a beam fires, wincing when your Coreature takes a big hit, crouching when it faints, cheering when a room is cleared, a victory dance for a boss, slumping when the run is lost, and looking around while it waits. Each one plays below, then every pose in every direction.</div>
   <h2>In motion</h2>
   <div class="acts" id="acts"></div>
   <h2>Every pose</h2>
@@ -34,11 +34,11 @@
   <script src="js/trainer.js"></script>
   <script>
     const K = 5, VIEWS = ['front', 'fside', 'side', 'bside', 'back'];
-    let LOOK = TRAINER_OUTFIT;
+    let LOOK = TRAINER_DEFAULT_LOOK;
     // every look: the 5 views, plus a walk going round
     const looks = document.getElementById('looks'), walkers = [];
     looks.innerHTML = '<tr><th></th>' + VIEWS.map(v => `<th>${v}</th>`).join('') + '<th>walk</th></tr>';
-    for (const [key, o] of Object.entries(TRAINER_OUTFITS)) {
+    for (const [key, o] of Object.entries(TRAINER_LOOK_NAMES)) {
       const tr = document.createElement('tr'); tr.style.cursor = 'pointer';
       tr.innerHTML = `<th>${o.name}</th>`;
       for (const v of [...VIEWS, 'walk']) {

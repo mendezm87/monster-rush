@@ -14,14 +14,14 @@ const STARTERS = ['smugshi', 'cinderox', 'tidalisk'];
 const ROOM_SIZES = { s: [576, 324], wide: [864, 324], tall: [576, 486], big: [864, 486], boss: [864, 540] };
 const REVIVE_HP = 0.3;                                   // fainted party members come back at 30% on a new floor
 
-// Leveling: XP for each wild monster beaten. The monster that's out gets it all, the
+// Leveling: XP for each wild Coreature beaten. The Coreature that's out gets it all, the
 // rest of the party (not fainted) gets half. Level n -> n+1 needs XP_NEED(n).
 const XP_WILD = 10, XP_TOUGH = 20, XP_BOSS = 50, XP_BENCH = 0.5;
 const XP_NEED = n => 18 + 11 * n;
 const LV_HP = 0.035, LV_STAT = 0.02, LV_HEAL = 0.05;     // per level: +3.5% HP, +2% atk/def; leveling heals 5%
 const LEARN_EVERY = 2;   // a new move to learn at every 2nd level (2, 4, 6, ...)
 
-// Wild monsters are weaker than arena monsters (there can be three of them) and get
+// Wild Coreatures are weaker than arena Coreatures (there can be three of them) and get
 // tougher each floor; a boss is close to full arena strength.
 const WILD_AI = {
   wild: { think: 0.3, dodge: 0.3, aggro: 0.45, react: 0.45, aimErr: 0.18, lead: false },
@@ -39,17 +39,17 @@ function wildSpec(id, floorN, kind) {
 // Relics last for the whole run and help the whole party. Each relic is one self-contained entry:
 //   tag    its element (RELIC_TAGS), for the evolution altar's recipes
 //   gear   where the party wears it (head, eyes, neck, feet; the piece is GEAR_ART[id] in gear.js), or
-//   aura   an effect around the monster instead, for relics that aren't a thing you'd wear (RELIC_AURA in render.js)
+//   aura   an effect around the Coreature instead, for relics that aren't a thing you'd wear (RELIC_AURA in render.js)
 //   bonus  stat multipliers for the whole party (atk, def, spd, cd)
 //   mods   numbers the game asks for by name (Battle.mod): names ending in Mul multiply, the rest add up
 //   on     things it does when something happens (Battle.emit): hit(b, src, tgt, mv, mult) after a hit
 //          lands, dash(b, m, action, dt) every frame of a dash, clear(b, m) when a room is cleared
-//   fused  what it becomes when it's offered at the evolution altar: fused into that one monster for
+//   fused  what it becomes when it's offered at the evolution altar: fused into that one Coreature for
 //          good (its own name, desc, bonus, mods, on), usually a stronger or mutated version
 // A new relic is an entry here, an icon (ICON_ART in render.js) and its gear (GEAR_ART) or aura (RELIC_AURA);
 // test.html checks every relic has them, and that every mod and event is one the game really uses.
 const STORM_MV = { id: 'stormArc', name: 'Storm Coil', type: 'electric', kind: 'projectile', power: 70, chained: true };
-// a bolt jumps from the monster just hit to the nearest other one (Storm Coil)
+// a bolt jumps from the Coreature just hit to the nearest other one (Storm Coil)
 function chainBolt(b, src, tgt, mult) {
   const o = b.foes(src).filter(f => f !== tgt && f.visible && !f.fainted).sort((p, q) => Math.hypot(p.x - tgt.x, p.y - tgt.y) - Math.hypot(q.x - tgt.x, q.y - tgt.y))[0];
   if (!o || Math.hypot(o.x - tgt.x, o.y - tgt.y) > 180) return;
@@ -116,7 +116,7 @@ function shuffle(a) {
   return a;
 }
 
-// Each area's own monsters: most wild monsters, recruits and bosses on a floor come from
+// Each area's own Coreatures: most wild Coreatures, recruits and bosses on a floor come from
 // here (AREA_ODDS), the rest from anywhere, so every area feels different but can surprise.
 const AREA_MONS = {
   meadow: { natives: ['sparkit', 'thornback', 'slumbear', 'pixibelle', 'galewing', 'scarablade', 'lumawool', 'smugshi', 'bellpaca', 'shellmet'], bosses: ['slumbear', 'thornback', 'galewing'] },
@@ -127,7 +127,7 @@ const AREA_MONS = {
   spire:  { natives: ['drakorn', 'mindra', 'shadefang', 'pixibelle', 'galewing', 'gearhulk', 'wispurr', 'brawlix', 'voltergeist'], bosses: ['drakorn', 'gearhulk', 'slumbear'] },
 };
 const AREA_ODDS = 0.75;
-// n different wild monster ids for an area
+// n different wild Coreature ids for an area
 function wildIds(stage, n, skip = []) {
   const nat = shuffle(AREA_MONS[stage].natives.filter(id => !skip.includes(id)));
   const all = shuffle(ROSTER.map(m => m.id).filter(id => !skip.includes(id)));
@@ -141,7 +141,7 @@ function wildIds(stage, n, skip = []) {
 }
 
 // What clearing a fight room gives (weights). It shows over the room's doors, so you can choose
-// your way through a floor, like Hades' doors. Wild monsters drop less to make up for it, so the
+// your way through a floor, like Hades' doors. Wild Coreatures drop less to make up for it, so the
 // total loot is about what it was; the doors decide what kind you get.
 const ROOM_REWARDS = { coins: 30, berries: 25, xp: 15, move: 15, chest: 3 };
 function pickReward() {
@@ -150,7 +150,7 @@ function pickReward() {
   return 'coins';
 }
 
-// Champions (like Isaac's): now and then a wild monster has a trait, shown by a coloured ring
+// Champions (like Isaac's): now and then a wild Coreature has a trait, shown by a coloured ring
 // and a label. Swift: faster, quicker recharges. Giant: bigger, more HP, hard to push. Spiky:
 // touching it hurts. Splitting: becomes two small copies when it faints. Shiny: rare, golden,
 // drops lots of coins and a treasure chest. w = how often, of the champions.
@@ -170,7 +170,7 @@ function makeChampion(spec, floorN) {
   return spec;
 }
 
-// Who lives in a fight room: 1-3 wild monsters, or sometimes one tougher one.
+// Who lives in a fight room: 1-3 wild Coreatures, or sometimes one tougher one.
 function makeWave(floorN, sizeKey, stage) {
   if (Math.random() < (floorN > 3 ? 0.25 : 0.18)) return [wildSpec(wildIds(stage, 1)[0], floorN, 'tough')];
   const roomy = sizeKey === 'big' || sizeKey === 'wide' || sizeKey === 'tall';
@@ -228,7 +228,7 @@ function tryFloor(floorN, partyIds, relics, last, offers = 3) {
   const [boss, ...rest] = ends;
   shuffle(rest);
   const [recruit, shop, treasure] = rest;
-  // the evolution altar: from floor 3, when there's a spare dead end (relics are offered there to evolve a monster at its last stage)
+  // the evolution altar: from floor 3, when there's a spare dead end (relics are offered there to evolve a Coreature at its last stage)
   const altar = floorN >= 3 && rest[3] && Math.random() < 0.65 ? rest[3] : null;
 
   const ids = ROSTER.map(m => m.id);
@@ -249,7 +249,7 @@ function tryFloor(floorN, partyIds, relics, last, offers = 3) {
       const rivals = EVOLVED.filter(e => !partyIds.includes(e.from));
       if (last) r.enemies = [wildSpec(pickRand(rivals.length ? rivals : EVOLVED).id, floorN, 'final')];
     }
-    if (r.type === 'recruit') {   // two of the area's monsters and one from anywhere
+    if (r.type === 'recruit') {   // two of the area's Coreatures and one from anywhere
       const local = shuffle(AREA_MONS[stage].natives.filter(id => !partyIds.includes(id))).slice(0, 2);
       r.offer = [...local, ...shuffle(ids.filter(id => !partyIds.includes(id) && !local.includes(id)))].slice(0, offers);
     }
@@ -271,8 +271,23 @@ function tryFloor(floorN, partyIds, relics, last, offers = 3) {
 // The save carries a version number. When its shape changes, bump SAVE_VERSION and add a
 // step to SAVE_UPGRADES that turns version n into n + 1, so older saves keep working after an
 // update. Before upgrading, the old save is copied to a backup key.
-const SAVE_KEY = 'monsterRush.save.v1';
-const RUN_KEY = 'monsterRush.run';   // the run in progress (Save.saveRun); RUN_SAVE_VERSION is bumped when its shape changes
+const SAVE_KEY = 'deepArchive.save.v1';
+const RUN_KEY = 'deepArchive.run';   // the run in progress (Save.saveRun); RUN_SAVE_VERSION is bumped when its shape changes
+// The game was called Coreature Rush until r80, and its saves were kept under that name. The first
+// time the game loads, everything under the old name moves to the new one (the unlocks, the run in
+// progress, old backups), so nobody loses progress.
+const OLD_SAVE_PREFIX = 'monsterRush.', SAVE_PREFIX = 'deepArchive.';
+function moveOldSaves() {
+  try {
+    const old = [];
+    for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith(OLD_SAVE_PREFIX)) old.push(k); }
+    for (const k of old) {
+      const nk = SAVE_PREFIX + k.slice(OLD_SAVE_PREFIX.length);
+      if (localStorage.getItem(nk) === null) localStorage.setItem(nk, localStorage.getItem(k));
+      localStorage.removeItem(k);
+    }
+  } catch (e) { /* storage blocked: nothing to move */ }
+}
 const RUN_SAVE_VERSION = 1;   // the storage key stays the same; the version lives inside
 const SAVE_VERSION = 2;
 const SAVE_UPGRADES = {
@@ -286,6 +301,7 @@ const DEFAULT_SETTINGS = { lighting: true, music: 0.8, sfx: 0.8, keys: {} };   /
 const Save = {
   data: { version: SAVE_VERSION, starters: [...STARTERS], runs: 0, wins: 0, bestFloor: 0, bestEndless: 0, recruited: [], found: [], trainers: ['scarf'], settings: { ...DEFAULT_SETTINGS } },
   load() {
+    moveOldSaves();
     let d = null;
     try { d = JSON.parse(localStorage.getItem(SAVE_KEY)); } catch (e) { /* storage blocked or broken: play without it */ }
     if (d && typeof d === 'object') {
@@ -338,7 +354,7 @@ const Save = {
 Save.load();
 
 // Everything that lasts for one run.
-// The trainers, chosen before the starter. Every trainer wears the bracer that holds monsters as
+// The trainers, chosen before the starter. Every trainer wears the Arcbracer that holds Coreatures as
 // data; each brings a starting power, and the stronger powers come with a drawback (like Isaac's
 // characters). look: 'm' or 'f' (him or her; pixel.js TRAINER_LOOKS draws each). perk works like a relic that can't be lost (bonus,
 // mods, on); the rest are read by RunState. unlock: how it's earned (trainerUnlocks in main.js).
@@ -375,7 +391,7 @@ class RunState {
   }
   get T() { return TRAINERS[this.trainer] || TRAINERS.scarf; }
   get perk() { return this.T.perk || null; }
-  get partyMax() { return this.T.partyMax || 6; }   // the bracer's slots
+  get partyMax() { return this.T.partyMax || 6; }   // the Arcbracer's slots
   get reveal() { return !!this.T.reveal; }
   newFloor(n) {
     // the old floor's room pictures and scorch marks: freed now (phones cap canvas memory)
@@ -383,7 +399,7 @@ class RunState {
     this.floorN = n;
     this.floor = genFloor(n, this.party.map(m => m.def.from || m.id), this.relics, !this.endless && n === RUN_FLOORS, this.T.offers || 3);
     this.warm();
-    // fainted monsters get back up at 30% for the new floor
+    // fainted Coreatures get back up at 30% for the new floor
     for (const m of this.party) if (m.fainted) { m.fainted = false; m.hp = Math.round(m.maxHp * REVIVE_HP); m.status = null; }
     if (this.party[this.pi].fainted) this.pi = this.party.findIndex(m => !m.fainted);
     this.room = this.floor.start;
@@ -428,7 +444,7 @@ class RunState {
     run.warm();
     return run;
   }
-  // draw this floor's monsters (and what the party evolves into) in the background, a little at a time
+  // draw this floor's Coreatures (and what the party evolves into) in the background, a little at a time
   warm() {
     const ids = [];
     for (const m of this.party) { ids.push(m.id); if (m.def.evolve) ids.push(m.def.evolve.to); ids.push(...Object.keys(m.def.branches || {})); }   // and what it can become
@@ -479,7 +495,7 @@ class RunState {
     });
     return ups;
   }
-  // Teach a monster a new move it can learn (movesets.js); returns its id, or null if it knows them all.
+  // Teach a Coreature a new move it can learn (movesets.js); returns its id, or null if it knows them all.
   learnMove(m) {
     const can = movePool(m.id).filter(k => !m.known.includes(k));
     if (!can.length) return null;

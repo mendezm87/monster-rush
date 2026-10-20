@@ -2,7 +2,7 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "monster-rush",
+      "name": "deep-archive",
       "runtimeExecutable": "python",
       "runtimeArgs": ["serve.py", "8137"],
       "port": 8137

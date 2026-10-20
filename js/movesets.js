@@ -7,7 +7,7 @@
 // moves only an evolved form knows (they're what evolving brings). A set is 4 different moves
 // with at least one that does damage.
 // Shared by both games (keep the file identical): Monster Battle Stadium uses MoveSets for its
-// team screen (sets kept per player in this browser; the CPU uses the defaults); Monster Rush
+// team screen (sets kept per player in this browser; the CPU uses the defaults); Deep Archive
 // uses movePool for the moves monsters learn as they level up during a run.
 
 const SIGNATURE = new Set(['smugshi', 'mondaze', 'smugshogun'].filter(id => ROSTER_BY_ID[id]).flatMap(id => ROSTER_BY_ID[id].moves));

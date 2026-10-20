@@ -1,4 +1,4 @@
-// The trainers (Monster Rush). Four trainers (dungeon.js TRAINERS), each as him ('m') and her
+// The trainers (Deep Archive). Four trainers (dungeon.js TRAINERS), each as him ('m') and her
 // ('f'), hand-shaped from the owner's concept art (docs/concept-prompts.md T1-T4, T1F-T4F): 8 looks
 // in 5 views (front, back, side facing right, and the diagonals fside / bside, also facing right).
 // A picture is 34x42 (the figure itself about 20 wide; the rest is room for a flying scarf or a
@@ -96,7 +96,7 @@ function peekHead(rows, ys) {
 // ---------------------------------------------------------------- the looks
 const TRAINER_LOOKS = {
   // T1: messy dark hair with a red streak, brass goggles, a long red scarf whipping in the wind,
-  // a charcoal bomber covered in patches over a slate tee, crystal charms on the belt, olive cargo
+  // a charcoal bomber covered in patches over a slate tee, Arc-core charms on the belt, olive cargo
   // shorts over leggings, chunky boots, fingerless gloves (her: long locks and a high ponytail)
   scarf: {
     name: 'Scarf Tamer',
@@ -208,7 +208,7 @@ const TRAINER_LOOKS = {
         P.row(28, 6, 17, 'b'); P.pts([[11, 28], [12, 28]], 'B');
       }
       for (let y = 21; y <= 27; y++) { P.px(5, y, 'k'); P.px(18, y, 'k'); }
-      // cargo shorts with crystal charms hanging off the belt
+      // cargo shorts with Arc-core charms hanging off the belt
       P.row(29, 6, 17, 'O'); P.rect(5, 30, 18, 32, 'O'); P.row(33, 6, 10, 'O'); P.row(33, 13, 17, 'O');
       P.col(6, 29, 33, 'Q'); P.col(17, 29, 33, 'P');
       P.row(30, 4, 6, 'P'); P.rect(4, 31, 6, 32, 'O'); P.px(4, 31, 'Q'); P.row(30, 17, 19, 'P'); P.rect(17, 31, 19, 32, 'O'); P.row(32, 17, 19, 'P');
@@ -641,9 +641,9 @@ function trainerMap(look, view, noArm = '') {
   return (_trmaps[key] = P.g.map(r => r.join('')));
 }
 // every look, for the gallery and review pages: { 'scarf-m': { name }, ... }
-const TRAINER_OUTFITS = {};
-for (const id of Object.keys(TRAINER_LOOKS)) for (const s of ['m', 'f']) TRAINER_OUTFITS[id + '-' + s] = { name: TRAINER_LOOKS[id].name + (s === 'f' ? ' (her)' : ' (him)') };
-const TRAINER_OUTFIT = 'scarf-m';
+const TRAINER_LOOK_NAMES = {};
+for (const id of Object.keys(TRAINER_LOOKS)) for (const s of ['m', 'f']) TRAINER_LOOK_NAMES[id + '-' + s] = { name: TRAINER_LOOKS[id].name + (s === 'f' ? ' (her)' : ' (him)') };
+const TRAINER_DEFAULT_LOOK = 'scarf-m';
 
 // The walk: 4 frames (both feet down, the left leg lifted, both down, the right leg lifted); a
 // lifted leg is its half of the boot rows (split at TR_SPLIT) moved up a pixel.
@@ -656,11 +656,11 @@ function trainerStep(map, leg) {
 }
 // pictures are made once per look and view (pixel.js gridFromMap)
 const _trainer = {};
-function trainerCanvas(look = TRAINER_OUTFIT, view = 'front') {
+function trainerCanvas(look = TRAINER_DEFAULT_LOOK, view = 'front') {
   const key = 'c' + look + view;
   return _trainer[key] || (_trainer[key] = gridFromMap(trainerMap(look, view), trainerPal(look)).toCanvas());
 }
-function trainerWalk(look = TRAINER_OUTFIT, view = 'front') {
+function trainerWalk(look = TRAINER_DEFAULT_LOOK, view = 'front') {
   const key = 'w' + look + view;
   if (_trainer[key]) return _trainer[key];
   const map = trainerMap(look, view), pal = trainerPal(look), still = trainerCanvas(look, view);

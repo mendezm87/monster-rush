@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0d0b14">
-  <title>Monster Rush Tests</title>
+  <title>Deep Archive Tests</title>
   <style>
     :root { --ink: #15111f; --ok: #6ee07a; --bad: #ff6a6a; --warn: #ffd23f; }
     * { box-sizing: border-box; }
@@ -26,7 +26,7 @@
   </style>
 </head>
 <body>
-  <h1>Monster Rush tests</h1>
+  <h1>Deep Archive tests</h1>
   <p class="hint">Bots play the real game (muted) in the box below, and your saved progress is never touched. Options in the address bar:
     <code>?runs=10</code> normal runs per starter, <code>&amp;endless=2</code> endless runs per starter (stopped at floor <code>&amp;maxfloor=6</code>), <code>&amp;starter=smugshi</code> to test just one, <code>&amp;learn=0</code> to keep bots from learning moves, <code>?quick</code> for the checks plus one run per starter (about a minute).
     <a href="gallery.html">Gallery</a> · <a href="./">Game</a></p>
@@ -55,7 +55,7 @@ function check(name, ok, details = '') {
   if (!ok) { checksOk = false; problems.push(name + ': ' + details); }
   $('#checks').insertAdjacentHTML('beforeend', `<tr><td>${name}</td><td class="${ok ? 'ok' : 'bad'}">${ok ? 'PASS' : 'FAIL'}</td><td>${details}</td></tr>`);
 }
-// a heads-up that doesn't fail the tests (e.g. a monster's art changed: fine if it was meant to)
+// a heads-up that doesn't fail the tests (e.g. a Coreature's art changed: fine if it was meant to)
 function note(name, details) {
   $('#checks').insertAdjacentHTML('beforeend', `<tr><td>${name}</td><td class="warn">CHANGED</td><td>${details}</td></tr>`);
 }
@@ -67,7 +67,7 @@ const tick = () => new Promise(r => setTimeout(r, 0));
 (async () => {
   const html = await (await fetch('index.html', { cache: 'reload' })).text();
   const files = [...html.matchAll(/(?:src|href)="((?:js|css)\/[^"]+)"/g)].map(m => m[1]);
-  // the monster art files listed in js/monsters.js
+  // the Coreature art files listed in js/monsters.js
   const list = await (await fetch('js/monsters.js', { cache: 'reload' })).text();
   for (const m of (list.match(/MONSTER_FILES = \[([^\]]*)\]/) || [, ''])[1].matchAll(/'(\w+)'/g)) files.push(`js/monsters/${m[1]}.js`);
   await Promise.all(files.map(f => fetch(f, { cache: 'reload' })));
@@ -88,7 +88,7 @@ $('#game').addEventListener('load', async () => {
   Save.saveRun = () => {}; Save.clearRun = () => {}; Save.loadRun = () => null;   // and never the owner's saved run either
   if (!Sfx.muted) w.toggleMute();
 
-  // ---------- sprites: every monster and the trainer, in every view ----------
+  // ---------- sprites: every Coreature and the trainer, in every view ----------
   try {
     const VIEWS = ['front', 'fside', 'side', 'bside', 'back'], bad = [];
     for (const m of G('ALL_MONS()')) {
@@ -99,12 +99,12 @@ $('#game').addEventListener('load', async () => {
         if (!px) bad.push(`${m.id}/${v}`);
       }
     }
-    for (const look of Object.keys(G('TRAINER_OUTFITS'))) for (const v of G('TRAINER_VIEWS')) if (!w.trainerCanvas(look, v).width || !w.trainerWalk(look, v)[1].width) bad.push('trainer/' + look + '/' + v);
+    for (const look of Object.keys(G('TRAINER_LOOK_NAMES'))) for (const v of G('TRAINER_VIEWS')) if (!w.trainerCanvas(look, v).width || !w.trainerWalk(look, v)[1].width) bad.push('trainer/' + look + '/' + v);
     const n = G('ALL_MONS()').length;
-    check('Sprites', !bad.length, bad.length ? 'missing or empty: ' + bad.join(', ') : `${n} monsters × ${VIEWS.length} views, plus the trainer`);
+    check('Sprites', !bad.length, bad.length ? 'missing or empty: ' + bad.join(', ') : `${n} Coreatures × ${VIEWS.length} views, plus the trainer`);
   } catch (e) { check('Sprites', false, e.message); }
 
-  // ---------- every monster: art, animations, gear spots, moves, evolution, and where it lives ----------
+  // ---------- every Coreature: art, animations, gear spots, moves, evolution, and where it lives ----------
   const VIEWS5 = ['front', 'fside', 'side', 'bside', 'back'];
   try {
     const bad = [], MOVES = G('MOVES'), ITEMS = G('ITEMS'), TYPES = G('TYPES'), RIGGED = G('RIGGED'), RIG_FRAMES = G('RIG_FRAMES');
@@ -131,9 +131,9 @@ $('#game').addEventListener('load', async () => {
         for (const f of a.feet) if (f && !inside(f.x, f.y)) say(`gear: feet off in ${v}`);
       }
     }
-    check('Monsters', !bad.length, bad.length ? bad.slice(0, 12).join('; ') + (bad.length > 12 ? ` (and ${bad.length - 12} more)` : '')
-      : `${ALL.length} monsters: art, animations, gear spots, moves, types, items, evolutions, and each one appears somewhere`);
-  } catch (e) { check('Monsters', false, e.message); }
+    check('Coreatures', !bad.length, bad.length ? bad.slice(0, 12).join('; ') + (bad.length > 12 ? ` (and ${bad.length - 12} more)` : '')
+      : `${ALL.length} Coreatures: art, animations, gear spots, moves, types, items, evolutions, and each one appears somewhere`);
+  } catch (e) { check('Coreatures', false, e.message); }
 
   // ---------- every relic: effect, element tag, gear, icon; mods and events the game really uses ----------
   try {
@@ -159,7 +159,7 @@ $('#game').addEventListener('load', async () => {
     check('Relics', !bad.length, bad.length ? bad.join('; ') : `${Object.keys(RELICS).length} relics: effect, element tag, gear or aura, icon and fused version (mods the game uses: ${[...MODS].join(', ')}; events: ${[...EVENTS].join(', ')})`);
   } catch (e) { check('Relics', false, e.message); }
 
-  // ---------- pictures: every monster's art compared with the saved fingerprints ----------
+  // ---------- pictures: every Coreature's art compared with the saved fingerprints ----------
   try {
     const hash = cv => { const d = cv.getContext('2d').getImageData(0, 0, cv.width, cv.height).data; let h = 2166136261; for (let i = 0; i < d.length; i++) h = Math.imul(h ^ d[i], 16777619); return h >>> 0; };
     const sets = (vs, out) => { for (const v of Object.keys(vs).sort()) out.push(hash(vs[v])); if (vs.flapped) sets(vs.flapped, out); };
@@ -175,7 +175,7 @@ $('#game').addEventListener('load', async () => {
     const changed = saved ? Object.keys(now).filter(id => saved[id] && saved[id] !== now[id]) : [];
     const added = saved ? Object.keys(now).filter(id => !saved[id]) : Object.keys(now);
     window.spriteHashes = JSON.stringify(now, null, 1);   // the new fingerprints, to save when art changed on purpose
-    if (!changed.length && !added.length) check('Pictures', true, `every picture of all ${Object.keys(now).length} monsters matches the saved fingerprints`);
+    if (!changed.length && !added.length) check('Pictures', true, `every picture of all ${Object.keys(now).length} Coreatures matches the saved fingerprints`);
     else note('Pictures', (changed.length ? `art changed: ${changed.join(', ')}. ` : '') + (added.length ? `new: ${added.join(', ')}. ` : '') +
       'Fine if that was meant; then save the new fingerprints (window.spriteHashes) to tests/sprite-hashes.json.');
   } catch (e) { check('Pictures', false, e.message); }
@@ -396,7 +396,7 @@ $('#game').addEventListener('load', async () => {
   v.className = pass ? 'pass' : 'fail';
   v.textContent = pass ? 'PASS' : `FAIL: ${problems.length} problem${problems.length > 1 ? 's' : ''}`;
   window.__results = { pass, problems, rows: rows.map(r => ({ starter: r.starter, endless: r.endless, rs: r.rs })) };
-  document.title = (pass ? 'PASS' : 'FAIL') + ' · Monster Rush Tests';
+  document.title = (pass ? 'PASS' : 'FAIL') + ' · Deep Archive Tests';
 });
 </script>
 </body>

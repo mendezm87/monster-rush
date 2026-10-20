@@ -24,7 +24,7 @@
 </head>
 <body>
   <h1>Gear Test</h1>
-  <div class="hint">Every relic is something your monsters wear. Nothing is hand-placed: each piece finds the monster's head, eyes, neck and feet from its animation rig, so it sits in the right spot and moves with it. One piece per spot (head, eyes, neck, feet): the newest relic wins. Tap relics below to pick them up or drop them; the last box on each card plays the walk.</div>
+  <div class="hint">Every relic is something your Coreatures wear. Nothing is hand-placed: each piece finds the Coreature's head, eyes, neck and feet from its animation rig, so it sits in the right spot and moves with it. One piece per spot (head, eyes, neck, feet): the newest relic wins. Tap relics below to pick them up or drop them; the last box on each card plays the walk.</div>
   <div class="chips" id="pick"></div>
   <div class="hint" id="time"></div>
   <div class="grid" id="grid"></div>
@@ -70,7 +70,7 @@
         const sp = sets[mon.id] = gear.length ? gearSprites(mon.id, gear) : SPRITES[mon.id];
         cards[mon.id].querySelectorAll('canvas').forEach(cv => { if (cv.dataset.v !== 'walk') paint(cv, sp.views[cv.dataset.v]); });
       }
-      document.getElementById('time').textContent = `Dressed all ${ALL_MONS().length} monsters in ${Math.round(performance.now() - t0)} ms (the game only dresses your party).`;
+      document.getElementById('time').textContent = `Dressed all ${ALL_MONS().length} Coreatures in ${Math.round(performance.now() - t0)} ms (the game only dresses your party).`;
     }
     let t = 0;
     setInterval(() => {

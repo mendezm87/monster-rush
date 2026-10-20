@@ -18,7 +18,7 @@ const UI = {
 
   typeTag(t) { return `<span class="tag" data-tip="type:${t}" style="background:${TYPES[t].color}">${TYPES[t].name}</span>`; },
 
-  // A monster's portrait, name, types, stats and moves (team cards, recruit offers).
+  // A Coreature's portrait, name, types, stats and moves (team cards, recruit offers).
   detailHtml(def, extra = '') {
     return `<canvas width="88" height="88"></canvas><div>
       <div class="d-name">${def.name} ${def.types.map(t => this.typeTag(t)).join(' ')}</div>
@@ -119,7 +119,7 @@ const UI = {
       chip.insertAdjacentHTML('beforeend', '<div class="mini"><div></div></div>');
       chip.addEventListener('pointerdown', e => {
         e.preventDefault();
-        if (battle.swap('player', i)) Sfx.play('ball');
+        if (battle.swap('player', i)) Sfx.play('blip');
         this.closeSwap();
       });
       tray.appendChild(chip);
@@ -229,13 +229,13 @@ const UI = {
     const hpText = `${Math.ceil(mon.hp)} / ${mon.maxHp}`;
     if (c.hp !== hpText) { root.querySelector('.hpnum').textContent = hpText; c.hp = hpText; }
 
-    // the bracer's slots: each holds a monster's data, lit in its type colour (empty ones dark)
-    const balls = Array.from({ length: Math.max(slots, team.length) }, (_, i) => { const m = team[i];
-      // the crystal fills with its HP (in 5% steps, so the HUD isn't rebuilt every frame), and pulses when low
+    // the Arcbracer's slots: each holds a Coreature's data, lit in its type colour (empty ones dark)
+    const cores = Array.from({ length: Math.max(slots, team.length) }, (_, i) => { const m = team[i];
+      // the Arc-core fills with its HP (in 5% steps, so the HUD isn't rebuilt every frame), and pulses when low
       if (!m) return '<div class="slot empty"></div>';
       const hp = m.fainted ? 0 : Math.max(5, Math.round(m.hp / m.maxHp * 20) * 5);
       return m ? `<div class="slot${m.fainted ? ' out' : ''}${i === idx && !m.fainted ? ' active' : ''}${!m.fainted && hp <= 25 ? ' low' : ''}" style="--c:${TYPES[m.def.types[0]].color};--hp:${hp}%"></div>` : '<div class="slot empty"></div>'; }).join('');
-    if (c.balls !== balls) { root.querySelector('.balls').innerHTML = balls; c.balls = balls; }
+    if (c.cores !== cores) { root.querySelector('.slots').innerHTML = cores; c.cores = cores; }
   },
 };
 

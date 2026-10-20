@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#0d0b14">
-  <title>Monster Rush HD-2D Test</title>
+  <title>Deep Archive HD-2D Test</title>
   <link rel="stylesheet" href="css/fonts.css">
   <style>
     :root { --ink: #15111f; --font: "Lilita One", "Arial Black", "Segoe UI Black", Arial, system-ui, sans-serif; }
@@ -23,7 +23,7 @@
 </head>
 <body>
   <h1>Look test: HD-2D</h1>
-  <div class="hint">The same room and the same 32-pixel monsters, drawn two ways. <b>Now</b> is how the game looks today. <b>HD-2D</b> keeps the pixel monsters but adds lighting (torches, glowing attacks that light up the room), soft shadows, a blur on the near and far edges like a camera lens, glow on beams and shots, and floating light motes. Flip between them and try each floor theme. Nothing in the game has changed. <a href="./">Back to the game</a> · <a href="gallery.html">Gallery</a></div>
+  <div class="hint">The same room and the same 32-pixel Coreatures, drawn two ways. <b>Now</b> is how the game looks today. <b>HD-2D</b> keeps the pixel Coreatures but adds lighting (torches, glowing attacks that light up the room), soft shadows, a blur on the near and far edges like a camera lens, glow on beams and shots, and floating light motes. Flip between them and try each floor theme. Nothing in the game has changed. <a href="./">Back to the game</a> · <a href="gallery.html">Gallery</a></div>
   <div class="bar">
     <div class="chips" id="look"><button data-v="now">Now</button><button data-v="hd" class="on">HD-2D</button></div>
     <div class="chips" id="stage"></div>
@@ -76,7 +76,7 @@
     const F = roomField({ w: W, h: H });
     const toshi = { id: 'smugshi', x: 210, y: 220, face: 1, view: 'side' };
     const wild = [{ id: 'sparkit', x: 400, y: 170, face: -1, view: 'front' }, { id: 'wispurr', x: 440, y: 260, face: -1, view: 'side' }];
-    const trainerImgs = { front: trainerCanvas(TRAINER_OUTFIT, 'front'), side: trainerCanvas(TRAINER_OUTFIT, 'side') };
+    const trainerImgs = { front: trainerCanvas(TRAINER_DEFAULT_LOOK, 'front'), side: trainerCanvas(TRAINER_DEFAULT_LOOK, 'side') };
     const trainer = { x: 170, y: 232 };
     const torches = [{ x: 120, y: 26 }, { x: 456, y: 26 }, { x: 13, y: 250 }];
     const shots = [];
@@ -165,7 +165,7 @@
       };
       for (const tc of torches) light(tc.x, tc.y + 14, 200 + Math.sin(t * 9 + tc.x) * 10, m.torch, 0.85);
       light(toshi.x, toshi.y - 10, 110, [255, 235, 210], 0.35);
-      for (const w of wild) light(w.x, w.y - 10, 70, [255, 235, 210], 0.18);         // a soft light that follows your monster
+      for (const w of wild) light(w.x, w.y - 10, 70, [255, 235, 210], 0.18);         // a soft light that follows your Coreature
       for (const s of shots) light(s.x, s.y, 70, [255, 220, 90], 0.7);
       if (beam) {
         const { ox, oy, a, len } = beamGeom(), on = beam.t > 0.35;

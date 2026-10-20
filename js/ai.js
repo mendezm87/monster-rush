@@ -1,5 +1,5 @@
 // ------------------------------------------------------------------ CPU brain
-// Drives one monster (each wild monster has its own; tests can drive the player with one).
+// Drives one Coreature (each wild Coreature has its own; tests can drive the player with one).
 class AI {
   constructor(diff) { this.d = diff; this.reset(); }
   reset() { this.dir = { x: 0, y: 0 }; this.want = -1; this.delay = 0; this.think = rand(0.2, 0.6); this.strafe = Math.random() < 0.5 ? 1 : -1; }
@@ -35,7 +35,7 @@ class AI {
       mx = ux * radial - uy * this.strafe * 0.75;
       my = uy * radial + ux * this.strafe * 0.75;
     }
-    // wild monsters spread out instead of piling onto one spot
+    // wild Coreatures spread out instead of piling onto one spot
     for (const o of b.e) {
       if (o === me || !o.alive || me.side !== 'enemy') continue;
       const ox = me.x - o.x, oy = me.y - o.y, od = Math.hypot(ox, oy);
@@ -49,7 +49,7 @@ class AI {
     const mm = Math.hypot(mx, my);
     this.dir = mm > 0.05 ? { x: mx / mm, y: my / mm } : { x: 0, y: 0 };
 
-    // wild monsters take turns, so three of them don't all fire on the same frame
+    // wild Coreatures take turns, so three of them don't all fire on the same frame
     const waiting = me.side === 'enemy' && b.enemyAtkT > 0;
     if (this.want < 0 && !waiting && me.canAct() && Math.random() < this.d.aggro) {
       const i = this.pick(me, foe, d);

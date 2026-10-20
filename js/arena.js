@@ -57,7 +57,7 @@ const STAGES = {
   },
 };
 
-// The walkable floor of a room (monsters' feet stay inside it).
+// The walkable floor of a room (Coreatures' feet stay inside it).
 function roomField(room) {
   return { x0: WALL.side, y0: WALL.top, x1: room.w - WALL.side, y1: room.h - WALL.bottom };
 }

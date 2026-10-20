@@ -1,4 +1,4 @@
-// Plain-language descriptions and hover tooltips, shared by Monster Rush and Monster Battle
+// Plain-language descriptions and hover tooltips, shared by Deep Archive and Monster Battle
 // Stadium (keep both copies identical). Move and item text is written from their numbers, so
 // it's never out of date. Anything with data-tip="kind:id" gets a styled tooltip under the mouse.
 
@@ -82,7 +82,7 @@ function typeMatchups(types) {
 }
 const mult = e => (e >= 4 ? '×4' : e >= 2 ? '×2' : e <= 0.0625 ? '×1/16' : e <= 0.125 ? '×⅛' : e <= 0.25 ? '×¼' : '×½');
 const typeChip = (t, extra = '') => `<span class="tag" data-tip="type:${t}" style="background:${TYPES[t].color}">${TYPES[t].name}${extra ? ' ' + extra : ''}</span>`;
-// a relic's element, for its tooltip (Monster Rush; the Stadium has no relics)
+// a relic's element, for its tooltip (Deep Archive; the Stadium has no relics)
 const TAG_LABEL = id => (typeof TAG_NAMES !== 'undefined' ? TAG_NAMES[RELICS[id].tag] : RELICS[id].tag.toUpperCase());
 
 // ---------- hover tooltips (mouse only; on a phone you tap instead) ----------

@@ -1,4 +1,4 @@
-// Shared helpers for the room code, and Mon: one monster in a room (yours or wild).
+// Shared helpers for the room code, and Mon: one Coreature in a room (yours or wild).
 
 const TAU = Math.PI * 2;
 const SPR_SCALE = 1.5;   // world units per sprite pixel (3 canvas px at 2x)
@@ -7,13 +7,13 @@ const rand = (a = 0, b = 1) => a + Math.random() * (b - a);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 let _uid = 1;
-const BERRY_HEAL = 0.25;   // a berry heals a quarter of your active monster's HP
+const BERRY_HEAL = 0.25;   // a berry heals a quarter of your active Coreature's HP
 // The Ember Tracks relic's fire pools.
 // a spiky champion's spines (it hurts to touch one)
 const SPIKE_MV = { id: 'spikes', name: 'Spikes', type: 'normal', kind: 'dash', power: 70 };
 const EMBER_MV = { id: 'emberTrail', name: 'Ember Trail', type: 'fire', kind: 'zone', power: 60, linger: 1.4, tick: 0.35, status: ['brn', 0.1] };
 
-// opts (wild monsters): hpMul / atkMul scale the arena stats, scale draws it bigger, boss marks a boss.
+// opts (wild Coreatures): hpMul / atkMul scale the arena stats, scale draws it bigger, boss marks a boss.
 class Mon {
   constructor(def, side, opts = {}) {
     this.side = side;
@@ -27,7 +27,7 @@ class Mon {
     this.aiKind = opts.ai || null;
     this.level = 1; this.xp = 0;
     this.bonus = { atk: 1, def: 1, spd: 1, cd: 1 };   // from relics (player side)
-    this.fused = [];   // relics fused into it at the evolution altar (their `fused` versions, for this monster only)
+    this.fused = [];   // relics fused into it at the evolution altar (their `fused` versions, for this Coreature only)
     this.setDef(def);
     this.hp = this.maxHp;
     this.fainted = false;

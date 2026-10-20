@@ -1,4 +1,4 @@
-// Game data: types, type chart, moves, items and the monster roster.
+// Game data: types, type chart, moves, items and the Coreature roster.
 
 const TYPES = {
   normal:   { name: 'NORMAL',   color: '#a8a77a', fx: ['#ff8a2a', '#ffd36b', '#fffbe6'] },
@@ -76,7 +76,7 @@ function typeEffect(moveType, defTypes) {
   fx: name      - a look of its own, drawn in fx.js (wheel, aura, roll, claw, slash, flurry, wool,
                   bubble, mud, stare, tornado)
  status: [kind, chance]  (par / brn / frz / psn)
- Not every monster needs a beam; some types have none.
+ Not every Coreature needs a beam; some types have none.
 */
 const MOVES = {
   // electric
@@ -282,7 +282,7 @@ const ROSTER = [
 ];
 
 // Evolved forms: a starter becomes one of these at `evolve.level` (see `evolve` on the base
-// monster). They aren't part of the wild / recruit pool.
+// Coreature). They aren't part of the wild / recruit pool.
 const EVOLVED = [
   { id: 'smugshogun', name: 'SMUGSHOGUN', types: ['normal', 'fairy'], hp: 1360, atk: 1.32, def: 1.1, spd: 114, size: 'L', item: 'snackPouch',
     moves: ['zoomiesMax', 'shibaRoar', 'supremeSmug', 'blanketNap'], from: 'smugshi' },
@@ -291,10 +291,10 @@ const EVOLVED = [
   { id: 'maelstrisk', name: 'MAELSTRISK', types: ['water', 'dragon'], hp: 1560, atk: 1.16, def: 1.22, spd: 88, size: 'L', item: 'mysticDrop',
     moves: ['tidalCannon', 'bubbleBeam', 'dragonPulse', 'maelstrom'], from: 'tidalisk' },
 ];
-// Legendary 4th stages: made at an evolution altar from a monster at its last stage by offering two
+// Legendary 4th stages: made at an evolution altar from a Coreature at its last stage by offering two
 // relics, one of each element in its `recipe` (RELIC_TAGS); any relic of those elements works, and
-// each one fuses into the monster as a stronger version (RELICS[id].fused). Not in the wild or recruit pool.
-// A monster's branches come from here (def.branches = { id: recipe }).
+// each one fuses into the Coreature as a stronger version (RELICS[id].fused). Not in the wild or recruit pool.
+// A Coreature's branches come from here (def.branches = { id: recipe }).
 const LEGENDS = [
   { id: 'magmabastion', name: 'MAGMA BASTION', types: ['water', 'fire'], hp: 2300, atk: 1.32, def: 1.5, spd: 46, size: 'L', item: 'emberStone',
     moves: ['geyserVent', 'steamEruption', 'magmaWave', 'ironDefense'], from: 'garrishell', recipe: ['fire', 'water'] },
