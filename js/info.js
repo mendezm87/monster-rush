@@ -33,7 +33,7 @@ function drawInfo() {
       for (const m of fused) row(portrait(m), `<b>${m.def.name}</b><br>${m.fused.map(id => `<b class="fz" data-tip="fused:${id}">${RELICS[id].fused.name}</b> ${RELICS[id].fused.desc}`).join('<br>')}`);
     }
   } else if (Info.tab === 'items') {
-    body.insertAdjacentHTML('beforeend', '<div class="hint">Each monster holds one item of its own; it always has it.</div>');
+    body.insertAdjacentHTML('beforeend', '<div class="hint">Each Coreature holds one item of its own; it always has it.</div>');
     for (const m of run.party) row(portrait(m), `<b>${m.def.name}</b> holds <b data-tip="item:${m.def.item}">${ITEMS[m.def.item].name}</b><br>${itemDesc(ITEMS[m.def.item])}`);
   } else {
     body.insertAdjacentHTML('beforeend', '<div class="hint">A move of the same type as its user hits 30% harder. ×2 means double damage, ×½ half.</div>');

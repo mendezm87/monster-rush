@@ -2,7 +2,7 @@
 
 // Shown on the title screen so players can tell whether their browser has the latest
 // build (GitHub Pages lets browsers cache files for up to 10 minutes). Bump on every release.
-const VERSION = '2026.10.19-r78';
+const VERSION = '2026.10.20-r79';
 
 const App = {
   endless: false,   // the mode picked on the title screen
@@ -182,7 +182,7 @@ function openStarter() {
     };
     list.appendChild(card);
   }
-  $('#starter-detail').innerHTML = `<div class="hint">Pick the monster you start the run with. You can recruit more along the way.<br>
+  $('#starter-detail').innerHTML = `<div class="hint">Pick the Coreature you start the run with. You can recruit more along the way.<br>
     Beat a monster as a boss to unlock it as a starter (${Save.data.starters.length} of ${ROSTER.length} unlocked).</div>`;
   $('#btn-starter-go').disabled = true;
   UI.show('starter');
@@ -425,8 +425,8 @@ function openAltar(ped) {
 function drawAltar() {
   const run = App.run, list = altarMons(), m = run.party[Altar.mon], recipe = m && Altar.branch && m.def.branches[Altar.branch];
   $('#altar-hint').textContent = !list.length
-    ? 'The altar is quiet. A monster at its last stage (like Garrishell) can change here, if you offer it two relics.'
-    : run.relics.length < 2 ? 'Offer two relics here to change a monster at its last stage. You need two.'
+    ? 'The altar is quiet. A Coreature at its last stage (like Garrishell) can change here, if you offer it two relics.'
+    : run.relics.length < 2 ? 'Offer two relics here to change a Coreature at its last stage. You need two.'
     : !m ? 'Who will change?' : !recipe ? 'Pick what it becomes. Each needs two elements.'
     : `Offer one ${recipeText(recipe).replace(' + ', ' and one ')} relic. They fuse into it for good.`;
   UI.partyCards($('#altar-mons'), list.map(o => o.m), {
@@ -506,7 +506,7 @@ function drawParty() {
   });
   const btn = $('#btn-release');
   if (Party.sel < 0) {
-    $('#party-detail').innerHTML = '<div class="hint">Tap a monster to see its moves, or to release it from your party.</div>';
+    $('#party-detail').innerHTML = '<div class="hint">Tap a Coreature to see its moves, or to release it from your party.</div>';
     btn.disabled = true; btn.textContent = 'Release';
     return;
   }

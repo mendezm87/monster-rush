@@ -64,22 +64,22 @@ const healBy = (b, m, k) => {
   if (m === b.P) b.number(m, heal, null, '#b6ff9a', '#4fae2e', '+');
 };
 const RELICS = {
-  leechLens:   { name: 'LEECH LENS', desc: 'Beams also drain: your monster heals 15% of the damage its beams deal.', tag: 'life', gear: 'eyes', mods: { beamDrain: 0.15 },
+  leechLens:   { name: 'LEECH LENS', desc: 'Beams also drain: your Coreature heals 15% of the damage its beams deal.', tag: 'life', gear: 'eyes', mods: { beamDrain: 0.15 },
     fused: { name: 'LEECH SIGHT', desc: 'All its attacks drain 12% of their damage, and its beams 30%.', mods: { drainAll: 0.12, beamDrain: 0.3 } } },
   emberTracks: { name: 'EMBER TRACKS', desc: 'Dashes leave a trail of fire behind them.', tag: 'fire', aura: 'embers',
     on: { dash(b, m, a, dt) { if ((a.trailT = (a.trailT || 0) - dt) <= 0) { a.trailT = 0.07; b.zones.push({ x: m.x, y: m.y, r: 13, t: 0, delay: 0, mv: EMBER_MV, owner: m, done: true, tick: 0.15, id: _uid++ }); } } },
     fused: { name: 'MAGMA TRAILS', desc: 'Its dashes leave a wider trail of magma that burns harder.',
       on: { dash(b, m, a, dt) { if ((a.magmaT = (a.magmaT || 0) - dt) <= 0) { a.magmaT = 0.05; b.zones.push({ x: m.x, y: m.y, r: 19, t: 0, delay: 0, mv: EMBER_MV, owner: m, done: true, tick: 0.3, id: _uid++ }); } } } } },
   muscleCharm: { name: 'MUSCLE CHARM', desc: '+15% attack for your whole party.', tag: 'iron', gear: 'head', bonus: { atk: 1.15 },
-    fused: { name: 'IRON MUSCLE', desc: '+35% attack for this monster.', bonus: { atk: 1.35 } } },
+    fused: { name: 'IRON MUSCLE', desc: '+35% attack for this Coreature.', bonus: { atk: 1.35 } } },
   ironShell:   { name: 'IRON SHELL', desc: '+15% defence for your whole party.', tag: 'iron', gear: 'head', bonus: { def: 1.15 },
-    fused: { name: 'IRON HIDE', desc: '+35% defence for this monster.', bonus: { def: 1.35 } } },
+    fused: { name: 'IRON HIDE', desc: '+35% defence for this Coreature.', bonus: { def: 1.35 } } },
   swiftBoots:  { name: 'SWIFT BOOTS', desc: '+12% speed for your whole party.', tag: 'wind', gear: 'feet', bonus: { spd: 1.12 },
-    fused: { name: 'GALE STEP', desc: '+28% speed for this monster.', bonus: { spd: 1.28 } } },
+    fused: { name: 'GALE STEP', desc: '+28% speed for this Coreature.', bonus: { spd: 1.28 } } },
   hourglass:   { name: 'HOURGLASS', desc: 'Moves recharge 15% faster.', tag: 'wind', gear: 'neck', bonus: { cd: 0.85 },
-    fused: { name: 'TIME SHARD', desc: "This monster's moves recharge 30% faster.", bonus: { cd: 0.7 } } },
-  luckyCoin:   { name: 'LUCKY COIN', desc: 'Wild monsters drop 50% more coins.', tag: 'luck', gear: 'neck', mods: { coinMul: 1.5 },
-    fused: { name: 'MIDAS TOUCH', desc: 'Its hits sometimes knock a coin out of wild monsters.',
+    fused: { name: 'TIME SHARD', desc: "This Coreature's moves recharge 30% faster.", bonus: { cd: 0.7 } } },
+  luckyCoin:   { name: 'LUCKY COIN', desc: 'Wild Coreatures drop 50% more coins.', tag: 'luck', gear: 'neck', mods: { coinMul: 1.5 },
+    fused: { name: 'MIDAS TOUCH', desc: 'Its hits sometimes knock a coin out of wild Coreatures.',
       on: { hit(b, src, tgt, mv, mult) { if (mult >= 1 && !mv.chained && Math.random() < 0.15) b.spawnPickup('coin', tgt.x, tgt.y); } } } },
   berryBasket: { name: 'BERRY BASKET', desc: 'Berries drop more often and heal 40% instead of 25%.', tag: 'life', aura: 'berries', mods: { berryOddsMul: 25 / 12, berryHealMul: 1.6, roomBerries: 1 },
     fused: { name: 'BERRY HEART', desc: 'It heals 15% of its HP whenever a room is cleared.', on: { clear(b, m) { healBy(b, m, 0.15); } } } },
@@ -91,19 +91,19 @@ const RELICS = {
   blastCore:   { name: 'BLAST CORE', desc: 'Blasts and strikes from above are 25% bigger.', tag: 'fire', gear: 'neck', mods: { blastMul: 1.25 },
     fused: { name: 'NOVA CORE', desc: 'Its blasts and strikes from above are 50% bigger.', mods: { blastMul: 1.5 } } },
   tideCharm:   { name: 'TIDE CHARM', desc: 'Water moves hit 20% harder.', tag: 'water', aura: 'tide', mods: { waterMul: 1.2 },
-    fused: { name: 'RIPTIDE', desc: "This monster's water moves hit 45% harder.", mods: { waterMul: 1.45 } } },
+    fused: { name: 'RIPTIDE', desc: "This Coreature's water moves hit 45% harder.", mods: { waterMul: 1.45 } } },
   rainBell:    { name: 'RAIN BELL', desc: 'Clearing a room heals your whole party a little (8%).', tag: 'water', gear: 'neck',
     on: { clear(b) { for (const m of b.run.party) healBy(b, m, 0.08); } },
     fused: { name: 'STORM BELL', desc: 'It heals 20% of its HP whenever a room is cleared.', on: { clear(b, m) { healBy(b, m, 0.2); } } } },
-  stormCoil:   { name: 'STORM COIL', desc: 'Hits have a 15% chance to arc lightning to another wild monster.', tag: 'storm', gear: 'head',
+  stormCoil:   { name: 'STORM COIL', desc: 'Hits have a 15% chance to arc lightning to another wild Coreature.', tag: 'storm', gear: 'head',
     on: { hit(b, src, tgt, mv, mult) { if (mult >= 1 && !mv.chained && Math.random() < 0.15) chainBolt(b, src, tgt, 0.6); } },
-    fused: { name: 'TESLA HEART', desc: 'Its hits arc lightning to another wild monster 35% of the time, harder.',
+    fused: { name: 'TESLA HEART', desc: 'Its hits arc lightning to another wild Coreature 35% of the time, harder.',
       on: { hit(b, src, tgt, mv, mult) { if (mult >= 1 && !mv.chained && Math.random() < 0.35) chainBolt(b, src, tgt, 1); } } } },
 };
 const RELIC_TAGS = ['fire', 'water', 'storm', 'iron', 'life', 'wind', 'luck'];
 // Shop goods that are used up straight away.
 const GOODS = {
-  bigBerry: { name: 'BIG BERRY', desc: 'Heals your active monster by 50%.', price: 5 },
+  bigBerry: { name: 'BIG BERRY', desc: 'Heals your active Coreature by 50%.', price: 5 },
   picnic:   { name: 'PICNIC BASKET', desc: 'Heals your whole party by 40%.', price: 10 },
   revive:   { name: 'REVIVE SEED', desc: 'Fainted party members get back up with 40% HP.', price: 12 },
 };
@@ -344,16 +344,16 @@ Save.load();
 // mods, on); the rest are read by RunState. unlock: how it's earned (trainerUnlocks in main.js).
 const TRAINERS = {
   scarf: { name: 'SCARF TAMER', power: 'Tag Team',
-    desc: 'Swapping recharges twice as fast, and a monster you swap in hits 25% harder for 4 seconds.', drawback: null, unlock: null,
+    desc: 'Swapping recharges twice as fast, and a Coreature you swap in hits 25% harder for 4 seconds.', drawback: null, unlock: null,
     perk: { mods: { swapCdMul: 0.5 }, on: { swapIn(b, m) { m.buffs.push({ stat: 'atk', mul: 1.25, t: 4 }); } } } },
   researcher: { name: 'FIELD RESEARCHER', power: 'Field Notes',
-    desc: 'Your party earns 30% more XP, and recruit rooms offer 4 monsters instead of 3.', drawback: 'Your monsters deal 10% less damage.',
-    unlock: 'Recruit 10 different monsters.', perk: { bonus: { atk: 0.9 } }, xpMul: 1.3, offers: 4 },
+    desc: 'Your party earns 30% more XP, and recruit rooms offer 4 Coreatures instead of 3.', drawback: 'Your Coreatures deal 10% less damage.',
+    unlock: 'Recruit 10 different Coreatures.', perk: { bonus: { atk: 0.9 } }, xpMul: 1.3, offers: 4 },
   diver: { name: 'DUNGEON DIVER', power: 'Delver',
     desc: 'Starts with a random relic, and the lantern shows the whole map of every floor.', drawback: 'An old salvaged Arcbracer: only 4 Arc-core slots.',
     unlock: 'Reach floor 4.', partyMax: 4, reveal: true, startRelic: true },
   shiba: { name: 'SHIBA TRAINER', power: 'Pack Leader',
-    desc: 'Toshi (Smugshi) joins your run as a free extra monster.', drawback: 'Wild monsters drop 30% fewer coins.',
+    desc: 'Toshi (Smugshi) joins your run as a free extra Coreature.', drawback: 'Wild Coreatures drop 30% fewer coins.',
     unlock: 'Win a run with Smugshi in your party.', perk: { mods: { coinMul: 0.7 } }, companion: 'smugshi' },
 };
 class RunState {
