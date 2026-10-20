@@ -27,7 +27,7 @@
 </head>
 <body>
   <h1>Proposal: our own types</h1>
-  <div class="hint">Twelve original types grown out of the world (a fallen high-tech civilization, its ruins reclaimed by nature, its data corrupted or still alive), replacing the 18 copied ones. Read the chart across: a move of the row's type does <b>2×</b> (green) or <b>½</b> (red) damage to a Coreature of the column's type; blank is normal. Three of our own triangles sit beside the classic fire / water / plant one: <b>Arcane</b> beats <b>Glitch</b> beats <b>Iron</b> beats <b>Arcane</b>, and <b>Beast</b> beats <b>Shade</b> beats <b>Arcane</b> beats <b>Beast</b>.</div>
+  <div class="hint">Twelve original types grown out of the world (a fallen high-tech civilization, its ruins reclaimed by nature, its data corrupted or still alive), replacing the 18 copied ones. Read the chart across: a move of the row's type does <b>2×</b> (green) or <b>½</b> (red) damage to a Coreature of the column's type; blank is normal. Every matchup has a reason a player could guess (water puts fire out, metal carries the shock, you can't punch a shadow); each type's card lists them.</div>
   <h2>The chart</h2>
   <div class="wrap"><table class="chart" id="chart"></table></div>
   <h2>The types</h2>
@@ -51,21 +51,10 @@
       shade:   { name: 'Shade',   color: '#4a3a6a', desc: 'Darkness, shadows and lingering echoes of the dead.' },
       beast:   { name: 'Beast',   color: '#c89a6a', desc: 'Raw body and instinct: claws, fists, tackles, plain toughness.' },
     };
-    // attacking type -> { 2: [...], h: [...] } (h = half damage)
-    const C = {
-      blaze:   { 2: ['verdant', 'frost', 'iron'], h: ['tide', 'stone', 'blaze'] },
-      tide:    { 2: ['blaze', 'stone'], h: ['verdant', 'tide', 'frost'] },
-      storm:   { 2: ['tide', 'gale', 'iron'], h: ['stone', 'verdant', 'storm', 'glitch'] },
-      verdant: { 2: ['tide', 'stone', 'glitch'], h: ['blaze', 'gale', 'verdant'] },
-      stone:   { 2: ['blaze', 'storm', 'frost'], h: ['iron', 'beast'] },
-      frost:   { 2: ['verdant', 'gale', 'arcane'], h: ['blaze', 'tide', 'frost', 'iron'] },
-      gale:    { 2: ['verdant', 'beast'], h: ['stone', 'storm'] },
-      iron:    { 2: ['arcane', 'frost'], h: ['blaze', 'tide', 'iron', 'storm'] },
-      glitch:  { 2: ['iron', 'storm'], h: ['arcane', 'verdant', 'glitch', 'shade'] },
-      arcane:  { 2: ['glitch', 'beast'], h: ['iron', 'shade', 'arcane'] },
-      shade:   { 2: ['arcane', 'shade'], h: ['beast'] },
-      beast:   { 2: ['shade', 'stone'], h: ['arcane', 'gale', 'glitch'] },
-    };
+    // attacking type -> { target: why } for 2x (WHY2) and for 1/2 (WHYH): every matchup has a reason a player could guess
+    const WHY2 = {"blaze": {"verdant": "burns plants", "frost": "melts ice", "shade": "its light chases away the dark"}, "tide": {"blaze": "puts fire out", "stone": "wears rock away", "iron": "rusts metal"}, "storm": {"tide": "water carries the shock", "iron": "metal carries the shock", "gale": "lightning strikes fliers"}, "verdant": {"tide": "plants drink water up", "stone": "roots crack rock"}, "stone": {"blaze": "smothers fire", "storm": "grounds lightning", "frost": "shatters ice", "gale": "rocks knock fliers down"}, "frost": {"tide": "freezes water", "verdant": "frost kills plants", "gale": "ices up wings"}, "gale": {"verdant": "blows leaves and bugs away", "beast": "strikes from the sky, out of reach"}, "iron": {"stone": "drills and picks break rock", "frost": "smashes ice"}, "glitch": {"iron": "corrupts machines", "storm": "scrambles power", "arcane": "corrupts the old world's code"}, "arcane": {"shade": "light drives out darkness", "glitch": "the old code repairs corruption"}, "shade": {"arcane": "darkness swallows light", "beast": "animals fear the dark"}, "beast": {"verdant": "tears through plants", "glitch": "raw instinct can't be hacked"}};
+    const WHYH = {"blaze": {"tide": "water puts it out", "stone": "rock doesn't burn", "blaze": "fire on fire"}, "tide": {"verdant": "plants soak it up", "tide": "water on water"}, "storm": {"stone": "rock is grounded", "storm": "storm on storm"}, "verdant": {"blaze": "plants burn up", "iron": "can't cut metal", "gale": "vines can't reach the sky", "verdant": "plant on plant"}, "stone": {"iron": "metal is harder", "beast": "tough hides shrug off rocks"}, "frost": {"blaze": "ice melts", "iron": "ice breaks on metal", "frost": "ice on ice"}, "gale": {"stone": "rock doesn't budge", "frost": "cold wind only chills it", "storm": "storms ride the wind"}, "iron": {"blaze": "metal just heats up", "iron": "metal on metal"}, "glitch": {"verdant": "living things don't run on code", "beast": "living things don't run on code", "glitch": "bug on bug"}, "arcane": {"arcane": "mind on mind"}, "shade": {"glitch": "data feels no fear", "shade": "dark on dark"}, "beast": {"iron": "claws can't scratch metal", "shade": "you can't punch a shadow", "gale": "claws can't reach the sky", "arcane": "muscle can't touch the mind"}};
+    const C = Object.fromEntries(Object.keys(WHY2).map(a => [a, { 2: Object.keys(WHY2[a]), h: Object.keys(WHYH[a]) }]));
     // every Coreature's new types, from its old ones
     const MAP = { normal: 'beast', fighting: 'beast', fire: 'blaze', water: 'tide', grass: 'verdant', bug: 'verdant', electric: 'storm', ice: 'frost',
       ground: 'stone', rock: 'stone', dragon: 'arcane', psychic: 'arcane', fairy: 'arcane', dark: 'shade', ghost: 'shade', poison: 'glitch', flying: 'gale', steel: 'iron' };
@@ -88,10 +77,9 @@
     document.getElementById('cards').innerHTML = keys.map(k => {
       const weak = keys.filter(a => mult(a, k) === 2), resist = keys.filter(a => mult(a, k) === 0.5);
       return `<div class="card">${tag(k)}${T[k].relic ? ` <span class="l">relic element: ${T[k].relic}</span>` : ''}<div class="d">${T[k].desc}</div>
-        <div class="l">Hits hard</div><div>${C[k][2].map(tag).join('')}</div>
-        <div class="l">Hits weakly</div><div>${C[k].h.map(tag).join('')}</div>
-        <div class="l">Weak to</div><div>${weak.map(tag).join('') || '<span class="m">nothing</span>'}</div>
-        <div class="l">Resists</div><div>${resist.map(tag).join('') || '<span class="m">nothing</span>'}</div>
+        <div class="l">Its moves hit hard</div><div class="m">${C[k][2].map(t => tag(t) + ' ' + WHY2[k][t]).join('<br>')}</div>
+        <div class="l">It gets hit hard by</div><div class="m">${weak.map(a => tag(a) + ' ' + WHY2[a][k]).join('<br>') || 'nothing'}</div>
+        <div class="l">It shrugs off</div><div class="m">${resist.filter(a => a !== k).map(a => tag(a) + ' ' + WHYH[a][k]).join('<br>') || 'nothing'}</div>
         <div class="l">Coreatures (${who(k).length})</div><div class="m">${who(k).join(', ') || 'none yet'}</div></div>`;
     }).join('');
     document.getElementById('old').innerHTML = Object.entries(MAP).map(([o, n]) => `${o} → ${tag(n)}`).join(' &nbsp; ') +
