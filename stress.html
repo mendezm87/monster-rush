@@ -100,20 +100,25 @@ frame.addEventListener('load', async () => {
     $('#fps').textContent = Math.round(1000 / avg) + ' fps';
     $('#worst').innerHTML = `worst <span class="${grade(worst)}">${Math.round(worst)} ms</span>`;
     $('#relics').textContent = `${run.relics.length}/${Object.keys(RELICS).length} relics`;
-    let q = 0; try { q = G('_gearQ').length; } catch (e) {}
-    $('#queue').textContent = q ? `dressing ${q}…` : '';
+    $('#queue').textContent = `${made} new pictures`;
     graph.fillStyle = '#000'; graph.fillRect(0, 0, 120, 22);
     times.forEach((t, i) => { graph.fillStyle = t < 25 ? '#3ad070' : t < 50 ? '#ffd040' : '#ff5040'; const h = Math.min(22, t / 4); graph.fillRect(i, 22 - h, 1, h); });
     graph.fillStyle = '#ffffff40'; graph.fillRect(0, 22 - 16.7 / 4, 120, 1);   // 60 fps line
   }, 250);
 
+  // count the pictures (canvases) the game makes: making lots at once is what hitched phones
+  let made = 0;
+  const ce = w.document.createElement.bind(w.document);
+  w.document.createElement = (t, ...r) => { if (String(t).toLowerCase() === 'canvas') { made++; for (const W of watches) W.made++; } return ce(t, ...r); };
+
   // ---- results
   const results = [];
   const report = W => {
-    const line = `${W.what}: worst frame ${Math.round(W.worst)} ms${W.hitches ? `, ${W.hitches} hitch${W.hitches > 1 ? 'es' : ''} over 50 ms` : ''}`;
+    const line = `${W.what}: worst frame ${Math.round(W.worst)} ms${W.hitches ? `, ${W.hitches} hitch${W.hitches > 1 ? 'es' : ''} over 50 ms` : ''}, ${W.made} new pictures`;
     results.push(line); log(line, grade(W.worst));
   };
-  const watchFor = what => watches.push({ what, worst: 0, hitches: 0, until: w.performance.now() + 3000 });
+  const watchFor = (what, ms = 3000) => watches.push({ what, worst: 0, hitches: 0, made: 0, until: w.performance.now() + ms });
+  setTimeout(() => watchFor('standing still (baseline, 5 s)', 5000), 2000);
 
   // ---- the buttons
   const nextRelic = () => Object.keys(RELICS).find(id => !run.relics.includes(id));
