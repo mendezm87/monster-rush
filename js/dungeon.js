@@ -14,12 +14,40 @@ const STARTERS = ['smugshi', 'cinderox', 'tidalisk'];
 const ROOM_SIZES = { s: [576, 324], wide: [864, 324], tall: [576, 486], big: [864, 486], boss: [864, 540] };
 const REVIVE_HP = 0.3;                                   // fainted party members come back at 30% on a new floor
 
-// Leveling: XP for each wild Coreature beaten. The Coreature that's out gets it all, the
-// rest of the party (not fainted) gets half. Level n -> n+1 needs XP_NEED(n).
-const XP_WILD = 10, XP_TOUGH = 20, XP_BOSS = 50, XP_BENCH = 0.5;
-const XP_NEED = n => 18 + 11 * n;
-const LV_HP = 0.035, LV_STAT = 0.02, LV_HEAL = 0.05;     // per level: +3.5% HP, +2% atk/def; leveling heals 5%
-const LEARN_EVERY = 2;   // a new move to learn at every 2nd level (2, 4, 6, ...)
+// Restoring (replaced levels in r88): Coreatures don't level up, they recover their lost data. Each
+// wild Coreature beaten gives data (the one that's out gets it all, the rest of the party, not
+// fainted, half). Data fills a bar, one bar at a time: RESTORE_NEED(bars) for the next, where `bars`
+// counts every bar ever completed. Stats grow smoothly with everything restored (RS_HP and RS_STAT
+// per full bar, so a new form keeps what its old one gained); at 25 / 50 / 75% of every bar a lost
+// memory comes back (a pick-1-of-2 between fights: a move or a strength, MEMORY_AT); at 100% a
+// Coreature with a next form is ready to Restore into it (after the room is cleared), and one with
+// no next form is fully restored and keeps cycling the bar (mastery).
+const DATA_WILD = 10, DATA_TOUGH = 20, DATA_BOSS = 50, DATA_BENCH = 0.5;
+const RESTORE_NEED = bars => 220 + 70 * bars;
+const RS_HP = 0.15, RS_STAT = 0.08, RS_HEAL = 0.1;   // per full bar: +15% HP, +8% attack and defence; a full bar heals 10%
+const MEMORY_AT = [0.25, 0.5, 0.75];
+// The strengths a memory can bring back instead of a move (multipliers on this Coreature, for the run).
+const STRENGTHS = {
+  resilience: { name: 'RESILIENCE', desc: '+10% max HP.', mem: { hp: 1.1 } },
+  ferocity:   { name: 'FEROCITY',   desc: '+8% attack.', mem: { atk: 1.08 } },
+  armor:      { name: 'ARMOR',      desc: '+8% defence.', mem: { def: 1.08 } },
+  agility:    { name: 'AGILITY',    desc: '+8% speed.', mem: { spd: 1.08 } },
+  focus:      { name: 'FOCUS',      desc: 'Its moves recharge 6% faster.', mem: { cd: 0.94 } },
+};
+// A form's stage in its line: I for a first form, II and III for what it Restores into, IV for a legend.
+const STAGE_NUM = ['', 'I', 'II', 'III', 'IV'];
+// e.g. "II · 62%" (stage II, 62% of its bar), "I ✦2 · 40%" (a one-form Coreature fully restored twice)
+const restoreLabel = m => `${STAGE_NUM[formStage(m.def)]}${m.mastery ? ' ✦' + m.mastery : ''} · ${Math.floor(m.restore * 100)}%`;
+function formStage(def) {
+  if (LEGENDS.includes(def)) return 4;
+  let n = 1, cur = def;
+  for (let guard = 0; guard < 5; guard++) {
+    const from = [...ROSTER, ...EVOLVED].find(d => d.evolve && d.evolve.to === cur.id);
+    if (!from) break;
+    n++; cur = from;
+  }
+  return n;
+}
 
 // Wild Coreatures are weaker than arena Coreatures (there can be three of them) and get
 // tougher each floor; a boss is close to full arena strength.
@@ -363,8 +391,8 @@ const TRAINERS = {
     desc: 'Swapping recharges twice as fast, and a Coreature you swap in hits 25% harder for 4 seconds.', drawback: null, unlock: null,
     perk: { mods: { swapCdMul: 0.5 }, on: { swapIn(b, m) { m.buffs.push({ stat: 'atk', mul: 1.25, t: 4 }); } } } },
   researcher: { name: 'FIELD RESEARCHER', power: 'Field Notes',
-    desc: 'Your party earns 30% more XP, and recruit rooms offer 4 Coreatures instead of 3.', drawback: 'Your Coreatures deal 10% less damage.',
-    unlock: 'Recruit 10 different Coreatures.', perk: { bonus: { atk: 0.9 } }, xpMul: 1.3, offers: 4 },
+    desc: 'Your Coreatures restore 30% faster, and recruit rooms offer 4 Coreatures instead of 3.', drawback: 'Your Coreatures deal 10% less damage.',
+    unlock: 'Recruit 10 different Coreatures.', perk: { bonus: { atk: 0.9 } }, dataMul: 1.3, offers: 4 },
   diver: { name: 'DUNGEON DIVER', power: 'Delver',
     desc: 'Starts with a random relic, and the lantern shows the whole map of every floor.', drawback: 'An old salvaged Arcbracer: only 4 Arc-core slots.',
     unlock: 'Reach floor 4.', partyMax: 4, reveal: true, startRelic: true },
@@ -413,9 +441,9 @@ class RunState {
     return {
       v: RUN_SAVE_VERSION, endless: this.endless, trainer: this.trainer, look: this.look, pi: this.pi, coins: this.coins, relics: this.relics, stats: this.stats, floorN: this.floorN,
       room: at(this.room),
-      party: this.party.map(m => ({ id: m.id, level: m.level, xp: m.xp, hp: Math.round(m.hp), fainted: m.fainted,
+      party: this.party.map(m => ({ id: m.id, bars: m.bars, data: m.data, mem: m.mem, pending: !!m.restorePending, mastery: m.mastery || 0, hp: Math.round(m.hp), fainted: m.fainted,
         moves: m.moves.map(x => x.id), known: m.known, newMoves: m.newMoves || [], fused: m.fused || [] })),
-      learnQueue: this.learnQueue.map(q => ({ mon: this.party.indexOf(q.mon), id: q.id })).filter(q => q.mon >= 0),
+      learnQueue: this.learnQueue.map(q => ({ mon: this.party.indexOf(q.mon), id: q.id, choice: q.choice })).filter(q => q.mon >= 0),
       floor: { n: this.floor.n, last: this.floor.last, stage: this.floor.stage, start: at(this.floor.start), boss: at(this.floor.boss),
         rooms: rooms.map(r => {
           const o = {};
@@ -430,12 +458,13 @@ class RunState {
     Object.assign(run, { endless: d.endless, trainer: d.trainer || 'scarf', look: d.look || 'm', pi: d.pi, coins: d.coins, relics: d.relics, stats: d.stats, floorN: d.floorN, swapCd: 0 });
     run.party = d.party.map(o => {
       const m = new Mon(ROSTER_BY_ID[o.id], 'player');
-      m.setLevel(o.level); m.xp = o.xp;
+      if (o.bars !== undefined) { m.bars = o.bars; m.data = o.data; m.mem = { ...m.mem, ...o.mem }; m.restorePending = !!o.pending; m.mastery = o.mastery || 0; m.grow(); }
+      else m.setProgress(Math.max(0, (o.level - 1) / 4));   // a run saved before the Restore system: levels become restoration
       m.known = o.known; m.setMoves(o.moves); m.newMoves = o.newMoves; m.fused = o.fused;
       m.hp = Math.min(m.maxHp, o.hp); m.fainted = o.fainted;
       return m;
     });
-    run.learnQueue = d.learnQueue.map(q => ({ mon: run.party[q.mon], id: q.id }));
+    run.learnQueue = d.learnQueue.map(q => ({ mon: run.party[q.mon], id: q.id, choice: q.choice }));
     const rooms = d.floor.rooms.map(o => ({ ...o, doors: {} }));
     d.floor.rooms.forEach((o, i) => { for (const [dir, j] of Object.entries(o.doors)) rooms[i].doors[dir] = rooms[j]; });
     run.floor = { n: d.floor.n, last: d.floor.last, stage: d.floor.stage, rooms, start: rooms[d.floor.start], boss: rooms[d.floor.boss] };
@@ -479,21 +508,35 @@ class RunState {
     if (id === 'revive') { if (!down.length) return false; if (!dry) for (const m of down) { m.fainted = false; m.hp = Math.round(m.maxHp * 0.4); m.status = null; } }
     return true;
   }
-  // Returns the level-ups: [{ mon, level, learned }] (learned: a new move id, at every even level)
-  giveXp(amount) {
-    const ups = [];
+  // Give the party data. Returns what happened: [{ mon, full }] for every bar completed (memories
+  // reached on the way go into learnQueue as choices, offered between fights).
+  giveData(amount) {
+    const out = [];
     this.party.forEach((m, i) => {
       if (m.fainted) return;
-      m.xp += Math.round(amount * (i === this.pi ? 1 : XP_BENCH) * (this.T.xpMul || 1));
-      while (m.xp >= XP_NEED(m.level)) {
-        m.xp -= XP_NEED(m.level);
-        m.setLevel(m.level + 1);
-        const learned = m.level % LEARN_EVERY === 0 ? this.learnMove(m) : null;
-        if (learned) this.learnQueue.push({ mon: m, id: learned });
-        ups.push({ mon: m, level: m.level, learned });
+      let left = Math.round(amount * (i === this.pi ? 1 : DATA_BENCH) * (this.T.dataMul || 1));
+      while (left > 0) {
+        const need = RESTORE_NEED(m.bars), before = m.data / need, take = Math.min(left, need - m.data);
+        m.data += take; left -= take;
+        const after = m.data / need;
+        for (const at of MEMORY_AT) if (before < at && after >= at) this.learnQueue.push({ mon: m, choice: this.memoryChoice(m) });
+        if (m.data >= need) {
+          m.data = 0; m.bars++;
+          if (m.def.evolve) m.restorePending = true; else m.mastery++;
+          out.push({ mon: m, full: true });
+        }
       }
+      m.grow();
     });
-    return ups;
+    return out;
+  }
+  // Two options for a memory that comes back: two moves, a move or a strength, or two strengths.
+  memoryChoice(m) {
+    const moves = movePool(m.id).filter(k => !m.known.includes(k)).sort(() => Math.random() - 0.5);
+    const strengths = Object.keys(STRENGTHS).sort(() => Math.random() - 0.5);
+    if (moves.length >= 2 && Math.random() < 0.5) return [{ move: moves[0] }, { move: moves[1] }];
+    if (moves.length >= 1) return [{ move: moves[0] }, { strength: strengths[0] }];
+    return [{ strength: strengths[0] }, { strength: strengths[1] }];
   }
   // Teach a Coreature a new move it can learn (movesets.js); returns its id, or null if it knows them all.
   learnMove(m) {
@@ -503,15 +546,15 @@ class RunState {
     m.known.push(k);
     return k;
   }
-  // new recruits join a level behind the party's average, at full HP
-  joinLevel() {
-    const avg = this.party.reduce((s, m) => s + m.level, 0) / this.party.length;
-    return Math.max(1, Math.round(avg) - 1);
+  // new recruits join a little behind the party's average restoration, at full HP
+  joinProgress() {
+    const avg = this.party.reduce((s, m) => s + m.progress, 0) / this.party.length;
+    return Math.max(0, avg - 0.3);
   }
   recruit(id, releaseIdx = -1) {
     const m = new Mon(ROSTER_BY_ID[id], 'player');
-    m.setLevel(this.joinLevel()); m.hp = m.maxHp;
-    for (let lv = LEARN_EVERY; lv <= m.level; lv += LEARN_EVERY) this.learnMove(m);   // the moves it learned on the way (in its moves menu)
+    m.setProgress(this.joinProgress()); m.hp = m.maxHp;
+    for (let k = 0; k < Math.floor(m.progress * MEMORY_AT.length); k++) this.learnMove(m);   // the moves it recalled on the way (in its moves menu)
     m.bonus = { ...this.party[0].bonus };
     if (releaseIdx >= 0) this.release(releaseIdx, m);
     else this.party.push(m);

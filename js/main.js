@@ -2,7 +2,7 @@
 
 // Shown on the title screen so players can tell whether their browser has the latest
 // build (GitHub Pages lets browsers cache files for up to 10 minutes). Bump on every release.
-const VERSION = '2026.10.20-r88';
+const VERSION = '2026.10.20-r89';
 
 const App = {
   endless: false,   // the mode picked on the title screen
@@ -63,7 +63,7 @@ Backdrop.init();
 function updateContinue() {
   const d = Save.loadRun(), btn = $('#btn-continue');
   btn.classList.toggle('hidden', !d);
-  if (d) { const m = d.party[d.pi] || d.party[0]; btn.innerHTML = `CONTINUE<small>${d.endless ? 'Endless floor ' + d.floorN : `Floor ${d.floorN}/${RUN_FLOORS}`} · ${ROSTER_BY_ID[m.id] ? ROSTER_BY_ID[m.id].name : ''} Lv ${m.level}</small>`; }
+  if (d) { const m = d.party[d.pi] || d.party[0]; btn.innerHTML = `CONTINUE<small>${d.endless ? 'Endless floor ' + d.floorN : `Floor ${d.floorN}/${RUN_FLOORS}`} · ${ROSTER_BY_ID[m.id] ? ROSTER_BY_ID[m.id].name : ''}</small>`; }
 }
 $('#btn-continue').onclick = () => { Sfx.init(); Sfx.play('select'); continueRun(); };
 $('#btn-play').onclick = () => { Sfx.init(); Sfx.play('select'); App.endless = false; openTrainer(); };
@@ -326,7 +326,7 @@ function showResult(result, record = false) {
     $('#result-stats').innerHTML = `Reached floor ${run.floorN}${run.endless ? ` (best ${Save.data.bestEndless})` : ` of ${RUN_FLOORS}, ${STAGES[run.floor.stage].name}`} &nbsp;·&nbsp; Time ${ts}<br>
       Rooms cleared ${run.stats.rooms} &nbsp;·&nbsp; Wild Coreatures beaten ${run.stats.kos}<br>
       Coins ${run.coins} &nbsp;·&nbsp; Relics ${run.relics.length}<br>
-      Party ${run.party.map(m => `${m.def.name} Lv ${m.level}`).join(', ')}`;
+      Party ${run.party.map(m => `${m.def.name} (${restoreLabel(m)})`).join(', ')}`;
     UI.show('result');
   }, 1400);
 }
@@ -344,7 +344,7 @@ function openOffer(ped) {
   if (ped.kind === 'mon') {
     const def = ROSTER_BY_ID[ped.id];
     $('#recruit-title').textContent = `Recruit ${def.name}?`;
-    UI.fillDetail($('#recruit-detail'), def, ` · joins at Lv ${run.joinLevel()}`);
+    UI.fillDetail($('#recruit-detail'), def, ` · joins ${Math.floor(run.joinProgress() % 1 * 100)}% restored`);
     if (full) drawOfferParty();
     yes.textContent = 'RECRUIT'; yes.disabled = full;
   } else {
@@ -512,7 +512,7 @@ function drawParty() {
   }
   const m = run.party[Party.sel];
   const fused = (m.fused || []).map(id => RELICS[id].fused.name).join(', ');
-  UI.fillDetail($('#party-detail'), m.def, ` · Lv ${m.level} · ${m.fainted ? 'FAINTED' : `${Math.ceil(m.hp)} / ${m.maxHp} HP`}${fused ? ` · Fused: ${fused}` : ''}`);
+  UI.fillDetail($('#party-detail'), m.def, ` · ${restoreLabel(m)} restored · ${m.fainted ? 'FAINTED' : `${Math.ceil(m.hp)} / ${m.maxHp} HP`}${fused ? ` · Fused: ${fused}` : ''}`);
   $('#party-detail .d-moves').outerHTML = movesEditorHtml(m);
   $('#party-detail .d-mvdesc').remove();   // the editor has its own description line
   btn.disabled = !canRelease(Party.sel);
@@ -557,7 +557,7 @@ function movesEditorHtml(m) {
     <div class="mv-slots">${ids.map((k, i) => moveBtn(k, `data-slot="${i}"`, i === MovesEd.slot ? 'sel' : '', slotLabel(i))).join('')}</div>
     ${moveDescHtml(MovesEd.mv || (MovesEd.slot >= 0 ? ids[MovesEd.slot] : null))}
     ${spare.length ? `<div class="mv-head">Also knows</div><div class="mv-known">${spare.map(k => moveBtn(k, `data-mv="${k}"`, (k === MovesEd.mv ? 'sel ' : '') + (fresh.includes(k) ? 'new' : ''))).join('')}</div>`
-      : `<div class="hint">It learns a new move at every 2nd level.</div>`}</div>`;
+      : `<div class="hint">At 25, 50 and 75% restored, a lost memory comes back: a move or a strength.</div>`}</div>`;
 }
 // a tap inside a moves editor; returns true if it should be redrawn
 function movesEditorTap(m, el) {
@@ -590,6 +590,7 @@ function afterMovesChange(m) {
 const Learn = { cur: null };
 function openLearn() {
   const run = App.run, item = run.learnQueue.shift();
+  if (item && item.choice) return openMemory(item);
   if (!item || !run.party.includes(item.mon) || !item.mon.known.includes(item.id)) return;
   Learn.cur = item; MovesEd.slot = -1; MovesEd.mv = null;
   App.paused = true; Input.reset();
@@ -600,7 +601,7 @@ function openLearn() {
 function drawLearn() {
   const { mon: m, id } = Learn.cur, mv = MOVES[id];
   $('#learn-title').textContent = `${m.def.name} learned ${mv.name}!`;
-  UI.fillDetail($('#learn-detail'), m.def, ` · Lv ${m.level}`);
+  UI.fillDetail($('#learn-detail'), m.def, ` · ${restoreLabel(m)}`);
   $('#learn-detail .d-moves').outerHTML = `<div class="mv-ed"><div class="mv-new">${moveBtn(id, 'disabled', 'big')}</div>${moveDescHtml(id)}
     <div class="mv-head">Put it in place of <span>(the old move stays known: swap back any time in Pause, Party)</span></div>
     <div class="mv-slots">${m.moves.map((x, i) => moveBtn(x.id, `data-slot="${i}"`, '', slotLabel(i))).join('')}</div></div>`;
@@ -623,6 +624,40 @@ $('#learn-detail').addEventListener('click', e => {
   closeLearn(false);
 });
 $('#btn-learn-keep').onclick = () => { Sfx.play('back'); closeLearn(true); };
+
+// ---------- a memory comes back (25 / 50 / 75% of the restore bar): pick 1 of 2 ----------
+const Memory = { cur: null };
+function openMemory(item) {
+  if (!App.run.party.includes(item.mon)) return;
+  Memory.cur = item;
+  App.paused = true; Input.reset();
+  const m = item.mon;
+  $('#memory-title').textContent = `${m.def.name} remembers…`;
+  $('#memory-sub').textContent = `${restoreLabel(m)} restored. Pick which lost memory comes back.`;
+  $('#memory-cards').innerHTML = item.choice.map((o, i) => o.move
+    ? `<div class="mem" role="button" tabindex="0" data-opt="${i}"><div class="k">A LOST MOVE</div><div class="mbig">${moveBtn(o.move, 'disabled', 'big')}</div>${moveDescHtml(o.move)}</div>`
+    : `<div class="mem" role="button" tabindex="0" data-opt="${i}"><div class="k">A LOST STRENGTH</div><div class="n">${STRENGTHS[o.strength].name}</div>${STRENGTHS[o.strength].desc} For the rest of the run.</div>`).join('');
+  UI.show('memory');
+  Sfx.play('levelUp');
+}
+$('#memory-cards').addEventListener('click', e => {
+  const b = e.target.closest('[data-opt]');
+  if (!b || !Memory.cur) return;
+  const { mon: m, choice } = Memory.cur, o = choice[+b.dataset.opt];
+  Memory.cur = null;
+  if (o.move) {   // a move: it's known again, then pick a slot for it (or keep it for later)
+    if (!m.known.includes(o.move)) m.known.push(o.move);
+    Sfx.play('select');
+    Learn.cur = { mon: m, id: o.move }; MovesEd.slot = -1; MovesEd.mv = null;
+    drawLearn(); UI.show('learn');
+  } else {        // a strength: applies straight away
+    const g = STRENGTHS[o.strength].mem;
+    for (const k of Object.keys(g)) m.mem[k] *= g[k];
+    m.grow();
+    Sfx.play('blip'); UI.banner(`${m.def.name}: ${STRENGTHS[o.strength].name}!`);
+    UI.hideScreens(); App.paused = false;
+  }
+});
 $('#btn-party-back').onclick = () => { Sfx.play('back'); UI.show('pause'); };
 $('#btn-party').onclick = () => { Sfx.play('select'); openParty(); };
 

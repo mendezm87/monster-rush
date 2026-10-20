@@ -70,8 +70,12 @@ html, body {
   -webkit-text-stroke: 0.45cqh var(--ink); paint-order: stroke fill; color: #fff; line-height: 1; }
 
 .mon-name .lv { font-size: 2.6cqh; color: #ffe066; margin-left: 1cqh; }
-.xpbar { height: 1cqh; background: #2a2638; border-radius: 0.5cqh; overflow: hidden; margin-top: 0.4cqh; }
-.xpbar div { height: 100%; background: #5aa0ff; }
+.xpbar { position: relative; height: 1.2cqh; background: #2a2638; border-radius: 0.5cqh; overflow: hidden; margin-top: 0.4cqh; }
+.xpbar div { height: 100%; background: linear-gradient(90deg, #3ac8ff, #8af0ff); }
+/* the restore bar's memory marks at 25, 50 and 75% */
+.xpbar::after { content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(90deg, transparent calc(25% - 0.2cqh), #fff8 calc(25% - 0.2cqh) 25%, transparent 25% calc(50% - 0.2cqh), #fff8 calc(50% - 0.2cqh) 50%,
+    transparent 50% calc(75% - 0.2cqh), #fff8 calc(75% - 0.2cqh) 75%, transparent 75%); }
 .card .c-lv { position: absolute; top: 1cqh; right: 1.2cqh; font-size: 2.4cqh; color: #ffe066; -webkit-text-stroke: 0.3cqh var(--ink); paint-order: stroke fill; }
 .slots { grid-column: 1 / 3; display: flex; align-items: center; gap: 0.6cqh; }
 .ball { width: 3.2cqh; height: 3.2cqh; border-radius: 50%; border: 0.4cqh solid var(--ink);
@@ -384,3 +388,12 @@ kbd { background: #2b2540; border: 0.3cqh solid #555; border-bottom-width: 0.8cq
 .slots .slot { position: relative; }
 /* type icons in tags */
 .tag .ticon { width: 1.1em; height: 1.1em; vertical-align: -0.15em; margin-right: 0.25em; image-rendering: pixelated; }
+
+/* a memory comes back: pick 1 of 2 */
+.memory-cards { display: flex; gap: 3cqh; justify-content: center; flex-wrap: wrap; margin: 2cqh 0; }
+.memory-cards .mem { width: 46cqh; min-height: 30cqh; padding: 2cqh; border-radius: 2.4cqh; border: 0.7cqh solid var(--ink); background: #241f36; color: #fff;
+  cursor: pointer; text-align: left; font: 700 2.4cqh/1.35 system-ui, sans-serif; box-shadow: 0 0.8cqh 0 var(--ink); }
+.memory-cards .mem:hover, .memory-cards .mem:focus { transform: translateY(-0.4cqh); border-color: #5ae8ff; }
+.memory-cards .mem .k { font: 900 2.2cqh var(--font); color: #5ae8ff; letter-spacing: .08em; }
+.memory-cards .mem .n { font: 900 3.6cqh var(--font); margin: 0.6cqh 0; }
+.memory-cards .mem .mbig { pointer-events: none; }

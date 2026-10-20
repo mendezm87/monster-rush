@@ -3,7 +3,7 @@
 const $ = sel => document.querySelector(sel);
 
 const UI = {
-  screens: ['title', 'help', 'starter', 'recruit', 'party', 'pick', 'pause', 'result', 'settings', 'learn', 'altar', 'info', 'trainer'],
+  screens: ['title', 'help', 'starter', 'recruit', 'party', 'pick', 'pause', 'result', 'settings', 'learn', 'memory', 'altar', 'info', 'trainer'],
 
   show(name) {
     for (const s of this.screens) $('#screen-' + s).classList.toggle('hidden', s !== name);
@@ -66,7 +66,7 @@ const UI = {
       drawPortrait(cv, m.id, { fainted: m.fainted });
       card.appendChild(cv);
       card.insertAdjacentHTML('beforeend',
-        `<div class="c-lv">Lv ${m.level}</div><div class="c-name">${m.def.name}</div><div class="c-types">${m.def.types.map(t => this.typeTag(t)).join('')}</div>` +
+        `<div class="c-lv">${restoreLabel(m)}</div><div class="c-name">${m.def.name}</div><div class="c-types">${m.def.types.map(t => this.typeTag(t)).join('')}</div>` +
         (hp ? `<div class="c-hp">${m.fainted ? 'FAINTED' : `${Math.ceil(m.hp)} / ${m.maxHp} HP`}</div>` : ''));
       if (onPick) card.onclick = () => onPick(i);
       el.appendChild(card);
@@ -225,9 +225,9 @@ const UI = {
       drawPortrait(root.querySelector('.portrait canvas'), mon.id, { zoom: 1.6, crop: true });
       c.tags = null; c.name = null;
     }
-    const name = `${mon.def.name}<span class="lv">Lv ${mon.level}</span>`;
+    const name = `${mon.def.name}<span class="lv" data-tip="text:Restored ${Math.floor(mon.restore * 100)}% of its next piece of lost data. At 25, 50 and 75% a memory comes back; at 100% it Restores into its next form, or is fully restored.">${restoreLabel(mon)}</span>`;
     if (c.name !== name) { root.querySelector('.mon-name').innerHTML = name; c.name = name; }
-    root.querySelector('.xpbar div').style.width = (mon.xp / XP_NEED(mon.level) * 100) + '%';
+    root.querySelector('.xpbar div').style.width = (mon.restore * 100) + '%';   // the restore bar
     const tags = mon.def.types.map(t => this.typeTag(t)).join('') +
       (mon.status ? `<span class="tag status ${mon.status}" data-tip="status:${mon.status}">${mon.status.toUpperCase()}</span>` : `<span class="tag item" data-tip="item:${mon.def.item}">${mon.item.name || ''}</span>`);
     if (c.tags !== tags) { root.querySelector('.tags').innerHTML = tags; c.tags = tags; }

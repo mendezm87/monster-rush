@@ -290,14 +290,14 @@ const ROSTER = [
   { id: 'smouldox', name: 'SMOULDOX', types: ['fire', 'earth'], hp: 1300, atk: 1.12, def: 1.2, spd: 64, size: 'M', item: 'emberStone',
     moves: ['flameWheel', 'rockSlide', 'fireBlast', 'heavyStomp'] },
   { id: 'shellmet', name: 'SHELLMET', types: ['water', 'metal'], hp: 950, atk: 0.95, def: 1.15, spd: 78, size: 'M', item: 'mysticDrop',
-    moves: ['spoutShot', 'aquaJet', 'ironSlam', 'ironDefense'], evolve: { to: 'bulwarden', level: 5 } },
+    moves: ['spoutShot', 'aquaJet', 'ironSlam', 'ironDefense'], evolve: { to: 'bulwarden' } },
   { id: 'bulwarden', name: 'BULWARDEN', types: ['water', 'metal'], hp: 1200, atk: 1.02, def: 1.22, spd: 68, size: 'M', item: 'mysticDrop',
-    moves: ['cuffCannon', 'hydroCannon', 'ironSlam', 'ironDefense'], evolve: { to: 'garrishell', level: 9 } },
+    moves: ['cuffCannon', 'hydroCannon', 'ironSlam', 'ironDefense'], evolve: { to: 'garrishell' } },
   { id: 'garrishell', name: 'GARRISHELL', types: ['water', 'metal'], hp: 1500, atk: 1.1, def: 1.3, spd: 58, size: 'L', item: 'mysticDrop',
     moves: ['twinCannon', 'hydroCannon', 'ironSlam', 'ironDefense'] },
 ];
 
-// Evolved forms: a starter becomes one of these at `evolve.level` (see `evolve` on the base
+// Evolved forms: a starter Restores into one of these when its bar fills (see `evolve` on the base
 // Coreature). They aren't part of the wild / recruit pool.
 const EVOLVED = [
   { id: 'smugshogun', name: 'SMUGSHOGUN', types: ['beast', 'arcane'], hp: 1360, atk: 1.32, def: 1.1, spd: 114, size: 'L', item: 'snackPouch',
@@ -320,8 +320,7 @@ const LEGENDS = [
     moves: ['droneSwarm', 'hydroCannon', 'magnetStorm', 'ironDefense'], from: 'garrishell', recipe: ['metal', 'wind'] },
 ];
 for (const l of LEGENDS) { const base = ROSTER.find(m => m.id === l.from); (base.branches = base.branches || {})[l.id] = l.recipe; }
-const EVOLVE_LEVEL = 6;
-for (const e of EVOLVED) ROSTER.find(m => m.id === e.from).evolve = { to: e.id, level: EVOLVE_LEVEL };
+for (const e of EVOLVED) ROSTER.find(m => m.id === e.from).evolve = { to: e.id };   // it Restores into this form when its bar fills
 const ALL_MONS = () => [...ROSTER, ...EVOLVED, ...LEGENDS];
 const ROSTER_BY_ID = Object.fromEntries(ALL_MONS().map(m => [m.id, m]));
 

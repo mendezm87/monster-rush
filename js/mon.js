@@ -25,7 +25,10 @@ class Mon {
     this.champ = opts.champ || null;   // a champion's trait (CHAMPIONS)
     this.small = !!opts.small;   // a splitting champion's copy
     this.aiKind = opts.ai || null;
-    this.level = 1; this.xp = 0;
+    this.bars = 0; this.data = 0;   // restoration: bars completed, data in the current one (dungeon.js RESTORE_NEED)
+    this.mem = { hp: 1, atk: 1, def: 1, spd: 1, cd: 1 };   // strengths its memories brought back (STRENGTHS)
+    this.restorePending = false;
+    this.mastery = 0;   // times this form, with no next form, has been fully restored   // its bar is full and it has a next form: it Restores once the room is clear
     this.bonus = { atk: 1, def: 1, spd: 1, cd: 1 };   // from relics (player side)
     this.fused = [];   // relics fused into it at the evolution altar (their `fused` versions, for this Coreature only)
     this.setDef(def);
@@ -80,25 +83,33 @@ class Mon {
     this.setMoves(ids);
     return true;
   }
-  get canEvolve() { return !this.fainted && this.def.evolve && this.level >= this.def.evolve.level; }
+  get canEvolve() { return !this.fainted && this.def.evolve && this.restorePending; }
+  // how far through the current bar (0-1), and everything ever restored (bars + that)
+  get restore() { return typeof RESTORE_NEED === 'function' ? this.data / RESTORE_NEED(this.bars) : 0; }
+  get progress() { return this.bars + this.restore; }
   get cy() { return this.y - this.h * 0.4; }
   get alive() { return this.visible && !this.fainted; }
   buffMul(stat) { return this.buffs.reduce((m, b) => (b.stat === stat ? m * b.mul : m), 1); }
-  // each level adds LV_HP to HP and LV_STAT to attack and defence
-  lvMul(per) { return 1 + per * (this.level - 1); }
-  calcMaxHp() { return Math.round(this.def.hp * this.hpMul * this.lvMul(LV_HP)); }
-  atk() { return this.def.atk * this.atkMul * this.lvMul(LV_STAT) * this.bonus.atk * (this.item.atk || 1) * this.buffMul('atk') * (this.status === 'brn' ? 0.75 : 1); }
-  defense() { return this.def.def * this.lvMul(LV_STAT) * this.bonus.def * (this.item.def || 1) * this.buffMul('def'); }
-  cdMul() { return (this.item.cd || 1) * this.bonus.cd * (this.champ === 'swift' ? 0.75 : 1); }
-  // Gain levels; HP grows with the level (and the new HP comes filled in).
-  setLevel(n) {
+  // everything restored so far adds RS_HP to HP and RS_STAT to attack and defence per full bar, smoothly
+  growMul(per) { return 1 + (typeof RS_HP === 'number' ? per : 0) * this.progress; }
+  calcMaxHp() { return Math.round(this.def.hp * this.hpMul * this.growMul(typeof RS_HP === 'number' ? RS_HP : 0) * this.mem.hp); }
+  atk() { return this.def.atk * this.atkMul * this.growMul(typeof RS_STAT === 'number' ? RS_STAT : 0) * this.mem.atk * this.bonus.atk * (this.item.atk || 1) * this.buffMul('atk') * (this.status === 'brn' ? 0.75 : 1); }
+  defense() { return this.def.def * this.growMul(typeof RS_STAT === 'number' ? RS_STAT : 0) * this.mem.def * this.bonus.def * (this.item.def || 1) * this.buffMul('def'); }
+  cdMul() { return (this.item.cd || 1) * this.bonus.cd * this.mem.cd * (this.champ === 'swift' ? 0.75 : 1); }
+  // Stats follow its restoration; new max HP comes filled in.
+  grow() {
     const old = this.maxHp;
-    this.level = n;
     this.maxHp = this.calcMaxHp();
     if (!this.fainted) this.hp = Math.min(this.maxHp, this.hp + (this.maxHp - old));
   }
+  // Set how much it has restored in all (recruits, old saves): bars and data from one number.
+  setProgress(p) {
+    this.bars = Math.floor(p); this.data = Math.round((p - this.bars) * RESTORE_NEED(this.bars));
+    if (this.bars > 0 && this.def.evolve) this.restorePending = true;
+    this.grow();
+  }
   speed() {
-    return this.def.spd * (this.item.spd || 1) * this.bonus.spd * this.buffMul('spd') * (this.champ === 'swift' ? 1.4 : 1) *
+    return this.def.spd * (this.item.spd || 1) * this.bonus.spd * this.mem.spd * this.buffMul('spd') * (this.champ === 'swift' ? 1.4 : 1) *
       (this.status === 'par' ? 0.55 : 1) * (this.slowT > 0 ? 0.55 : 1);
   }
   canAct() { return this.visible && !this.fainted && !this.action && this.stunT <= 0 && this.status !== 'frz'; }

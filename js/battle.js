@@ -172,16 +172,17 @@ class Battle {
     this.stairs = { x: (F.x0 + F.x1) / 2, y: (F.y0 + F.y1) / 2 };
   }
 
-  // Coreatures that reached their level transform (between fights, so moves don't change mid-combo).
-  // In the world's story they're living data from a fallen civilization: leveling up recovers more of
-  // their lost data, until they're whole enough to take back a stronger form.
+  // Coreatures whose bar is full Restore into their next form (between fights, so moves don't change
+  // mid-combo). In the world's story they're living data from a fallen civilization: every bit of data
+  // they recover brings back more of their old selves, until they're whole enough to take back a
+  // stronger form.
   evolveReady() {
     for (const m of this.p) {
       if (!m.canEvolve) continue;
       const from = m.def.name, to = ROSTER_BY_ID[m.def.evolve.to];
-      m.setDef(to);
+      m.setDef(to); m.restorePending = false; m.mastery = 0;
       m.hp = Math.min(m.maxHp, m.hp + Math.round(m.maxHp * 0.25));
-      this.ui.banner(`${from} TRANSFORMED!`, `Its lost data came back: it's ${to.name} again`);
+      this.ui.banner(`${from} RESTORED!`, `Its lost data came back: it's ${to.name} again`);
       this.run.stats.evolved = (this.run.stats.evolved || 0) + 1;
       Sfx.play('evolve');
       if (m === this.P) {
@@ -291,7 +292,7 @@ class Battle {
     if (m.side === 'enemy') {
       this.run.stats.kos++;
       this.dropLoot(m);
-      this.giveXp(m.boss ? XP_BOSS : m.scale > 1 ? XP_TOUGH : XP_WILD);
+      this.giveData(m.boss ? DATA_BOSS : m.scale > 1 ? DATA_TOUGH : DATA_WILD);
       if (m.champ === 'split') this.splitChampion(m);
       return;
     }
@@ -322,20 +323,20 @@ class Battle {
     if (this.hooks.end) this.hooks.end(result);
   }
 
-  // ---------------------------------------------------------- xp
-  giveXp(amount) {
-    for (const ev of this.run.giveXp(amount)) {
-      const m = ev.mon, heal = Math.round(m.maxHp * LV_HEAL);
+  // ---------------------------------------------------------- data (restoring)
+  giveData(amount) {
+    for (const ev of this.run.giveData(amount)) {
+      const m = ev.mon, heal = Math.round(m.maxHp * RS_HEAL);
       m.hp = Math.min(m.maxHp, m.hp + heal);
+      const what = m.def.evolve ? 'DATA COMPLETE!' : 'FULLY RESTORED!';
       if (m === this.P) {
-        this.text(m.x, m.y - m.h - 14, `LEVEL ${m.level}!`, '#ffe066');
-        this.burst(m.x, m.cy, ['#ffe066', '#ffffff', '#ffd23f'], 20, 60, -50);
-        this.particles.push({ x: m.x, y: m.y - 2, r0: 4, r1: 30, life: 0.4, max: 0.4, color: '#ffe066', kind: 'ring', w: 2 });
+        this.text(m.x, m.y - m.h - 14, what, '#ffe066');
+        this.burst(m.x, m.cy, ['#ffe066', '#ffffff', '#5ae8ff'], 20, 60, -50);
+        this.particles.push({ x: m.x, y: m.y - 2, r0: 4, r1: 30, life: 0.4, max: 0.4, color: '#5ae8ff', kind: 'ring', w: 2 });
       } else {
         const t = this.trainer;
-        this.text(t.x, t.y - 50, `${m.def.name} LV ${m.level}`, '#ffe9a0');
+        this.text(t.x, t.y - 50, `${m.def.name}: ${what}`, '#ffe9a0');
       }
-      if (ev.learned) this.text(m === this.P ? m.x : this.trainer.x, (m === this.P ? m.y - m.h : this.trainer.y - 50) - 24, `LEARNED ${MOVES[ev.learned].name.toUpperCase()}!`, TYPES[MOVES[ev.learned].type].fx[1]);
       Sfx.play('levelUp');
     }
     if (this.state === 'explore') this.evolveReady();
@@ -420,10 +421,10 @@ class Battle {
       this.run.coins++;
       this.sparks(k.x, k.y - 4, 4, '#ffe066');
       Sfx.play('coin');
-    } else if (k.kind === 'shard') {   // XP for the party (the Coreature that's out gets it all)
-      this.ui.banner('ARC-CORE SHARD!', 'Scraps of old data: XP for the party');
+    } else if (k.kind === 'shard') {   // data for the party (the Coreature that's out gets it all)
+      this.ui.banner('ARC-CORE SHARD!', 'Scraps of old data for the party');
       Sfx.play('levelUp');
-      this.giveXp(15 + 3 * this.run.floorN);
+      this.giveData(15 + 3 * this.run.floorN);
     } else if (k.kind === 'disc') {    // the Coreature that's out learns a new move
       const id = this.run.learnMove(P);
       if (id) { this.run.learnQueue.push({ mon: P, id }); this.ui.banner('MOVE DISC!'); }

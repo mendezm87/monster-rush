@@ -121,7 +121,7 @@ $('#game').addEventListener('load', async () => {
       if (m.moves.length !== 4 || m.moves.some(k => !MOVES[k])) say('moves: ' + (m.moves.filter(k => !MOVES[k]).join(', ') || 'not 4'));
       if (m.types.some(t => !TYPES[t])) say('unknown type');
       if (!ITEMS[m.item]) say('unknown item ' + m.item);
-      if (m.evolve && (!BYID[m.evolve.to] || !(m.evolve.level > 0))) say('bad evolution');
+      if (m.evolve && !BYID[m.evolve.to]) say('bad evolution');
       for (const [to, recipe] of Object.entries(m.branches || {})) if (!BYID[to] || recipe.length !== 2 || recipe.some(t => !G('RELIC_TAGS').includes(t))) say(`bad altar branch ${to}`);
       if (!found.has(m.id)) say('never appears in the game (no area, starter or evolution)');
       for (const v of VIEWS5) {   // gear spots: on the picture, and in a sensible order
@@ -339,6 +339,13 @@ $('#game').addEventListener('load', async () => {
       // with the same-type bonus) if the new one does more; otherwise keep it for later
       if (LEARN && b.state === 'explore' && App.run.learnQueue.length) {
         w.openLearn();
+        // a memory: take a move if it beats the weakest attack, else a strength (a move then goes on below)
+        const M = G('Memory').cur;
+        if (M) {
+          const MV = G('MOVES'), m = M.mon, dpsM = k => (MV[k].power || 0) * (m.def.types.includes(MV[k].type) ? 1.3 : 1) / (MV[k].cd || 1);
+          const best = M.choice.map((o, i) => ({ i, v: o.move ? dpsM(o.move) : 40 })).sort((a, b) => b.v - a.v)[0];
+          btn('memory-cards').querySelector(`[data-opt="${best.i}"]`).click();
+        }
         const L = G('Learn').cur, MOVES = G('MOVES');
         if (L) {
           const m = L.mon, attack = k => !['buff', 'heal'].includes(MOVES[k].kind);

@@ -29,6 +29,10 @@ New play links (with the example name above):
 - [ ] Update the links in `README.md` and `CLAUDE.md` (both games), and the Stadium link in this game's README.
 - [ ] Check both games load from the new links.
 
+## Game work waiting its turn
+
+- [ ] **Make transformations look cool (owner's request, 2026-10-20).** When a Coreature Restores into its next form it should be a big, memorable moment, not just a flash and a banner: e.g. the screen dims, the Coreature breaks into glowing data, the new form assembles piece by piece (like a deploy, but bigger), a burst in its type's colours, a sound and music sting, the trainer reacting, the new name and form shown big. Plan it with the owner once the Restore bar is in (ROADMAP.md, "The Restore system").
+
 ## Before any release or real product
 
 - [ ] Trademark search by a lawyer (US, EU, Japan) for *Coreatures*, *Deep Archive*, *Arcbracer* and *Arc-core*. The quick web checks so far are in CLAUDE.md under "Names".
