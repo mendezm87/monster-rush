@@ -38,6 +38,17 @@ Coreatures, they level and transform, and relics fuse into them. The roadmap lea
 - [ ] **Trademark search** by a lawyer for the game and brand names (see `TODO.md`).
 - [ ] **Phone check** of the whole game on the owner's phone (memory, frame rate, controls).
 
+## The Restore system (owner's picks, 2026-10-20): replaces levels
+
+Coreatures don't "level up", they **recover their lost data**. The owner picked four ideas from a list of eight (the others were plain levels, fragment collecting, bond through use and feeding):
+
+- [ ] **Restore bar:** each form has a bar from 0 to 100% restored, filled by beating wild Coreatures and Arc-core Shards. Stats grow smoothly with it; the HUD shows the form's stage (I, II, III) instead of a level. At 100% the Coreature **Restores** into its next form ("Smugshi restored: it's Smugshogun again!"). Final forms overflow into altar fuel or a mastery bonus. Grounding: file recovery (rebuilding a damaged file from scattered pieces), a hologram (every piece holds the whole image, blurrier), metamorphosis (smooth growth, then a sudden change of form).
+- [ ] **Memory choices:** at 25 / 50 / 75%, a pick-1-of-2 between fights: which lost memory comes back (two moves, or a move vs a strength such as speed, toughness or a passive). Replaces "a move every 2 levels".
+- [ ] **Branching forms (Digimon-style):** how a Coreature was used (move types, tanking vs dodging, time fighting) decides which form it Restores into when it has more than one. Undiscovered forms show as "???" in the codex. Needs a second form designed per line (owner's image generator), starters first.
+- [ ] **Glitch risk:** tainted data (Glitch champions, cursed rooms, absorbing data at a full bar) builds corruption; at the limit the Coreature becomes a **Glitched** variant (distorted colours, Glitch as a second type, a strong corrupted move, a drawback). Cleanse at the altar or keep it.
+
+Build order: the bar and memory choices first (code only), then Glitch variants (code-drawn colours), then branching forms (needs new designs).
+
 ## Phase 2: Runs that feel different every time (the core of a great roguelike)
 
 The roguelikes people play for hundreds of hours are built on **builds**: items that combine in surprising, sometimes broken ways.
