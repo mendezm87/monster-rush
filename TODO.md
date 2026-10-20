@@ -40,6 +40,7 @@ New play links (with the example name above):
   2. **Relic auras** (sparks, embers, berries, water rings drawn every frame round every Coreature) piling up with lots of relics. This would be a steady cost rather than a passing one, so less likely.
   3. **Memory clean-up:** freeing old dressed sets (`forgetGear`) and old canvases can make the browser pause to collect garbage, especially on iPhone.
   How to check: time `dress()` on each relic pickup, and log frame times through a run that collects 10+ relics (on the dev PC and on a phone). Note whether it lines up with picking up worn relics.
+  **Measured 2026-10-20 (dev PC, party of 6, every relic added one by one): suspect 1 confirmed.** Each worn relic: 130-180 ms frozen and 1,090 new canvases (a whole dressed set per Coreature). Aura relics: 0 ms, 0 canvases. On a phone that's likely a freeze of half a second or more per worn relic, plus a burst of canvas memory (the phone-memory problem from r67). **Fix to build next:** make `gearSprites` build in steps like `warmSprites` (a generator, a few ms per frame, the Coreature that's out first) and have `monSprite` show the old or plain set until the new one is ready; then measure again.
 
 ## Game work waiting its turn
 
