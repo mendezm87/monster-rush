@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deep Archive Types</title>
+  <link rel="stylesheet" href="css/fonts.css">
+  <style>
+    body { margin: 0; background: #0d0b14; color: #fff; font-family: "Lilita One", "Arial Black", Arial, sans-serif; padding: 16px; }
+    h1 { margin: 0 0 6px; font-size: 30px; color: #ffe066; }
+    h2 { font-size: 22px; color: #ffe066; margin: 22px 0 8px; }
+    .hint { font: 600 14px/1.45 system-ui, sans-serif; opacity: .8; max-width: 900px; }
+    .tag { display: inline-block; padding: 2px 9px; border-radius: 9px; font-size: 14px; color: #fff; -webkit-text-stroke: 3px #15111f; paint-order: stroke fill; margin: 2px 2px; }
+    table.chart { border-collapse: collapse; margin-top: 8px; }
+    .chart td, .chart th { width: 34px; height: 30px; text-align: center; font-size: 13px; border: 1px solid #241f36; }
+    .chart th.col { height: 92px; vertical-align: bottom; }
+    .chart th.col span { display: inline-block; transform: rotate(-60deg); transform-origin: left bottom; white-space: nowrap; margin-left: 18px; }
+    .chart th.row { text-align: right; padding-right: 6px; width: auto; }
+    .x2 { background: #2f7a3a; } .xh { background: #7a2f2f; }
+    .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 10px; max-width: 1200px; }
+    .card { background: #1c1730; border: 2px solid #3a3358; border-radius: 12px; padding: 10px 12px; }
+    .card .d { font: 600 13px/1.4 system-ui, sans-serif; opacity: .85; margin: 4px 0 6px; }
+    .card .l { font: 700 12px system-ui, sans-serif; opacity: .7; margin-top: 4px; }
+    .card .m { font: 600 13px system-ui, sans-serif; }
+    .wrap { overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <h1>Proposal: our own types</h1>
+  <div class="hint">Twelve original types grown out of the world (a fallen high-tech civilization, its ruins reclaimed by nature, its data corrupted or still alive), replacing the 18 copied ones. Read the chart across: a move of the row's type does <b>2×</b> (green) or <b>½</b> (red) damage to a Coreature of the column's type; blank is normal. Three of our own triangles sit beside the classic fire / water / plant one: <b>Arcane</b> beats <b>Glitch</b> beats <b>Iron</b> beats <b>Arcane</b>, and <b>Beast</b> beats <b>Shade</b> beats <b>Arcane</b> beats <b>Beast</b>.</div>
+  <h2>The chart</h2>
+  <div class="wrap"><table class="chart" id="chart"></table></div>
+  <h2>The types</h2>
+  <div class="cards" id="cards"></div>
+  <h2>What happens to the old types</h2>
+  <div class="hint" id="old"></div>
+
+  <script>
+    // The proposal (not used by the game yet).
+    const T = {
+      blaze:   { name: 'Blaze',   color: '#f0642a', desc: 'Fire and heat: the furnaces and magma under the ruins.', relic: 'fire' },
+      tide:    { name: 'Tide',    color: '#3a8ef0', desc: 'Water, rain and the sea that swallowed half the old cities.', relic: 'water' },
+      storm:   { name: 'Storm',   color: '#f4c430', desc: 'Lightning and the power that still runs through old cables.', relic: 'storm' },
+      verdant: { name: 'Verdant', color: '#4caf50', desc: 'Plants, insects and the wild growth reclaiming the ruins.', relic: 'life' },
+      stone:   { name: 'Stone',   color: '#a07850', desc: 'Rock, earth and rubble: the bones of the old world.' },
+      frost:   { name: 'Frost',   color: '#7ad8f0', desc: 'Ice and cold: frozen vaults, preserved things.' },
+      gale:    { name: 'Gale',    color: '#9ab8e8', desc: 'Wind, flight and open sky above the spires.', relic: 'wind' },
+      iron:    { name: 'Iron',    color: '#8a96a8', desc: 'Metal and machines: the old civilization\'s hardware.', relic: 'iron' },
+      glitch:  { name: 'Glitch',  color: '#d040c8', desc: 'Corrupted data: broken code that spreads like poison. New, and only ours.' },
+      arcane:  { name: 'Arcane',  color: '#8a5ae8', desc: 'The old world\'s mind and myth: minds, light, dragons, things that seem like magic.' },
+      shade:   { name: 'Shade',   color: '#4a3a6a', desc: 'Darkness, shadows and lingering echoes of the dead.' },
+      beast:   { name: 'Beast',   color: '#c89a6a', desc: 'Raw body and instinct: claws, fists, tackles, plain toughness.' },
+    };
+    // attacking type -> { 2: [...], h: [...] } (h = half damage)
+    const C = {
+      blaze:   { 2: ['verdant', 'frost', 'iron'], h: ['tide', 'stone', 'blaze'] },
+      tide:    { 2: ['blaze', 'stone'], h: ['verdant', 'tide', 'frost'] },
+      storm:   { 2: ['tide', 'gale', 'iron'], h: ['stone', 'verdant', 'storm', 'glitch'] },
+      verdant: { 2: ['tide', 'stone', 'glitch'], h: ['blaze', 'gale', 'verdant'] },
+      stone:   { 2: ['blaze', 'storm', 'frost'], h: ['iron', 'beast'] },
+      frost:   { 2: ['verdant', 'gale', 'arcane'], h: ['blaze', 'tide', 'frost', 'iron'] },
+      gale:    { 2: ['verdant', 'beast'], h: ['stone', 'storm'] },
+      iron:    { 2: ['arcane', 'frost'], h: ['blaze', 'tide', 'iron', 'storm'] },
+      glitch:  { 2: ['iron', 'storm'], h: ['arcane', 'verdant', 'glitch', 'shade'] },
+      arcane:  { 2: ['glitch', 'beast'], h: ['iron', 'shade', 'arcane'] },
+      shade:   { 2: ['arcane', 'shade'], h: ['beast'] },
+      beast:   { 2: ['shade', 'stone'], h: ['arcane', 'gale', 'glitch'] },
+    };
+    // every Coreature's new types, from its old ones
+    const MAP = { normal: 'beast', fighting: 'beast', fire: 'blaze', water: 'tide', grass: 'verdant', bug: 'verdant', electric: 'storm', ice: 'frost',
+      ground: 'stone', rock: 'stone', dragon: 'arcane', psychic: 'arcane', fairy: 'arcane', dark: 'shade', ghost: 'shade', poison: 'glitch', flying: 'gale', steel: 'iron' };
+    const MONS = [['Sparkit', 'electric'], ['Cinderox', 'fire'], ['Tidalisk', 'water'], ['Thornback', 'grass/ground'], ['Slumbear', 'normal'], ['Frostling', 'ice'],
+      ['Drakorn', 'dragon'], ['Boulderon', 'rock/ground'], ['Mindra', 'psychic'], ['Shadefang', 'dark'], ['Lumawool', 'electric'], ['Brawlix', 'fighting'],
+      ['Galewing', 'flying'], ['Venomire', 'poison'], ['Scarablade', 'bug/fighting'], ['Wispurr', 'ghost'], ['Gearhulk', 'steel'], ['Pixibelle', 'fairy'],
+      ['Smugshi', 'normal/fairy'], ['Mondaze', 'normal/dark'], ['Voltergeist', 'electric/ghost'], ['Coilizard', 'electric/rock'], ['Bellpaca', 'electric/normal'],
+      ['Smouldox', 'fire/rock'], ['Shellmet', 'water/steel'], ['Bulwarden', 'water/steel'], ['Garrishell', 'water/steel'], ['Smugshogun', 'normal/fairy'],
+      ['Infernox', 'fire/ground'], ['Maelstrisk', 'water/dragon'], ['Magma Bastion', 'water/fire'], ['Railwarden', 'water/electric'], ['Citadrone', 'water/steel']];
+    const newTypes = old => [...new Set(old.split('/').map(t => MAP[t]))];
+    const tag = k => `<span class="tag" style="background:${T[k].color}">${T[k].name}</span>`;
+    const keys = Object.keys(T);
+    const mult = (a, d) => C[a][2].includes(d) ? 2 : C[a].h.includes(d) ? 0.5 : 1;
+    // the chart
+    let h = '<tr><th></th>' + keys.map(k => `<th class="col"><span>${tag(k)}</span></th>`).join('') + '</tr>';
+    for (const a of keys) h += `<tr><th class="row">${tag(a)}</th>` + keys.map(d => { const m = mult(a, d); return `<td class="${m === 2 ? 'x2' : m === 0.5 ? 'xh' : ''}">${m === 2 ? '2×' : m === 0.5 ? '½' : ''}</td>`; }).join('') + '</tr>';
+    document.getElementById('chart').innerHTML = h;
+    // a card per type: what it's good and bad against, who has it
+    const who = k => MONS.filter(([, o]) => newTypes(o).includes(k)).map(([n]) => n);
+    document.getElementById('cards').innerHTML = keys.map(k => {
+      const weak = keys.filter(a => mult(a, k) === 2), resist = keys.filter(a => mult(a, k) === 0.5);
+      return `<div class="card">${tag(k)}${T[k].relic ? ` <span class="l">relic element: ${T[k].relic}</span>` : ''}<div class="d">${T[k].desc}</div>
+        <div class="l">Hits hard</div><div>${C[k][2].map(tag).join('')}</div>
+        <div class="l">Hits weakly</div><div>${C[k].h.map(tag).join('')}</div>
+        <div class="l">Weak to</div><div>${weak.map(tag).join('') || '<span class="m">nothing</span>'}</div>
+        <div class="l">Resists</div><div>${resist.map(tag).join('') || '<span class="m">nothing</span>'}</div>
+        <div class="l">Coreatures (${who(k).length})</div><div class="m">${who(k).join(', ') || 'none yet'}</div></div>`;
+    }).join('');
+    document.getElementById('old').innerHTML = Object.entries(MAP).map(([o, n]) => `${o} → ${tag(n)}`).join(' &nbsp; ') +
+      '<br><br>Every Coreature keeps its look and moves; its types change by this table (a Coreature with two old types that land on the same new one gets just that one). Moves change type the same way. No immunities: like now, the weakest hit is ½.';
+  </script>
+</body>
+</html>
