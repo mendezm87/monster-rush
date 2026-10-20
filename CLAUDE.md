@@ -13,6 +13,8 @@ A real-time, top-down pixel-art **roguelike** in the style of *The Binding of Is
 
 ## Where things live
 
+- **`TODO.md`** is the shared to-do list (the owner asked for it): the repo move and rename, telling people the new link, the follow-ups for Claude after the move, the trademark search. Keep it current: tick or remove items when they're done, add ones the owner asks for.
+
 - Repo: `mendezm87/monster-rush` (public). Everything lives on `main`, the default and only branch.
 - GitHub Pages (public): https://mendezm87.github.io/monster-rush/ , serving the root of `main`. Pages rebuilds on push; a manual rebuild is `gh api -X POST repos/mendezm87/monster-rush/pages/builds`.
 - This repo started as a file copy of Monster Battle Stadium at its commit `178a842` (2026-10-17). The two games are independent from here on: changes here don't flow back, and monster stats may diverge (the arena is tuned for fair 1v1s, this game for runs).
