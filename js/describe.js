@@ -93,10 +93,17 @@ const TIPS = {
   relic: id => `<b>${RELICS[id].name}</b><i>${TAG_LABEL(id)} relic · tap for all your relics</i>${RELICS[id].desc}`,
   fused: id => `<b>${RELICS[id].fused.name}</b><i>Fused from ${RELICS[id].name}</i>${RELICS[id].fused.desc}`,
   item: id => `<b>${ITEMS[id].name}</b><i>Held item</i>${itemDesc(ITEMS[id])}`,
-  type: t => {
-    const good = [], bad = [];
-    for (const d of Object.keys(TYPES)) { const e = typeEffect(t, [d]); if (e > 1) good.push(TYPES[d].name); else if (e < 1) bad.push(TYPES[d].name); }
-    return `<b>${TYPES[t].name}</b><i>${t} moves are…</i>Strong vs ${good.join(', ') || 'nothing'}<br>Weak vs ${bad.join(', ') || 'nothing'}`;
+  type: t => {   // with the reason for each matchup when the game has them (TYPE_WHY in data.js)
+    const why = (tbl, a, d) => (typeof tbl !== 'undefined' && tbl[a] && tbl[a][d] && a !== d ? ` <span class="why">(${tbl[a][d]})</span>` : '');
+    const W2 = typeof TYPE_WHY !== 'undefined' ? TYPE_WHY : undefined, WH = typeof TYPE_WHY_HALF !== 'undefined' ? TYPE_WHY_HALF : undefined;
+    const hard = [], weak = [], hurt = [];
+    for (const d of Object.keys(TYPES)) {
+      const e = typeEffect(t, [d]);
+      if (e > 1) hard.push(TYPES[d].name + why(W2, t, d)); else if (e < 1) weak.push(TYPES[d].name + why(WH, t, d));
+      if (typeEffect(d, [t]) > 1) hurt.push(TYPES[d].name + why(W2, d, t));
+    }
+    return `<b>${TYPES[t].name}</b><i>its moves hit hard on…</i>${hard.join('<br>') || 'nothing'}` +
+      `<i>barely hurt…</i>${weak.join('<br>') || 'nothing'}<i>it gets hit hard by…</i>${hurt.join('<br>') || 'nothing'}`;
   },
   status: s => `<b>${STATUS_TIPS[s][0]}</b><i>Status · wears off after ${STATUS_TIPS[s][1]} s</i>${STATUS_TIPS[s][2]}`,
   text: s => s,

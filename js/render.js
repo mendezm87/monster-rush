@@ -103,6 +103,34 @@ const ALTAR_IMG = gridFromMap([
   'ksssssk',
   'kkkkkkk',
 ], { k: OUTLINE, p: '#b05aff', w: '#f0d0ff', s: '#7a6a8a' }).toCanvas();
+// A small badge per type: a pictogram on the type's colour (over wild Coreatures' bars, in tags).
+const TYPE_ICON_ART = {
+  fire:     ['..1..', '.11..', '.111.', '11111', '.111.'],
+  water:    ['..1..', '.111.', '11111', '11111', '.111.'],
+  electric: ['..11.', '.11..', '1111.', '..11.', '.11..'],
+  plant:    ['...11', '..111', '.111.', '111..', '1....'],
+  earth:    ['.....', '.111.', '11111', '11111', '.....'],
+  ice:      ['1.1.1', '.111.', '11111', '.111.', '1.1.1'],
+  wind:     ['1111.', '....1', '.111.', '1....', '.1111'],
+  metal:    ['.1.1.', '11111', '11.11', '11111', '.1.1.'],
+  glitch:   ['111..', '1.1.1', '..111', '11.1.', '.1.11'],
+  arcane:   ['..1..', '..1..', '11111', '..1..', '..1..'],
+  shade:    ['.111.', '11...', '1....', '11...', '.111.'],
+  phantom:  ['.111.', '11111', '1.1.1', '11111', '1.1.1'],
+  beast:    ['1.1.1', '.....', '.111.', '11111', '.111.'],
+  brawl:    ['1111.', '11111', '11111', '.1111', '..11.'],
+};
+const _typeIcons = {}, _typeIconURLs = {};
+function typeIcon(t) {
+  if (_typeIcons[t]) return _typeIcons[t];
+  const art = TYPE_ICON_ART[t] || TYPE_ICON_ART.beast;
+  const rows = ['.........', '.ccccccc.', ...art.map(r => '.c' + r.replace(/1/g, 'w').replace(/\./g, 'c') + 'c.'), '.ccccccc.', '.........'];
+  const g = gridFromMap(rows, { c: TYPES[t].color, w: '#ffffff' });
+  g.outline(OUTLINE);
+  return (_typeIcons[t] = g.toCanvas());
+}
+function typeIconURL(t) { return _typeIconURLs[t] || (_typeIconURLs[t] = typeIcon(t).toDataURL()); }
+
 const PICKUP_IMG = { coin: COIN_IMG, berry: BERRY_IMG, shard: SHARD_IMG, disc: DISC_IMG, chest: CHEST_IMG };
 // the sign over a doorway: what's in the room behind it
 const REWARD_IMG = { coins: COIN_IMG, berries: BERRY_IMG, xp: SHARD_IMG, move: DISC_IMG, chest: CHEST_IMG };
@@ -247,7 +275,7 @@ mixInto(Battle, class {
   }
 
   // Floating damage number; merges repeated ticks with the same key.
-  number(m, val, key, fill, shade, prefix = '') {
+  number(m, val, key, fill, shade, prefix = '', scale = 1) {
     // the pixel font has no decimal point, so 245.6 would read as "2456"
     val = Math.round(val);
     if (key) {
@@ -259,7 +287,7 @@ mixInto(Battle, class {
       }
     }
     const ox = rand(-8, 8);
-    this.floats.push({ key, val, x: m.x + ox, y: m.y - m.h - 2, t: 0, fill, shade, prefix, img: numberCanvas(prefix + val, fill, shade) });
+    this.floats.push({ key, val, x: m.x + ox, y: m.y - m.h - 2, t: 0, fill, shade, prefix, scale, img: numberCanvas(prefix + val, fill, shade) });
     return true;
   }
 
@@ -491,6 +519,7 @@ mixInto(Battle, class {
       ctx.fillStyle = pct > 0.5 ? '#3ccf4e' : pct > 0.2 ? '#f2c12e' : '#e8433a';
       ctx.fillRect(x, y, Math.max(1, Math.round(w * pct)), 3);
       if (m.status) { ctx.fillStyle = STATUS_COL[m.status]; ctx.fillRect(x + w + 2, y - 1, 4, 5); }
+      m.def.types.forEach((t, i) => ctx.drawImage(typeIcon(t), x - 10 - i * 9, y - 3));   // its types, read before the first hit
       if (m.champ) {   // the champion's trait over its bar
         const c = CHAMPIONS[m.champ];
         ctx.font = 'italic 900 7px "Lilita One", "Arial Black", Arial, sans-serif'; ctx.textAlign = 'center'; ctx.lineJoin = 'round';
@@ -623,7 +652,7 @@ mixInto(Battle, class {
         // lingering pool: fades in and out, with bubbles popping across it
         const age = z.t - z.delay, left = z.mv.linger - age;
         const fade = clamp(Math.min(age / 0.15, left / 0.4), 0, 1);
-        const zx = z.x, zy = z.y, fx = TYPES[z.mv.type].fx;
+        const zx = z.x, zy = z.y, fx = fxOf(z.mv);
         ctx.globalAlpha = 0.38 * fade; ctx.fillStyle = fx[0];
         ctx.beginPath(); ctx.ellipse(zx, zy, z.r, z.r * 0.7, 0, 0, TAU); fill();
         ctx.globalAlpha = 0.7 * fade; ctx.strokeStyle = fx[1]; ctx.lineWidth = 1.5;
@@ -637,7 +666,7 @@ mixInto(Battle, class {
         continue;
       }
       const k = clamp(z.t / z.delay, 0, 1), zx = z.x, zy = z.y;
-      ctx.fillStyle = TYPES[z.mv.type].fx[0];
+      ctx.fillStyle = fxOf(z.mv)[0];
       ctx.globalAlpha = 0.18 + k * 0.2;
       ctx.beginPath(); ctx.ellipse(zx, zy, z.r * k, z.r * k * 0.7, 0, 0, TAU); fill();
       ctx.globalAlpha = pulse;
@@ -653,11 +682,11 @@ mixInto(Battle, class {
       if (a.kind === 'burst' && !a.done && a.mv.cone) {   // a cone: a wedge in front
         const k = clamp(a.t / a.mv.delay, 0, 1), c0 = dir - a.mv.cone, c1 = dir + a.mv.cone;
         const wedge = r => { ctx.beginPath(); ctx.moveTo(X, Y); ctx.ellipse(X, Y, r, r * 0.7, 0, c0, c1); ctx.closePath(); };
-        ctx.fillStyle = TYPES[a.mv.type].fx[0]; ctx.globalAlpha = 0.15 + k * 0.2; wedge(a.r * k); fill();
+        ctx.fillStyle = fxOf(a.mv)[0]; ctx.globalAlpha = 0.15 + k * 0.2; wedge(a.r * k); fill();
         ctx.globalAlpha = pulse; ctx.strokeStyle = '#ffffff'; ctx.setLineDash([4, 3]); wedge(a.r); ctx.stroke(); ctx.setLineDash([]);
       } else if (a.kind === 'burst' && !a.done) {
         const k = clamp(a.t / a.mv.delay, 0, 1);
-        ctx.fillStyle = TYPES[a.mv.type].fx[0];
+        ctx.fillStyle = fxOf(a.mv)[0];
         ctx.globalAlpha = 0.15 + k * 0.2;
         ctx.beginPath(); ctx.ellipse(X, Y, a.r * k, a.r * k * 0.7, 0, 0, TAU); fill();
         ctx.globalAlpha = pulse; ctx.strokeStyle = '#ffffff';
@@ -676,7 +705,7 @@ mixInto(Battle, class {
       }
       if (a.kind === 'vortex') {
         // swirling dashed rings marking the pull radius
-        const fx = TYPES[a.mv.type].fx, fade = clamp(Math.min(a.t / 0.12, (a.mv.dur - a.t) / 0.2), 0, 1);
+        const fx = fxOf(a.mv), fade = clamp(Math.min(a.t / 0.12, (a.mv.dur - a.t) / 0.2), 0, 1);
         ctx.globalAlpha = 0.16 * fade; ctx.fillStyle = fx[0];
         ctx.beginPath(); ctx.ellipse(X, Y, a.mv.r, a.mv.r * 0.7, 0, 0, TAU); fill();
         ctx.lineWidth = 1.5;
@@ -688,7 +717,7 @@ mixInto(Battle, class {
         ctx.setLineDash([]); ctx.lineDashOffset = 0;
       }
       if (a.kind === 'dash' && a.t <= 0.1) {
-        ctx.globalAlpha = 0.5; ctx.strokeStyle = TYPES[a.mv.type].fx[2];
+        ctx.globalAlpha = 0.5; ctx.strokeStyle = fxOf(a.mv)[2];
         ctx.beginPath(); ctx.moveTo(X, Y);
         ctx.lineTo(X + Math.cos(dir) * 40, Y + Math.sin(dir) * 40); ctx.stroke();
       }
@@ -698,7 +727,7 @@ mixInto(Battle, class {
 
   drawFloats(ctx) {
     for (const f of this.floats) {
-      const pop = f.t < 0.1 ? 3 - f.t * 10 : 2;
+      const pop = (f.t < 0.1 ? 3 - f.t * 10 : 2) * (f.scale || 1);
       ctx.globalAlpha = f.t > 0.7 ? 1 - (f.t - 0.7) / 0.25 : 1;
       const w = f.img.width * pop, h = f.img.height * pop;
       ctx.drawImage(f.img, Math.round(f.x - w / 2), Math.round(f.y - h), w, h);

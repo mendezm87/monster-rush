@@ -1,6 +1,8 @@
 // Battle's moves: using them, aiming, hits and damage, statuses, and the moves in
 // flight (dashes, beams, bursts, projectiles, zones, deploys from the Arcbracer). See battle.js.
 
+const TIMES_EXPLAINED = 3;   // how many times each type matchup explains itself (see explainMatchup)
+
 mixInto(Battle, class {
   // ---------------------------------------------------------- moves
   tryMove(m, i) {
@@ -34,7 +36,7 @@ mixInto(Battle, class {
     const dir = this.aim(m, foe, mv);
     if (Math.abs(Math.cos(dir)) > 0.2) m.face = Math.cos(dir) > 0 ? 1 : -1;
     m.look(Math.cos(dir), Math.sin(dir));
-    const fx = TYPES[mv.type].fx;
+    const fx = fxOf(mv);
 
     switch (mv.kind) {
       case 'projectile': {
@@ -115,6 +117,19 @@ mixInto(Battle, class {
 
   // Apply damage. mult scales power (beam ticks), opts.merge groups numbers,
   // opts.kb sets the knockback direction and opts.force overrides its strength.
+  // The first few times a matchup comes up (TIMES_EXPLAINED per matchup, remembered across runs),
+  // the hit says why: "Water puts fire out". So players learn the chart by playing.
+  explainMatchup(tgt, type, eff) {
+    const table = eff > 1 ? TYPE_WHY[type] : TYPE_WHY_HALF[type];
+    const def = tgt.def.types.find(t => table && table[t] && t !== type);
+    if (!def) return;
+    const key = type + (eff > 1 ? '>' : '<') + def, seen = Save.data.explained || (Save.data.explained = {});
+    if ((seen[key] || 0) >= TIMES_EXPLAINED) return;
+    seen[key] = (seen[key] || 0) + 1; Save.write();
+    const why = table[def], line = why[0].toUpperCase() + why.slice(1);
+    this.text(tgt.x, tgt.y - tgt.h - 2, line, eff > 1 ? '#ffffff' : '#c8c8d8', tgt.y);
+  }
+
   hit(src, tgt, mv, mult = 1, opts = {}) {
     if (!tgt.visible || tgt.fainted || tgt.invuln > 0) return 0;
     const eff = typeEffect(mv.type, tgt.def.types);
@@ -130,7 +145,9 @@ mixInto(Battle, class {
     if (mult >= 1 && animSince(tgt, 'hurt') > 0.12) animMark(tgt, 'hurt');   // the hit pose: real hits only, not beam or burn ticks
 
     const merge = opts.merge ? opts.merge + ':' + (tgt.uid || (tgt.uid = _uid++)) : null;
-    const fresh = this.number(tgt, dmg, merge);
+    // the damage number: big and bright when it hits hard, small and grey when it barely hurts
+    const look = eff > 1 ? ['#fff066', '#ff8a1a', 1.4] : eff < 1 ? ['#d8d8e4', '#8a8aa0', 0.75] : [undefined, undefined, 1];
+    const fresh = this.number(tgt, dmg, merge, look[0], look[1], '', look[2]);
     const kb = opts.kb ?? Math.atan2(tgt.cy - src.cy, tgt.x - src.x);
     // bosses barely budge
     const force = (opts.force ?? (mult < 1 ? 22 : Math.min(260, 60 + dmg * 0.45))) * (tgt.boss ? 0.35 : tgt.champ === 'giant' ? 0.5 : 1);
@@ -141,6 +158,7 @@ mixInto(Battle, class {
     if (fresh) {
       if (eff >= 2) this.text(tgt.x, tgt.y - tgt.h - 12, 'SUPER EFFECTIVE!', '#ffe066', tgt.y);
       else if (eff < 1) this.text(tgt.x, tgt.y - tgt.h - 12, eff <= 0.25 ? 'BARELY AFFECTS...' : 'NOT VERY EFFECTIVE', '#c8c8d8', tgt.y);
+      if (eff !== 1) this.explainMatchup(tgt, mv.type, eff);
       if (crit) this.text(tgt.x, tgt.y - tgt.h - 22, 'CRITICAL HIT!', '#ff7a5a', tgt.y);
     }
     Sfx.play(dmg > 200 ? 'bigHit' : 'hit');
@@ -169,7 +187,7 @@ mixInto(Battle, class {
 
   applyStatus(m, s) {
     if (m.status || m.fainted) return;
-    const immune = { par: ['electric'], brn: ['fire'], frz: ['ice'], psn: ['poison', 'steel'] }[s];
+    const immune = { par: ['electric'], brn: ['fire'], frz: ['ice'], psn: ['glitch', 'metal'] }[s];
     if (m.def.types.some(t => immune.includes(t))) return;
     m.status = s;
     m.statusT = { par: 8, brn: 6, frz: 1.6, psn: 8 }[s];
@@ -184,7 +202,7 @@ mixInto(Battle, class {
   updateAction(m, dt) {
     const a = m.action;
     a.t += dt;
-    const fx = a.mv ? TYPES[a.mv.type].fx : null;
+    const fx = a.mv ? fxOf(a.mv) : null;
     switch (a.kind) {
       case 'cast':
         if (a.t >= a.dur) m.action = null;
@@ -200,7 +218,7 @@ mixInto(Battle, class {
             const ox = m.x + Math.cos(a.dir) * 8, oy = m.cy + Math.sin(a.dir) * 8;
             this.particles.push({ x: ox + Math.cos(ang) * rr, y: oy + Math.sin(ang) * rr, vx: -Math.cos(ang) * rr * 3, vy: -Math.sin(ang) * rr * 3, life: 0.3, max: 0.3, size: 2, color: fx[Math.random() < 0.5 ? 1 : 2], kind: 'sq' });
           }
-          if (a.t >= mv.charge) { a.phase = 'fire'; a.t = 0; Sfx.beamFire(mv.dur, mv.type); this.addShake(5); }
+          if (a.t >= mv.charge) { a.phase = 'fire'; a.t = 0; Sfx.beamFire(mv.dur, styleOf(mv)); this.addShake(5); }
         } else {
           a.tick -= dt;
           if (a.tick <= 0) {
@@ -419,7 +437,7 @@ mixInto(Battle, class {
         }
       }
       p.x += p.vx * dt; p.y += p.vy * dt;
-      const fx = p.mv.palette || TYPES[p.mv.type].fx;
+      const fx = fxOf(p.mv);
       if (Math.random() < 0.9) this.particles.push({ x: p.x + rand(-1, 1) * p.r * 0.5, y: p.y + rand(-1, 1) * p.r * 0.5, vx: -p.vx * 0.1, vy: -p.vy * 0.1, life: 0.25, max: 0.25, size: Math.max(1, p.r * 0.6), color: fx[rand() < 0.5 ? 0 : 1], kind: 'sq' });
       const foe = p.life > 0 && !(p.hitCd > 0) && this.foes(p.owner).find(f => Math.hypot(p.x - f.x, p.y - f.cy) < p.r + f.r);
       if (foe) {
@@ -452,7 +470,7 @@ mixInto(Battle, class {
       z.t += dt;
       if (!z.done && z.t >= z.delay) {
         z.done = true; z.tick = 0.5;   // a pool's first tick comes after the landing hit
-        const fx = TYPES[z.mv.type].fx;
+        const fx = fxOf(z.mv);
         if (z.mv.fx === 'bolt') this.particles.push({ x: z.x, y: z.y, life: 0.25, max: 0.25, kind: 'bolt', color: fx[1], seed: Math.random() });
         Sfx.move(z.mv, 'land');
         if (z.mv.fx === 'tornado') {   // touching down: a puff of dust rather than a blast

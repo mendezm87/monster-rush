@@ -16,7 +16,7 @@ const UI = {
     if (!on) { $('#callouts').innerHTML = ''; $('#banner').className = ''; }
   },
 
-  typeTag(t) { return `<span class="tag" data-tip="type:${t}" style="background:${TYPES[t].color}">${TYPES[t].name}</span>`; },
+  typeTag(t) { return `<span class="tag" data-tip="type:${t}" style="background:${TYPES[t].color}"><img class="ticon" src="${typeIconURL(t)}" alt="">${TYPES[t].name}</span>`; },
 
   // A Coreature's portrait, name, types, stats and moves (team cards, recruit offers).
   detailHtml(def, extra = '') {
@@ -158,17 +158,20 @@ const UI = {
       b.style.background = `linear-gradient(${col}, ${shadeHex(col, -0.25)})`;
       const key = `${i >= 2 ? '<b>⇧</b>' : ''}${mouseIcon(i % 2 === 0 ? 'left' : 'right')}`;
       b.dataset.tip = 'mv:' + mv.id;
-      b.innerHTML = `<span class="key">${key}</span><span class="nm">${mv.name}</span><div class="cd"></div>`;
+      b.innerHTML = `<span class="key">${key}</span><span class="nm">${mv.name}</span><span class="eff"></span><div class="cd"></div>`;
       Input.bindMoveButton(b, i, 0);
       box.appendChild(b);
-      return { el: b, cd: b.querySelector('.cd') };
+      return { el: b, cd: b.querySelector('.cd'), eff: b.querySelector('.eff'), shown: 1 };
     });
     $('#btn-swap .key').textContent = Input.swapLabel();
   },
 
   hudCache: {},
   updateHud(battle) {
-    this.updateSide('#hud-p', battle.P, battle.p, battle.pi, battle.run ? battle.run.partyMax : 6);
+    // which party Coreatures have a move that hits one of this room's wild Coreatures hard
+    const foes = battle.state === 'fight' ? battle.e.filter(e => e.alive) : [];
+    const good = battle.p.map(m => !m.fainted && foes.length > 0 && m.moves.some(mv => !['buff', 'heal'].includes(mv.kind) && foes.some(f => typeEffect(mv.type, f.def.types) > 1)));
+    this.updateSide('#hud-p', battle.P, battle.p, battle.pi, battle.run ? battle.run.partyMax : 6, good);
     this.drawRelics(battle.run);
     const floor = floorLabel(battle.run);
     if (this.hudCache.floor !== floor) { $('#floor-label').textContent = floor; this.hudCache.floor = floor; }
@@ -198,14 +201,23 @@ const UI = {
     const m = battle.P;
     const calm = battle.state !== 'fight';
     $('#move-buttons').classList.toggle('calm', calm);
+    // how each move would land on the Coreature it's aimed at (moves auto-aim at the nearest one)
+    const target = !calm && m.alive ? battle.foe(m) : null;
     this.moveBtns.forEach((b, i) => {
-      if (!m.moves[i]) return;
-      const full = m.moves[i].cd * m.cdMul();
+      const mv = m.moves[i];
+      if (!mv) return;
+      const full = mv.cd * m.cdMul();
       b.cd.style.height = (m.cd[i] > 0 ? (m.cd[i] / full) * 100 : 0) + '%';
+      const eff = target && !['buff', 'heal'].includes(mv.kind) ? typeEffect(mv.type, target.def.types) : 1;
+      if (b.shown !== eff) {
+        b.shown = eff;
+        b.el.classList.toggle('up', eff > 1); b.el.classList.toggle('down', eff < 1);
+        b.eff.textContent = eff > 1 ? '▲' : eff < 1 ? '▼' : '';
+      }
     });
   },
 
-  updateSide(sel, mon, team, idx, slots = 6) {
+  updateSide(sel, mon, team, idx, slots = 6, good = []) {
     const root = $(sel);
     const c = this.hudCache.p || (this.hudCache.p = { ghost: mon.hp });
     if (c.id !== mon.id + idx) {
@@ -234,7 +246,7 @@ const UI = {
       // the Arc-core fills with its HP (in 5% steps, so the HUD isn't rebuilt every frame), and pulses when low
       if (!m) return '<div class="slot empty"></div>';
       const hp = m.fainted ? 0 : Math.max(5, Math.round(m.hp / m.maxHp * 20) * 5);
-      return m ? `<div class="slot${m.fainted ? ' out' : ''}${i === idx && !m.fainted ? ' active' : ''}${!m.fainted && hp <= 25 ? ' low' : ''}" style="--c:${TYPES[m.def.types[0]].color};--hp:${hp}%"></div>` : '<div class="slot empty"></div>'; }).join('');
+      return m ? `<div class="slot${m.fainted ? ' out' : ''}${i === idx && !m.fainted ? ' active' : ''}${!m.fainted && hp <= 25 ? ' low' : ''}${good[i] ? ' good' : ''}" style="--c:${TYPES[m.def.types[0]].color};--hp:${hp}%"></div>` : '<div class="slot empty"></div>'; }).join('');
     if (c.cores !== cores) { root.querySelector('.slots').innerHTML = cores; c.cores = cores; }
   },
 };

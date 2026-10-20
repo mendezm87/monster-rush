@@ -320,6 +320,7 @@ kbd { background: #2b2540; border: 0.3cqh solid #555; border-bottom-width: 0.8cq
 #tip.show { opacity: 1; }
 #tip b { display: block; font: 900 15px "Lilita One", "Arial Black", Arial, sans-serif; color: #ffe066; }
 #tip i { display: block; font-style: normal; font-size: 11.5px; opacity: .7; margin-bottom: 3px; }
+#tip .why { opacity: .75; font-size: 11.5px; }
 .tipped { text-decoration: underline dotted; cursor: help; }
 #hud .tag, #hud .tipped { pointer-events: auto; }
 
@@ -369,3 +370,17 @@ kbd { background: #2b2540; border: 0.3cqh solid #555; border-bottom-width: 0.8cq
 .phone .app:active svg, .phone .app:hover svg { transform: translateY(0.3cqh); box-shadow: 0 0.3cqh 0 var(--ink); }
 .phone .big-btn { width: 100%; }
 .phone-home { width: 14cqh; height: 0.8cqh; border-radius: 1cqh; background: rgba(255,255,255,.4); }
+
+/* type cues: a move button shows how it would land on the Coreature it's aimed at */
+.mbtn .eff { position: absolute; top: -1.4cqh; right: -0.8cqh; z-index: 2; font: 900 3.2cqh var(--font); line-height: 1;
+  -webkit-text-stroke: 0.6cqh var(--ink); paint-order: stroke fill; }
+.mbtn.up { box-shadow: 0 0 0 0.5cqh #5aff7a, 0 0 2cqh #5aff7a; }
+.mbtn.up .eff { color: #5aff7a; }
+.mbtn.down { filter: saturate(.35) brightness(.8); }
+.mbtn.down .eff { color: #ff8a7a; }
+/* the party's Arc-cores: a ▲ on a Coreature with a move that hits this room's wild Coreatures hard */
+.slots .slot.good::after { content: '▲'; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -175%) rotate(-45deg);
+  color: #5aff7a; font: 900 2.2cqh var(--font); -webkit-text-stroke: 0.5cqh var(--ink); paint-order: stroke fill; }
+.slots .slot { position: relative; }
+/* type icons in tags */
+.tag .ticon { width: 1.1em; height: 1.1em; vertical-align: -0.15em; margin-right: 0.25em; image-rendering: pixelated; }

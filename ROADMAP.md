@@ -32,7 +32,7 @@ Coreatures, they level and transform, and relics fuse into them. The roadmap lea
 
 ## Phase 1: Release blockers (must happen before anything is sold)
 
-- [ ] **Our own type system (owner).** The 18 types and the type chart are copied from Pokémon; that's the biggest IP risk left. Design an original set (fewer types is fine, e.g. 10-12, built around the world: data, ruins, storm, iron...), then re-type every Coreature and move.
+- [x] **Our own type system (r87):** 14 types (Fire, Water, Electric, Ice, Plant, Earth, Wind, Metal, Glitch, Arcane, Shade, Phantom, Beast, Brawl), every matchup with a common-sense reason, in both games, plus in-fight cues that make matchups obvious. Follow-ups: re-run the Stadium's balance round robin; maybe rename the poison status to Glitch's own.
 - [ ] **Redesign the look-alikes (owner, with generated concept art).** Still flagged: Cinderox (ember or lava calf, a young Infernox), Slumbear (several rounds with the owner), Mindra, Drakorn, and the medium-risk list (Tidalisk and Maelstrisk, Venomire, Scarablade, Brawlix, Thornback, Boulderon). Sparkit and Lumawool are done.
 - [ ] **Rename the moves that share Pokémon's move names:** 37 of the 101 do (Thunderbolt, Flamethrower, Shadow Ball, Dark Pulse, Close Combat, Moonblast...). Single common words like Gust or Wish are low risk; a whole list matching theirs isn't. Keep signature moves (Zoomies, Shiba Scream, Blank Stare) as they are: they're ours.
 - [ ] **Trademark search** by a lawyer for the game and brand names (see `TODO.md`).

@@ -2,7 +2,7 @@
 //
 // The pool for a monster is its own 4 moves plus every move another monster knows whose type is
 // one of its own types or one of their themed "coverage" types (COVERAGE, a bit like learnsets:
-// fire can also learn ground, dragon and normal moves), except signature moves, which stay with
+// fire can also learn earth, arcane and beast moves), except signature moves, which stay with
 // their owner (Smugshi is the owner's dog Toshi; Mondaze has its own personality moves), and
 // moves only an evolved form knows (they're what evolving brings). A set is 4 different moves
 // with at least one that does damage.
@@ -13,12 +13,10 @@
 const SIGNATURE = new Set(['smugshi', 'mondaze', 'smugshogun'].filter(id => ROSTER_BY_ID[id]).flatMap(id => ROSTER_BY_ID[id].moves));
 const DAMAGING = k => !['buff', 'heal'].includes(MOVES[k].kind);
 const COVERAGE = {
-  normal: ['fighting', 'ground'], fire: ['ground', 'dragon', 'normal'], water: ['ice', 'dragon', 'normal'],
-  grass: ['ground', 'poison', 'bug'], electric: ['steel', 'normal'], ice: ['water', 'flying'],
-  ground: ['rock', 'fire', 'steel'], rock: ['ground', 'fighting', 'steel'], dragon: ['fire', 'water', 'flying'],
-  psychic: ['fairy', 'ghost'], dark: ['ghost', 'poison', 'fighting'], fighting: ['rock', 'normal', 'steel'],
-  flying: ['normal', 'dragon'], poison: ['dark', 'bug', 'grass'], bug: ['grass', 'poison', 'flying'],
-  ghost: ['dark', 'psychic', 'poison'], steel: ['rock', 'electric', 'ground'], fairy: ['psychic', 'grass', 'normal'],
+  beast: ['brawl', 'earth'], brawl: ['earth', 'beast', 'metal'], fire: ['earth', 'arcane', 'beast'], water: ['ice', 'arcane', 'beast'],
+  plant: ['earth', 'glitch'], electric: ['metal', 'beast'], ice: ['water', 'wind'], earth: ['fire', 'metal', 'brawl'],
+  wind: ['beast', 'arcane'], metal: ['earth', 'electric'], glitch: ['shade', 'plant'], arcane: ['phantom', 'plant', 'beast'],
+  shade: ['phantom', 'glitch', 'brawl'], phantom: ['shade', 'arcane', 'glitch'],
 };
 
 const _pools = {};

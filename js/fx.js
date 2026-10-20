@@ -3,14 +3,38 @@
 // sprite pixel (1.5 world units), gets a dark ink outline like the monsters, has its soft
 // edges snapped to hard pixels, and is scaled up without smoothing. So attacks are chunky,
 // crisp pixel art at any screen size, drawn after the lighting so they stay bright.
-// Each type has its own look: bolts, flames, leaves, bubbles, shards, rings and so on.
+// Each look ("style") has its own art: bolts, flames, leaves, bubbles, shards, rings and so on. A
+// move's style is `mv.style`, or its type when it has none (a game whose types are the looks); the
+// type decides the damage, the style only what it looks and sounds like (a stinger stays a stinger).
 
 const FX_PX = 1.5;   // world units per effect pixel (the size of a sprite pixel)
 const INK = OUTLINE;
-// a move's colours: its own palette if it has one (Mud Shot), else its type's
-const fxOf = mv => mv.palette || TYPES[mv.type].fx;
-// a move's debris: its own if its look needs it (bubbles, mud), else its type's
-const debrisOf = mv => (mv.fx === 'bubble' ? 'bubble' : mv.fx === 'mud' ? 'mud' : FX_DEBRIS[mv.type] || 'star');
+// the palette of each style
+const FX_STYLES = {
+  normal: ['#ff8a2a', '#ffd36b', '#fffbe6'],
+  fire: ['#ff4a1c', '#ffa424', '#fff3b0'],
+  water: ['#2f6bff', '#6fb6ff', '#e6f6ff'],
+  grass: ['#2f9e3a', '#8be04e', '#eaffc8'],
+  electric: ['#ffc21f', '#fff27a', '#ffffff'],
+  ice: ['#5ab8e8', '#aeeaff', '#ffffff'],
+  ground: ['#8a5a2b', '#d6a356', '#f7e2b0'],
+  rock: ['#6e5a3a', '#b59a62', '#efe0b8'],
+  dragon: ['#5a2bd6', '#a77bff', '#f1e6ff'],
+  psychic: ['#d62f8a', '#ff8ad0', '#ffe6f6'],
+  dark: ['#2a1a3a', '#7a4aa8', '#e2d0ff'],
+  fighting: ['#b0281e', '#ff6a3a', '#ffe0c8'],
+  flying: ['#7a8ae8', '#c8d4ff', '#ffffff'],
+  poison: ['#7a2a9a', '#c86ae0', '#f0d0ff'],
+  bug: ['#6a8a12', '#c8e03a', '#f4ffc0'],
+  ghost: ['#3a2a6a', '#8a6ad8', '#e0d4ff'],
+  steel: ['#7a8498', '#c8d0e0', '#ffffff'],
+  fairy: ['#e86aa8', '#ffb4dc', '#fff0fa'],
+};
+const styleOf = mv => mv.style || mv.type;
+// a move's colours: its own palette if it has one (Mud Shot), else its style's, else its type's
+const fxOf = mv => mv.palette || FX_STYLES[styleOf(mv)] || TYPES[mv.type].fx;
+// a move's debris: its own if its look needs it (bubbles, mud), else its style's
+const debrisOf = mv => (mv.fx === 'bubble' ? 'bubble' : mv.fx === 'mud' ? 'mud' : FX_DEBRIS[styleOf(mv)] || 'star');
 
 const FXLayer = (() => {
   const w = Math.ceil(W / FX_PX) + 2, h = Math.ceil(H / FX_PX) + 2;
@@ -346,7 +370,7 @@ mixInto(Battle, class {
 
   // Blowing a cone (Blizzard, Gust): snow or wind pouring out in front of the user.
   fxCone(m, a) {
-    const mv = a.mv, fx = TYPES[mv.type].fx, speed = a.r / 0.35, snow = mv.type === 'ice';
+    const mv = a.mv, fx = fxOf(mv), speed = a.r / 0.35, snow = styleOf(mv) === 'ice';
     for (let i = 0; i < (snow ? 4 : 3); i++) {
       const ang = a.dir + rand(-mv.cone, mv.cone) * 0.95, s = speed * rand(0.7, 1.15), ox = m.x + Math.cos(a.dir) * 8, oy = m.cy + Math.sin(a.dir) * 8;
       const life = a.r / s;
@@ -376,7 +400,7 @@ mixInto(Battle, class {
     if (shape === 'ring' || shape === 'star') {
       for (let i = 1; i <= 2; i++) this.particles.push({ kind: 'wave', x, y: y - 2, r0: 4, r1: r * (1 - i * 0.12), life: 0.32 + i * 0.1, max: 0.32, color: i % 2 ? fx[1] : fx[2], w: 4 });
     }
-    if (mv.type === 'electric') {   // lightning cracking outwards
+    if (styleOf(mv) === 'electric') {   // lightning cracking outwards
       for (let i = 0; i < 6; i++) {
         const a = i / 6 * TAU + rand(-0.3, 0.3);
         this.particles.push({ kind: 'strike', x: x + Math.cos(a) * r * 0.95, y: y + Math.sin(a) * r * 0.65, x2: x, y2: y - 4, seed: Math.random() * 1e6, color: fx[1], life: 0.22, max: 0.22 });
@@ -386,7 +410,7 @@ mixInto(Battle, class {
 
   // Buffs and heals: a shield for defence, chevrons for attack and speed, + signs for healing.
   fxBuff(m, mv) {
-    const fx = TYPES[mv.type].fx, b = mv.buff || {};
+    const fx = fxOf(mv), b = mv.buff || {};
     if (b.def) this.particles.push({ kind: 'shield', x: m.x, y: m.cy, r: m.r + 12, color: fx[2], life: 0.9, max: 0.9 });
     if (b.atk || b.spd) for (let i = 0; i < 6; i++) {
       this.particles.push({ kind: 'chevron', x: m.x + rand(-14, 14), y: m.cy + rand(-6, 12), vx: 0, vy: -rand(35, 60), size: rand(3, 4.5),
@@ -532,7 +556,7 @@ mixInto(Battle, class {
     for (let i = 0; i < 6; i++) {
       const t = tb + ((i * 0.19 + T * 0.35) % 1) * (1 - tb), ang = -T * 9 + i * 2.3, r = rAt(t) + 4;
       const x = cxAt(t) + Math.cos(ang) * r, y = ground - t * Hh + Math.sin(ang) * r * 0.26;
-      if (i % 2) FXD.leaf(c, x, y, ang * 2, 3.2, '#8be04e', '#2f9e3a'); else FXD.rock(c, x, y, ang, 2.4, TYPES.rock.fx, i + 1);
+      if (i % 2) FXD.leaf(c, x, y, ang * 2, 3.2, '#8be04e', '#2f9e3a'); else FXD.rock(c, x, y, ang, 2.4, FX_STYLES.rock, i + 1);
     }
     // the storm cloud: a flat, lumpy disc, dark underneath, with a slow swirl on top
     const crx = r1 * 1.45 * cloudK, cry = 12 * cloudK, lumpy = (y, ry) => () => {
@@ -594,7 +618,7 @@ mixInto(Battle, class {
 
   // a blast winding up: energy gathering at the user's feet
   drawCharge(c, m, a) {
-    const fx = TYPES[a.mv.type].fx, k = clamp(a.t / a.mv.delay, 0, 1);
+    const fx = fxOf(a.mv), k = clamp(a.t / a.mv.delay, 0, 1);
     for (let i = 0; i < 6; i++) {
       const ang = i / 6 * TAU + this.time * 5, rr = (1 - k) * 22 + 6;
       FXD.dot(c, m.x + Math.cos(ang) * rr, m.y - 2 + Math.sin(ang) * rr * 0.6, 1.8, i % 2 ? fx[1] : fx[2]);
@@ -602,7 +626,7 @@ mixInto(Battle, class {
   }
 
   drawProjectile(c, p) {
-    const t = p.mv.type, fx = fxOf(p.mv), R = p.r * 2.2, a = Math.atan2(p.vy, p.vx), T = this.time, x = p.x, y = p.y;
+    const t = styleOf(p.mv), fx = fxOf(p.mv), R = p.r * 2.2, a = Math.atan2(p.vy, p.vx), T = this.time, x = p.x, y = p.y;
     if (p.mv.fx === 'bubble') {   // a wobbly see-through bubble with a shine
       const r = R * (0.85 + 0.08 * Math.sin(T * 14 + p.spin));
       FXD.ring(c, x, y, r, '#cfeeff', 1.4, 0.92);
@@ -711,18 +735,18 @@ mixInto(Battle, class {
 
   drawBeam(c, m, a) {
     if (a.mv.fx === 'stare') { this.drawStare(c, m, a); return; }
-    const mv = a.mv, fx = TYPES[mv.type].fx, T = this.time;
+    const mv = a.mv, fx = fxOf(mv), T = this.time;
     const ox = m.x + Math.cos(a.dir) * 6, oy = m.cy + Math.sin(a.dir) * 6;
     if (a.phase === 'charge') {   // a ball of energy growing at the muzzle
       const k = a.t / mv.charge, r = 2.5 + k * mv.width * 0.55;
       FXD.circle(c, ox, oy, r, fx[0]); FXD.dot(c, ox, oy, r * 0.65, fx[1]); FXD.dot(c, ox, oy, r * 0.3, '#ffffff');
-      if (mv.type === 'electric') FXD.bolt(c, ox, oy, ox + Math.cos(T * 30) * r * 2.2, oy + Math.sin(T * 30) * r * 2.2, (T * 30) | 0, 1.5, fx[1], 2, false);
+      if (styleOf(mv) === 'electric') FXD.bolt(c, ox, oy, ox + Math.cos(T * 30) * r * 2.2, oy + Math.sin(T * 30) * r * 2.2, (T * 30) | 0, 1.5, fx[1], 2, false);
       return;
     }
     const grow = Math.min(1, a.t / 0.08), fade = Math.min(1, (mv.dur - a.t) / 0.15);
     const len = mv.len * grow, w = mv.width * Math.max(0.25, fade) * 1.6;
     c.save(); c.translate(ox, oy); c.rotate(a.dir);
-    if (mv.type === 'electric') {   // twisting lightning instead of a solid beam
+    if (styleOf(mv) === 'electric') {   // twisting lightning instead of a solid beam
       const seed = ((T * 22) | 0) * 31;
       for (let i = 0; i < 3; i++) FXD.bolt(c, 0, 0, len, 0, seed + i * 7, w * (i ? 0.35 : 0.5), i ? fx[0] : fx[1], w * 0.9, i === 0);
     } else {
@@ -740,13 +764,13 @@ mixInto(Battle, class {
       };
       body(1, fx[0], true); body(0.68, fx[1], false); body(0.32, fx[2], false);
       // the type's flourish along the beam
-      if (mv.type === 'fire') {
+      if (styleOf(mv) === 'fire') {
         for (let x = (T * 300) % 22; x < len - 6; x += 22) for (const s of [-1, 1]) FXD.flame(c, x, s * w * 0.45, Math.PI + s * 0.5, w * 0.22, fx, T + x);
-      } else if (mv.type === 'grass' || mv.type === 'bug') {
+      } else if (styleOf(mv) === 'grass' || styleOf(mv) === 'bug') {
         for (let x = (T * 240) % 18; x < len; x += 18) FXD.leaf(c, x, Math.sin(x * 0.15 + T * 20) * w * 0.55, x * 0.3 + T * 12, w * 0.24, fx[1], fx[0]);
-      } else if (mv.type === 'psychic' || mv.type === 'dark' || mv.type === 'ghost') {
+      } else if (styleOf(mv) === 'psychic' || styleOf(mv) === 'dark' || styleOf(mv) === 'ghost') {
         for (let x = (T * 280) % 20; x < len; x += 20) FXD.ring(c, x, 0, w * 0.3, fx[2], 1.3, 3);
-      } else if (mv.type === 'ice') {
+      } else if (styleOf(mv) === 'ice') {
         for (let x = 10 + (T * 200) % 26; x < len; x += 26) FXD.shard(c, x, (x % 52 < 26 ? -1 : 1) * w * 0.5, (x % 52 < 26 ? -1 : 1) * 1.2, w * 0.2, fx);
       } else {   // twin strands spiralling down the beam (water and the rest)
         for (const ph of [0, Math.PI]) {
@@ -764,10 +788,10 @@ mixInto(Battle, class {
 
   // A vortex: a tornado for flying, a whirlpool for water, a spiral of the type's colour otherwise.
   drawVortex(c, m, a) {
-    const mv = a.mv, fx = TYPES[mv.type].fx, T = this.time;
+    const mv = a.mv, fx = fxOf(mv), T = this.time;
     const fade = clamp(Math.min(a.t / 0.15, (mv.dur - a.t) / 0.2), 0, 1), R = mv.r * fade;
     if (R < 2) return;
-    if (mv.type === 'flying') {   // a funnel of wind with a dark cloud on top
+    if (styleOf(mv) === 'flying') {   // a funnel of wind with a dark cloud on top
       for (let i = 0; i < 7; i++) {
         const k = i / 6, yy = m.y - k * 70, rr = (8 + k * R * 0.45);
         c.save(); c.translate(m.x + Math.sin(T * 8 + k * 3) * 4 * k, yy);
@@ -792,13 +816,13 @@ mixInto(Battle, class {
   drawZoneFalls(c) {
     for (const z of this.zones) {
       if (z.done) continue;
-      const left = z.delay - z.t, fx = TYPES[z.mv.type].fx, zx = z.x, zy = z.y;
+      const left = z.delay - z.t, fx = fxOf(z.mv), zx = z.x, zy = z.y;
       if (z.mv.fx === 'meteor' && left < 0.45) {
         const k = 1 - left / 0.45;
         FXD.flame(c, zx - 70 * (1 - k), zy - 170 * (1 - k), Math.atan2(170, 70), 7, fx, this.time);
       } else if (z.mv.fx === 'rock' && left < 0.35) {
         const k = 1 - left / 0.35;
-        FXD.rock(c, zx, zy - 150 * (1 - k * k) - 6, z.id, 8, TYPES.rock.fx, z.id);
+        FXD.rock(c, zx, zy - 150 * (1 - k * k) - 6, z.id, 8, FX_STYLES.rock, z.id);
       } else if (z.mv.fx === 'bolt' && left < 0.25) {   // a crackle in the clouds before it strikes
         FXD.bolt(c, zx + 10, zy - 200, zx - 6, zy - 150, ((this.time * 25) | 0) + z.id, 2, fx[1], 6, false);
       }

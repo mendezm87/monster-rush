@@ -649,7 +649,7 @@ class Battle {
         const d = Math.round(m.maxHp * 0.03);
         m.hp = Math.max(0, m.hp - d);
         this.number(m, d, null, '#ffb080', '#c84a1a');
-        this.burst(m.x, m.cy, TYPES.fire.fx, 6, 30, -40);
+        this.burst(m.x, m.cy, FX_STYLES.fire, 6, 30, -40);
         if (m.hp <= 0) { this.faint(m); return; }
       }
       if (m.status === 'psn' && m.statusTick <= 0) {
@@ -657,7 +657,7 @@ class Battle {
         const d = Math.round(m.maxHp * 0.025);
         m.hp = Math.max(0, m.hp - d);
         this.number(m, d, null, '#e8b8ff', '#8a3ab0');
-        this.burst(m.x, m.cy, TYPES.poison.fx, 6, 30, -30);
+        this.burst(m.x, m.cy, FX_STYLES.poison, 6, 30, -30);
         if (m.hp <= 0) { this.faint(m); return; }
       }
       if (m.statusT <= 0) {

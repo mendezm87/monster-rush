@@ -10,7 +10,7 @@ let _uid = 1;
 const BERRY_HEAL = 0.25;   // a berry heals a quarter of your active Coreature's HP
 // The Ember Tracks relic's fire pools.
 // a spiky champion's spines (it hurts to touch one)
-const SPIKE_MV = { id: 'spikes', name: 'Spikes', type: 'normal', kind: 'dash', power: 70 };
+const SPIKE_MV = { id: 'spikes', name: 'Spikes', type: 'beast', style: 'normal', kind: 'dash', power: 70 };
 const EMBER_MV = { id: 'emberTrail', name: 'Ember Trail', type: 'fire', kind: 'zone', power: 60, linger: 1.4, tick: 0.35, status: ['brn', 0.1] };
 
 // opts (wild Coreatures): hpMul / atkMul scale the arena stats, scale draws it bigger, boss marks a boss.

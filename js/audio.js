@@ -503,32 +503,34 @@ const Sfx = (() => {
     return end;
   }
 
+  // a move's sound follows its look (`style`), like its art in fx.js; the type only decides damage
+  const styleOf = mv => mv.style || mv.type;
   // the sound of each kind of move, at each phase
   const KIND_SFX = {
     projectile: {
-      cast(mv) { const p = TYPE_PITCH[mv.type] || 700; tone(p, 0.09, 'square', 0.06, -p * 0.5); typeLayer(mv.type, 0.16, 0.55); },
-      land(mv) { noise(0.35, 0.4, 700); tone(80, 0.3, 'triangle', 0.2, -30); typeLayer(mv.type, 0.4, 0.8); },   // a shot that explodes
+      cast(mv) { const p = TYPE_PITCH[styleOf(mv)] || 700; tone(p, 0.09, 'square', 0.06, -p * 0.5); typeLayer(styleOf(mv), 0.16, 0.55); },
+      land(mv) { noise(0.35, 0.4, 700); tone(80, 0.3, 'triangle', 0.2, -30); typeLayer(styleOf(mv), 0.4, 0.8); },   // a shot that explodes
     },
     dash: {
-      cast(mv) { sweep(0.22, 400, 2600, 0.6); tone((TYPE_PITCH[mv.type] || 700) * 0.4, 0.16, 'sawtooth', 0.07, 250); typeLayer(mv.type, 0.28, 0.5); },
+      cast(mv) { sweep(0.22, 400, 2600, 0.6); tone((TYPE_PITCH[styleOf(mv)] || 700) * 0.4, 0.16, 'sawtooth', 0.07, 250); typeLayer(styleOf(mv), 0.28, 0.5); },
     },
     burst: {
-      cast(mv) { tone(160, mv.delay || 0.4, 'sawtooth', 0.06, 500); typeLayer(mv.type, mv.delay || 0.4, 0.3); },
+      cast(mv) { tone(160, mv.delay || 0.4, 'sawtooth', 0.06, 500); typeLayer(styleOf(mv), mv.delay || 0.4, 0.3); },
       release(mv) {
-        if (mv.cone) { sweep(mv.blow + 0.1, 300, 2400, 0.45, 2); typeLayer(mv.type, mv.blow, 0.8); return; }
-        if (mv.ripple) { for (let i = 0; i < 3; i++) { tone(170, 0.2, 'sawtooth', 0.09, -80, i * 0.14); tone(85, 0.2, 'sine', 0.25, -30, i * 0.14); } typeLayer(mv.type, mv.ripple, 1); return; }
-        noise(0.4, 0.42, 650); tone(75, 0.36, 'triangle', 0.22, -30); typeLayer(mv.type, 0.38, 0.75);
+        if (mv.cone) { sweep(mv.blow + 0.1, 300, 2400, 0.45, 2); typeLayer(styleOf(mv), mv.blow, 0.8); return; }
+        if (mv.ripple) { for (let i = 0; i < 3; i++) { tone(170, 0.2, 'sawtooth', 0.09, -80, i * 0.14); tone(85, 0.2, 'sine', 0.25, -30, i * 0.14); } typeLayer(styleOf(mv), mv.ripple, 1); return; }
+        noise(0.4, 0.42, 650); tone(75, 0.36, 'triangle', 0.22, -30); typeLayer(styleOf(mv), 0.38, 0.75);
       },
     },
     zone: {
-      cast(mv) { if (mv.fx === 'bolt') return thunderNear(mv.delay); tone((TYPE_PITCH[mv.type] || 700) * 0.6, 0.18, 'triangle', 0.08, 500); typeLayer(mv.type, 0.12, 0.4); },
-      land(mv) { if (mv.fx === 'bolt') return thunderClap(); noise(0.3, 0.35, 800); tone(90, 0.25, 'triangle', 0.18, -30); typeLayer(mv.type, 0.28, 0.6); },
+      cast(mv) { if (mv.fx === 'bolt') return thunderNear(mv.delay); tone((TYPE_PITCH[styleOf(mv)] || 700) * 0.6, 0.18, 'triangle', 0.08, 500); typeLayer(styleOf(mv), 0.12, 0.4); },
+      land(mv) { if (mv.fx === 'bolt') return thunderClap(); noise(0.3, 0.35, 800); tone(90, 0.25, 'triangle', 0.18, -30); typeLayer(styleOf(mv), 0.28, 0.6); },
     },
-    vortex: { cast(mv) { lib.vortex(); typeLayer(mv.type, mv.dur || 1.2, 0.55); } },
-    buff: { cast(mv) { tone(400, 0.25, 'triangle', 0.13, 500); typeLayer(mv.type, 0.3, 0.45); } },
+    vortex: { cast(mv) { lib.vortex(); typeLayer(styleOf(mv), mv.dur || 1.2, 0.55); } },
+    buff: { cast(mv) { tone(400, 0.25, 'triangle', 0.13, 500); typeLayer(styleOf(mv), 0.3, 0.45); } },
     heal: { cast() { lib.heal(); } },
     // a direct hit: a thud with a dash of the type on top
-    hit: { hit(mv) { typeLayer(mv.type, 0.08, 0.4); } },
+    hit: { hit(mv) { typeLayer(styleOf(mv), 0.08, 0.4); } },
   };
 
   // signature moves

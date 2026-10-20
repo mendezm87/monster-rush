@@ -2,7 +2,7 @@
 
 // Shown on the title screen so players can tell whether their browser has the latest
 // build (GitHub Pages lets browsers cache files for up to 10 minutes). Bump on every release.
-const VERSION = '2026.10.20-r86';
+const VERSION = '2026.10.20-r87';
 
 const App = {
   endless: false,   // the mode picked on the title screen
@@ -411,7 +411,7 @@ $('#btn-recruit-yes').onclick = () => {
 };
 
 // ---------- the evolution altar: offer two relics, one of each element in the branch's recipe ----------
-const TAG_NAMES = { fire: 'FIRE', water: 'WATER', storm: 'STORM', iron: 'IRON', life: 'LIFE', wind: 'WIND', luck: 'LUCK' };
+const TAG_NAMES = { fire: 'FIRE', water: 'WATER', electric: 'ELECTRIC', metal: 'METAL', plant: 'PLANT', wind: 'WIND', luck: 'LUCK' };
 const Altar = { ped: null, mon: -1, branch: null, picks: [] };
 const altarMons = () => App.run.party.map((m, i) => ({ m, i })).filter(o => o.m.def.branches && !o.m.fainted);
 const recipeText = r => r.map(t => TAG_NAMES[t]).join(' + ');
