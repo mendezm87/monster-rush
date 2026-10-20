@@ -27,7 +27,7 @@
 </head>
 <body>
   <h1>Proposal: our own types</h1>
-  <div class="hint">Twelve original types grown out of the world (a fallen high-tech civilization, its ruins reclaimed by nature, its data corrupted or still alive), replacing the 18 copied ones. Read the chart across: a move of the row's type does <b>2×</b> (green) or <b>½</b> (red) damage to a Coreature of the column's type; blank is normal. Every matchup has a reason a player could guess (water puts fire out, metal carries the shock, you can't punch a shadow); each type's card lists them.</div>
+  <div class="hint">Twelve types: plain names for the elements (Fire, Water, Electric, Ice, Plant, Earth, Wind, Metal) and our own for the four that are only ours (Glitch, Arcane, Shade, Beast), grown out of the world (a fallen high-tech civilization, its ruins reclaimed by nature, its data corrupted or still alive), replacing the 18 copied ones. Read the chart across: a move of the row's type does <b>2×</b> (green) or <b>½</b> (red) damage to a Coreature of the column's type; blank is normal. Every matchup has a reason a player could guess (water puts fire out, metal carries the shock, you can't punch a shadow); each type's card lists them.</div>
   <h2>The chart</h2>
   <div class="wrap"><table class="chart" id="chart"></table></div>
   <h2>The types</h2>
@@ -38,14 +38,14 @@
   <script>
     // The proposal (not used by the game yet).
     const T = {
-      blaze:   { name: 'Blaze',   color: '#f0642a', desc: 'Fire and heat: the furnaces and magma under the ruins.', relic: 'fire' },
-      tide:    { name: 'Tide',    color: '#3a8ef0', desc: 'Water, rain and the sea that swallowed half the old cities.', relic: 'water' },
-      storm:   { name: 'Storm',   color: '#f4c430', desc: 'Lightning and the power that still runs through old cables.', relic: 'storm' },
-      verdant: { name: 'Verdant', color: '#4caf50', desc: 'Plants, insects and the wild growth reclaiming the ruins.', relic: 'life' },
-      stone:   { name: 'Stone',   color: '#a07850', desc: 'Rock, earth and rubble: the bones of the old world.' },
-      frost:   { name: 'Frost',   color: '#7ad8f0', desc: 'Ice and cold: frozen vaults, preserved things.' },
-      gale:    { name: 'Gale',    color: '#9ab8e8', desc: 'Wind, flight and open sky above the spires.', relic: 'wind' },
-      iron:    { name: 'Iron',    color: '#8a96a8', desc: 'Metal and machines: the old civilization\'s hardware.', relic: 'iron' },
+      blaze:   { name: 'Fire',   color: '#f0642a', desc: 'Fire and heat: the furnaces and magma under the ruins.', relic: 'fire' },
+      tide:    { name: 'Water',    color: '#3a8ef0', desc: 'Water, rain and the sea that swallowed half the old cities.', relic: 'water' },
+      storm:   { name: 'Electric',   color: '#f4c430', desc: 'Lightning and the power that still runs through old cables.', relic: 'electric' },
+      verdant: { name: 'Plant', color: '#4caf50', desc: 'Plants, insects and the wild growth reclaiming the ruins.', relic: 'plant' },
+      stone:   { name: 'Earth',   color: '#a07850', desc: 'Rock, earth and rubble: the bones of the old world.' },
+      frost:   { name: 'Ice',   color: '#7ad8f0', desc: 'Ice and cold: frozen vaults, preserved things.' },
+      gale:    { name: 'Wind',    color: '#9ab8e8', desc: 'Wind, flight and open sky above the spires.', relic: 'wind' },
+      iron:    { name: 'Metal',    color: '#8a96a8', desc: 'Metal and machines: the old civilization\'s hardware.', relic: 'metal' },
       glitch:  { name: 'Glitch',  color: '#d040c8', desc: 'Corrupted data: broken code that spreads like poison. New, and only ours.' },
       arcane:  { name: 'Arcane',  color: '#8a5ae8', desc: 'The old world\'s mind and myth: minds, light, dragons, things that seem like magic.' },
       shade:   { name: 'Shade',   color: '#4a3a6a', desc: 'Darkness, shadows and lingering echoes of the dead.' },
