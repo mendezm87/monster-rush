@@ -2,7 +2,7 @@
 
 ## Where we left off (keep this current at the end of every session)
 
-**2026-10-20 (r91):** the game is *Coreatures: Deep Archive*. Done this session: hand-shaped trainers (8 looks), our own 14 types with in-fight cues, the Restore system's first step (restore bar, memory choices), even starters, and the Restore moment. **Next up, from ROADMAP.md:** Glitch variants (Restore system step 2, code only), then the Phase 1 release blockers (renaming the 37 moves that share Pokémon's names, the look-alike redesigns), relic choices and more relics, branching forms. Waiting on the owner: moving and renaming the repos (below).
+**2026-10-20 (r91):** the game is *Coreatures: Deep Archive*. Done this session: hand-shaped trainers (8 looks), our own 14 types with in-fight cues, the Restore system's first step (restore bar, memory choices), even starters, and the Restore moment. **Next up, from ROADMAP.md:** Glitch variants (Restore system step 2, code only), then the Phase 1 release blockers (renaming the 37 moves that share Pokémon's names, the look-alike redesigns), relic choices and more relics, branching forms. Waiting on the owner: moving and renaming the repos (below). Open issue: Vic's slowdown with many relics (below, not confirmed yet).
 
 Things waiting to be done, for the owner and for Claude. Tick them off (`[x]`) or delete them when they're done.
 
@@ -32,6 +32,14 @@ New play links (with the example name above):
 - [ ] Point this PC's copies at the new repo addresses (`git remote set-url`) for both games.
 - [ ] Update the links in `README.md` and `CLAUDE.md` (both games), and the Stadium link in this game's README.
 - [ ] Check both games load from the new links.
+
+## Issues to look into
+
+- [ ] **Slowdown after picking up lots of relics (reported by Vic, 2026-10-20; not confirmed as a bug yet).** Vic felt the game slow down after collecting a lot of power-ups; it then went away and didn't come back, even after more relics. Device and browser not known yet (ask). Leading suspects, from the code:
+  1. **Dressing the party in relic gear.** Picking up a relic that's worn (`gear` in RELICS) calls `RunState.dress()`, which builds a new dressed sprite set (`gearSprites` in gear.js) for every party member whose gear changed: every frame of every view, all at once. About 15 ms per Coreature on the dev PC, far more on a phone, so 6 Coreatures can mean a noticeable hitch, and each new combination of gear is a new set. Once every gear spot (head, eyes, neck, feet) is taken, later relics often don't change what's worn, or are auras, which fits "it didn't come back". Fix idea: build dressed sets in the background a few frames at a time (like `warmSprites`), or only for the Coreature that's out first.
+  2. **Relic auras** (sparks, embers, berries, water rings drawn every frame round every Coreature) piling up with lots of relics. This would be a steady cost rather than a passing one, so less likely.
+  3. **Memory clean-up:** freeing old dressed sets (`forgetGear`) and old canvases can make the browser pause to collect garbage, especially on iPhone.
+  How to check: time `dress()` on each relic pickup, and log frame times through a run that collects 10+ relics (on the dev PC and on a phone). Note whether it lines up with picking up worn relics.
 
 ## Game work waiting its turn
 
