@@ -13,6 +13,7 @@ A real-time, top-down pixel-art **roguelike** in the style of *The Binding of Is
 
 ## Where things live
 
+- **`ROADMAP.md`** is the plan to grow the game to the scale of the big roguelikes (release blockers, run variety, bosses, long-term goals, polish, release), with today's numbers. Keep it current: tick items as they land and update the numbers.
 - **`TODO.md`** is the shared to-do list (the owner asked for it): the repo move and rename, telling people the new link, the follow-ups for Claude after the move, the trademark search. Keep it current: tick or remove items when they're done, add ones the owner asks for.
 
 - Repo: `mendezm87/monster-rush` (public). Everything lives on `main`, the default and only branch.
