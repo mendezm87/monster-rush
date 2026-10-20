@@ -67,7 +67,7 @@
     function dressAll() {
       const t0 = performance.now(), gear = gearFor(owned);
       for (const mon of ALL_MONS()) {
-        const sp = sets[mon.id] = gear.length ? gearSprites(mon.id, gear) : SPRITES[mon.id];
+        const sp = sets[mon.id] = gear.length ? gearSet(mon.id, gear) : SPRITES[mon.id];
         cards[mon.id].querySelectorAll('canvas').forEach(cv => { if (cv.dataset.v !== 'walk') paint(cv, sp.views[cv.dataset.v]); });
       }
       document.getElementById('time').textContent = `Dressed all ${ALL_MONS().length} Coreatures in ${Math.round(performance.now() - t0)} ms (the game only dresses your party).`;

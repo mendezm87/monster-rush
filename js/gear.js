@@ -203,11 +203,11 @@ function drawGear(g, id, v, gear) {
 }
 
 // A Coreature's whole sprite set with gear laid over it: views, flap frames and animation frames.
-// Layers are shared between frames where the head and legs sit the same, so this is quick.
+// Layers are shared between frames where the head and legs sit the same. Built a frame's worth
+// of pictures per step (a generator), so the game can spread the work out (see gearSprites).
 const GEAR_SETS = {};
-function gearSprites(id, gear) {
-  const key = id + '|' + gear.join(','), sp = SPRITES[id];
-  if (GEAR_SETS[key]) return GEAR_SETS[key];
+function* gearSteps(id, gear) {
+  const sp = SPRITES[id];
   const layers = {}, own = [];   // own: the canvases made here (faint frames are the plain Coreature's, shared)
   const layer = v => {
     const Q = rig(), k = v + Q.head.join() + (Q.legs || [0, 0]).join();
@@ -228,28 +228,75 @@ function gearSprites(id, gear) {
     if (views.flapped) flapped(out, dress(views.flapped));
     return out;
   };
-  const keep = RIG;
-  RIG = null;
-  const out = { ...sp, views: dress(sp.views) };
+  // one frame's views in a given pose; the rig is set and put back inside the step, never left on
+  const at = (views, pose) => { const keep = RIG; RIG = pose ? { ...REST, ...pose } : null; try { return dress(views); } finally { RIG = keep; } };
+  const out = { ...sp, views: at(sp.views, null) };
   out.img = out.views.front;
+  yield;
   if (sp.frames) {
     out.frames = {};
     const poses = { ...RIG_COMMON, ...RIG_FRAMES[RIGGED[id]] };
     for (const [k, f] of Object.entries(sp.frames)) {
       if (k === 'faint') { out.frames[k] = f; continue; }   // it topples over and its gear falls off
-      const at = (views, pose) => { RIG = { ...REST, ...pose }; const d = dress(views); RIG = null; return d; };
-      out.frames[k] = Array.isArray(f) ? f.map((views, i) => at(views, poses[k][i])) : at(f, poses[k]);
+      if (!Array.isArray(f)) { out.frames[k] = at(f, poses[k]); yield; continue; }
+      out.frames[k] = [];
+      for (let i = 0; i < f.length; i++) { out.frames[k].push(at(f[i], poses[k][i])); yield; }
     }
   }
-  RIG = keep;
   Object.defineProperty(out, 'own', { value: own });
-  return GEAR_SETS[key] = out;
+  return out;
+}
+// The whole dressed set right now (review pages). The game uses gearSprites instead.
+function gearSet(id, gear) {
+  const key = id + '|' + gear.join(',');
+  if (GEAR_SETS[key]) return GEAR_SETS[key];
+  const it = _gearBuilding[key] || gearSteps(id, gear);
+  let r; while (!(r = it.next()).done);
+  delete _gearBuilding[key];
+  const i = _gearQ.indexOf(key); if (i >= 0) _gearQ.splice(i, 1);
+  return GEAR_SETS[key] = r.value;
+}
+// What the game draws a Coreature with (monSprite): its dressed set once it's ready. A full
+// dressed set is ~180 pictures; building six at once froze phones for a moment on every worn
+// relic (Vic's slowdown, r92), so new sets are built in the background, ~4 ms between frames,
+// whatever's on screen first, while the Coreature keeps its previous look.
+const _gearQ = [], _gearBuilding = {}, _gearShown = {}, _gearFree = [];
+let _gearT = 0, _gearForget = null;
+function gearSprites(id, gear) {
+  const key = id + '|' + gear.join(',');
+  if (GEAR_SETS[key]) { _gearShown[id] = key; return GEAR_SETS[key]; }
+  const i = _gearQ.indexOf(key);
+  if (i > 0) _gearQ.splice(i, 1);
+  if (i !== 0) _gearQ.unshift(key);   // asked for now: it goes first
+  if (!_gearT) _gearT = setTimeout(_gearTick, 0);
+  const prev = _gearShown[id];
+  return (prev && GEAR_SETS[prev]) || SPRITES[id];
+}
+function _gearTick() {
+  _gearT = 0;
+  const t0 = performance.now();
+  while (_gearQ.length && performance.now() - t0 < 4) {
+    const key = _gearQ[0];
+    if (GEAR_SETS[key]) { _gearQ.shift(); continue; }
+    const cut = key.indexOf('|'), id = key.slice(0, cut), gear = key.slice(cut + 1).split(',');
+    const it = _gearBuilding[key] || (_gearBuilding[key] = gearSteps(id, gear));
+    const r = it.next();
+    if (r.done) { GEAR_SETS[key] = r.value; delete _gearBuilding[key]; _gearQ.shift(); }
+  }
+  if (!_gearQ.length && _gearForget) { const keep = _gearForget; _gearForget = null; forgetGear(keep); }
+  while (_gearFree.length && performance.now() - t0 < 4) for (const c of _gearFree.splice(-60)) freeCanvas(c);   // freeing ~1,000 at once took 25 ms
+  if (_gearQ.length || _gearFree.length) _gearT = setTimeout(_gearTick, 16);
 }
 // Free every dressed set no party member wears now (relics changed, someone left or evolved).
+// While new sets are still being built, this waits for them, so nobody loses their look meanwhile.
 function forgetGear(inUse) {
+  for (let i = _gearQ.length - 1; i >= 0; i--) if (!inUse.has(_gearQ[i])) _gearQ.splice(i, 1);   // nobody wears those now
+  if (_gearQ.length) { _gearForget = inUse; return; }
   for (const [key, set] of Object.entries(GEAR_SETS)) {
     if (inUse.has(key)) continue;
-    for (const c of set.own || []) freeCanvas(c);
+    _gearFree.push(...(set.own || []));   // freed a few at a time by _gearTick
     delete GEAR_SETS[key];
   }
+  if (_gearFree.length && !_gearT) _gearT = setTimeout(_gearTick, 0);
+  for (const key of Object.keys(_gearBuilding)) if (!inUse.has(key)) delete _gearBuilding[key];
 }
