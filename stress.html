@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Deep Archive Stress Test</title>
+<!-- Not linked from the game. A stress test to run on a phone: the real game with a full party,
+     buttons to pile on relics and fights, and a live readout of how smooth it runs.
+     Your saved progress and saved run are never touched. -->
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; font: 600 12px/1.3 system-ui, sans-serif; color: #fff; }
+  iframe { position: fixed; inset: 0; width: 100%; height: 100%; border: 0; }
+  #panel { position: fixed; top: max(6px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); z-index: 5;
+    background: #15111fe8; border: 2px solid #5ae8ff; border-radius: 10px; padding: 5px 8px; max-width: min(96vw, 520px); }
+  #meter { display: flex; gap: 8px; align-items: center; cursor: pointer; white-space: nowrap; }
+  #meter b { color: #5ae8ff; }
+  #graph { width: 120px; height: 22px; background: #000; border-radius: 3px; image-rendering: pixelated; }
+  #more { display: none; margin-top: 6px; }
+  #panel.open #more { display: block; }
+  .row { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 5px; }
+  button { font: 700 12px system-ui, sans-serif; color: #fff; background: #2a2440; border: 1px solid #5a5080; border-radius: 6px; padding: 6px 8px; }
+  button.on { background: #1d6a4a; border-color: #5aff9a; }
+  #log { max-height: 26vh; overflow-y: auto; font: 500 11px/1.35 ui-monospace, monospace; color: #cfd; white-space: pre-wrap; }
+  .bad { color: #ff8a7a; } .ok { color: #8aff9a; } .meh { color: #ffe066; }
+</style>
+</head>
+<body>
+<iframe id="game" allow="fullscreen; autoplay"></iframe>
+<div id="panel">
+  <div id="meter" title="Tap for the stress buttons">STRESS <span id="fps">-- fps</span> <span id="worst">worst --</span> <canvas id="graph" width="120" height="22"></canvas> <span id="relics">0 relics</span> <span id="queue"></span></div>
+  <div id="more">
+    <div class="row">
+      <button id="b-relic">+1 relic</button>
+      <button id="b-auto">Auto relics</button>
+      <button id="b-all">All relics</button>
+      <button id="b-clear">Remove relics</button>
+    </div>
+    <div class="row">
+      <button id="b-fight">Fight (3)</button>
+      <button id="b-horde">Horde (6)</button>
+      <button id="b-heal">Heal party</button>
+      <button id="b-sound">Sound off</button>
+      <button id="b-copy">Copy results</button>
+    </div>
+    <div id="log">Loading the game…</div>
+  </div>
+</div>
+<script>
+const $ = s => document.querySelector(s);
+const frame = $('#game');
+$('#meter').onclick = () => $('#panel').classList.toggle('open');
+const log = (text, cls = '') => { const l = $('#log'); if (l.dataset.fresh !== '1') { l.textContent = ''; l.dataset.fresh = '1'; } l.insertAdjacentHTML('beforeend', `<div class="${cls}">${text}</div>`); l.scrollTop = 1e9; };
+
+// Fetch fresh copies of the game's files first (like test.html), so a phone never stress-tests an old build.
+(async () => {
+  const html = await (await fetch('index.html', { cache: 'reload' })).text();
+  const files = [...html.matchAll(/(?:src|href)="((?:js|css)\/[^"]+)"/g)].map(m => m[1]);
+  const list = await (await fetch('js/monsters.js', { cache: 'reload' })).text();
+  for (const m of (list.match(/MONSTER_FILES = \[([^\]]*)\]/) || [, ''])[1].matchAll(/'(\w+)'/g)) files.push(`js/monsters/${m[1]}.js`);
+  await Promise.all(files.map(f => fetch(f, { cache: 'reload' })));
+  frame.src = 'index.html?stress=' + Date.now();
+})();
+
+frame.addEventListener('load', async () => {
+  if (!frame.getAttribute('src')) return;
+  const w = frame.contentWindow, G = name => w.eval(name);
+  const Save = G('Save'), Sfx = G('Sfx'), App = G('App'), RELICS = G('RELICS');
+  // never touch the real save or the saved run
+  Save.write = () => {}; Save.saveRun = () => {}; Save.clearRun = () => {}; Save.loadRun = () => null;
+  if (!Sfx.muted) w.toggleMute();
+  w.addEventListener('error', e => log('ERROR: ' + (e.message || e.error), 'bad'));
+
+  // a full party of six with very different shapes (fliers, big ones, a floater)
+  App.trainer = 'scarf'; App.look = 'm'; App.endless = false;
+  w.startRun('smugshi');
+  const run = App.run;
+  for (const id of ['garrishell', 'galewing', 'slumbear', 'sparkit', 'voltergeist']) run.recruit(id);
+  G('UI').drawRelics(run);
+  const version = G('VERSION');
+  log(`Build ${version}. Full party of 6. Tap a button, then play as normal. Each relic logs the worst frame in the 3 s after it.`);
+
+  // ---- the meter: frames timed inside the game's own window
+  const times = [], graph = $('#graph').getContext('2d');
+  let last = w.performance.now(), watches = [];
+  const loop = () => {
+    const now = w.performance.now(), dt = now - last; last = now;
+    if (dt < 1000 && !document.hidden) {   // a longer gap means the page was hidden (switched app, screen off), not a hitch
+      times.push(dt); if (times.length > 120) times.shift();
+      for (const W of watches) { W.worst = Math.max(W.worst, dt); if (dt > 50) W.hitches++; }
+    }
+    for (const W of watches.filter(W => now > W.until)) report(W);
+    watches = watches.filter(W => now <= W.until);
+    w.requestAnimationFrame(loop);
+  };
+  w.requestAnimationFrame(loop);
+  const grade = ms => ms < 25 ? 'ok' : ms < 50 ? 'meh' : 'bad';
+  setInterval(() => {
+    if (!times.length) return;
+    const avg = times.reduce((a, b) => a + b, 0) / times.length, worst = Math.max(...times);
+    $('#fps').textContent = Math.round(1000 / avg) + ' fps';
+    $('#worst').innerHTML = `worst <span class="${grade(worst)}">${Math.round(worst)} ms</span>`;
+    $('#relics').textContent = `${run.relics.length}/${Object.keys(RELICS).length} relics`;
+    let q = 0; try { q = G('_gearQ').length; } catch (e) {}
+    $('#queue').textContent = q ? `dressing ${q}…` : '';
+    graph.fillStyle = '#000'; graph.fillRect(0, 0, 120, 22);
+    times.forEach((t, i) => { graph.fillStyle = t < 25 ? '#3ad070' : t < 50 ? '#ffd040' : '#ff5040'; const h = Math.min(22, t / 4); graph.fillRect(i, 22 - h, 1, h); });
+    graph.fillStyle = '#ffffff40'; graph.fillRect(0, 22 - 16.7 / 4, 120, 1);   // 60 fps line
+  }, 250);
+
+  // ---- results
+  const results = [];
+  const report = W => {
+    const line = `${W.what}: worst frame ${Math.round(W.worst)} ms${W.hitches ? `, ${W.hitches} hitch${W.hitches > 1 ? 'es' : ''} over 50 ms` : ''}`;
+    results.push(line); log(line, grade(W.worst));
+  };
+  const watchFor = what => watches.push({ what, worst: 0, hitches: 0, until: w.performance.now() + 3000 });
+
+  // ---- the buttons
+  const nextRelic = () => Object.keys(RELICS).find(id => !run.relics.includes(id));
+  const addRelic = () => {
+    const id = nextRelic(); if (!id) return false;
+    watchFor(`+ ${RELICS[id].name} (${RELICS[id].gear ? 'worn' : 'aura'})`);
+    run.addRelic(id); G('UI').drawRelics(run);
+    return true;
+  };
+  $('#b-relic').onclick = () => { if (!addRelic()) log('Every relic is on. "Remove relics" to start again.'); };
+  let auto = 0;
+  $('#b-auto').onclick = () => {
+    if (auto) { clearInterval(auto); auto = 0; $('#b-auto').classList.remove('on'); return; }
+    $('#b-auto').classList.add('on');
+    addRelic();
+    auto = setInterval(() => { if (!addRelic()) { clearInterval(auto); auto = 0; $('#b-auto').classList.remove('on'); log('Auto relics done.'); } }, 3500);
+  };
+  $('#b-all').onclick = () => {
+    watchFor('+ every relic at once');
+    for (const id of Object.keys(RELICS)) if (!run.relics.includes(id)) run.relics.push(id);
+    run.applyRelics(); G('UI').drawRelics(run);
+  };
+  $('#b-clear').onclick = () => { watchFor('- removed every relic'); run.relics.length = 0; run.applyRelics(); G('UI').drawRelics(run); };
+  const fight = n => {
+    const b = App.battle;
+    if (!b || b.state !== 'explore') { log('Finish the fight you are in first.'); return; }
+    const ids = [];
+    for (let i = 0; i < n; i++) ids.push(...G('wildIds')(run.stageKey, 1, ids));
+    b.room.cleared = false;
+    b.room.enemies = ids.map(id => G('wildSpec')(id, run.floorN, 'wild'));
+    b.startFight();
+    watchFor(`fight with ${n}`);
+  };
+  $('#b-fight').onclick = () => fight(3);
+  $('#b-horde').onclick = () => fight(6);
+  $('#b-heal').onclick = () => { for (const m of run.party) { m.fainted = false; m.hp = m.maxHp; } log('Party healed.'); };
+  $('#b-sound').onclick = () => { w.toggleMute(); $('#b-sound').textContent = Sfx.muted ? 'Sound off' : 'Sound on'; $('#b-sound').classList.toggle('on', !Sfx.muted); };
+  $('#b-copy').onclick = async () => {
+    const text = [`Deep Archive stress test, build ${version}`, navigator.userAgent, `screen ${screen.width}x${screen.height} @${devicePixelRatio}x`, ...results].join('\n');
+    try { await navigator.clipboard.writeText(text); log('Copied. Paste it in a message.', 'ok'); }
+    catch (e) { log(text); log('Could not copy; screenshot this instead.', 'meh'); }
+  };
+  $('#panel').classList.add('open');
+});
+</script>
+</body>
+</html>

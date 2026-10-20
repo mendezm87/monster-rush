@@ -2,7 +2,7 @@
 
 ## Where we left off (keep this current at the end of every session)
 
-**2026-10-20 (r92):** the game is *Coreatures: Deep Archive*. Done this session: hand-shaped trainers (8 looks), our own 14 types with in-fight cues, the Restore system's first step (restore bar, memory choices), even starters, and the Restore moment. **Next up, from ROADMAP.md:** Glitch variants (Restore system step 2, code only), then the Phase 1 release blockers (renaming the 37 moves that share Pokémon's names, the look-alike redesigns), relic choices and more relics, branching forms. Waiting on the owner: moving and renaming the repos (below). Vic's slowdown with many relics is fixed in r92 (below; not yet checked on a phone).
+**2026-10-20 (r93):** the game is *Coreatures: Deep Archive*. Done this session: hand-shaped trainers (8 looks), our own 14 types with in-fight cues, the Restore system's first step (restore bar, memory choices), even starters, and the Restore moment. **Next up, from ROADMAP.md:** Glitch variants (Restore system step 2, code only), then the Phase 1 release blockers (renaming the 37 moves that share Pokémon's names, the look-alike redesigns), relic choices and more relics, branching forms. Waiting on the owner: moving and renaming the repos (below). Vic's slowdown with many relics is fixed in r92; `stress.html` (r93) is there to check it on a phone (below).
 
 Things waiting to be done, for the owner and for Claude. Tick them off (`[x]`) or delete them when they're done.
 
@@ -41,7 +41,7 @@ New play links (with the example name above):
   3. **Memory clean-up:** freeing old dressed sets (`forgetGear`) and old canvases can make the browser pause to collect garbage, especially on iPhone.
   How to check: time `dress()` on each relic pickup, and log frame times through a run that collects 10+ relics (on the dev PC and on a phone). Note whether it lines up with picking up worn relics.
   **Measured 2026-10-20 (dev PC, party of 6, every relic added one by one): suspect 1 confirmed.** Each worn relic: 130-180 ms frozen and 1,090 new canvases (a whole dressed set per Coreature). Aura relics: 0 ms, 0 canvases. On a phone that's likely a freeze of half a second or more per worn relic, plus a burst of canvas memory (the phone-memory problem from r67). **Fix to build next:** make `gearSprites` build in steps like `warmSprites` (a generator, a few ms per frame, the Coreature that's out first) and have `monSprite` show the old or plain set until the new one is ready; then measure again.
-  **Fixed in r92:** dressed sets now build in the background (steps of about 6-8 ms, sometimes 15, instead of one 130-180 ms freeze per worn relic), and old ones are freed a batch at a time. Measured on the dev PC only: worth asking Vic (or checking on a phone) whether it still hitches.
+  **Fixed in r92:** dressed sets now build in the background (steps of about 6-8 ms, sometimes 15, instead of one 130-180 ms freeze per worn relic), and old ones are freed a batch at a time. Measured on the dev PC only: worth asking Vic (or checking on a phone) whether it still hitches. **To check on a phone (r93):** open https://mendezm87.github.io/monster-rush/stress.html, tap Auto relics, then Horde a few times, and send back what Copy results gives (green under 25 ms is smooth, yellow under 50, red is a visible hitch).
 
 ## Game work waiting its turn
 
