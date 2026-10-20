@@ -60,7 +60,11 @@ function note(name, details) {
   $('#checks').insertAdjacentHTML('beforeend', `<tr><td>${name}</td><td class="warn">CHANGED</td><td>${details}</td></tr>`);
 }
 $('#again').onclick = () => location.reload();
-const tick = () => new Promise(r => setTimeout(r, 0));
+// A short yield so the page stays responsive. A message channel instead of setTimeout: browsers stretch
+// setTimeout to a second or more in background tabs, which made runs crawl when the window wasn't in front.
+const tickCh = new MessageChannel(), tickWaiting = [];
+tickCh.port1.onmessage = () => { const r = tickWaiting.shift(); if (r) r(); };
+const tick = () => new Promise(r => { tickWaiting.push(r); tickCh.port2.postMessage(0); });
 
 // Refresh the browser's copies of the game's files first, so the tests never run an
 // old cached build, then load the game.

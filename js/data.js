@@ -203,7 +203,7 @@ const MOVES = {
   zoomies:      { name: 'Zoomies', type: 'beast', style: 'normal', kind: 'dash', power: 170, cd: 2, speed: 430, dur: 0.35 },
   shibaScream:  { name: 'Shiba Scream', type: 'beast', style: 'normal', kind: 'burst', power: 230, cd: 5, r: 60, delay: 0.35, status: ['par', 0.3], sfx: 'shibaScream' },
   smugBeam:     { name: 'Smug Beam', type: 'arcane', style: 'fairy', kind: 'beam', power: 250, cd: 5, charge: 0.45, dur: 0.6, width: 11, len: 280 },
-  blanketNap:   { name: 'Blanket Nap', type: 'beast', style: 'normal', kind: 'heal', amount: 0.35, cd: 15 },
+  blanketNap:   { name: 'Blanket Nap', type: 'beast', style: 'normal', kind: 'heal', amount: 0.3, cd: 15 },
   // Mondaze: a burnt-out sloth running on coffee
   deadlineDash: { name: 'Deadline Dash', type: 'shade', style: 'dark', kind: 'dash', power: 260, cd: 3.5, speed: 320, dur: 0.45 },
   heavySigh:    { name: 'Heavy Sigh', type: 'beast', style: 'normal', kind: 'burst', power: 210, cd: 5, r: 70, delay: 0.5, slow: 2.5 },
@@ -239,10 +239,10 @@ const ITEMS = {
 const ROSTER = [
   { id: 'sparkit',   name: 'SPARKIT',   types: ['electric'], hp: 820,  atk: 1.2,  def: 0.85, spd: 105, size: 'M', item: 'voltCharm',
     moves: ['voltRush', 'thunderbolt', 'thunder', 'voltCannon'] },
-  { id: 'cinderox',  name: 'CINDEROX',  types: ['fire'],     hp: 1200, atk: 1.15, def: 1.1,  spd: 90,  size: 'M', item: 'emberStone',
-    moves: ['flameWheel', 'flamethrower', 'fireBlast', 'eruption'] },
-  { id: 'tidalisk',  name: 'TIDALISK',  types: ['water'],    hp: 1240, atk: 1.04, def: 1.1,  spd: 86,  size: 'M', item: 'mysticDrop',
-    moves: ['hydroCannon', 'bubbleBeam', 'aquaJet', 'whirlpool'] },
+  { id: 'cinderox',  name: 'CINDEROX',  types: ['fire'],     hp: 1280, atk: 1.15, def: 1.1,  spd: 98,  size: 'M', item: 'emberStone',
+    moves: ['flameWheel', 'flamethrower', 'rockSlide', 'eruption'] },   // Rock Slide: Earth coverage for Fire-proof rooms (r90)
+  { id: 'tidalisk',  name: 'TIDALISK',  types: ['water'],    hp: 1290, atk: 1.04, def: 1.1,  spd: 86,  size: 'M', item: 'mysticDrop',
+    moves: ['hydroCannon', 'bubbleBeam', 'iceShard', 'whirlpool'] },   // Ice Shard: Ice coverage against Plant and Wind (r90)
   { id: 'thornback', name: 'THORNBACK', types: ['plant', 'earth'], hp: 1260, atk: 0.98, def: 1.25, spd: 70, size: 'M', item: 'ironPlate',
     moves: ['razorLeaf', 'solarBeam', 'seedBomb', 'photosynth'] },
   { id: 'slumbear',  name: 'SLUMBEAR',  types: ['beast'],   hp: 1950, atk: 1.15, def: 1.15, spd: 55,  size: 'L', item: 'snackPouch',
@@ -274,7 +274,7 @@ const ROSTER = [
   { id: 'pixibelle', name: 'PIXIBELLE', types: ['arcane'],    hp: 940,  atk: 1.08, def: 0.96,  spd: 94,  size: 'M', item: 'pixieDust',
     moves: ['moonblast', 'dazzleBeam', 'fairyWind', 'wish'] },
   // Toshi, the owner's real Shiba Inu: fast, smug, loves a blanket
-  { id: 'smugshi',   name: 'SMUGSHI',   types: ['beast', 'arcane'], hp: 1080, atk: 1.18, def: 1.0, spd: 110, size: 'M', item: 'snackPouch',
+  { id: 'smugshi',   name: 'SMUGSHI',   types: ['beast', 'arcane'], hp: 1080, atk: 1.05, def: 1.0, spd: 110, size: 'M', item: 'snackPouch',
     moves: ['zoomies', 'shibaScream', 'smugBeam', 'blanketNap'] },
   { id: 'mondaze',   name: 'MONDAZE',   types: ['beast', 'shade'], hp: 1220, atk: 1.2, def: 1.15, spd: 70, size: 'M', item: 'powerBand',
     moves: ['deadlineDash', 'heavySigh', 'blankStare', 'coffeeBreak'] },
