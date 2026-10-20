@@ -26,7 +26,7 @@ door rewards, champions, area natives; hand-made pixel art with 8-way rigs; reli
 team; run saving; runs on phone, PC and gamepad.
 
 **The hook to build on:** *a roguelike where your team is the build.* Every run you collect different
-Coreatures, they level and transform, and relics fuse into them. The roadmap leans into that.
+Coreatures, they restore and transform, and relics fuse into them. The roadmap leans into that.
 
 ---
 

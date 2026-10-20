@@ -1,5 +1,9 @@
 # To-do
 
+## Where we left off (keep this current at the end of every session)
+
+**2026-10-20 (r91):** the game is *Coreatures: Deep Archive*. Done this session: hand-shaped trainers (8 looks), our own 14 types with in-fight cues, the Restore system's first step (restore bar, memory choices), even starters, and the Restore moment. **Next up, from ROADMAP.md:** Glitch variants (Restore system step 2, code only), then the Phase 1 release blockers (renaming the 37 moves that share Pokémon's names, the look-alike redesigns), relic choices and more relics, branching forms. Waiting on the owner: moving and renaming the repos (below).
+
 Things waiting to be done, for the owner and for Claude. Tick them off (`[x]`) or delete them when they're done.
 
 ## Move and rename the repos (owner, on the GitHub website)
@@ -31,7 +35,7 @@ New play links (with the example name above):
 
 ## Game work waiting its turn
 
-- [ ] **Make transformations look cool (owner's request, 2026-10-20).** When a Coreature Restores into its next form it should be a big, memorable moment, not just a flash and a banner: e.g. the screen dims, the Coreature breaks into glowing data, the new form assembles piece by piece (like a deploy, but bigger), a burst in its type's colours, a sound and music sting, the trainer reacting, the new name and form shown big. Plan it with the owner once the Restore bar is in (ROADMAP.md, "The Restore system").
+- [x] **Make transformations look cool (done in r91):** the Restore moment (spotlight, the Coreature breaking into its own pixels, swirling data, the new form assembling, flash, burst and its new name). Possible extras: a music sting, per-type flourishes.
 
 ## Before any release or real product
 

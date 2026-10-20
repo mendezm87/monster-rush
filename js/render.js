@@ -371,6 +371,7 @@ mixInto(Battle, class {
     // attacks and effects: chunky pixel art in their own layer (see fx.js)
     this.drawAttacks(FXLayer.begin(Math.round(this.cam.x) - shx, Math.round(this.cam.y) - shy));
     FXLayer.end(ctx);
+    if (this.restoring) this.drawRestore(ctx);
     // the Arcbracer's deploy beam: it shoots to the ground, then fades while the Coreature assembles
     for (const b of this.deploys) {
       const reach = Math.min(1, b.t / b.beam), fade = b.landed ? Math.max(0, 1 - (b.t - b.beam) / 0.25) : 1;
@@ -528,6 +529,41 @@ mixInto(Battle, class {
     }
   }
 
+  // The Restore moment (Battle.startRestore): a spotlight, the swirling data, the new name.
+  drawRestore(ctx) {
+    const R = this.restoring, m = R.m, t = R.t, T = RESTORE_T;
+    const dim = Math.min(1, t / 0.35) * (t > T.end - 1.1 ? Math.max(0, (T.end - t) / 1.1) : 1);
+    // the room dims to a spotlight on the Coreature (a cheap gradient, only while this plays)
+    const cx = m.x, cy = m.cy, g = ctx.createRadialGradient(cx, cy, 8, cx, cy, 120);
+    g.addColorStop(0, 'rgba(6,4,14,0)'); g.addColorStop(0.35, `rgba(6,4,14,${0.45 * dim})`); g.addColorStop(1, `rgba(6,4,14,${0.88 * dim})`);
+    ctx.fillStyle = g; ctx.fillRect(this.cam.x - 4, this.cam.y - 4, W + 8, H + 8);
+    // its pixels: out and up in a swirl, then back in as the new form builds
+    if (R.broke && t < T.build + 0.1) {
+      for (const p of R.pixels) {
+        const out = clamp((t - T.glow) / (T.swirl - T.glow), 0, 1), back = clamp((t - T.swirl) / (T.build - T.swirl), 0, 1);
+        const e = out * (1 - back), ease = e * e * (3 - 2 * e);
+        const ang = p.ang + p.spin * (t - T.glow), r = p.r0 + p.out * ease;
+        const x = (cx + Math.cos(ang) * r) * ease + p.x0 * (1 - ease), y = (cy + Math.sin(ang) * r - p.lift * ease) * ease + p.y0 * (1 - ease);
+        ctx.globalAlpha = back > 0 ? 1 - back * 0.8 : 1;
+        ctx.fillStyle = (Math.floor(t * 20 + p.r0) % 5 === 0) ? '#ffffff' : p.color;
+        ctx.fillRect(Math.round(x - p.size * 0.25), Math.round(y - p.size * 0.25), p.size * 1.5, p.size * 1.5);
+      }
+      ctx.globalAlpha = 1;
+    }
+    // the payoff: its new name, big, over "RESTORED · STAGE II"
+    if (R.built) {
+      const k = clamp((t - T.build) / 0.25, 0, 1), fade = t > T.end - 0.5 ? Math.max(0, (T.end - t) / 0.5) : 1;
+      const x = this.cam.x + W / 2, y = this.cam.y + H * 0.28, col = TYPES[m.def.types[0]].color;
+      ctx.save(); ctx.globalAlpha = fade; ctx.textAlign = 'center'; ctx.lineJoin = 'round';
+      ctx.font = `italic 900 ${Math.round(30 * (1.6 - 0.6 * k))}px "Lilita One", "Arial Black", Arial, sans-serif`;
+      ctx.lineWidth = 6; ctx.strokeStyle = '#15111f'; ctx.strokeText(m.def.name, x, y); ctx.fillStyle = '#ffe066'; ctx.fillText(m.def.name, x, y);
+      ctx.font = 'italic 900 11px "Lilita One", "Arial Black", Arial, sans-serif';
+      const sub = `RESTORED · STAGE ${STAGE_NUM[formStage(m.def)]}`;
+      ctx.lineWidth = 4; ctx.strokeText(sub, x, y + 16); ctx.fillStyle = col; ctx.fillText(sub, x, y + 16);
+      ctx.restore();
+    }
+  }
+
   drawTrainer(ctx) {
     const t = this.trainer, img = this.trainerImg[t.view];
     const px = Math.round(t.x), py = Math.round(t.y);
@@ -600,6 +636,7 @@ mixInto(Battle, class {
       ctx.rotate(this.time * 9 * L);
       ctx.translate(0, S / 2 - 3);
     }
+    if (m.restoreHide) { ctx.restore(); return; }   // broken apart into data during the Restore moment
     const pic = posed(img, pose.sq, pose.sh), k = S / sp.size, pw = pic.width * k, ph = pic.height * k;
     const dx = -pw / 2, dy = 3 - ph;
     if (m.assembleT !== undefined && m.assembleT < 1) drawAssembling(ctx, pic, dx, dy, pw, ph, m.assembleT, TYPES[m.def.types[0]].color);   // beamed in from the Arcbracer
@@ -612,6 +649,9 @@ mixInto(Battle, class {
     else if (m.status === 'brn' && Math.sin(this.time * 10) > 0.5) { tint = '#ff5a2a'; ta = 0.35; }
     else if (m.status === 'psn' && Math.sin(this.time * 7) > 0.4) { tint = '#b04ae0'; ta = 0.4; }
     else if (m.stunT > 0 && Math.sin(this.time * 20) > 0) { tint = '#ffffff'; ta = 0.25; }
+    if (this.restoring && this.restoring.m === m && !this.restoring.broke) {   // glowing brighter as it charges
+      const k2 = this.restoring.t / RESTORE_T.glow; tint = '#ffffff'; ta = Math.min(0.9, 0.2 + k2 * 0.7 * (0.75 + 0.25 * Math.sin(this.time * 30)));
+    }
     if (tint) { ctx.globalAlpha = ta * alpha; ctx.drawImage(tintOf(pic, tint), dx, dy, pw, ph); }
     ctx.restore();
     ctx.globalAlpha = 1;

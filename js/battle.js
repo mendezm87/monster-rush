@@ -17,6 +17,25 @@ function mixInto(target, src) {
 // ------------------------------------------------------------------ Room
 // One room of a floor. The player's party lives on the run; wild Coreatures are made
 // when an uncleared room is entered. hooks: exit(dir), stairs(), recruit(pedestal), end(result).
+// The Restore moment's timeline in seconds (see Battle.startRestore): glowing, swirling apart,
+// building the new form, and when it ends.
+const RESTORE_T = { glow: 0.6, swirl: 1.3, build: 2.0, end: 3.5 };
+// The Coreature's own pixels, as glowing data that swirls away and back (one per sprite pixel).
+function restorePixels(m) {
+  const sp = monSprite(m), img = sp.views[m.view] || sp.views.front, S = sp.size * SPR_SCALE * m.scale, k = S / sp.size;
+  const w = img.width, h = img.height, data = img.getContext('2d').getImageData(0, 0, w, h).data, out = [];
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const a = (y * w + x) * 4;
+    if (data[a + 3] < 128) continue;
+    const wx = m.x + (x - w / 2) * k * (m.face < 0 ? -1 : 1), wy = m.y + 3 - (h - y) * k;
+    const dx = wx - m.x, dy = wy - m.cy;
+    out.push({ x0: wx, y0: wy, ang: Math.atan2(dy, dx), r0: Math.hypot(dx, dy), spin: rand(2.5, 4.5) * (Math.random() < 0.5 ? -1 : 1),
+      lift: rand(18, 42), out: rand(16, 46), size: k, t: 0,
+      color: `rgb(${data[a]},${data[a + 1]},${data[a + 2]})` });
+  }
+  return out;
+}
+
 class Battle {
   constructor({ run, room, entry = null, ui, hooks = {} }) {
     this.run = run; this.room = room; this.ui = ui; this.hooks = hooks;
@@ -178,20 +197,59 @@ class Battle {
   // stronger form.
   evolveReady() {
     for (const m of this.p) {
-      if (!m.canEvolve) continue;
-      const from = m.def.name, to = ROSTER_BY_ID[m.def.evolve.to];
+      if (!m.canEvolve || this.restoring) continue;
+      if (m === this.P && m.visible) { this.startRestore(m); continue; }   // the one that's out gets the full moment
+      const from = m.def.name, to = ROSTER_BY_ID[m.def.evolve.to];   // a benched one Restores quietly
       m.setDef(to); m.restorePending = false; m.mastery = 0;
       m.hp = Math.min(m.maxHp, m.hp + Math.round(m.maxHp * 0.25));
       this.ui.banner(`${from} RESTORED!`, `Its lost data came back: it's ${to.name} again`);
       this.run.stats.evolved = (this.run.stats.evolved || 0) + 1;
       Sfx.play('evolve');
-      if (m === this.P) {
-        m.flash = 1.2;
-        this.particles.push({ x: m.x, y: m.y - 2, r0: 4, r1: 46, life: 0.6, max: 0.6, color: '#ffffff', kind: 'ring', w: 3 });
-        this.burst(m.x, m.cy, ['#ffffff', '#ffe066', '#a8d0ff'], 40, 110, -40);
-        this.ui.onSendOut('player', m);
-      }
     }
+  }
+
+  // The Restore moment (about 3.4 s, everything else waits): the room dims to a spotlight while the
+  // Coreature glows and charges (RESTORE_T.glow); it breaks into its own pixels, which swirl up
+  // around it as glowing data (.swirl); they swirl back in while the new form assembles from the
+  // feet up (.build); then a flash, a burst in its type's colours and its new name, big
+  // (.card), and the room fades back in. Drawn by drawRestore (render.js).
+  startRestore(m) {
+    m.restorePending = false;
+    this.restoring = { m, t: 0, from: m.def, to: ROSTER_BY_ID[m.def.evolve.to], pixels: [], broke: false, built: false };
+    this.trainerAct('brace', m);
+    Sfx.beamCharge(RESTORE_T.glow);
+  }
+  updateRestore(dt) {
+    const R = this.restoring, m = R.m;
+    R.t += dt;
+    if (!R.broke && R.t >= RESTORE_T.glow) {   // it breaks apart into its own pixels
+      R.broke = true;
+      R.pixels = restorePixels(m);
+      m.setDef(R.to); m.mastery = 0;
+      m.restoreHide = true;
+      this.addShake(2.5);
+      Sfx.play('recall');
+    }
+    if (R.broke && !R.building && R.t >= RESTORE_T.swirl) {   // the new form starts to assemble
+      R.building = true; m.restoreHide = false; m.assembleT = 0;
+      Sfx.play('deploy');
+    }
+    if (R.broke && !R.built && R.t >= RESTORE_T.swirl) m.assembleT = Math.min(1, (R.t - RESTORE_T.swirl) / (RESTORE_T.build - RESTORE_T.swirl));
+    if (!R.built && R.t >= RESTORE_T.build) {   // the payoff
+      R.built = true; m.assembleT = undefined; m.flash = 0.6;
+      m.hp = Math.min(m.maxHp, m.hp + Math.round(m.maxHp * 0.25));
+      const col = TYPES[m.def.types[0]].color, fx = TYPES[m.def.types[0]].fx;
+      this.particles.push({ x: m.x, y: m.y - 2, r0: 6, r1: 70, life: 0.7, max: 0.7, color: '#ffffff', kind: 'ring', w: 4 });
+      this.particles.push({ x: m.x, y: m.y - 2, r0: 4, r1: 52, life: 0.55, max: 0.55, color: col, kind: 'ring', w: 3 });
+      this.burst(m.x, m.cy, ['#ffffff', ...fx], 60, 150, -50);
+      this.addShake(7);
+      this.run.stats.evolved = (this.run.stats.evolved || 0) + 1;
+      Sfx.play('evolve');
+      this.trainerAct('victory');
+      this.ui.onSendOut('player', m);
+    }
+    for (const p of R.pixels) p.t += dt;
+    if (R.t >= RESTORE_T.end) { this.restoring = null; this.evolveReady(); }
   }
 
   // The evolution altar: the offered relics are gone for good, and the Coreature becomes the legend
@@ -453,6 +511,7 @@ class Battle {
     this.updateWeather(dt);
     this.updateParticles(dt);
     this.updateDeploys(dt);
+    if (this.restoring) { this.updateRestore(dt); return; }   // the Restore moment: everything else waits
 
     switch (this.state) {
       case 'explore':
