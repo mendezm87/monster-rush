@@ -533,3 +533,69 @@ flaps their wings).
 > one hard-edged shadow tone, soft airbrushed highlights, hand-painted watercolour background of a
 > cloud sea at sunset with distant floating ruins, slight film grain, 4:3 screenshot framing, original
 > creature design, no text
+
+---
+
+## Round 5: Drakorn, cuter and more cartoony (r97; the owner: "all those dragon designs suck, can we try something cuter or more cartoony?")
+
+Round 4 was too serious. These keep the dinosaur-that-Restores-into-a-dragon idea but go cute, round
+and funny, with a **different style block**: a bright 2000s TV cartoon instead of 90s cel anime.
+**Pick a pair** (or mix). The dragon keeps the name Drakorn; the dinosaur gets a new name. Still
+staying away from Dragonite's marks: orange skin, a cream belly, two thin antennae.
+
+The cartoon style, already in every prompt below:
+
+> bright 2000s TV cartoon style, thick clean black outlines, chunky rounded shapes, big expressive
+> eyes, flat saturated colours with simple cel shading, plain simple background, original creature
+> design, no text
+
+**K1 · Tiny-arms rex** (a little T-rex who's very proud of himself; grows into L1)
+> A small round chubby baby T-rex monster, bright teal with lemon-yellow stripes down its back, a
+> huge head with a big toothy grin and two tiny comically short arms, big shiny eyes full of
+> confidence, stubby legs, a fat little tail, puffing out its chest, a cute monster from a
+> monster-battling game. bright 2000s TV cartoon style, thick clean black outlines, chunky rounded
+> shapes, big expressive eyes, flat saturated colours with simple cel shading, plain simple
+> background, original creature design, no text
+
+**L1 · Tiny-arms dragon** (evolved: Drakorn; the joke carries on)
+> A big, strong, round-bellied dragon monster that grew from a little T-rex, bright teal with
+> lemon-yellow stripes, huge powerful legs and tail, great big wings, but STILL two tiny comically
+> short arms, a wide confident grin, a small crest of yellow spikes on its head, flying with a proud
+> heroic pose, cute and funny but clearly strong, a monster from a monster-battling game. bright
+> 2000s TV cartoon style, thick clean black outlines, chunky rounded shapes, big expressive eyes,
+> flat saturated colours with simple cel shading, plain simple background, original creature
+> design, no text
+
+**K2 · Cloud puff dino** (a fluffy little dino; grows into L2)
+> A small round baby dinosaur monster with a fluffy white cloud for a mane around its neck and a
+> little cloud puff on the tip of its tail, soft sky-blue skin with pale lavender spots, big sleepy
+> happy eyes, rosy cheeks, stubby legs, floating just a little off the ground, a cute monster from
+> a monster-battling game. bright 2000s TV cartoon style, thick clean black outlines, chunky rounded
+> shapes, big expressive eyes, flat saturated colours with simple cel shading, plain simple
+> background, original creature design, no text
+
+**L2 · Cloud dragon** (evolved: Drakorn)
+> A big round friendly dragon monster that grew from a cloud dinosaur, sky-blue with lavender
+> spots, its cloud mane now a huge fluffy white collar, wings made of puffy white clouds with a
+> little rainbow shimmer, a long tail ending in a cloud puff, a gentle confident smile, two short
+> rounded horns, flying happily, cute but big and strong, a monster from a monster-battling game.
+> bright 2000s TV cartoon style, thick clean black outlines, chunky rounded shapes, big expressive
+> eyes, flat saturated colours with simple cel shading, plain simple background, original creature
+> design, no text
+
+**K3 · Kite-back stego** (a stegosaurus pup with candy-coloured back plates; grows into L3)
+> A small chubby baby stegosaurus monster, mint-green skin, the plates down its back shaped and
+> coloured like little paper kites in red, yellow and purple, a short tail with two soft round
+> spikes, big bright curious eyes, a happy open-mouthed smile, stubby legs, a cute monster from a
+> monster-battling game. bright 2000s TV cartoon style, thick clean black outlines, chunky rounded
+> shapes, big expressive eyes, flat saturated colours with simple cel shading, plain simple
+> background, original creature design, no text
+
+**L3 · Kite dragon** (evolved: Drakorn; its back plates became wings)
+> A big chunky dragon monster that grew from a stegosaurus, mint-green skin, its back plates have
+> grown into four big colourful kite-shaped wings in red, yellow and purple with thin cross-struts
+> like real kites, a long tail with ribbon streamers like a kite's tail, a wide happy grin, two
+> small rounded horns, soaring joyfully, cute but big and strong, a monster from a monster-battling
+> game. bright 2000s TV cartoon style, thick clean black outlines, chunky rounded shapes, big
+> expressive eyes, flat saturated colours with simple cel shading, plain simple background,
+> original creature design, no text
