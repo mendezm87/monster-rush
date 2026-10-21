@@ -800,3 +800,57 @@ replace "a broad rounded muzzle like a hippo's" with one of these (the mock-up i
   smile"
 - **Pillow face:** "a flat face with a piped seam running across it like the edge of a pillow, a
   small stitched nose and a wide calm mouth"
+
+### Round 6e: jumbled bears (the owner: "what if we try a mix of different bears combined, as if the data on all bears was jumbled up")
+
+Fits the world: Coreatures are data from the old civilization, and Slumbear's came back scrambled
+from every bear on record, stitched together into one huge sleepy creature. Each part is a
+different bear: grizzly, polar, panda, sun bear (the golden crescent on its chest), spectacled bear
+(the cream rings round its eyes), sloth bear (the shaggy mane), black bear. A 44px mock-up is in
+`docs/samples/slumbear-jumble.js`.
+
+**J1 · Stitched from every bear**
+> A huge round heavy sleepy monster stitched together from the parts of different bears, each part
+> joined by a visible seam with big stitches: a grizzly-brown body with a shoulder hump, a
+> polar-white patch down one side and one white leg, one black panda leg, one panda-black arm and one
+> cinnamon-brown arm, mismatched ears (one black, one white), a panda's black patch round one sleepy
+> eye and a spectacled bear's cream ring round the other, a sun bear's golden crescent across its
+> chest, a short muzzle with a big dark nose, a slow sleepy smile, a creature that is no one bear
+> but all of them, gentle and enormous, a monster from a monster-battling game. 1990s TV anime cel
+> art, hand-inked line art with varying line weight, flat cel colours with one hard-edged shadow
+> tone, soft airbrushed highlights, hand-painted watercolour background of overgrown ancient ruins,
+> slight film grain, 4:3 screenshot framing, original creature design, no text
+
+**J2 · Scrambled data** (the jumble shows as blocks, like corrupted data)
+> A huge round heavy sleepy monster whose body is made of blocky rectangular sections of different
+> bears' fur that don't quite line up, as if its data was scrambled: grizzly brown, polar white,
+> panda black and white, cinnamon, the golden crescent of a sun bear's chest broken across two
+> blocks, one eye with a panda's black patch and one with a spectacled bear's cream ring, the edges
+> between sections faintly glowing pale blue like data seams, a shaggy sloth-bear mane, a broad
+> sleepy face, stubby legs that don't match, eerie but gentle and enormous, a monster from a
+> monster-battling game. 1990s TV anime cel art, hand-inked line art with varying line weight, flat
+> cel colours with one hard-edged shadow tone, soft airbrushed highlights, hand-painted watercolour
+> background of a dim archive full of glowing crystals, slight film grain, 4:3 screenshot framing,
+> original creature design, no text
+
+**J3 · Patchwork plush of bears** (the jumble, but cosy: the S7a quilt idea with bear-fur patches)
+> A huge round sleepy monster with a soft quilted hide like an old mattress, covered in sewn-on
+> patches of different bears' fur: a patch of grizzly brown, a patch of polar white, panda-black
+> patches round one eye and over its ears, a spectacled bear's cream ring round its other eye, a sun
+> bear's golden crescent patch on its chest, a shaggy sloth-bear tuft on its head, every patch with
+> big visible stitches, a flat round face like a stuffed toy with an embroidered nose, a tiny
+> stitched smile, stubby mismatched legs, cosy and enormous, a monster from a monster-battling game.
+> 1990s TV anime cel art, hand-inked line art with varying line weight, flat cel colours with one
+> hard-edged shadow tone, soft airbrushed highlights, hand-painted watercolour background of a
+> moonlit bamboo grove, slight film grain, 4:3 screenshot framing, original creature design, no text
+
+**J4 · Bear chimera** (fiercer, one bear's head on another's body)
+> A huge heavy monster that's a jumble of bear species: a polar bear's long white head and neck on a
+> massive grizzly body with a high shoulder hump, a sloth bear's shaggy black mane round its
+> shoulders, one panda-patterned foreleg and one cinnamon foreleg, a sun bear's golden crescent on
+> its chest, a spectacled bear's cream rings round its heavy-lidded eyes, thick seams of stitches
+> where the parts meet, yawning to show big blunt teeth, drowsy but powerful and enormous, a monster
+> from a monster-battling game. 1990s TV anime cel art, hand-inked line art with varying line
+> weight, flat cel colours with one hard-edged shadow tone, soft airbrushed highlights,
+> hand-painted watercolour background of a snowy mountain pass, slight film grain, 4:3 screenshot
+> framing, original creature design, no text
