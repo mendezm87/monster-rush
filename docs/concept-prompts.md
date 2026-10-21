@@ -599,3 +599,52 @@ The cartoon style, already in every prompt below:
 > game. bright 2000s TV cartoon style, thick clean black outlines, chunky rounded shapes, big
 > expressive eyes, flat saturated colours with simple cel shading, plain simple background,
 > original creature design, no text
+
+---
+
+## Round 6: Slumbear (r119; the owner: "let's work on Slumbear now")
+
+The owner really likes Slumbear, so this one goes slowly, over several rounds with lots of their
+input. Today he reads as Snorlax because four marks come together: a teal-blue round body, a cream
+face mask, a big oval cream belly, and a closed-eye smile (plus little round ears and cream soles).
+Each direction keeps what makes him Slumbear (a huge, round, sleepy Beast bear who fires a Mega
+Beam, belly-flops, stomps and stops for snacks) and changes those marks. Generate, mix and send
+back what you like; the next round narrows down from there.
+
+**S1 · Moon bear** (the cream crescent on a real moon bear's chest instead of a big belly)
+> A huge round sleepy bear monster, shaggy midnight-blue fur almost black, a cream crescent-moon
+> marking across its chest, big rounded ears, heavy drooping eyelids with dark sleepy circles, a
+> little drool bubble, a floppy striped nightcap with a star pom-pom, hugging a worn old pillow,
+> thick stubby legs, gentle and enormous, a monster from a monster-battling game. 1990s TV anime cel
+> art, hand-inked line art with varying line weight, flat cel colours with one hard-edged shadow
+> tone, soft airbrushed highlights, hand-painted watercolour background of a moonlit meadow, slight
+> film grain, 4:3 screenshot framing, original creature design, no text
+
+**S2 · Moss hibernator** (so lazy a little forest grew on his back)
+> A huge round dozing bear monster, shaggy grey-brown fur, its broad back and shoulders overgrown
+> with thick green moss, small mushrooms, ferns and one young sapling, a bird's nest with an egg on
+> top of its head, a pale tan patch of fur on its tummy with an uneven edge, eyes shut and snoring
+> with its mouth slightly open, thick stubby legs with mossy claws, peaceful and enormous, a monster
+> from a monster-battling game. 1990s TV anime cel art, hand-inked line art with varying line
+> weight, flat cel colours with one hard-edged shadow tone, soft airbrushed highlights,
+> hand-painted watercolour background of an old forest clearing, slight film grain, 4:3 screenshot
+> framing, original creature design, no text
+
+**S3 · Quilt bear** (always wrapped up for a nap)
+> A huge round sleepy bear monster with honey-gold fur, wrapped in a big patchwork quilt worn like a
+> hooded cape, only its face, round ears and big paws poking out, a sleep mask pushed up on its
+> forehead, half-open bored eyes, holding a half-eaten honeycomb, a few crumbs on its fur, thick
+> stubby legs in fuzzy socks, cosy and enormous, a monster from a monster-battling game. 1990s TV
+> anime cel art, hand-inked line art with varying line weight, flat cel colours with one hard-edged
+> shadow tone, soft airbrushed highlights, hand-painted watercolour background of a cabin porch at
+> dusk, slight film grain, 4:3 screenshot framing, original creature design, no text
+
+**S4 · Sleeping sentinel** (a guardian of the ruins who fell asleep on duty; fits the game's story)
+> A huge round bear monster asleep sitting up, slate-grey fur, ancient weathered bronze armour
+> plates on its shoulders and forearms covered in green patina and lichen, a dim glowing crystal
+> set in its forehead, a broken stone collar with carved runes, eyes closed with a calm deep frown,
+> a pale stone-coloured patch on its chest shaped like a shield, thick stubby legs, ancient and
+> enormous, a monster from a monster-battling game. 1990s TV anime cel art, hand-inked line art with
+> varying line weight, flat cel colours with one hard-edged shadow tone, soft airbrushed
+> highlights, hand-painted watercolour background of overgrown temple ruins, slight film grain, 4:3
+> screenshot framing, original creature design, no text
