@@ -278,13 +278,14 @@ function gearSprites(id, gear) {
       return c;
     } });
     if (views.flapped) flapped(out, dress(views.flapped, pose));
+    if (views.half) halfFlapped(out, dress(views.half, pose));
     return out;
   };
   const out = { ...sp, views: dress(sp.views, null) };
   Object.defineProperty(out, 'img', { enumerable: true, get: () => out.views.front });
   if (sp.frames) {
     out.frames = {};
-    const poses = { ...RIG_COMMON, ...RIG_FRAMES[RIGGED[id]] };
+    const poses = rigPoses(id);
     for (const [k, f] of Object.entries(sp.frames)) {
       if (k === 'faint') { out.frames[k] = f; continue; }   // it topples over and its gear falls off
       out.frames[k] = Array.isArray(f) ? f.map((views, i) => dress(views, poses[k][i])) : dress(f, poses[k]);

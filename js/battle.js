@@ -36,6 +36,9 @@ function restorePixels(m) {
   return out;
 }
 
+// The colours of the dust Coreatures kick up (Battle.dust, and the thud when one faints).
+const DUST = ['#d8ccb0', '#b8a888', '#ece4d0'];
+
 class Battle {
   constructor({ run, room, entry = null, ui, hooks = {} }) {
     this.run = run; this.room = room; this.ui = ui; this.hooks = hooks;
@@ -607,12 +610,26 @@ class Battle {
         break;
     }
     for (const m of this.mons) {
-      if (m.fainted) m.fadeT += dt;
+      if (m.fainted) {   // it topples; a thud of dust when it hits the ground
+        const was = m.fadeT; m.fadeT += dt;
+        if (was < 0.15 && m.fadeT >= 0.15 && m.visible !== false) { this.burst(m.x, m.y - 1, DUST, 10, 50, -12, 4); this.addShake(1.5); }
+      } else this.dust(m, dt);
       m.ghosts.forEach(g => (g.t -= dt));
       m.ghosts = m.ghosts.filter(g => g.t > 0);
     }
     this.updateTrainer(dt);
     this.updateCamera(dt);
+  }
+
+  // Dust kicked up by a Coreature on the ground: puffs behind it as it dashes or runs flat out (r110).
+  dust(m, dt) {
+    if (!m.visible || m.hover > 0 || (FLYERS[m.id] && m.status !== 'frz')) return;
+    const dashing = m.action && m.action.kind === 'dash', sp = Math.hypot(m.vx, m.vy);
+    if (!dashing && sp < m.speed() * 0.9) return;
+    m.dustT = (m.dustT || 0) - dt;
+    if (m.dustT > 0) return;
+    m.dustT = dashing ? 0.05 : 0.3;                                  // a steady trail when dashing, a puff now and then when running
+    this.burst(m.x - m.vx / (sp || 1) * m.r * 0.6, m.y - 1, DUST, dashing ? 2 : 1, 18, -14, 2);
   }
 
   updateSpawn(m, dt) {

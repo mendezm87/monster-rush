@@ -152,6 +152,7 @@ mixInto(Battle, class {
     // bosses barely budge
     const force = (opts.force ?? (mult < 1 ? 22 : Math.min(260, 60 + dmg * 0.45))) * (tgt.boss ? 0.35 : tgt.champ === 'giant' ? 0.5 : 1);
     tgt.kx += Math.cos(kb) * force; tgt.ky += Math.sin(kb) * force;
+    if (mult >= 1) tgt.stagger = force > 150;   // a big knockback: it staggers, then steadies itself (monAnim)
 
     this.fxImpact(tgt, mv, dmg, eff, mult, src);
     if (mult >= 1 || fresh) this.sparks(tgt.x, tgt.cy, mult < 1 ? 2 : 6);
@@ -164,7 +165,12 @@ mixInto(Battle, class {
     Sfx.play(dmg > 200 ? 'bigHit' : 'hit');
     if (mult >= 1) Sfx.move(mv, 'hit');
     this.addShake(mult < 1 ? 1.2 : Math.min(6, 1 + dmg / 80));
-    if (mult >= 1 && dmg > 150) this.hitstop = Math.min(0.09, 0.03 + dmg / 6000);
+    // hit-stop: everything freezes for a split second on a solid hit, longer on criticals and
+    // super-effective hits, and the one that got hit holds a white flash through it (r110)
+    if (mult >= 1 && (dmg > 80 || crit || eff > 1)) {
+      this.hitstop = Math.max(this.hitstop, Math.min(0.1, 0.035 + dmg / 5000 + (crit ? 0.02 : 0) + (eff > 1 ? 0.015 : 0)));
+      tgt.flash = Math.max(tgt.flash, 0.12 + this.hitstop);
+    }
 
     if (mv.status && Math.random() < mv.status[1] * Math.min(1, mult * 3)) this.applyStatus(tgt, mv.status[0]);
     this.emit('hit', src, tgt, mv, mult);

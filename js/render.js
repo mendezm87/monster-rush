@@ -640,8 +640,10 @@ mixInto(Battle, class {
     const still = m.status === 'frz' || m.stunT > 0 || m.lift > 0.01;
     const pose = still && !m.fainted ? { views: sp.views, sq: 0, sh: 0, dy: 0 } : monAnim(m, phase, !!hover);
     const bob = -pose.dy;
-    const flapping = fly && sp.flap && !grounded && m.stunT <= 0 && Math.sin((this.time * fly.flap * (moving ? 1.3 : 1) + phase) * TAU) > 0;
-    const img = (flapping && pose.views.flapped ? pose.views.flapped : pose.views)[m.view];
+    // wings in four steps (r110): up, half-way, down, half-way
+    const beat = fly && sp.flap && !grounded && m.stunT <= 0 && !pose.noFlap ? Math.floor(((this.time * fly.flap * (moving ? 1.3 : 1) + phase) % 1) * 4) : 0;
+    const wings = beat === 2 ? pose.views.flapped : beat % 2 ? pose.views.half || pose.views.flapped : null;
+    const img = (wings || pose.views)[m.view];
     const mine = m.side === 'player';
 
     // ground marker + shadow

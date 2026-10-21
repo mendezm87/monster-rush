@@ -318,3 +318,12 @@ Object.assign(MONSTER_ART_DIAG, {
   },
 });
 Object.assign(RIGGED, { cosmite: 'biped', drakorn: 'flier' });
+// Nyxdrake's fidget (r110): it stretches its wings up high and roars at the sky, every 10 seconds or so.
+Object.assign(FIDGETS, { drakorn: { fps: 5, every: 10, frames: [
+  { head: [0, -1], flap: -0.25 },
+  { head: [1, -2], mouth: 'roar', tail: [1, 0], flap: -0.55 },
+  { head: [1, -2], mouth: 'roar', tail: [-1, 0], flap: -0.7 },
+  { head: [0, -1], flap: -0.3 },
+  { flap: 0.3 },
+  {},
+] } });

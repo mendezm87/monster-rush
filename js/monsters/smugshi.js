@@ -230,3 +230,13 @@ Object.assign(MONSTER_ART_DIAG, {
   },
 });
 Object.assign(RIGGED, { smugshi: 'quad', smugshogun: 'quad' });
+// Smugshi's fidget (r110): a big lazy yawn, then a smug glance away, every 9 seconds or so.
+Object.assign(FIDGETS, { smugshi: { fps: 5, every: 9, frames: [
+  { head: [0, -1], eyes: 'blink' },
+  { head: [0, -2], eyes: 'sleep', mouth: 'roar', ears: [1, 1] },
+  { head: [0, -2], eyes: 'sleep', mouth: 'roar', ears: [1, 1] },
+  { head: [0, -1], eyes: 'blink', mouth: 'open' },
+  { head: [-1, 0], tail: [1, 0] },
+  { head: [-1, 0], tail: [-1, 0] },
+  {},
+] } });

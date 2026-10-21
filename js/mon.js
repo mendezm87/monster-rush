@@ -117,9 +117,21 @@ class Mon {
   // Turn to look along (dx, dy): the back when heading up the screen, the front when
   // heading down, the side or a diagonal (flipped by face) otherwise. See viewFor.
   look(dx, dy) {
-    const v = viewFor(dx, dy, this.view, !!MONSTER_ART_DIAG[this.id]);
+    const diag = !!MONSTER_ART_DIAG[this.id], v = viewFor(dx, dy, this.view, diag);
     if (!v) return;
+    const now = animClock();
+    if (this.turnUntil > now) return;                                   // still turning
+    const order = diag ? ['front', 'fside', 'side', 'bside', 'back'] : ['front', 'side', 'back'];
+    const face = isSideView(v) && Math.abs(dx) > 0.001 ? Math.sign(dx) : this.face;
+    const a = order.indexOf(this.view), b = order.indexOf(v);
+    // a sharp turn (front to back, or flipping round while side-on) passes through the view in between (r110)
+    if (a >= 0 && b >= 0 && (Math.abs(a - b) >= 2 || (face !== this.face && isSideView(this.view) && isSideView(v)))) {
+      this.view = Math.abs(a - b) >= 2 ? order[Math.round((a + b) / 2)] : 'front';
+      if (Math.abs(a - b) >= 2 && isSideView(this.view)) this.face = face;
+      this.turnUntil = now + 0.06;
+      return;
+    }
     this.view = v;
-    if (isSideView(v) && Math.abs(dx) > 0.001) this.face = Math.sign(dx);
+    this.face = face;
   }
 }

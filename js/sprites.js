@@ -19,7 +19,7 @@ function flapPts(pts, w = {}) {
 }
 const wingPoly = (g, pts, pal, opt, w) => g.poly(flapPts(pts, w), pal, opt);
 const wingPolyM = (g, pts, pal, opt, w) => g.polyM(flapPts(pts, w), pal, opt);
-const flapEll = (cx, rx) => (FLAP ? [16 + (cx - 16) * 0.72, rx * 0.55] : [cx, rx]);
+const flapEll = (cx, rx) => (FLAP ? [16 + (cx - 16) * (1 - 0.28 * FLAP), rx * (1 - 0.45 * FLAP)] : [cx, rx]);
 const wingEllipse = (g, cx, cy, rx, ry, pal, opt) => { const [x, r] = flapEll(cx, rx); return g.ellipse(x, cy, r, ry, pal, opt); };
 const wingEllipseM = (g, cx, cy, rx, ry, pal, opt) => { const [x, r] = flapEll(cx, rx); return g.ellipseM(x, cy, r, ry, pal, opt); };
 
@@ -83,6 +83,8 @@ const RIG_FRAMES = {
     idle: [{}, { tail: [1, 0] }, { head: [0, -1] }, { head: [0, -1], tail: [-1, 0] }],
     windup: { body: 1, head: [-1, 1], tail: [0, 1], ears: [1, 1] },
     attack: { head: [1, 0], tail: [0, -1], mouth: 'open' },
+    lunge: { body: -1, head: [2, 0], legs: [1, 0], ears: [2, 2], tail: [-1, -1], mouth: 'open' },   // the strike itself, thrown forward
+    recover: { body: 1, head: [0, 1], tail: [0, 1] },                                                // settling back after
     hurt: { head: [-1, -1], eyes: 'hurt', mouth: 'open', ears: [2, 2] },
     run: [{ body: -1, head: [1, -1], legs: [2, 0], ears: [2, 2], tail: [-1, -1] }, { head: [1, 0], legs: [0, 2], ears: [2, 2], tail: [-1, 0] }],
     roar: { head: [1, -1], mouth: 'roar', ears: [1, 1], tail: [0, -1] },
@@ -96,6 +98,8 @@ const RIG_FRAMES = {
     idle: [{}, {}, { head: [0, -1] }, { head: [0, -1], tail: [1, 0] }],
     windup: { body: 1, head: [-1, 1], arms: [-2, -2] },
     attack: { head: [1, 0], arms: [2, 2], mouth: 'open', tail: [-1, 0] },
+    lunge: { body: -1, head: [2, 0], arms: [3, 1], legs: [0, 1], mouth: 'open', tail: [-1, 0] },
+    recover: { body: 1, head: [0, 1], arms: [-1, -1] },
     hurt: { head: [-1, -1], arms: [-1, -1], eyes: 'hurt', mouth: 'open' },
     run: [{ body: -1, head: [1, -1], legs: [2, 0], arms: [-2, 2], tail: [-1, -1] }, { head: [1, 0], legs: [0, 2], arms: [2, -2], tail: [-1, 0] }],
     roar: { head: [0, -1], arms: [-1, -1], mouth: 'roar' },
@@ -109,6 +113,8 @@ const RIG_FRAMES = {
     idle: [{}, { tail: [1, 0] }, { tail: [0, -1] }, { tail: [-1, 0] }],
     windup: { body: 1, head: [-1, 1], ears: [1, 1] },
     attack: { head: [1, 0], mouth: 'open', tail: [-1, 0] },
+    lunge: { body: -1, head: [2, -1], mouth: 'open', tail: [-2, 0], ears: [2, 2] },
+    recover: { body: 1, head: [0, 1], tail: [1, 0] },
     hurt: { head: [-1, -1], eyes: 'hurt', mouth: 'open', ears: [2, 2] },
     run: [{ body: -1, head: [1, 0], tail: [-2, 0], ears: [2, 2] }, { head: [1, 0], tail: [-2, 1], ears: [2, 2] }],
     roar: { head: [1, -1], mouth: 'roar', ears: [1, 1] },
@@ -122,6 +128,13 @@ RIG_FRAMES.flier = { ...RIG_FRAMES.floater, idle: [{}, { tail: [1, 0] }, { body:
 RIG_FRAMES.slither = { ...RIG_FRAMES.floater,   // a serpent's coil stays put while the body sways and the tail swishes
   walk: lagged([{ body: 0, swing: 2 }, { body: -1, swing: 1 }, { body: 0, swing: -2 }, { body: -1, swing: -1 }]),
   idle: [{}, { tail: [1, 0] }, { head: [0, -1], tail: [2, 0] }, { head: [0, -1], tail: [1, 0] }] };
+// Fidgets (r110): a little routine of its own a Coreature plays every so often while it stands
+// around (Smugshi yawns and looks away, Nyxdrake stretches its wings and roars). Each family file
+// adds its own: { frames: [poses], fps, every: seconds between }. A pose may set flap (how far its
+// wings swing: negative raises them) for a wing stretch.
+const FIDGETS = {};
+// Every pose a monster's frames are built from: its body type's, the shared ones, and its fidget.
+const rigPoses = id => ({ ...RIG_COMMON, ...RIG_FRAMES[RIGGED[id]], ...(FIDGETS[id] ? { fidget: FIDGETS[id].frames } : {}) });
 // Heals that show a pose of their own for as long as their effect plays (Blanket Nap sleeps).
 const HEAL_POSE = { blanketNap: ['sleep', 1.6], snack: ['chew', 0.95], photosynth: ['proud', 1.1], wish: ['proud', 1.2] };
 // A fainted monster lies on its side: the faint frame turned a quarter (exact, so the pixels
@@ -214,7 +227,7 @@ function _warmTick() {   // about 4 ms of drawing at a time, between the game's 
 // Let monsters' pictures go (Deep Archive, on a new floor: everyone not in the party or on the
 // floor). Their canvases are freed now; SPRITES[id] draws them again if they're needed later.
 function forgetSprites(keep) {
-  const views = vs => { if (!vs) return; for (const k of Object.keys(vs)) freeCanvas(vs[k]); views(vs.flapped); };
+  const views = vs => { if (!vs) return; for (const k of Object.keys(vs)) freeCanvas(vs[k]); views(vs.flapped); views(vs.half); };
   for (const id of Object.keys(SPRITE_STORE)) {
     if (keep.has(id)) continue;
     const sp = SPRITE_STORE[id];
@@ -230,6 +243,7 @@ function buildSprites() {}
 const VIEWS = ['front', 'side', 'back'];
 // A set of views remembers its wings-down twin (hidden, so it isn't listed as a view).
 const flapped = (views, twin) => Object.defineProperty(views, 'flapped', { value: twin });
+const halfFlapped = (views, twin) => Object.defineProperty(views, 'half', { value: twin });   // wings half-way (r110: a 4-step flap)
 // One monster's sprite set: its views, flap frame and animation frames.
 function buildMonSprites(mon) {
   const gen = spriteSteps(mon);
@@ -256,26 +270,26 @@ function* spriteSteps(mon) {
   };
   const views = draw(), fly = FLYERS[mon.id] || null;
   yield;
-  let flap = null;
-  if (fly && fly.flap) { flap = draw(null, 1); yield; }   // the wings-down frame
+  let flap = null, half = null;
+  if (fly && fly.flap) { flap = draw(null, 1); yield; half = draw(null, 0.5); yield; }   // the wings-down frame and the one in between
   let frames = null;
   if (RIGGED[mon.id]) {   // its animation frames, each a full set of views
-    const poses = { ...RIG_COMMON, ...RIG_FRAMES[RIGGED[mon.id]] };
+    const poses = rigPoses(mon.id);
     frames = {};
     for (const [k, f] of Object.entries(poses)) {
-      if (Array.isArray(f)) { frames[k] = []; for (const ff of f) { frames[k].push(draw(ff)); yield; } }
+      if (Array.isArray(f)) { frames[k] = []; for (const ff of f) { frames[k].push(draw(ff, ff.flap || 0)); yield; } }
       else { frames[k] = draw(f); yield; }
     }
     for (const v of Object.keys(frames.faint)) frames.faint[v] = lying(frames.faint[v]);   // laid on its side
     if (fly && fly.flap) {   // a flier's frames, wings down (drawMon swaps them in as it flaps)
       for (const [k, f] of Object.entries(poses)) {
-        if (k === 'faint') continue;
-        if (Array.isArray(f)) { for (let i = 0; i < f.length; i++) { flapped(frames[k][i], draw(f[i], 1)); yield; } }
-        else { flapped(frames[k], draw(f, 1)); yield; }
+        if (k === 'faint' || k === 'fidget') continue;   // a fidget holds its own wing pose
+        if (Array.isArray(f)) { for (let i = 0; i < f.length; i++) { flapped(frames[k][i], draw(f[i], 1)); yield; halfFlapped(frames[k][i], draw(f[i], 0.5)); yield; } }
+        else { flapped(frames[k], draw(f, 1)); yield; halfFlapped(frames[k], draw(f, 0.5)); yield; }
       }
     }
   }
-  if (flap) flapped(views, flap);
+  if (flap) { flapped(views, flap); halfFlapped(views, half); }
   return { img: views.front, views, size, diag, fly, flap, frames };
 }
 
@@ -392,7 +406,10 @@ function monAnim(m, phase, flying) {
   }
   const pop = animSince(m, 'pop');
   if (pop < 0.3) return out(F && F.windup, F ? 0 : pop < 0.12 ? -1 : 1, 0, pop < 0.12 ? 2 : 0);   // sent out: up, then landing
-  if (animSince(m, 'hurt') < 0.2) return F ? out(F.hurt) : out(null, 1, side ? -1 : 0);
+  if (animSince(m, 'hurt') < (m.stagger ? 0.3 : 0.2)) return F ? out(F.hurt) : out(null, 1, side ? -1 : 0);
+  if (F && F.recover && animSince(m, 'hurt') < (m.stagger ? 0.45 : 0.3)) return out(F.recover);   // steadying itself after the hit
+  if (a !== m._act) { if (m._act && !a) animMark(m, 'done'); m._act = a; }                          // an action just ended
+  if (F && F.recover && !a && animSince(m, 'done') < 0.14) return out(F.recover);                   // settling back after it
   const healPose = () => {   // Blanket Nap sleeps, Snack Time chews, sunny and wishful heals look proud
     const k = m.healPose || (a && a.mv && HEAL_POSE[a.mv.id] ? HEAL_POSE[a.mv.id][0] : 'proud');
     return out(k === 'chew' ? F.chew[Math.floor(clock * 7) % 2] : F[k]);
@@ -402,10 +419,11 @@ function monAnim(m, phase, flying) {
       if (a.kind === 'dash') return out(F.run[Math.floor(clock * 12) % 2]);
       if (a.kind === 'beam') return out(a.phase === 'charge' ? F.windup : F.roar);
       if (a.kind === 'vortex') return out(F.roar);
-      if (a.kind === 'burst') return out(a.done ? F.attack : F.windup);
+      if (a.kind === 'burst') return out(a.done ? F.attack : a.t > (a.delay || 0.3) * 0.7 && F.lunge ? F.lunge : F.windup);
       if (a.pose === 'proud') return out(F.proud);
       if (a.pose === 'heal') return healPose();
-      return out(a.t < a.dur * 0.45 ? F.windup : F.throw);
+      const k = a.t / a.dur;   // wind up, lunge into it, throw, and ease back
+      return out(k < 0.35 ? F.windup : k < 0.55 && F.lunge ? F.lunge : k < 0.85 || !F.recover ? F.throw : F.recover);
     }
     const wind = a.kind === 'cast' ? a.t < a.dur * 0.45 : a.kind === 'burst' ? !a.done : a.kind === 'beam' ? a.phase === 'charge' : false;
     return out(null, wind ? 1 : 0, 0, wind ? 0 : 1);
@@ -420,6 +438,11 @@ function monAnim(m, phase, flying) {
     if (animSince(m, 'heal') < (m.healDur || 0)) return healPose();
     if ((clock + phase) % 3.7 < 0.14) return out(F.blink);
     if ((clock + phase * 1.7) % 5.3 < 0.22) return out(F.flick);   // an ear twitch now and then
+    const fg = FIDGETS[m.id];
+    if (fg && F.fidget) {   // its own little routine, every so often
+      const t = (clock + phase * 3.1) % fg.every, n = F.fidget.length;
+      if (t < n / fg.fps) return { ...out(F.fidget[Math.floor(t * fg.fps)]), noFlap: true };
+    }
     return out(F.idle[Math.floor(clock * 2.5 + phase) % 4]);
   }
   return out(null);
