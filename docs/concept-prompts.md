@@ -790,3 +790,13 @@ explore S7a further; mix what you like.
 > varying line weight, flat cel colours with one hard-edged shadow tone, soft airbrushed highlights,
 > hand-painted watercolour background of a sunny bamboo grove, slight film grain, 4:3 screenshot
 > framing, original creature design, no text
+
+**Swapping the face** (the owner: "I don't know that I like the hippo look"). In any S7a prompt,
+replace "a broad rounded muzzle like a hippo's" with one of these (the mock-up in
+`docs/samples/slumbear-s7a.js` has each one drawn):
+- **Plush face:** "a flat round face like a stuffed toy, a small embroidered dark nose with a seam
+  running down from it, a tiny stitched smile and faint rosy cheeks"
+- **Button nose:** "a short soft snout with a round dark button sewn on for a nose, a small sleepy
+  smile"
+- **Pillow face:** "a flat face with a piped seam running across it like the edge of a pillow, a
+  small stitched nose and a wide calm mouth"

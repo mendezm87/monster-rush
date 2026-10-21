@@ -1,6 +1,9 @@
 // Slumbear redesign mock-up, S7a "patchwork panda" (r123; not loaded by the game). To see it, open the game,
 // then in the console: (0, eval)(await (await fetch('docs/samples/slumbear-s7a.js')).text()) adds 'slumbearS7a'
 // (start a run and App.run.party[0].setDef(ROSTER_BY_ID.slumbearS7a)). Front, side and back only.
+// r124 (the owner: "I don't know that I like the hippo look"): three other faces, slumbearS7a_button
+// (a short soft snout with a button nose), _plush (a flat face with an embroidered nose and a seam), _pillow
+// (a flat face with a piped seam across it).
 // A huge round sleepy creature with a soft quilted hide like an old mattress, cream, with charcoal
 // patches sewn on (round the eyes, the ears, the stubby arms and legs, a band across the shoulders),
 // a broad hippo-like muzzle, a cloth button on its belly and a tuft of stuffing poking out of a seam.
@@ -18,7 +21,7 @@
   // stitches round a sewn-on patch: light thread dots along its edge
   const stitches = (p, cx, cy, rx, ry, n = 10) => { for (let i = 0; i < n; i++) { const t = (i / n) * Math.PI * 2; p.px(Math.round(cx + Math.cos(t) * (rx - 0.6) - 0.5), Math.round(cy + Math.sin(t) * (ry - 0.6) - 0.5), THREAD); } };
 
-  MONSTER_ART.slumbearS7a = function (g, v = 'front') {
+  const draw = (g, v, face) => {
     const { Q, b, h, t, earA, earB, legA, legB, armA, armB } = rigParts(g, v), side = v === 'side';
     if (side) {
       legB.ellipse(16, 40, 4.5, 3, P(K.s, '#1c1a20', K.b), { edge: true });                      // far leg
@@ -35,9 +38,24 @@
       earA.ellipse(23.5, 6.5, 3, 3, K, { edge: true });
       h.ellipse(28.5, 12.5, 3, 2.5, K);                                                       // eye patch
       rigEye(h, Q, 28, 12, () => { h.rect(28, 13, 2, 1, '#e6ddcc'); h.px(29, 13, '#fffaf2'); }, 3);   // heavy sleepy eye
-      h.ellipse(32.5, 17, 4.4, 3.6, M, { edge: true });                                      // broad hippo-like muzzle
-      h.px(36, 15, NOSE).px(36, 16, NOSE);                                                    // nostril
-      rigMouth(h, Q, 31, 19, 4, () => { h.rect(31, 19, 3, 1, K.s); h.px(34, 18, K.s); });
+      if (face === 'hippo') {
+        h.ellipse(32.5, 17, 4.4, 3.6, M, { edge: true });                                    // broad hippo-like muzzle
+        h.px(36, 15, NOSE).px(36, 16, NOSE);                                                  // nostril
+        rigMouth(h, Q, 31, 19, 4, () => { h.rect(31, 19, 3, 1, K.s); h.px(34, 18, K.s); });
+      } else if (face === 'button') {
+        h.ellipse(33, 16.5, 3.2, 2.6, M, { edge: true });                                    // a short soft snout
+        h.ellipse(35.5, 15, 1.4, 1.2, NOSE); h.px(35, 14, THREAD);                            // a round button nose
+        rigMouth(h, Q, 31, 19, 3, () => { h.rect(31, 19, 2, 1, K.s); h.px(33, 18, K.s); });
+      } else if (face === 'plush') {
+        h.rect(33, 14, 2, 2, NOSE); h.px(33, 14, THREAD);                                     // an embroidered nose on a flat face
+        h.px(33, 16, STITCH).px(33, 17, STITCH);                                              // the seam down its face, like a plush toy
+        rigMouth(h, Q, 30, 18, 3, () => { h.rect(30, 18, 3, 1, K.s); h.px(33, 18, K.s); h.px(29, 17, K.s); });
+        h.px(30, 15, '#e8c8bc');                                                              // a rosy cheek
+      } else {                                                                                // pillow: a piped seam across the lower face
+        h.rect(27, 17, 8, 1, STITCH);
+        h.px(33, 14, NOSE).px(34, 15, NOSE).px(34, 14, NOSE).px(33, 15, NOSE);                // a small stitched nose
+        rigMouth(h, Q, 30, 19, 4, () => { h.rect(30, 19, 4, 1, K.s); });
+      }
       return;
     }
     if (v === 'back') {
@@ -67,10 +85,28 @@
     h.ellipse(22, 13, 11, 8.5, C, { edge: true });                                           // head
     h.poly([[13, 10], [19, 10.5], [19, 14.5], [14, 15]], K); h.poly([[31, 10], [25, 10.5], [25, 14.5], [30, 15]], K);   // drooping eye patches
     rigEyes(h, Q, 44, 15, 12, 3, () => { h.rectM(15, 12, 3, 1, '#e6ddcc'); h.pxM(17, 12, '#fffaf2'); });   // heavy sleepy lids
-    h.ellipse(22, 17.5, 7, 4, M, { edge: true });                                            // broad hippo-like muzzle
-    h.px(19, 16, NOSE).px(24, 16, NOSE);                                                     // nostrils
-    rigMouth(h, Q, 19, 19, 6, () => { h.rect(20, 19, 4, 1, K.s); h.px(19, 18, K.s); h.px(24, 18, K.s); });   // a slow, sleepy smile
+    if (face === 'hippo') {
+      h.ellipse(22, 17.5, 7, 4, M, { edge: true });                                          // broad hippo-like muzzle
+      h.px(19, 16, NOSE).px(24, 16, NOSE);                                                   // nostrils
+      rigMouth(h, Q, 19, 19, 6, () => { h.rect(20, 19, 4, 1, K.s); h.px(19, 18, K.s); h.px(24, 18, K.s); });   // a slow, sleepy smile
+    } else if (face === 'button') {
+      h.ellipse(22, 17, 4.6, 3, M, { edge: true });                                          // a short soft snout
+      h.ellipse(22, 15.6, 1.8, 1.3, NOSE); h.px(21, 15, THREAD).px(22, 15, THREAD);          // a round button nose with its thread
+      rigMouth(h, Q, 20, 18, 4, () => { h.rect(21, 19, 2, 1, K.s); h.px(20, 18, K.s); h.px(23, 18, K.s); });
+    } else if (face === 'plush') {
+      h.rect(20, 15, 4, 1, NOSE); h.rect(21, 16, 2, 1, NOSE); h.px(20, 15, THREAD);          // an embroidered nose on a flat face
+      h.px(21, 17, STITCH); h.px(22, 17, STITCH);                                            // the seam down its face, like a plush toy
+      rigMouth(h, Q, 19, 18, 6, () => { h.px(19, 18, K.s); h.rect(20, 19, 4, 1, K.s); h.px(24, 18, K.s); });
+      h.pxM(13, 16, '#e8c8bc'); h.pxM(14, 16, '#e8c8bc');                                    // rosy cheeks
+    } else {                                                                                  // pillow: a piped seam across the lower face
+      h.rect(13, 17, 18, 1, STITCH);
+      h.px(21, 14, NOSE).px(22, 15, NOSE).px(22, 14, NOSE).px(21, 15, NOSE);                 // a small stitched nose
+      rigMouth(h, Q, 18, 19, 8, () => { h.rect(19, 19, 6, 1, K.s); h.px(18, 18, K.s); h.px(25, 18, K.s); });
+    }
   };
+  MONSTER_ART.slumbearS7a = (g, v = 'front') => draw(g, v, 'hippo');
+  for (const f of ['button', 'plush', 'pillow']) { MONSTER_ART['slumbearS7a_' + f] = (g, v = 'front') => draw(g, v, f); RIGGED['slumbearS7a_' + f] = 'biped'; }
   RIGGED.slumbearS7a = 'biped';
-  if (!ROSTER_BY_ID.slumbearS7a) { const d = { ...ROSTER_BY_ID.slumbear, id: 'slumbearS7a', name: 'SLUMBEAR S7a' }; EVOLVED.push(d); ROSTER_BY_ID[d.id] = d; }
+  for (const id of ['slumbearS7a', 'slumbearS7a_button', 'slumbearS7a_plush', 'slumbearS7a_pillow'])
+    if (!ROSTER_BY_ID[id]) { const d = { ...ROSTER_BY_ID.slumbear, id, name: 'SLUMBEAR ' + id.slice(9).toUpperCase() }; EVOLVED.push(d); ROSTER_BY_ID[d.id] = d; }
 })();
