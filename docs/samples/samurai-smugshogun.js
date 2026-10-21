@@ -184,8 +184,103 @@
     h.rect(20, 15, 4, 1, OUTLINE); h.rect(21, 16, 2, 1, OUTLINE); h.px(21, 15, '#5a5060');
     rigMouth(h, Q, 19, 18, 6, () => { h.px(19, 18, OUTLINE); h.rect(20, 19, 2, 1, OUTLINE); h.rect(22, 19, 2, 1, OUTLINE); h.px(24, 18, OUTLINE); h.px(21, 17, OUTLINE); h.px(22, 17, OUTLINE); });   // smug little "w" smile
   };
-  RIGGED.shogunA = 'quad'; RIGGED.shogunB = 'biped';
+  // B2 (the owner: "can I see the B one more chubby like the painting?"): a body nearly as wide as
+  // the picture, a bigger round head with puffy cheeks sticking out, short stubby legs.
+  MONSTER_ART.shogunC = function (g, v = 'front') {
+    const O = TOSHI.coat, C = TOSHI.white, Nd = P(NAVY.s, '#121a36', NAVY.b), SANDAL = '#8a5a3a';
+    const { Q, b, h, t, earA, earB, legA, legB, armA, armB } = rigParts(g, v), side = v === 'side';
+    if (side) {
+      t.ellipse(7.5, 26, 5, 5.5, O, { edge: true });                        // big fluffy tail
+      t.ellipse(7, 25.5, 3, 3.3, C); t.px(7, 25, O.s);
+      t.poly([[24, 31], [25.5, 33], [5, 39.5], [4, 37.5]], NAVY, { edge: true });   // scabbard, slung back from his hip
+      t.px(5, 38, GOLD);
+      legB.poly([[15, 35], [23, 35], [23, 40], [15, 40]], Nd, { edge: true });
+      legB.ellipse(19.5, 42.2, 3, 1.4, P(C.s, '#b8a68c', C.b), { edge: true });
+      armB.ellipse(15.5, 23, 3.8, 4.2, Nd, { edge: true });                 // far shoulder guard
+      b.ellipse(21, 28, 12.5, 9.8, RED, { edge: true });                    // a big round belly in a lacquered breastplate
+      b.poly([[9, 25], [33, 25], [33, 29], [9, 29]], RED, { edge: true });
+      lace(b, 10, 32, 24); lace(b, 10, 32, 28); studs(b, 12, 30, 21, 6);
+      b.poly([[25, 19], [31, 21], [29, 24], [24, 23]], C);                  // white bib at the neck
+      b.rect(9, 33, 25, 2, BELT.b); b.rect(9, 34, 25, 1, BELT.s);           // rope belt
+      b.ellipse(30, 34, 1.6, 1.4, BELT, { edge: true }); b.rect(29, 35, 2, 3, BELT.s);   // knot and tassel
+      legA.poly([[18, 35], [27, 35], [28, 40], [19, 40]], NAVY, { edge: true });   // short legs in wide trousers
+      legA.poly([[20, 38.5], [27, 38.5], [26, 41.5], [21, 41.5]], RED, { edge: true });
+      legA.ellipse(25, 42.3, 3.6, 1.5, C, { edge: true }); legA.rect(23, 42, 3, 1, SANDAL);
+      b.poly([[27, 32], [37, 28.5], [37.5, 30], [28, 33.5]], HILT, { edge: true });   // the katana's hilt, forward at the hip
+      b.px(30, 31, '#22564c').px(33, 30, '#22564c').px(35, 29, '#22564c');
+      b.ellipse(27, 33, 1.4, 2, GOLD, { edge: true });
+      armA.ellipse(22, 22.5, 4.5, 5, NAVY, { edge: true });                 // near shoulder guard
+      armA.rect(18, 23, 8, 1, RED.b); armA.rect(18, 25, 8, 1, RED.b);
+      armA.ellipse(28, 30, 2.8, 2.4, C, { edge: true });                    // chubby paw on the hilt
+      earB.poly([[22, 6], [21, -1], [26, 3]], P(O.s, TOSHI.line, O.b));
+      h.ellipse(28, 12, 10.5, 9, O, { edge: true });                        // big round head
+      earA.poly([[25, 5], [28, -1], [31, 4]], O, { edge: true }); earA.poly([[27, 4], [28, 0.5], [29.8, 3.5]], PINK);
+      h.ellipse(36, 16, 5.4, 3.6, C); h.ellipse(29.5, 16.5, 4.2, 3.4, C); h.ellipse(31, 19.6, 5.2, 2.3, C);   // muzzle, puffy cheek, chin
+      h.rect(18, 5, 17, 2, RED.b); h.rect(18, 6, 17, 1, RED.s);             // red headband
+      h.poly([[19, 5], [11, 3], [12, 8]], RED, { edge: true }); h.poly([[19, 6], [12, 10], [15, 11]], RED, { edge: true });
+      h.px(31, 8, C.b); h.px(32, 8, C.b);
+      rigEye(h, Q, 30, 9, () => { h.rect(30, 9, 5, 1, OUTLINE); h.rect(31, 10, 3, 1, DARK_EYE); }, 5);
+      h.rect(40, 14, 2, 2, OUTLINE); h.px(40, 14, '#5a5060');
+      rigMouth(h, Q, 35, 18, 4, () => { h.rect(35, 18, 4, 1, OUTLINE); h.px(34, 17, OUTLINE); });
+      return;
+    }
+    const legs = () => {
+      legA.poly([[11, 34], [21, 34], [21, 40], [10, 40]], NAVY, { edge: true }); legB.poly([[23, 34], [33, 34], [34, 40], [23, 40]], NAVY, { edge: true });
+      legA.poly([[12, 38.5], [20, 38.5], [20, 41.5], [13, 41.5]], RED, { edge: true }); legB.poly([[24, 38.5], [32, 38.5], [31, 41.5], [24, 41.5]], RED, { edge: true });
+    };
+    const belly = () => {
+      b.ellipse(22, 27.5, 13, 9.8, RED, { edge: true });
+      b.poly([[9.5, 25], [34.5, 25], [34.5, 29], [9.5, 29]], RED, { edge: true });
+      lace(b, 10, 34, 24); lace(b, 10, 34, 28);
+      b.rect(9, 33, 26, 2, BELT.b); b.rect(9, 34, 26, 1, BELT.s);
+    };
+    const shoulders = () => {
+      armA.ellipse(8.5, 22, 4.5, 5, NAVY, { edge: true }); armB.ellipse(35.5, 22, 4.5, 5, NAVY, { edge: true });
+      armA.rect(4, 22, 9, 1, RED.b); armB.rect(31, 22, 9, 1, RED.b); armA.rect(4, 24, 9, 1, RED.b); armB.rect(31, 24, 9, 1, RED.b);
+    };
+    if (v === 'back') {
+      legs(); belly(); studs(b, 12, 32, 21, 5);
+      b.poly([[5, 26], [7, 25], [12, 31], [10, 32]], HILT, { edge: true });   // hilt peeking out at his side
+      shoulders();
+      earA.poly([[12, 9], [11, -1], [19, 5]], O, { edge: true }); earB.poly([[32, 9], [33, -1], [25, 5]], O, { edge: true });
+      h.ellipse(22, 13, 12, 9, O, { edge: true });
+      h.ellipseM(10, 16, 2.2, 2.2, C);                                      // puffy cheeks from behind
+      h.rect(10, 6, 24, 2, RED.b); h.rect(10, 7, 24, 1, RED.s);
+      h.ellipse(22, 7, 2.2, 1.8, RED, { edge: true });
+      h.poly([[21, 8], [17, 19], [20, 18]], RED, { edge: true }); h.poly([[23, 8], [27, 19], [24, 18]], RED, { edge: true });
+      t.ellipse(22, 31, 5.5, 5, O, { edge: true });                         // the famous curled tail
+      t.ellipse(22, 30.5, 3.2, 2.8, C); t.px(22, 30, O.s); t.px(23, 30, O.s);
+      return;
+    }
+    t.ellipse(37, 27, 5, 5.5, O, { edge: true });                           // fluffy tail out to the side
+    t.ellipse(37.5, 26.5, 3, 3.3, C); t.px(37, 26, O.s);
+    t.poly([[10, 33], [12, 34], [5, 42], [3, 41]], NAVY, { edge: true });   // scabbard trailing behind his left leg
+    legs();
+    legA.ellipse(16.5, 42.4, 3.8, 1.5, C, { edge: true }); legB.ellipse(27.5, 42.4, 3.8, 1.5, C, { edge: true });   // paws in sandals
+    legA.rect(16, 42, 2, 1, SANDAL); legB.rect(27, 42, 2, 1, SANDAL);
+    belly();
+    b.poly([[18, 18], [26, 18], [22, 23]], C);                              // white bib at the neck
+    b.rect(18, 19, 8, 1, CORD); studs(b, 13, 31, 21, 6);
+    b.ellipse(15, 33.5, 1.8, 1.5, BELT, { edge: true }); b.rect(14, 35, 2, 3, BELT.s);   // knot and tassel
+    b.poly([[6, 26], [8, 25], [14.5, 31.5], [12.5, 32.5]], HILT, { edge: true });   // the katana's hilt at his left hip
+    b.px(9, 27, '#22564c').px(11, 29, '#22564c');
+    b.ellipse(13.5, 32, 2, 1.5, GOLD, { edge: true });
+    shoulders();
+    armA.ellipse(12, 30, 2.9, 2.5, C, { edge: true }); armB.ellipse(32, 30, 2.9, 2.5, C, { edge: true });   // chubby paws
+    earA.poly([[12, 9], [11, -1], [19, 5]], O, { edge: true }); earB.poly([[32, 9], [33, -1], [25, 5]], O, { edge: true });
+    earA.poly([[13.5, 7.5], [12.5, 1.5], [17, 5]], PINK); earB.poly([[30.5, 7.5], [31.5, 1.5], [27, 5]], PINK);
+    h.ellipse(22, 13, 12, 9, O, { edge: true });                            // bigger round head
+    h.ellipseM(10.5, 16.5, 3.2, 3, C, { edge: true });                      // puffy cheeks sticking out
+    h.ellipse(22, 17.5, 9.5, 5.2, C);                                       // big cream lower face
+    h.rect(10, 6, 24, 2, RED.b); h.rect(10, 7, 24, 1, RED.s);               // red headband
+    h.ellipse(22, 6, 2.2, 1.8, RED, { edge: true }); h.rect(21, 8, 2, 3, RED.b);
+    h.pxM(15, 10, C.b); h.pxM(16, 10, C.b);
+    rigEyes(h, Q, 44, 14, 12, 5, () => { h.rectM(14, 12, 5, 1, OUTLINE); h.rectM(15, 13, 3, 1, DARK_EYE); });
+    h.rect(20, 15, 4, 1, OUTLINE); h.rect(21, 16, 2, 1, OUTLINE); h.px(21, 15, '#5a5060');
+    rigMouth(h, Q, 19, 18, 6, () => { h.px(19, 18, OUTLINE); h.rect(20, 19, 2, 1, OUTLINE); h.rect(22, 19, 2, 1, OUTLINE); h.px(24, 18, OUTLINE); h.px(21, 17, OUTLINE); h.px(22, 17, OUTLINE); });
+  };
+  RIGGED.shogunA = 'quad'; RIGGED.shogunB = 'biped'; RIGGED.shogunC = 'biped';
   const base = ROSTER_BY_ID.smugshogun;
-  for (const [id, name] of [['shogunA', 'SAMURAI A'], ['shogunB', 'SAMURAI B']])
+  for (const [id, name] of [['shogunA', 'SAMURAI A'], ['shogunB', 'SAMURAI B'], ['shogunC', 'SAMURAI B2']])
     if (!ROSTER_BY_ID[id]) { const d = { ...base, id, name }; EVOLVED.push(d); ROSTER_BY_ID[id] = d; }
 })();
