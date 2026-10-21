@@ -648,3 +648,49 @@ back what you like; the next round narrows down from there.
 > varying line weight, flat cel colours with one hard-edged shadow tone, soft airbrushed
 > highlights, hand-painted watercolour background of overgrown temple ruins, slight film grain, 4:3
 > screenshot framing, original creature design, no text
+
+### Round 6b: less bear (the owner: "these all just look like bears, we should make it a little more ambiguous")
+
+Still huge, round, heavy and sleepy (Beast: a big beam, belly-flops, stomps, snacks), but not any one
+animal: each mixes a few, so it reads as a creature of its own. Kept away from Snorlax's marks
+(teal body, cream face mask, big oval belly, closed-eye smile).
+
+**S5 · Dumpling lump** (a giant soft dumpling with fur)
+> A huge soft round monster shaped like a giant furry dumpling, short plush lilac-grey fur, two very
+> long droopy ears that drape down over its body like a blanket, two tiny horn nubs on its brow, a
+> wide flat nose, small heavy-lidded sleepy eyes, a faint pale swirl on its round body, four stubby
+> legs hidden under its bulk, a creature that isn't any real animal, gentle and enormous, a monster
+> from a monster-battling game. 1990s TV anime cel art, hand-inked line art with varying line
+> weight, flat cel colours with one hard-edged shadow tone, soft airbrushed highlights,
+> hand-painted watercolour background of a quiet riverbank, slight film grain, 4:3 screenshot
+> framing, original creature design, no text
+
+**S6 · Fog hulk** (fur like a heavy storm cloud)
+> A huge round heavy monster whose shaggy fur looks like a dense grey storm cloud with darker
+> billows, a broad flat head with a short wrinkled snout like a tapir's, two small curled horns,
+> half-closed drowsy eyes with long lashes, a thick fluffy tail it uses as a pillow, little puffs of
+> cloud drifting up when it snores, thick stubby legs with dark hooves, a creature that isn't any
+> real animal, calm and enormous, a monster from a monster-battling game. 1990s TV anime cel art,
+> hand-inked line art with varying line weight, flat cel colours with one hard-edged shadow tone,
+> soft airbrushed highlights, hand-painted watercolour background of a misty hilltop, slight film
+> grain, 4:3 screenshot framing, original creature design, no text
+
+**S7 · Mattress hide** (soft quilted hide instead of fur)
+> A huge round heavy monster with a soft padded hide stitched in a diamond quilted pattern like an
+> old mattress, dusty rose and cream, a broad rounded muzzle like a hippo's caught mid-yawn, tiny
+> round ears, small sleepy eyes, a short stubby tail with a tassel, a few loose threads and a patch
+> sewn on one shoulder, thick stubby legs, a creature that isn't any real animal, cosy and enormous,
+> a monster from a monster-battling game. 1990s TV anime cel art, hand-inked line art with varying
+> line weight, flat cel colours with one hard-edged shadow tone, soft airbrushed highlights,
+> hand-painted watercolour background of an attic bedroom at night, slight film grain, 4:3
+> screenshot framing, original creature design, no text
+
+**S8 · Hearth shag** (a shaggy heap you can't see the eyes of)
+> A huge round shaggy monster with long warm rust-orange fur that falls over its eyes like a heavy
+> fringe, a big soft pink nose poking out, two short curled horns, a round heavy body like a haystack,
+> stubby legs ending in wide flat paws, bits of straw stuck in its fur, a slow sleepy smile
+> half-hidden by the fur, a creature that isn't any real animal, warm and enormous, a monster from a
+> monster-battling game. 1990s TV anime cel art, hand-inked line art with varying line weight, flat
+> cel colours with one hard-edged shadow tone, soft airbrushed highlights, hand-painted watercolour
+> background of a barn at sunset, slight film grain, 4:3 screenshot framing, original creature
+> design, no text
