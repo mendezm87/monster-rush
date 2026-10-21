@@ -136,6 +136,7 @@ class Battle {
         x = rand(F.x0 + 50, F.x1 - 50); y = rand(F.y0 + 40, F.y1 - 30);
         if (spec.boss) { x = (F.x0 + F.x1) / 2 + rand(-40, 40); y = P.y > (F.y0 + F.y1) / 2 ? F.y0 + 90 : F.y1 - 70; }
       } while (tries++ < 40 && (Math.hypot(x - P.x, y - P.y) < 170 || this.e.some(o => Math.hypot(o.x - x, o.y - y) < 60)));
+      if (spec.champ === 'glitch') { m.glitched = true; m.setDef(m.def); m.hp = m.maxHp; m.gear = ['glitch']; }   // already corrupted
       m.x = x; m.y = y; m.face = x < P.x ? 1 : -1;
       m.spawnT = 0.7 + i * 0.35;
       return m;
@@ -152,6 +153,7 @@ class Battle {
     this.emit('clear', null);   // e.g. Rain Bell
     for (const m of this.run.party) if (m.fused && m.fused.length) this.emit('clear', m, true);
     this.evolveReady();
+    this.glitchReady();
     if (this.boss && this.hooks.bossBeaten) this.hooks.bossBeaten(this.boss.id);
     this.state = 'explore'; this.stateT = 0;
     this.projectiles = this.projectiles.filter(p => p.owner.side === 'player');
@@ -250,6 +252,48 @@ class Battle {
     }
     for (const p of R.pixels) p.t += dt;
     if (R.t >= RESTORE_T.end) { this.restoring = null; this.evolveReady(); }
+  }
+
+  // Fully corrupted Coreatures turn Glitched once a room is cleared: Glitch type, the Glitched look,
+  // more attack, less HP, and Fatal Error to put in a slot (glitchDef, GLITCH in dungeon.js).
+  glitchReady() {
+    for (const m of this.p) {
+      if (!m.glitchPending || m.glitched) continue;
+      m.glitchPending = false; m.glitched = true;
+      m.setDef(m.def);
+      if (!m.known.includes(GLITCH.move)) { m.known.push(GLITCH.move); this.run.learnQueue.push({ mon: m, id: GLITCH.move }); }
+      this.run.dress();
+      this.ui.banner(`${m.def.name} GLITCHED!`, 'Corrupted data: Glitch type, +20% attack, -15% HP, and Fatal Error');
+      Sfx.play('recall');
+      if (m === this.P && m.visible) {
+        m.flash = 0.8;
+        for (let k = 0; k < 2; k++) this.particles.push({ x: m.x, y: m.y - 2, r0: 4 + k * 10, r1: 56 + k * 12, life: 0.6, max: 0.6, color: k ? '#3af0ff' : '#ff3ad8', kind: 'ring', w: 3 });
+        this.burst(m.x, m.cy, ['#ff3ad8', '#3af0ff', '#ffffff', '#15111f'], 50, 130, -30);
+        this.addShake(5);
+        this.ui.onSendOut('player', m);
+      }
+      this.ui.hudCache = {};
+    }
+  }
+  // The altar can wash the corruption out: back to its own types and stats, Fatal Error forgotten.
+  cleanse(m) {
+    m.glitched = false; m.glitchPending = false; m.corrupt = 0;
+    m.setDef(ROSTER_BY_ID[m.id]);
+    m.known = m.known.filter(k => k !== GLITCH.move);
+    if (m.moves.some(x => x.id === GLITCH.move)) {
+      const ids = m.moves.map(x => x.id), spare = m.known.find(k => !ids.includes(k));
+      m.setMoves(ids.map(k => (k === GLITCH.move ? spare : k)).filter(Boolean));
+    }
+    this.run.learnQueue = this.run.learnQueue.filter(q => !(q.mon === m && q.id === GLITCH.move));
+    this.run.dress();
+    this.ui.banner(`${m.def.name} CLEANSED!`, 'Its corrupted data is gone');
+    Sfx.play('evolve');
+    if (m === this.P) {
+      m.flash = 1.2;
+      this.particles.push({ x: m.x, y: m.y - 2, r0: 4, r1: 60, life: 0.7, max: 0.7, color: '#ffffff', kind: 'ring', w: 3 });
+      this.burst(m.x, m.cy, ['#ffffff', '#c87aff', '#a8f0ff'], 40, 110, -40);
+      this.ui.onSendOut('player', m);
+    }
   }
 
   // The evolution altar: the offered relics are gone for good, and the Coreature becomes the legend
@@ -419,6 +463,7 @@ class Battle {
     P.spikeT = Math.max(0, (P.spikeT || 0) - dt);
     for (const m of this.e) {
       if (!m.alive || !m.champ) continue;
+      if (m.champ === 'glitch' && Math.random() < dt * 6) this.sparks(m.x + rand(-m.r, m.r), m.cy + rand(-m.h / 2, m.h / 2), 1, Math.random() < 0.5 ? '#ff3ad8' : '#3af0ff');
       if (m.champ === 'shiny' && Math.random() < dt * 8) this.sparks(m.x + rand(-m.r, m.r), m.cy + rand(-m.h / 2, m.h / 2), 1, '#ffe066');
       if (m.champ === 'spiky' && P.alive && P.spikeT <= 0 && Math.hypot(P.x - m.x, P.y - m.y) < P.r + m.r + 3) {
         P.spikeT = 0.7;
@@ -435,6 +480,7 @@ class Battle {
     for (let i = 0; i < coins; i++) this.spawnPickup('coin', m.x, m.y);
     if (m.boss || Math.random() < 0.12 * this.mod(null, 'berryOddsMul')) this.spawnPickup('berry', m.x, m.y);
     if (m.champ === 'shiny') { for (let i = 0; i < 10; i++) this.spawnPickup('coin', m.x, m.y); this.spawnPickup('chest', m.x, m.y); }
+    if (m.champ === 'glitch') this.spawnPickup('glitchShard', m.x, m.y);
   }
 
   // the room's reward (shown over its doors) pops out in the middle once it's cleared
@@ -445,6 +491,7 @@ class Battle {
     if (kind === 'xp') this.spawnPickup('shard', x, y);
     if (kind === 'move') this.spawnPickup('disc', x, y);
     if (kind === 'chest') this.spawnPickup('chest', x, y);
+    if (kind === 'glitch') this.spawnPickup('glitchShard', x, y);
   }
 
   spawnPickup(kind, x, y) {
@@ -462,7 +509,7 @@ class Battle {
       } else { k.vx *= Math.exp(-dt * 6); k.vy *= Math.exp(-dt * 6); }
       // it drifts to you when you walk close
       const d = Math.hypot(P.x - k.x, P.y - k.y);
-      if (P.alive && k.t > 0.5 && d < 56) {
+      if (P.alive && k.t > 0.5 && d < 56 && k.kind !== 'glitchShard') {   // a Corrupted Shard never comes to you: taking it is a choice
         const pull = 260 * (1 - d / 70);
         k.vx += (P.x - k.x) / (d || 1) * pull * dt * 8; k.vy += (P.y - k.y) / (d || 1) * pull * dt * 8;
       }
@@ -483,6 +530,16 @@ class Battle {
       this.ui.banner('ARC-CORE SHARD!', 'Scraps of old data for the party');
       Sfx.play('levelUp');
       this.giveData(15 + 3 * this.run.floorN);
+    } else if (k.kind === 'glitchShard') {   // lots of data, but it corrupts the one that takes it
+      this.giveData(Math.round((15 + 3 * this.run.floorN) * GLITCH.data));
+      if (P.glitched) this.ui.banner('CORRUPTED SHARD!', `${P.def.name} is already Glitched: just the data`);
+      else {
+        this.run.corruptMon(P, GLITCH.shard);
+        this.ui.banner('CORRUPTED SHARD!', P.glitchPending ? `${P.def.name} is fully corrupted: it will turn Glitched` : `Lots of data, but ${P.def.name} is ${P.corrupt}% corrupted`);
+        this.text(P.x, P.y - P.h - 12, `+${GLITCH.shard}% CORRUPTED`, '#ff3ad8', P.y);
+      }
+      this.burst(k.x, k.y - 4, ['#ff3ad8', '#3af0ff', '#ffffff'], 14, 70, -20);
+      Sfx.play('recall');
     } else if (k.kind === 'disc') {    // the Coreature that's out learns a new move
       const id = this.run.learnMove(P);
       if (id) { this.run.learnQueue.push({ mon: P, id }); this.ui.banner('MOVE DISC!'); }

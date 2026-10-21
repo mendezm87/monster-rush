@@ -37,7 +37,20 @@ const STRENGTHS = {
 // A form's stage in its line: I for a first form, II and III for what it Restores into, IV for a legend.
 const STAGE_NUM = ['', 'I', 'II', 'III', 'IV'];
 // e.g. "II · 62%" (stage II, 62% of its bar), "I ✦2 · 40%" (a one-form Coreature fully restored twice)
-const restoreLabel = m => `${STAGE_NUM[formStage(m.def)]}${m.mastery ? ' ✦' + m.mastery : ''} · ${Math.floor(m.restore * 100)}%`;
+const restoreLabel = m => `${STAGE_NUM[formStage(m.def)]}${m.mastery ? ' ✦' + m.mastery : ''} · ${Math.floor(m.restore * 100)}%${m.glitched ? ' · GLITCHED' : m.corrupt ? ` · ⚠${m.corrupt}%` : ''}`;
+// ---------- Glitch variants (Restore system step 2, r95) ----------
+// Corrupted Shards hold a lot of data, but corrupt whoever takes it. They never drift to you like
+// other pickups: walking onto one is a choice. At 100% corruption (after the room is cleared) the
+// Coreature turns Glitched (glitchDef): Glitch becomes its second type, +20% attack but -15% HP,
+// the Glitched look (glitchPaint in gear.js) and Fatal Error. It stays Glitched through Restores;
+// the altar can Cleanse it for free.
+const GLITCH = { shard: 40, data: 2.5, atk: 1.2, hp: 0.85, move: 'fatalError' };
+function glitchDef(def) {
+  if (def.glitched) return def;
+  const types = def.types.includes('glitch') ? def.types : [def.types[0], 'glitch'];
+  return { ...def, types, hp: Math.round(def.hp * GLITCH.hp), atk: def.atk * GLITCH.atk, glitched: true };
+}
+
 function formStage(def) {
   if (LEGENDS.includes(def)) return 4;
   let n = 1, cur = def;
@@ -171,7 +184,7 @@ function wildIds(stage, n, skip = []) {
 // What clearing a fight room gives (weights). It shows over the room's doors, so you can choose
 // your way through a floor, like Hades' doors. Wild Coreatures drop less to make up for it, so the
 // total loot is about what it was; the doors decide what kind you get.
-const ROOM_REWARDS = { coins: 30, berries: 25, xp: 15, move: 15, chest: 3 };
+const ROOM_REWARDS = { coins: 30, berries: 25, xp: 15, move: 15, chest: 3, glitch: 6 };   // glitch: a Corrupted Shard (see GLITCH)
 function pickReward() {
   let r = Math.random() * Object.values(ROOM_REWARDS).reduce((a, b) => a + b, 0);
   for (const [k, w] of Object.entries(ROOM_REWARDS)) if ((r -= w) < 0) return k;
@@ -188,6 +201,7 @@ const CHAMPIONS = {
   spiky: { name: 'SPIKY', color: '#d8d8e8', w: 20 },
   split: { name: 'SPLITTING', color: '#8be04e', w: 20 },
   shiny: { name: 'SHINY', color: '#ffe066', w: 5 },
+  glitch: { name: 'GLITCHED', color: '#ff3ad8', w: 12 },   // already corrupted: Glitched look and type, drops a Corrupted Shard
 };
 const championOdds = floorN => Math.min(0.3, 0.06 + 0.035 * floorN);
 function makeChampion(spec, floorN) {
@@ -441,7 +455,7 @@ class RunState {
     return {
       v: RUN_SAVE_VERSION, endless: this.endless, trainer: this.trainer, look: this.look, pi: this.pi, coins: this.coins, relics: this.relics, stats: this.stats, floorN: this.floorN,
       room: at(this.room),
-      party: this.party.map(m => ({ id: m.id, bars: m.bars, data: m.data, mem: m.mem, pending: !!m.restorePending, mastery: m.mastery || 0, hp: Math.round(m.hp), fainted: m.fainted,
+      party: this.party.map(m => ({ id: m.id, bars: m.bars, data: m.data, mem: m.mem, pending: !!m.restorePending, mastery: m.mastery || 0, corrupt: m.corrupt || 0, glitched: !!m.glitched, gpending: !!m.glitchPending, hp: Math.round(m.hp), fainted: m.fainted,
         moves: m.moves.map(x => x.id), known: m.known, newMoves: m.newMoves || [], fused: m.fused || [] })),
       learnQueue: this.learnQueue.map(q => ({ mon: this.party.indexOf(q.mon), id: q.id, choice: q.choice })).filter(q => q.mon >= 0),
       floor: { n: this.floor.n, last: this.floor.last, stage: this.floor.stage, start: at(this.floor.start), boss: at(this.floor.boss),
@@ -460,6 +474,8 @@ class RunState {
       const m = new Mon(ROSTER_BY_ID[o.id], 'player');
       if (o.bars !== undefined) { m.bars = o.bars; m.data = o.data; m.mem = { ...m.mem, ...o.mem }; m.restorePending = !!o.pending; m.mastery = o.mastery || 0; m.grow(); }
       else m.setProgress(Math.max(0, (o.level - 1) / 4));   // a run saved before the Restore system: levels become restoration
+      m.corrupt = o.corrupt || 0; m.glitchPending = !!o.gpending;
+      if (o.glitched) { m.glitched = true; m.setDef(m.def); }   // setDef turns it Glitched
       m.known = o.known; m.setMoves(o.moves); m.newMoves = o.newMoves; m.fused = o.fused;
       m.hp = Math.min(m.maxHp, o.hp); m.fainted = o.fainted;
       return m;
@@ -496,7 +512,11 @@ class RunState {
   // everyone in the party wears the relics' gear (js/gear.js); drawn now, while things are calm
   dress() {
     const gear = typeof gearFor === 'function' ? gearFor(this.relics) : [];
-    for (const m of this.party) { m.gear = m.fused && m.fused.length ? gearFor([...this.relics, ...m.fused]) : gear; monSprite(m); }
+    for (const m of this.party) {
+      m.gear = m.fused && m.fused.length ? gearFor([...this.relics, ...m.fused]) : gear;
+      if (m.glitched) m.gear = [...m.gear, 'glitch'];   // the Glitched look rides on the gear sets (gear.js)
+      monSprite(m);
+    }
     if (typeof forgetGear === 'function') forgetGear(new Set(this.party.filter(m => m.gear && m.gear.length).map(m => m.id + '|' + m.gear.join(','))));
   }
   // Use a shop good; returns false if it would do nothing.
@@ -529,6 +549,12 @@ class RunState {
       m.grow();
     });
     return out;
+  }
+  // Corruption from a Corrupted Shard; at 100% it turns Glitched once the room is cleared (Battle.glitchReady).
+  corruptMon(m, amount) {
+    if (m.glitched) return;
+    m.corrupt = Math.min(100, (m.corrupt || 0) + amount);
+    if (m.corrupt >= 100) m.glitchPending = true;
   }
   // Two options for a memory that comes back: two moves, a move or a strength, or two strengths.
   memoryChoice(m) {

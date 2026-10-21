@@ -210,9 +210,51 @@ function drawGear(g, id, v, gear) {
 // benched Coreature costs nothing, and the one that's out dresses a picture or two as it animates.
 // Layers are shared between frames where the head and legs sit the same.
 const GEAR_SETS = {};
+// The Glitched look (dungeon.js, GLITCH): colours rotated through the channels (red to green, green
+// to blue, blue to red), so the shading stays but the palette turns wrong, and two or three torn
+// rows slid sideways with a magenta or cyan leading edge. The dark outline stays. Seeded per
+// picture, so a frame always tears the same way, and the tears jump about as it animates.
+function glitchPaint(c, key) {
+  const x = c.getContext('2d'), w = c.width, h = c.height, im = x.getImageData(0, 0, w, h), d = im.data;
+  const lit = o => d[o + 3] && d[o] + d[o + 1] + d[o + 2] > 110;   // a coloured pixel, not the dark outline
+  for (let y = 0; y < h; y++) for (let xx = 0; xx < w; xx++) {
+    const o = (y * w + xx) * 4;
+    if (!lit(o)) continue;
+    const r = d[o], g = d[o + 1], b = d[o + 2], dim = y % 3 === 2 ? 0.8 : 1;   // and faint scanlines
+    d[o] = b * dim; d[o + 1] = r * dim; d[o + 2] = g * dim;
+  }
+  let s = 7; for (const ch of key) s = (s * 31 + ch.charCodeAt(0)) | 0;
+  const rnd = () => ((s = (Math.imul(s, 1103515245) + 12345) | 0) >>> 0) / 4294967296;
+  const MAG = [255, 58, 216], CYAN = [58, 240, 255];
+  // torn bands: a row or two slid sideways and washed in magenta or cyan, with a bright leading edge
+  const tears = 2 + (rnd() < 0.5 ? 1 : 0);
+  for (let t = 0; t < tears; t++) {
+    const y0 = Math.floor(h * (0.25 + rnd() * 0.6)), rows = 1 + (rnd() < 0.5 ? 1 : 0), sh = rnd() < 0.5 ? -1 : 1, by = 2 + (rnd() < 0.4 ? 1 : 0), col = rnd() < 0.5 ? MAG : CYAN;
+    for (let y = y0; y < Math.min(h, y0 + rows); y++) {
+      const row = d.slice(y * w * 4, (y + 1) * w * 4), at = (xx, j) => (xx < 0 || xx >= w ? 0 : row[xx * 4 + j]);
+      for (let xx = 0; xx < w; xx++) {
+        const sx = xx - sh * by, o = (y * w + xx) * 4;
+        for (let j = 0; j < 4; j++) d[o + j] = at(sx, j);
+        if (!d[o + 3]) continue;
+        const edge = !at(sx + sh, 3), k = edge ? 1 : 0.4;
+        for (let j = 0; j < 3; j++) d[o + j] = d[o + j] * (1 - k) + col[j] * k;
+      }
+    }
+  }
+  // a few dead pixels on the body
+  for (let n = 0, tries = 0; n < 3 && tries < 60; tries++) {
+    const xx = Math.floor(rnd() * (w - 1)), y = Math.floor(rnd() * h), o = (y * w + xx) * 4;
+    if (!lit(o) || !lit(o + 4)) continue;
+    const col = [MAG, CYAN, [255, 255, 255]][n % 3];
+    for (const q of [o, o + 4]) { d[q] = col[0]; d[q + 1] = col[1]; d[q + 2] = col[2]; }
+    n++;
+  }
+  x.putImageData(im, 0, 0);
+}
 function gearSprites(id, gear) {
   const key = id + '|' + gear.join(',');
   if (GEAR_SETS[key]) return GEAR_SETS[key];
+  const glitch = gear.includes('glitch');   // the Glitched look (glitchPaint), not a worn piece
   const sp = SPRITES[id], layers = {}, own = [];   // own: the canvases made here (faint frames are the plain Coreature's, shared)
   const layer = v => {
     const Q = rig(), k = v + Q.head.join() + (Q.legs || [0, 0]).join();
@@ -229,7 +271,7 @@ function gearSprites(id, gear) {
     for (const v of Object.keys(views)) Object.defineProperty(out, v, { enumerable: true, configurable: true, get() {
       const keep = RIG, src = views[v];
       const c = document.createElement('canvas'); c.width = src.width; c.height = src.height;
-      try { RIG = pose ? { ...REST, ...pose } : null; const x = c.getContext('2d'); x.drawImage(src, 0, 0); x.drawImage(layer(v), 0, 0); }
+      try { RIG = pose ? { ...REST, ...pose } : null; const x = c.getContext('2d'); x.drawImage(src, 0, 0); x.drawImage(layer(v), 0, 0); if (glitch) glitchPaint(c, v + JSON.stringify(pose || 0)); }
       finally { RIG = keep; }
       own.push(c);
       Object.defineProperty(out, v, { value: c, enumerable: true });

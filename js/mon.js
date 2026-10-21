@@ -49,6 +49,7 @@ class Mon {
   }
   // Species-dependent bits (also used when evolving; HP keeps its share of the max).
   setDef(def) {
+    if (this.glitched && typeof glitchDef === 'function') def = glitchDef(def);   // Glitched through every form (dungeon.js)
     const share = this.maxHp ? this.hp / this.maxHp : 1, old = this.def, prev = this.moves && this.moves.map(m => m.id);
     this.def = def; this.id = def.id;
     this.item = ITEMS[def.item] || {};

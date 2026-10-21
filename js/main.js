@@ -2,7 +2,7 @@
 
 // Shown on the title screen so players can tell whether their browser has the latest
 // build (GitHub Pages lets browsers cache files for up to 10 minutes). Bump on every release.
-const VERSION = '2026.10.20-r94';
+const VERSION = '2026.10.20-r95';
 
 const App = {
   endless: false,   // the mode picked on the title screen
@@ -413,7 +413,7 @@ $('#btn-recruit-yes').onclick = () => {
 // ---------- the evolution altar: offer two relics, one of each element in the branch's recipe ----------
 const TAG_NAMES = { fire: 'FIRE', water: 'WATER', electric: 'ELECTRIC', metal: 'METAL', plant: 'PLANT', wind: 'WIND', luck: 'LUCK' };
 const Altar = { ped: null, mon: -1, branch: null, picks: [] };
-const altarMons = () => App.run.party.map((m, i) => ({ m, i })).filter(o => o.m.def.branches && !o.m.fainted);
+const altarMons = () => App.run.party.map((m, i) => ({ m, i })).filter(o => (o.m.def.branches || o.m.glitched) && !o.m.fainted);   // last stages, and Glitched ones to cleanse
 const recipeText = r => r.map(t => TAG_NAMES[t]).join(' + ');
 function openAltar(ped) {
   const list = altarMons();
@@ -423,9 +423,11 @@ function openAltar(ped) {
   UI.show('altar');
 }
 function drawAltar() {
-  const run = App.run, list = altarMons(), m = run.party[Altar.mon], recipe = m && Altar.branch && m.def.branches[Altar.branch];
+  const run = App.run, list = altarMons(), m = run.party[Altar.mon], cleanse = Altar.branch === 'cleanse', recipe = m && Altar.branch && !cleanse && m.def.branches[Altar.branch];
   $('#altar-hint').textContent = !list.length
-    ? 'The altar is quiet. A Coreature at its last stage (like Garrishell) can change here, if you offer it two relics.'
+    ? 'The altar is quiet. A Coreature at its last stage (like Garrishell) can change here, if you offer it two relics, and a Glitched one can be cleansed.'
+    : cleanse ? 'Wash its corrupted data out: it goes back to its own types and stats and forgets Fatal Error. Free.'
+    : m && m.glitched && !m.def.branches ? 'Cleanse its corrupted data?'
     : run.relics.length < 2 ? 'Offer two relics here to change a Coreature at its last stage. You need two.'
     : !m ? 'Who will change?' : !recipe ? 'Pick what it becomes. Each needs two elements.'
     : `Offer one ${recipeText(recipe).replace(' + ', ' and one ')} relic. They fuse into it for good.`;
@@ -434,7 +436,14 @@ function drawAltar() {
     onPick: k => { Sfx.play('select'); Object.assign(Altar, { mon: list[k].i, branch: null, picks: [] }); drawAltar(); },
   });
   const box = $('#altar-branches'); box.innerHTML = '';
-  if (m) for (const [id, rec] of Object.entries(m.def.branches)) {
+  if (m && m.glitched) {
+    const b = document.createElement('button');
+    b.className = cleanse ? 'sel' : '';
+    b.innerHTML = 'CLEANSE <span>free</span>';
+    b.onclick = () => { Sfx.play('select'); Object.assign(Altar, { branch: 'cleanse', picks: [] }); drawAltar(); };
+    box.appendChild(b);
+  }
+  if (m) for (const [id, rec] of Object.entries(m.def.branches || {})) {
     const b = document.createElement('button');
     b.className = Altar.branch === id ? 'sel' : '';
     b.innerHTML = `${Save.hasFound(id) ? ROSTER_BY_ID[id].name : '???'} <span>${recipeText(rec)}</span>`;
@@ -463,8 +472,8 @@ function drawAltar() {
   fz.innerHTML = Altar.picks.map(id => `<div><b>${RELICS[id].name} → ${RELICS[id].fused.name}</b> ${RELICS[id].fused.desc}</div>`).join('');
   const ok = !!(recipe && Altar.picks.length === 2 && recipe.every(t => Altar.picks.some(id => RELICS[id].tag === t)));
   const yes = $('#btn-altar-yes');
-  yes.disabled = !ok;
-  yes.textContent = ok ? 'OFFER AND EVOLVE' : recipe ? `PICK ${recipeText(recipe)}` : 'EVOLVE';
+  yes.disabled = !ok && !cleanse;
+  yes.textContent = cleanse ? 'CLEANSE' : ok ? 'OFFER AND EVOLVE' : recipe ? `PICK ${recipeText(recipe)}` : 'EVOLVE';
 }
 function closeAltar(took) {
   const b = App.battle, ped = Altar.ped;
@@ -477,6 +486,7 @@ function closeAltar(took) {
 $('#btn-altar-no').onclick = () => { Sfx.play('back'); closeAltar(false); };
 $('#btn-altar-yes').onclick = () => {
   const run = App.run, b = App.battle, m = run && run.party[Altar.mon];
+  if (b && m && Altar.branch === 'cleanse') { b.cleanse(m); UI.hudCache = {}; closeAltar(true); return; }
   if (!b || !m || !Altar.branch || Altar.picks.length !== 2) return;
   b.altarEvolve(m, ROSTER_BY_ID[Altar.branch], Altar.picks);
   Save.noteFound(Altar.branch);

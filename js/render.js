@@ -67,6 +67,16 @@ const SHARD_IMG = gridFromMap([   // an Arc-core Shard (XP): a sliver of a broke
   '.kAk.',
   '..k..',
 ], { k: OUTLINE, a: '#ffd84a', A: '#e0961e', w: '#fff8d0' }).toCanvas();
+const GLITCH_SHARD_IMG = gridFromMap([   // a Corrupted Shard: a shard torn into magenta and cyan
+  '..k...',
+  '.kwk..',
+  'kmmCk.',
+  '.kmCck',
+  'kmmCk.',
+  'kmCCk.',
+  '.kCk..',
+  '..k...',
+], { k: OUTLINE, m: '#ff3ad8', C: '#9a2088', c: '#3af0ff', w: '#ffd0f4' }).toCanvas();
 const DISC_IMG = gridFromMap([
   '..kkk..',
   '.kbbbk.',
@@ -131,9 +141,9 @@ function typeIcon(t) {
 }
 function typeIconURL(t) { return _typeIconURLs[t] || (_typeIconURLs[t] = typeIcon(t).toDataURL()); }
 
-const PICKUP_IMG = { coin: COIN_IMG, berry: BERRY_IMG, shard: SHARD_IMG, disc: DISC_IMG, chest: CHEST_IMG };
+const PICKUP_IMG = { coin: COIN_IMG, berry: BERRY_IMG, shard: SHARD_IMG, glitchShard: GLITCH_SHARD_IMG, disc: DISC_IMG, chest: CHEST_IMG };
 // the sign over a doorway: what's in the room behind it
-const REWARD_IMG = { coins: COIN_IMG, berries: BERRY_IMG, xp: SHARD_IMG, move: DISC_IMG, chest: CHEST_IMG };
+const REWARD_IMG = { coins: COIN_IMG, berries: BERRY_IMG, xp: SHARD_IMG, move: DISC_IMG, chest: CHEST_IMG, glitch: GLITCH_SHARD_IMG };
 function doorSign(room) {
   if (room.type === 'fight') return room.cleared ? null : { img: REWARD_IMG[room.reward], c: '#e8e0f0' };
   if (room.type === 'boss') return room.cleared ? null : { img: SKULL_IMG, c: '#e8433a' };
@@ -638,7 +648,9 @@ mixInto(Battle, class {
     }
     if (m.restoreHide) { ctx.restore(); return; }   // broken apart into data during the Restore moment
     const pic = posed(img, pose.sq, pose.sh), k = S / sp.size, pw = pic.width * k, ph = pic.height * k;
-    const dx = -pw / 2, dy = 3 - ph;
+    // Glitched: now and then it skips sideways for a moment, like a bad signal
+    const skip = m.glitched && (this.time * 0.7 + (m.side === 'enemy' ? 0.5 : 0)) % 1 < 0.05 ? (Math.sin(this.time * 70) > 0 ? 2 : -2) * k : 0;
+    const dx = -pw / 2 + skip, dy = 3 - ph;
     if (m.assembleT !== undefined && m.assembleT < 1) drawAssembling(ctx, pic, dx, dy, pw, ph, m.assembleT, TYPES[m.def.types[0]].color);   // beamed in from the Arcbracer
     else ctx.drawImage(pic, dx, dy, pw, ph);
     let tint = null, ta = 0;

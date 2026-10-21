@@ -176,6 +176,7 @@ const MOVES = {
   gust:         { name: 'Gust', type: 'wind', style: 'flying', kind: 'burst', power: 150, cd: 3.5, r: 100, delay: 0.2, cone: 0.6, blow: 0.3, push: 230, sfx: 'whoosh' },
   tornado:      { name: 'Tornado', type: 'wind', style: 'flying', kind: 'zone', power: 95, cd: 7, r: 30, delay: 0.6, linger: 2.4, tick: 0.3, pull: 70, fx: 'tornado' },
   // poison
+  fatalError:   { name: 'Fatal Error', type: 'glitch', style: 'poison', kind: 'burst', power: 280, cd: 8, r: 66, delay: 0.5, status: ['psn', 0.5] },   // only Glitched Coreatures (dungeon.js, glitchDef)
   sludgeBomb:   { name: 'Sludge Bomb', type: 'glitch', style: 'poison', kind: 'projectile', power: 200, cd: 3.5, speed: 185, r: 7, explode: 28, status: ['psn', 0.3] },
   toxicPool:    { name: 'Toxic Pool', type: 'glitch', style: 'poison', kind: 'zone', power: 120, cd: 6, r: 32, delay: 0.9, slow: 1.2, linger: 3, tick: 0.25, status: ['psn', 0.35] },
   acidSpray:    { name: 'Acid Spray', type: 'glitch', style: 'poison', kind: 'projectile', power: 55, cd: 1.9, speed: 210, r: 4, count: 4, spread: 0.5, status: ['psn', 0.1] },

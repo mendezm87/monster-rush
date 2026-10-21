@@ -2,7 +2,7 @@
 
 ## Where we left off (keep this current at the end of every session)
 
-**2026-10-20 (r94):** the game is *Coreatures: Deep Archive*. Done this session: hand-shaped trainers (8 looks), our own 14 types with in-fight cues, the Restore system's first step (restore bar, memory choices), even starters, and the Restore moment. **Next up, from ROADMAP.md:** Glitch variants (Restore system step 2, code only), then the Phase 1 release blockers (renaming the 37 moves that share Pokémon's names, the look-alike redesigns), relic choices and more relics, branching forms. Waiting on the owner: moving and renaming the repos (below). Vic's slowdown with many relics is fixed (r94, confirmed on the owner's phone with `stress.html`); Vic can try the same link.
+**2026-10-20 (r95):** the game is *Coreatures: Deep Archive*. Done this session: hand-shaped trainers (8 looks), our own 14 types with in-fight cues, the Restore system's first step (restore bar, memory choices), even starters, and the Restore moment. Glitch variants are in (r95: Corrupted Shards, the Glitched champion, the Glitched look, Fatal Error, cleansing at the altar); the owner hasn't seen them yet. **Next up, from ROADMAP.md:** the Phase 1 release blockers (renaming the 37 moves that share Pokémon's names, the look-alike redesigns), relic choices and more relics, branching forms. Waiting on the owner: moving and renaming the repos (below). Vic's slowdown with many relics is fixed (r94, confirmed on the owner's phone with `stress.html`); Vic can try the same link.
 
 Things waiting to be done, for the owner and for Claude. Tick them off (`[x]`) or delete them when they're done.
 
