@@ -241,7 +241,21 @@ const RELIC_AURA = {
 
 // Auras some Coreatures always have, drawn the same way as relic auras (RELIC_AURA below).
 // Nyxdrake (id drakorn): Arcane light rising off the nebula on its chest.
-const SPECIES_AURA = { drakorn: 'nebula' };
+const SPECIES_AURA = { drakorn: 'nebula', railwarden: 'coils' };
+// Railwarden: lightning crackling between the tips of its three coil spires, jumping every few frames.
+RELIC_AURA.coils = (ctx, b, m, X, Y) => {
+  const step = Math.floor(b.time / 0.08), seed = (step * 9301 + (m.uid || (m.uid = _uid++)) * 49297) % 233280;
+  let r = seed; const rnd = () => (r = (r * 9301 + 49297) % 233280) / 233280;
+  const side = m.view === 'side' || m.view === 'fside' || m.view === 'bside', back = m.view === 'side' ? -m.face : 0;
+  const top = Y - m.h * 0.97, w = side ? m.h * 0.09 : m.h * 0.2, cx = X + back * m.h * 0.24;
+  const tips = [[cx - w, top + 2], [cx, top], [cx + w, top + 2]];
+  for (let k = 0; k < 2; k++) {
+    if (rnd() < 0.35) continue;
+    const i = Math.floor(rnd() * 2), [x0, y0] = tips[i], [x1, y1] = tips[i + 1];
+    for (let s = 0; s <= 6; s++) { const f = s / 6; auraPx(ctx, x0 + (x1 - x0) * f, y0 + (y1 - y0) * f - Math.sin(f * Math.PI) * 4 + (rnd() - 0.5) * 5, s % 2 ? '#7af0ff' : '#e6fbff'); }
+  }
+  if (rnd() < 0.3) { const [x, y] = tips[Math.floor(rnd() * 3)]; for (let s = 0; s < 4; s++) auraPx(ctx, x + (rnd() - 0.5) * 6, y - s * 2, '#7af0ff'); }   // a spark leaping off a tip
+};
 RELIC_AURA.nebula = (ctx, b, m, X, Y) => {
   const cy = Y - m.h * 0.42, cols = ['#f2aaff', '#5af0e8', '#d062e0', '#a88ae8'];
   // a pulse of Arcane light rippling out from its chest every 1.4 s

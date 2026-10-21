@@ -392,6 +392,58 @@ Object.assign(RIGGED, { shellmet: 'quad', bulwarden: 'biped', garrishell: 'biped
 // Garrishell's legendary 4th stages, made at the evolution altar by offering relics (the owner's
 // generated art): the element offered picks the branch. Each keeps the family's green scales and
 // one glowing eye behind a visor; everything else changes.
+// Railwarden's parts (r106 redraw from the owner's art): tall copper coil spires on a capacitor pack,
+// a thick railgun lance with a glowing channel, a heater shield, lunging clawed legs, a knight's helm.
+const RAIL = {
+  SK: P('#5a8a3a', '#3a6226', '#7aa856'), SKD: P('#4a7430', '#30521e', '#5e8a44'), SHELL: P('#6a6a3e', '#48482a', '#8a8a56'),
+  RIM: P('#d8a838', '#a07220', '#f0cc68'), E: '#7af0ff', E2: '#d0faff', GOLD: '#d8a838', CLAW: '#c8c0a0',
+  CU: '#e08a44', CUD: '#9a5220', CAP: '#e8e8f0',
+};
+function railLine(p, x0, y0, x1, y1, col) {
+  const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0), 1);
+  for (let i = 0; i <= n; i++) p.px(Math.round(x0 + (x1 - x0) * i / n), Math.round(y0 + (y1 - y0) * i / n), col);
+}
+const railKit = {
+  // a copper coil spire: rings from its top down to the pack, a white ceramic cap and a silver spike
+  coil(p, x, top, bottom = 11) {
+    for (let y = top; y < bottom; y += 2) { p.rect(x - 1, y, 3, 1, RAIL.CU); p.rect(x - 1, y + 1, 3, 1, RAIL.CUD); }
+    p.rect(x - 1, top - 1, 3, 1, RAIL.CAP); p.px(x, top - 2, '#ffffff');
+  },
+  // the capacitor pack on its shell
+  pack(p, x0, x1, y0, y1) {
+    const { D } = LEGEND_PAL;
+    p.poly([[x0, y0], [x1, y0], [x1, y1], [x0, y1]], D, { edge: true }); p.rect(x0, y0, x1 - x0, 1, RAIL.GOLD);
+    p.rect(x0 + 3, y0 + 4, x1 - x0 - 6, 1, '#30333c'); p.px(x0 + 4, y0 + 7, RAIL.E).px(x1 - 4, y0 + 7, RAIL.E);
+  },
+  // the railgun lance: a thick barrel from its forearm housing (sx, sy) to the tip (ex, ey), a glowing channel down it
+  lance(p, sx, sy, ex, ey, w = 2.2) {
+    const { M, D } = LEGEND_PAL, len = Math.hypot(ex - sx, ey - sy), ux = (ex - sx) / len, uy = (ey - sy) / len, nx = -uy * w, ny = ux * w;
+    p.poly([[sx + nx, sy + ny], [ex + nx * 0.8, ey + ny * 0.8], [ex - nx * 0.8, ey - ny * 0.8], [sx - nx, sy - ny]], D, { edge: true });   // dark gunmetal barrel
+    railLine(p, sx + nx * 0.6, sy + ny * 0.6, ex + nx * 0.5, ey + ny * 0.5, M.b);                  // the two rails
+    railLine(p, sx - nx * 0.6, sy - ny * 0.6, ex - nx * 0.5, ey - ny * 0.5, M.s);
+    railLine(p, sx + ux * 3, sy + uy * 3, ex, ey, RAIL.E);                                           // blue light down the channel
+    for (let k = 0.3; k < 1; k += 0.3) p.px(Math.round(sx + (ex - sx) * k), Math.round(sy + (ey - sy) * k), RAIL.E2);
+    p.poly([[ex + nx, ey + ny], [ex + ux * 4, ey + uy * 4], [ex - nx, ey - ny]], M, { edge: true });     // steel spear tip
+    p.poly([[sx - 3, sy - 3], [sx + 3, sy - 3], [sx + 3, sy + 3], [sx - 3, sy + 3]], D, { edge: true });   // the housing on its forearm
+    p.rect(Math.round(sx - 3), Math.round(sy), 6, 1, RAIL.GOLD);
+  },
+
+  // a lunging clawed leg: thigh at (hx, 31), knee, shin down to the foot at fx
+  leg(p, hx, fx, pal = RAIL.SK) {
+    p.ellipse(hx, 31, 3.5, 4.5, pal, { edge: true });
+    p.poly([[hx - 2, 34], [hx + 2, 34], [fx + 2, 40], [fx - 2, 40]], pal, { edge: true });
+    p.poly([[fx - 4, 40], [fx + 4, 40], [fx + 4, 42], [fx - 4, 42]], pal, { edge: true });
+    p.px(Math.round(fx - 4), 42, RAIL.CLAW).px(Math.round(fx), 42, RAIL.CLAW).px(Math.round(fx + 3), 42, RAIL.CLAW);
+  },
+  // the heater shield, gold-rimmed, riveted, with a shine
+  shield(p, x0, y0) {
+    const { M, D } = LEGEND_PAL;
+    p.poly([[x0, y0], [x0 + 14, y0], [x0 + 15, y0 + 13], [x0 + 8, y0 + 25], [x0, y0 + 15]], RAIL.RIM, { edge: true });
+    p.poly([[x0 + 2, y0 + 2], [x0 + 12, y0 + 2], [x0 + 13, y0 + 12], [x0 + 8, y0 + 22], [x0 + 2, y0 + 14]], M);
+    for (const [dx, dy] of [[3, 3], [11, 3], [3, 12], [12, 12], [7, 19]]) p.px(x0 + dx, y0 + dy, D.s);
+    railLine(p, x0 + 4, y0 + 10, x0 + 9, y0 + 4, M.l); railLine(p, x0 + 5, y0 + 11, x0 + 10, y0 + 5, M.l);
+  },
+};
 const LEGEND_PAL = {
   M: P('#8a909c', '#5a606c', '#b4bac4'), D: P('#4a4e58', '#30333c', '#64687a'), BORE: '#1c2430',
   STEAM: P('#eef0f4', '#c4c8d4', '#ffffff'), LAVA: P('#ff7a1c', '#c8401a', '#ffd34a'),
@@ -462,78 +514,70 @@ Object.assign(MONSTER_ART, {
     h.px(20, 35, L).px(25, 36, L);
   },
 
-  // Railwarden (storm): lean and upright like an armoured lancer. The shell is now a capacitor
-  // pack with three copper coil spires; one arm is a railgun lance glowing along its rails, the
-  // other holds a tower shield made from a shell plate; a narrow helm with one cyan eye.
+  // Railwarden (storm relics; redrawn in r106 from the owner's art): a lean, muscular turtle lancer
+  // in a wide lunging stance, its shell turned into a capacitor pack with three tall copper coil
+  // spires (lightning crackles between them in the game: SPECIES_AURA), a thick railgun lance with
+  // a glowing channel for one arm, a gold-rimmed heater shield on the other, and a knight's helm
+  // with one cyan eye behind the visor.
   railwarden(g, v = 'front') { // 44x44
     const { M, D, BORE } = LEGEND_PAL;
-    const SK = P('#5a8a3a', '#3a6226', '#7aa856'), C = P('#b8c47a', '#8a9a52', '#d8e0a0'), RIM = P('#d8a838', '#a07220', '#f0cc68');
-    const E = '#7af0ff', E2 = '#d0faff', GOLD = '#d8a838', CLAW = '#c8c0a0';
+    const { SK, SKD, SHELL, E, E2 } = RAIL;
     const { Q, b, h, t, legA, legB, armA, armB } = rigParts(g, v);
-    const coil = (x, top) => { for (let y = top; y < 10; y += 2) { b.rect(x - 1, y, 3, 1, '#d87a3a'); b.rect(x - 1, y + 1, 3, 1, '#8a4a1a'); } b.px(x, top - 1, '#e8e8f0'); };
-    const arcs = pts => { for (const [x, y] of pts) t.px(x, y, (x + y) % 3 ? E : E2); };
-    const leg = (p, x, dir) => {
-      p.poly([[x - 3, 29], [x + 2, 29], [x + 1, 35], [x + 2 * dir, 41], [x - 3 * dir, 41], [x - 2, 35]], SK, { edge: true });
-      p.px(x - 3, 42, CLAW).px(x, 42, CLAW).px(x + 2, 42, CLAW);
-    };
-    const shieldKite = (p, x0) => {   // a tower shield made from a shell plate
-      p.poly([[x0, 14], [x0 + 14, 14], [x0 + 15, 28], [x0 + 8, 38], [x0, 30]], RIM, { edge: true });
-      p.poly([[x0 + 2, 16], [x0 + 12, 16], [x0 + 13, 27], [x0 + 8, 35], [x0 + 2, 29]], M);
-      p.px(x0 + 3, 17, D.s).px(x0 + 11, 17, D.s).px(x0 + 7, 25, D.s).px(x0 + 5, 20, M.l).px(x0 + 6, 19, M.l);
+    const K = railKit;
+    const helmFront = cx => {
+      h.poly([[cx - 5, 9], [cx - 3, 5], [cx + 3, 5], [cx + 5, 9], [cx + 5, 16], [cx - 5, 16]], M, { edge: true });
+      h.rect(cx - 1, 3, 2, 3, M.l);                                                                 // crest
+      h.rect(cx - 4, 10, 8, 2, BORE);                                                               // visor slit
+      rigEye(h, Q, cx + 1, 10, () => { h.rect(cx + 1, 10, 2, 2, E); h.px(cx + 1, 10, E2); }, 2);     // one cyan eye
+      for (const dx of [-3, -1, 1, 3]) h.px(cx + dx, 14, BORE);                                     // breathing holes
     };
     if (v === 'side') {
-      b.poly([[6, 10], [14, 10], [14, 24], [6, 24]], D, { edge: true }); b.rect(6, 10, 8, 1, GOLD);   // capacitor pack
-      coil(7, 3); coil(10, 1); coil(13, 3);
-      arcs([[8, 0], [9, 1], [11, 0], [12, 2], [14, 1], [15, 3], [5, 4], [4, 6]]);
-      t.poly([[13, 28], [6, 36], [9, 37], [15, 31]], SK, { edge: true }); t.rect(9, 32, 3, 2, D.b);   // tail with its cuff
-      armB.poly([[17, 14], [21, 14], [21, 31], [17, 31]], M, { edge: true }); armB.rect(20, 14, 1, 17, GOLD);   // the shield, edge on
-      leg(legB, 17, 1);
-      b.poly([[14, 12], [24, 12], [25, 26], [21, 31], [16, 31], [14, 24]], SK, { edge: true });   // lean body
-      b.poly([[21, 14], [25, 14], [25, 26], [22, 30]], C);
-      leg(legA, 21, 1);
-      h.poly([[17, 4], [20, 1], [25, 2], [28, 5], [28, 11], [18, 12]], M, { edge: true });        // narrow helm
-      h.rect(23, 6, 5, 2, BORE);
-      rigEye(h, Q, 25, 6, () => { h.rect(25, 6, 2, 2, E); h.px(25, 6, E2); }, 2);
-      h.px(25, 9, BORE).px(27, 9, BORE);
-      armA.ellipse(21, 16, 3, 3, SK, { edge: true });                                            // the railgun lance, levelled
-      armA.poly([[19, 17], [41, 17], [43, 19], [41, 21], [19, 21]], M, { edge: true });
-      armA.rect(23, 19, 17, 1, E); armA.rect(19, 17, 4, 4, D.b);
+      K.pack(b, 6, 15, 10, 24);                                                                     // capacitor pack on its back
+      K.coil(b, 7, 3, 10); K.coil(b, 11, 1, 10); K.coil(b, 14, 3, 10);
+      t.poly([[13, 29], [7, 35], [9, 37], [15, 32]], SK, { edge: true }); t.rect(9, 33, 3, 2, D.b);   // tail with its cuff
+      K.leg(legB, 16, 12, SKD);                                                                     // back leg, braced
+      armB.poly([[16, 15], [20, 15], [20, 32], [16, 32]], M, { edge: true }); armB.rect(19, 15, 1, 17, RAIL.GOLD);   // the shield, edge on
+      b.ellipse(19, 28, 5, 4, SK, { edge: true });                                                  // hips
+      b.poly([[14, 13], [25, 13], [26, 22], [23, 28], [16, 28], [14, 21]], SK, { edge: true });     // lean, muscled body
+      b.rect(23, 16, 2, 1, SK.s).rect(23, 20, 2, 1, SK.s).rect(22, 24, 2, 1, SK.s);
+      b.ellipse(14, 17, 3, 6, SHELL, { edge: true });                                               // shell rim under the pack
+      K.leg(legA, 21, 27);                                                                          // front leg, lunging
+      h.poly([[19, 7], [22, 4], [27, 5], [30, 8], [30, 15], [20, 15]], M, { edge: true });          // helm, side-on
+      h.rect(21, 3, 4, 2, M.l);
+      h.rect(25, 9, 5, 2, BORE);
+      rigEye(h, Q, 27, 9, () => { h.rect(27, 9, 2, 2, E); h.px(27, 9, E2); }, 2);
+      h.px(27, 13, BORE).px(29, 13, BORE);
+      K.lance(armA, 24, 20, 41, 20, 2.4);                                                           // the lance, levelled at the enemy
       return;
     }
     if (v === 'back') {
-      shieldKite(armB, 1);                                                                       // shield on this side from behind
-      leg(legA, 18, -1); leg(legB, 27, 1);
+      K.shield(armB, 0, 15);                                                                        // shield on this side from behind
+      K.leg(legA, 17, 13); K.leg(legB, 27, 31);
       t.poly([[21, 28], [24, 28], [19, 38], [16, 37]], SK, { edge: true }); t.rect(18, 33, 3, 2, D.b);
-      b.poly([[15, 13], [29, 13], [27, 27], [24, 30], [20, 30], [17, 27]], SK, { edge: true });
-      h.poly([[19, 5], [21, 2], [23, 2], [25, 5], [25, 9], [19, 9]], M, { edge: true });           // top of the helm
-      b.poly([[13, 9], [31, 9], [31, 24], [13, 24]], D, { edge: true }); b.rect(13, 9, 18, 1, GOLD);   // capacitor pack
-      b.rect(16, 13, 12, 1, '#30333c'); b.rect(16, 17, 12, 1, '#30333c'); b.px(18, 20, E).px(26, 20, E);
-      coil(16, 3); coil(22, 1); coil(28, 3);
-      arcs([[17, 1], [18, 0], [20, 1], [21, 0], [24, 0], [25, 1], [27, 0], [29, 1], [31, 4], [32, 6], [12, 5], [11, 7]]);
-      armA.ellipse(31, 15, 3, 3, SK, { edge: true });                                            // the lance
-      armA.poly([[29, 17], [32, 15], [43, 38], [40, 40]], M, { edge: true });
-      for (let k = 0; k < 9; k++) armA.px(33 + k, 20 + k * 2, E);
+      b.ellipse(22, 28, 6, 4, SK, { edge: true });
+      b.poly([[14, 14], [30, 14], [29, 22], [26, 28], [18, 28], [15, 22]], SK, { edge: true });
+      h.poly([[18, 8], [20, 5], [24, 5], [26, 8], [26, 13], [18, 13]], M, { edge: true });          // top of the helm
+      b.ellipse(22, 18, 11, 8, SHELL, { edge: true });                                              // the shell
+      K.pack(b, 13, 31, 9, 24);                                                                     // capacitor pack
+      K.coil(b, 15, 2, 9); K.coil(b, 22, 0, 9); K.coil(b, 29, 2, 9);
+      K.lance(armA, 32, 21, 42, 40);                                                                // the lance
       return;
     }
-    b.poly([[13, 10], [31, 10], [31, 22], [13, 22]], D, { edge: true }); b.rect(13, 10, 18, 1, GOLD);   // capacitor pack behind
-    coil(15, 3); coil(22, 1); coil(29, 3);
-    arcs([[16, 1], [17, 0], [19, 1], [20, 0], [24, 0], [25, 1], [27, 0], [28, 1], [31, 3], [32, 5], [12, 3], [11, 5]]);
-    leg(legA, 17, -1); leg(legB, 27, 1);
-    b.poly([[15, 13], [29, 13], [27, 26], [24, 30], [20, 30], [17, 26]], SK, { edge: true });     // lean torso
-    b.poly([[18, 15], [26, 15], [25, 26], [22, 29], [19, 26]], C);
-    b.rect(19, 19, 7, 1, C.s); b.rect(19, 23, 7, 1, C.s); b.rect(22, 15, 1, 13, C.s);
-    armA.ellipse(14, 15, 3, 3, SK, { edge: true });                                              // lance arm
-    armA.poly([[12, 16], [16, 18], [5, 40], [2, 38]], M, { edge: true });
-    armA.rect(11, 16, 4, 4, D.b);
-    for (let k = 0; k < 9; k++) armA.px(12 - k, 21 + Math.round(k * 2), E);                      // rails glowing
-    armA.poly([[2, 38], [5, 40], [1, 43]], M, { edge: true });
-    armB.ellipse(30, 15, 3, 3, SK, { edge: true });
-    shieldKite(armB, 27);
-    h.poly([[18, 5], [20, 2], [24, 2], [26, 5], [26, 13], [18, 13]], M, { edge: true });         // narrow knight's helm
-    h.rect(21, 1, 2, 4, M.l);
-    h.rect(19, 7, 6, 2, BORE);
-    rigEye(h, Q, 22, 7, () => { h.rect(22, 7, 2, 2, E); h.px(22, 7, E2); }, 2);                  // one cyan eye
-    h.px(20, 10, BORE).px(22, 10, BORE).px(24, 10, BORE).px(20, 11, BORE).px(22, 11, BORE).px(24, 11, BORE);
+    K.pack(b, 12, 32, 9, 21);                                                                       // capacitor pack, behind
+    K.coil(b, 13, 2, 9); K.coil(b, 22, 0, 9); K.coil(b, 31, 2, 9);                                 // three tall coil spires
+    t.poly([[24, 29], [30, 34], [28, 36], [23, 32]], SK, { edge: true });                            // tail
+    b.ellipse(22, 17, 11, 7, SHELL, { edge: true });                                                // shell rim behind its shoulders
+    K.leg(legA, 17, 12); K.leg(legB, 27, 32);                                                       // a wide, lunging stance
+    b.ellipse(22, 28, 6, 4, SK, { edge: true });                                                    // hips
+    b.poly([[14, 14], [30, 14], [29, 22], [26, 28], [18, 28], [15, 22]], SK, { edge: true });       // muscled chest
+    b.rect(17, 16, 4, 1, SK.l).rect(23, 16, 4, 1, SK.l).rect(17, 18, 4, 1, SK.s).rect(23, 18, 4, 1, SK.s);   // pecs
+    b.rect(21, 20, 1, 7, SK.s).rect(19, 23, 5, 1, SK.s).rect(19, 26, 5, 1, SK.s);                  // abs
+    b.rect(20, 12, 4, 3, SK);                                                                       // neck
+    armB.ellipse(31, 16, 3, 3, SK, { edge: true });                                                 // shield arm
+    K.shield(armB, 27, 15);
+    armA.ellipse(13, 16, 3, 3, SK, { edge: true });                                                 // lance arm
+    K.lance(armA, 11, 21, 3, 40);
+    helmFront(22);
   },
 
   // Citadrone (iron): a flying citadel. The shell is a huge armoured disc with teal panel lines
@@ -646,56 +690,42 @@ Object.assign(MONSTER_ART_DIAG, {
   },
   railwarden(g, v) {
     const { M, D, BORE } = LEGEND_PAL;
-    const SK = P('#5a8a3a', '#3a6226', '#7aa856'), C = P('#b8c47a', '#8a9a52', '#d8e0a0'), RIM = P('#d8a838', '#a07220', '#f0cc68');
-    const E = '#7af0ff', E2 = '#d0faff', GOLD = '#d8a838', CLAW = '#c8c0a0';
+    const { SK, SKD, SHELL, E, E2 } = RAIL;
     const { Q, b, h, t, legA, legB, armA, armB } = rigParts(g, v);
-    const coil = (x, top) => { for (let y = top; y < 10; y += 2) { b.rect(x - 1, y, 3, 1, '#d87a3a'); b.rect(x - 1, y + 1, 3, 1, '#8a4a1a'); } b.px(x, top - 1, '#e8e8f0'); };
-    const arcs = pts => { for (const [x, y] of pts) t.px(x, y, (x + y) % 3 ? E : E2); };
-    const leg = (p, x, dir) => {
-      p.poly([[x - 3, 29], [x + 2, 29], [x + 1, 35], [x + 2 * dir, 41], [x - 3 * dir, 41], [x - 2, 35]], SK, { edge: true });
-      p.px(x - 3, 42, CLAW).px(x, 42, CLAW).px(x + 2, 42, CLAW);
-    };
-    const shieldKite = (p, x0) => {
-      p.poly([[x0, 14], [x0 + 14, 14], [x0 + 15, 28], [x0 + 8, 38], [x0, 30]], RIM, { edge: true });
-      p.poly([[x0 + 2, 16], [x0 + 12, 16], [x0 + 13, 27], [x0 + 8, 35], [x0 + 2, 29]], M);
-      p.px(x0 + 3, 17, D.s).px(x0 + 11, 17, D.s).px(x0 + 7, 25, D.s).px(x0 + 5, 20, M.l).px(x0 + 6, 19, M.l);
-    };
+    const K = railKit;
     if (v === 'bside') {
-      shieldKite(armB, 0);
-      leg(legB, 16, -1); leg(legA, 26, 1);
+      K.shield(armB, 0, 15);
+      K.leg(legB, 16, 12); K.leg(legA, 26, 30);
       t.poly([[19, 28], [22, 28], [15, 38], [12, 37]], SK, { edge: true }); t.rect(15, 33, 3, 2, D.b);
-      b.poly([[14, 13], [28, 13], [26, 27], [23, 30], [19, 30], [16, 27]], SK, { edge: true });
-      h.poly([[21, 4], [24, 1], [28, 2], [30, 5], [30, 10], [22, 10]], M, { edge: true });
-      h.rect(29, 6, 2, 2, BORE); h.px(30, 6, E);
-      b.poly([[12, 9], [29, 9], [29, 24], [12, 24]], D, { edge: true }); b.rect(12, 9, 17, 1, GOLD);
-      b.rect(15, 13, 11, 1, '#30333c'); b.rect(15, 17, 11, 1, '#30333c'); b.px(17, 20, E).px(25, 20, E);
-      coil(15, 3); coil(21, 1); coil(27, 3);
-      arcs([[16, 1], [17, 0], [19, 1], [20, 0], [23, 0], [24, 1], [26, 0], [28, 1], [30, 4], [31, 6], [11, 5], [10, 7]]);
-      armA.ellipse(30, 15, 3, 3, SK, { edge: true });
-      armA.poly([[28, 17], [31, 15], [43, 36], [40, 38]], M, { edge: true });
-      for (let k = 0; k < 9; k++) armA.px(32 + k, 20 + k * 2, E);
+      b.ellipse(21, 28, 6, 4, SK, { edge: true });
+      b.poly([[14, 14], [29, 14], [28, 22], [25, 28], [17, 28], [15, 22]], SK, { edge: true });
+      h.poly([[21, 8], [24, 5], [28, 6], [30, 9], [30, 14], [22, 14]], M, { edge: true });
+      h.rect(29, 10, 2, 2, BORE); h.px(30, 10, E);                                                  // the edge of the visor
+      b.ellipse(20, 18, 10, 8, SHELL, { edge: true });
+      K.pack(b, 12, 29, 9, 24);
+      K.coil(b, 14, 2, 9); K.coil(b, 20, 0, 9); K.coil(b, 27, 2, 9);
+      K.lance(armA, 31, 21, 42, 40);
       return;
     }
-    b.poly([[12, 10], [29, 10], [29, 22], [12, 22]], D, { edge: true }); b.rect(12, 10, 17, 1, GOLD);
-    coil(14, 3); coil(20, 1); coil(27, 3);
-    arcs([[15, 1], [16, 0], [18, 1], [19, 0], [22, 0], [23, 1], [25, 0], [26, 1], [29, 3], [30, 5], [11, 3], [10, 5]]);
-    t.poly([[18, 28], [21, 28], [14, 38], [11, 37]], SK, { edge: true }); t.rect(14, 33, 3, 2, D.b);   // tail, out to the left
-    leg(legB, 18, -1); leg(legA, 28, 1);
-    b.poly([[16, 13], [30, 13], [28, 26], [25, 30], [21, 30], [18, 26]], SK, { edge: true });
-    b.poly([[20, 15], [28, 15], [27, 26], [24, 29], [21, 26]], C);
-    b.rect(21, 19, 7, 1, C.s); b.rect(21, 23, 7, 1, C.s); b.rect(24, 15, 1, 13, C.s);
-    armB.ellipse(16, 15, 2.6, 2.6, SK, { edge: true });                                        // far arm: the shield, half hidden
-    armB.poly([[8, 14], [17, 14], [17, 28], [12, 35], [8, 29]], RIM, { edge: true });
-    armB.poly([[10, 16], [15, 16], [15, 27], [12, 32], [10, 28]], M);
-    armA.ellipse(31, 15, 3, 3, SK, { edge: true });                                             // near arm: the lance
-    armA.poly([[29, 17], [33, 15], [43, 38], [40, 40]], M, { edge: true });
-    armA.rect(29, 16, 4, 4, D.b);
-    for (let k = 0; k < 9; k++) armA.px(33 + k, 20 + k * 2, E);
-    h.poly([[20, 5], [22, 2], [26, 2], [28, 5], [28, 13], [20, 13]], M, { edge: true });
-    h.rect(20, 4, 2, 8, M.s);                                                                   // its side
-    h.rect(22, 7, 6, 2, BORE);
-    rigEye(h, Q, 25, 7, () => { h.rect(25, 7, 2, 2, E); h.px(25, 7, E2); }, 2);
-    h.px(23, 10, BORE).px(25, 10, BORE).px(27, 10, BORE).px(23, 11, BORE).px(25, 11, BORE).px(27, 11, BORE);
+    K.pack(b, 13, 30, 9, 21);
+    K.coil(b, 14, 2, 9); K.coil(b, 21, 0, 9); K.coil(b, 28, 2, 9);
+    t.poly([[18, 29], [12, 35], [14, 37], [20, 32]], SK, { edge: true }); t.rect(14, 33, 3, 2, D.b);   // tail, out to the left
+    b.ellipse(21, 17, 10, 7, SHELL, { edge: true });
+    K.leg(legB, 18, 13, SKD); K.leg(legA, 27, 32);
+    b.ellipse(22, 28, 6, 4, SK, { edge: true });
+    b.poly([[15, 14], [30, 14], [29, 22], [26, 28], [19, 28], [16, 22]], SK, { edge: true });
+    b.rect(19, 18, 3, 1, SK.s).rect(24, 18, 4, 1, SK.s).rect(23, 20, 1, 7, SK.s).rect(21, 23, 5, 1, SK.s);
+    b.rect(21, 12, 4, 3, SK);
+    armB.ellipse(16, 16, 2.6, 2.6, SK, { edge: true });                                             // far arm: the shield, half hidden
+    K.shield(armB, 6, 15);
+    armA.ellipse(31, 16, 3, 3, SK, { edge: true });                                                 // near arm: the lance
+    K.lance(armA, 33, 21, 42, 39);
+    h.poly([[19, 9], [21, 5], [27, 5], [29, 9], [29, 16], [19, 16]], M, { edge: true });
+    h.rect(19, 8, 2, 8, M.s);                                                                       // its side
+    h.rect(23, 4, 2, 2, M.l);
+    h.rect(21, 10, 8, 2, BORE);
+    rigEye(h, Q, 25, 10, () => { h.rect(25, 10, 2, 2, E); h.px(25, 10, E2); }, 2);
+    for (const x of [22, 24, 26, 28]) h.px(x, 14, BORE);
   },
   citadrone(g, v) {
     const { D, BORE } = LEGEND_PAL;
