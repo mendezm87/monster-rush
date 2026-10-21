@@ -254,10 +254,10 @@ const ROSTER = [
     moves: ['megaBeam', 'bodySlam', 'heavyStomp', 'snack'] },
   { id: 'frostling', name: 'FROSTLING', types: ['ice'],      hp: 960,  atk: 1.1,  def: 0.92, spd: 96,  size: 'M', item: 'quickCharm',
     moves: ['iceShard', 'frostRay', 'blizzard', 'frostArmor'] },
-  // The night-sky dragons (r98, the owner's design): smug little Cosmite grows into Drakorn. Dragonkin/Shade.
-  { id: 'cosmite',   name: 'COSMITE',   types: ['dragonkin', 'shade'], hp: 980, atk: 1.05, def: 1.0, spd: 84, size: 'M', item: 'powerBand',
-    moves: ['gloomOrb', 'dragonClaw', 'starfall', 'dragonDance'], evolve: { to: 'drakorn' } },
-  { id: 'drakorn',   name: 'DRAKORN',   types: ['dragonkin', 'shade'], hp: 1350, atk: 1.25, def: 1.05, spd: 90, size: 'L', item: 'powerBand',
+  // The night-sky dragons (r98, the owner's design): smug little Cosmite grows into Drakorn. Dragonkin/Arcane (r99).
+  { id: 'cosmite',   name: 'COSMITE',   types: ['dragonkin', 'arcane'], hp: 980, atk: 1.05, def: 1.0, spd: 84, size: 'M', item: 'powerBand',
+    moves: ['moonblast', 'dragonClaw', 'starfall', 'dragonDance'], evolve: { to: 'drakorn' } },
+  { id: 'drakorn',   name: 'DRAKORN',   types: ['dragonkin', 'arcane'], hp: 1350, atk: 1.25, def: 1.05, spd: 90, size: 'L', item: 'powerBand',
     moves: ['dragonPulse', 'dragonClaw', 'starfall', 'dragonDance'] },
   { id: 'boulderon', name: 'BOULDERON', types: ['earth'], hp: 1420, atk: 1.15, def: 1.38, spd: 55, size: 'L', item: 'ironPlate',
     moves: ['rockSlide', 'quicksand', 'rollout', 'quake'] },
