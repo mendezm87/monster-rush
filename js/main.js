@@ -2,7 +2,7 @@
 
 // Shown on the title screen so players can tell whether their browser has the latest
 // build (GitHub Pages lets browsers cache files for up to 10 minutes). Bump on every release.
-const VERSION = '2026.10.21-r107';
+const VERSION = '2026.10.21-r108';
 
 const App = {
   endless: false,   // the mode picked on the title screen
@@ -642,6 +642,7 @@ function openMemory(item) {
   Memory.cur = item;
   App.paused = true; Input.reset();
   const m = item.mon;
+  drawPortrait($('#memory-portrait'), m.id);                                    // who it is that's remembering
   $('#memory-title').textContent = `${m.def.name} remembers…`;
   $('#memory-sub').textContent = `${restoreLabel(m)} restored. Pick which lost memory comes back.`;
   $('#memory-cards').innerHTML = item.choice.map((o, i) => o.move

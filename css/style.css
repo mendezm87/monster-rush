@@ -397,3 +397,8 @@ kbd { background: #2b2540; border: 0.3cqh solid #555; border-bottom-width: 0.8cq
 .memory-cards .mem .k { font: 900 2.2cqh var(--font); color: #5ae8ff; letter-spacing: .08em; }
 .memory-cards .mem .n { font: 900 3.6cqh var(--font); margin: 0.6cqh 0; }
 .memory-cards .mem .mbig { pointer-events: none; }
+
+/* the memory pop-up: the Coreature that's remembering, beside the title */
+.mem-head { display: flex; align-items: center; justify-content: center; gap: 2.5cqh; }
+.mem-head > div { text-align: left; }
+#memory-portrait { width: 14cqh; height: 14cqh; image-rendering: pixelated; background: #241f36; border: 0.6cqh solid var(--ink); border-radius: 2cqh; }
