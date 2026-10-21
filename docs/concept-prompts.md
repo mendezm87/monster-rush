@@ -458,3 +458,78 @@ body with bat wings, a chubby friendly dragon with small wings.
 > hand-inked line art with varying line weight, flat cel colours with one hard-edged shadow tone, soft
 > airbrushed highlights, hand-painted watercolour background of a night sky with a comet over
 > mountains, slight film grain, 4:3 screenshot framing, original creature design, no text
+
+**Round 3 results (r97):** the owner liked all three Mindra designs and made them one line:
+**Gyroculus** (MI3, the astrolabe: a mind trapped in an old instrument) → **Mindra** (MI1, the oracle
+jelly: the mind breaks free) → **Stonicface** (MI2, the stone mask: it recovers its ancient face).
+None of the Drakorn designs landed.
+
+---
+
+## Round 4: Drakorn as a dinosaur that Restores into a dragon (r97)
+
+The owner: "something like Dragonite, but better. Maybe a dinosaur that transforms into a dragon."
+That fits the world: the dinosaur is what's left of it, and Restoring brings back the mythical
+dragon it used to be. **Pick a pair** (D1 with E1, and so on) or mix. The dragon keeps the name
+Drakorn (Arcane; Dragon Pulse, Dragon Claw, Starfall, Dragon Dance); the dinosaur gets a new name.
+
+"Like Dragonite, but better": big, powerful and loyal, a gentle giant you'd trust, but impressive
+rather than cuddly. Stay away from Dragonite's marks: orange skin, a round cream belly, two thin
+antennae, tiny wings on a chubby body. The dinosaurs walk on the ground; the dragons fly (the game
+flaps their wings).
+
+**D1 · Horned calf** (a young three-horned dinosaur; grows into E1)
+> A sturdy baby dinosaur like a young triceratops, slate-blue scaly hide with pale stone-grey
+> underside, a wide bony frill around its neck edged with small gold knobs, one short thick horn on
+> its nose and two little brow horns, faint glowing gold markings on the frill like old carvings,
+> bright brave eyes, stomping forward, a baby monster from a monster-battling game. 1990s TV anime cel
+> art, hand-inked line art with varying line weight, flat cel colours with one hard-edged shadow tone,
+> soft airbrushed highlights, hand-painted watercolour background of a fern valley with ruined stone
+> pillars, slight film grain, 4:3 screenshot framing, original creature design, no text
+
+**E1 · Horned guardian dragon** (evolved: Drakorn)
+> A huge, noble dragon that grew from a horned dinosaur, slate-blue scales with a pale stone-grey
+> chest plate, its neck frill has opened into a great crest of bone and gold that frames its head
+> like a crown, one long horn on its snout and two swept-back brow horns, broad powerful wings with
+> deep blue membranes marked with glowing gold patterns, thick strong arms and legs, calm golden eyes,
+> protective and powerful, a fully evolved monster from a monster-battling game. 1990s TV anime cel
+> art, hand-inked line art with varying line weight, flat cel colours with one hard-edged shadow tone,
+> soft airbrushed highlights, hand-painted watercolour background of a sky above ancient ruins at
+> sunrise, slight film grain, 4:3 screenshot framing, original creature design, no text
+
+**D2 · Sail-back hatchling** (a young sail-backed dinosaur; grows into E2)
+> A lean young dinosaur with a tall sail along its back like a spinosaurus, deep green-teal scales
+> with a sandy belly, the sail a warm sunset red with glowing gold lines running through it like
+> veins of light, a long snout with small teeth, a long tail, standing on strong back legs with
+> short clawed arms, bold and curious, a baby monster from a monster-battling game. 1990s TV anime cel
+> art, hand-inked line art with varying line weight, flat cel colours with one hard-edged shadow tone,
+> soft airbrushed highlights, hand-painted watercolour background of a misty river delta at dawn,
+> slight film grain, 4:3 screenshot framing, original creature design, no text
+
+**E2 · Sail dragon** (evolved: Drakorn)
+> A great dragon whose back sail has split in two and opened into huge wings, the wing membranes the
+> same sunset red with glowing gold veins of light, deep green-teal scales with a sandy chest, a long
+> powerful snout, a ridge of short spines down its neck, strong arms and legs, a long tail with a
+> small fin, proud and majestic in flight, a fully evolved monster from a monster-battling game.
+> 1990s TV anime cel art, hand-inked line art with varying line weight, flat cel colours with one
+> hard-edged shadow tone, soft airbrushed highlights, hand-painted watercolour background of a golden
+> sky over a river delta, slight film grain, 4:3 screenshot framing, original creature design, no text
+
+**D3 · Long-neck hatchling** (a young long-necked dinosaur; grows into E3)
+> A round, sturdy baby long-necked dinosaur like a young brachiosaurus, warm sand-gold hide with a
+> darker brown back dappled with spots, a long neck and small head with big gentle eyes, a row of
+> small rounded plates down its back, thick legs, a short tail, curious and fearless, a baby monster
+> from a monster-battling game. 1990s TV anime cel art, hand-inked line art with varying line weight,
+> flat cel colours with one hard-edged shadow tone, soft airbrushed highlights, hand-painted
+> watercolour background of a tall forest of giant ferns, slight film grain, 4:3 screenshot framing,
+> original creature design, no text
+
+**E3 · Sky leviathan** (evolved: Drakorn)
+> An enormous gentle-giant dragon with a long elegant neck, sand-gold scales and a darker bronze back,
+> the plates down its back grown into a ridge of glowing gold crystals, vast wings with bronze
+> membranes, a small noble head with two long swept-back horns and wise glowing eyes, strong pillar
+> legs tucked as it flies, calm and immensely powerful, a fully evolved monster from a monster-battling
+> game. 1990s TV anime cel art, hand-inked line art with varying line weight, flat cel colours with
+> one hard-edged shadow tone, soft airbrushed highlights, hand-painted watercolour background of a
+> cloud sea at sunset with distant floating ruins, slight film grain, 4:3 screenshot framing, original
+> creature design, no text
