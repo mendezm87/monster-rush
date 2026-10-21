@@ -290,7 +290,7 @@ Object.assign(MONSTER_ART_DIAG, {
     // Three-quarter front (r102 redraw): built from the side view, which the owner liked: the neck
     // curving up and forward, the head turned to show its long snout, and the wings sweeping back.
     const Snout = P('#3e4282', '#262a5a', '#5c62b0');
-    dragonWing(b, { sh: [27, 18], wr: [35, 3], tips: [[42, 7], [41, 13], [37, 18]], scal: [[38, 10], [38, 15], [33, 19]], back: [28, 22] }, WingD);   // far wing, behind
+    dragonWing(b, { sh: [25, 18], wr: [20, 2], tips: [[10, 3], [9, 10], [13, 16]], scal: [[14, 7], [13, 13], [18, 17]], back: [23, 21] }, WingD);   // far wing, sweeping back behind the near one (it hid the head when it was on the right)
     dragonTail(t, [[18, 33], [14, 36], [10, 37], [6, 35], [4, 31], [5, 28]], [5, 25]);
     dragonLeg(legB, 'front', 26, SkD);                                                                 // far leg
     b.ellipse(21, 30, 5, 4, Sk, { edge: true });                                                       // hips
@@ -307,15 +307,15 @@ Object.assign(MONSTER_ART_DIAG, {
     earB.poly([[27, 5], [22, 2], [23, 1], [28, 3]], Horn);                                             // far horn
     h.ellipse(27.5, 10.5, 2.4, 3, Sk);
     h.ellipse(29, 7, 5, 3.8, Sk, { edge: true });                                                      // head
-    h.poly([[30, 4], [39, 7], [39, 10], [31, 12], [28, 10]], Snout, { edge: true });                   // long snout, turned toward you
-    h.px(38, 8, OUTLINE).px(34, 10, OUTLINE);
+    h.poly([[31, 5], [40, 7], [40, 10], [31, 11], [28, 10]], Snout, { edge: true });                   // long snout, turned toward you
+    h.px(39, 8, OUTLINE);
     earA.poly([[30, 4], [24, 0], [22, 0], [25, 1], [31, 3]], Horn, { edge: true });                    // near horn, swept back
     h.poly([[27, 9], [24, 10], [27, 11]], Horn);                                                       // cheek spike
     h.rect(26, 5, 2, 1, OUTLINE); h.rect(30, 5, 3, 1, OUTLINE);
     rigEye(h, Q, 27, 6, () => h.px(27, 6, GOLD));
     rigEye(h, Q, 31, 6, () => { h.rect(31, 6, 3, 1, GOLD); h.px(31, 7, GOLD); }, 3);
     rigMouth(h, Q, 32, 11, 4);
-    speckle(b, [[20, 22], [26, 27], [21, 30]]); speckle(h, [[28, 5], [33, 7]]);
+    speckle(b, [[20, 22], [26, 27], [21, 30]]); speckle(h, [[27, 4]]);
   },
 });
 Object.assign(RIGGED, { cosmite: 'biped', drakorn: 'flier' });
