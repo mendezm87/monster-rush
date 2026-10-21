@@ -234,7 +234,7 @@ Which other monsters evolve and into what (to design together); more relics and 
 | `js/describe.js` | Plain-language descriptions (`moveDesc`, `moveStats`, `itemDesc`, `typeMatchups`, `STATUS_TIPS`) and the hover tooltips (`TIPS`, `data-tip`). **Shared with the Stadium**: keep both copies identical |
 | `js/info.js` | Rush's Info screen (relics, held items, types) |
 | `js/ui.js`, `js/main.js` | HUD (active monster, boss bar), callouts, swap tray, starter / recruit / party / pick / result screens, room-to-room flow (`enterRoom`, `roomHooks`), the settings screen, `fitScreen` (picks `RES`), game loop, `VERSION` |
-| `gallery.html` | Sprite gallery (linked from the title screen): every monster and the trainer in front/side/back plus a turning preview, on any floor theme. New monsters appear in it automatically |
+| `gallery.html` | Sprite gallery (linked from the title screen): every monster and the trainer in front/side/back plus a turning preview, on any floor theme. New monsters appear in it automatically, and the altar forms (LEGENDS) have their own section with their recipe (r105) |
 | `js/gear.js` | Relic gear: `relicGear` (a relic's spot, from `RELICS`), `gearFor`, `gearAnchors` (head, eyes, neck, feet from the rig), `GEAR_ART`, `gearSprites` (a dressed sprite set). Rush only; sprites.js's `monSprite(m)` uses it when it's loaded |
 | `js/lighting.js` | `Lighting`: room lighting (`apply` after the room and monsters are drawn, `overlay` after the crisp layer), wall torches, soft shadows (`Lighting.shadow`), on/off |
 | `js/input.js` | Keyboard, mouse, touch and gamepad input (`Input.dir(p)`, `Input.moves(p)`, `Input.mouse`), keyboard remapping (`ACTIONS`, `bind`, `setBindings`, `captureKey`, `keyName`) |

@@ -62,8 +62,10 @@
       const el = document.createElement('div');
       el.className = 'card' + (def.from ? ' evo' : '');
       let note = '';
-      if (def.evolve) note = `Evolves into <b>${ROSTER_BY_ID[def.evolve.to].name}</b> at level ${def.evolve.level}.`;
+      if (def.evolve) note = `Restores into <b>${ROSTER_BY_ID[def.evolve.to].name}</b> when its bar fills.`;
       if (def.from) note = `Evolved form of <b>${ROSTER_BY_ID[def.from].name}</b>.`;
+      if (def.recipe) note = `Altar form of <b>${ROSTER_BY_ID[def.from].name}</b>: offer one ${def.recipe.map(t => t.toUpperCase()).join(' and one ')} relic.`;
+      if (def.branches) note += ` At an altar it can become ${Object.keys(def.branches).map(k => '<b>' + ROSTER_BY_ID[k].name + '</b>').join(', ')}.`;
       if (def.id === 'smugshi') note = 'Toshi, the real dog. ' + note;
       el.innerHTML = `<div class="top"><span class="name">${def.name}</span><span class="tags">${def.types.map(tag).join('')}</span></div>
         ${viewBoxes(SPRITES[def.id].diag ? VIEWS6 : VIEWS4)}
@@ -82,6 +84,7 @@
     const starters = ['smugshi', 'cinderox', 'tidalisk'];
     section('Starters and their evolutions', starters.flatMap(id => [ROSTER_BY_ID[id], ROSTER_BY_ID[ROSTER_BY_ID[id].evolve.to]]));
     section('Everyone else', ROSTER.filter(m => !starters.includes(m.id)));
+    section('Altar forms (legends)', LEGENDS);
 
     // the trainers, every look
     const trImgs = {};
