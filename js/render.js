@@ -659,7 +659,7 @@ mixInto(Battle, class {
     // dash afterimages
     for (const g of m.ghosts) {
       ctx.globalAlpha = (g.t / 0.22) * 0.5 * alpha;
-      ctx.save(); ctx.translate(Math.round(g.x), Math.round(g.y)); if (g.face < 0) ctx.scale(-1, 1);
+      ctx.save(); ctx.translate(Math.round(g.x), Math.round(g.y)); if (isSideView(g.view) && g.face < 0) ctx.scale(-1, 1);
       ctx.drawImage(tinted(m.id, g.color, g.view), -S / 2, -S + 3, S, S); ctx.restore();
     }
     ctx.globalAlpha = alpha;
@@ -674,7 +674,9 @@ mixInto(Battle, class {
 
     ctx.save();
     ctx.translate(X, Math.round(Y + bob + sink - hover));
-    if (m.face < 0) ctx.scale(-1, 1);
+    // only side-on views are mirrored for facing left: front and back views stay as drawn, so a Coreature
+    // whose two sides differ (Slumbear, Daimochi's katana) keeps each colour and thing on its own side (r128)
+    if (isSideView(m.view) && m.face < 0) ctx.scale(-1, 1);
     const roll = m.action && m.action.kind === 'dash' && m.action.mv.fx === 'roll' && m.action.t > 0.1;
     if (roll) { ctx.translate(0, -S / 2 + 3); ctx.rotate((m.action.t - 0.1) * 22); ctx.translate(0, S / 2 - 3); }   // Rollout: tumble along
     if (m.lift > 0.01) {   // caught in a tornado: carried up and spun round

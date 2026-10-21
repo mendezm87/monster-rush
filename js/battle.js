@@ -27,7 +27,7 @@ function restorePixels(m) {
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
     const a = (y * w + x) * 4;
     if (data[a + 3] < 128) continue;
-    const wx = m.x + (x - w / 2) * k * (m.face < 0 ? -1 : 1), wy = m.y + 3 - (h - y) * k;
+    const wx = m.x + (x - w / 2) * k * (isSideView(m.view) && m.face < 0 ? -1 : 1), wy = m.y + 3 - (h - y) * k;
     const dx = wx - m.x, dy = wy - m.cy;
     out.push({ x0: wx, y0: wy, ang: Math.atan2(dy, dx), r0: Math.hypot(dx, dy), spin: rand(2.5, 4.5) * (Math.random() < 0.5 ? -1 : 1),
       lift: rand(18, 42), out: rand(16, 46), size: k, t: 0,
