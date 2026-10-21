@@ -311,9 +311,8 @@ Object.assign(MONSTER_ART_DIAG, {
     h.px(39, 8, OUTLINE);
     earA.poly([[30, 4], [24, 0], [22, 0], [25, 1], [31, 3]], Horn, { edge: true });                    // near horn, swept back
     h.poly([[27, 9], [24, 10], [27, 11]], Horn);                                                       // cheek spike
-    h.rect(26, 5, 2, 1, OUTLINE); h.rect(30, 5, 3, 1, OUTLINE);
-    rigEye(h, Q, 27, 6, () => h.px(27, 6, GOLD));
-    rigEye(h, Q, 31, 6, () => { h.rect(31, 6, 3, 1, GOLD); h.px(31, 7, GOLD); }, 3);
+    h.rect(30, 5, 3, 1, OUTLINE);                                                                      // brow
+    rigEye(h, Q, 31, 6, () => { h.rect(31, 6, 3, 1, GOLD); h.px(31, 7, GOLD); }, 3);                   // one eye: the head is turned almost side-on, the far eye is hidden
     rigMouth(h, Q, 32, 11, 4);
     speckle(b, [[20, 22], [26, 27], [21, 30]]); speckle(h, [[27, 4]]);
   },
