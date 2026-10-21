@@ -694,3 +694,41 @@ animal: each mixes a few, so it reads as a creature of its own. Kept away from S
 > cel colours with one hard-edged shadow tone, soft airbrushed highlights, hand-painted watercolour
 > background of a barn at sunset, slight film grain, 4:3 screenshot framing, original creature
 > design, no text
+
+### Round 6c: Mattress hide with a subtle panda theme (the owner: "I like the path we're heading with mattress hide, let's see what it would look like with a subtle panda theme")
+
+Keeps S7 (a huge round creature with a soft quilted hide instead of fur, a broad yawning muzzle,
+tiny round ears, small sleepy eyes) and borrows only the panda's colours and a love of bamboo, so
+it reads as a sleepy quilted creature first and a panda only on a second look.
+
+**S7a · Patchwork panda** (the panda marks are dark fabric patches sewn on)
+> A huge round heavy monster with a soft padded hide stitched in a diamond quilted pattern like an
+> old mattress, cream-white, with patches of charcoal-black fabric sewn on around its small sleepy
+> eyes, over its tiny round ears, on its stubby arms and legs and as a band across its shoulders,
+> the stitches showing along every patch edge, a broad rounded muzzle like a hippo's caught
+> mid-yawn, a big cloth-covered button on its round belly, a little tuft of stuffing poking out of
+> one seam, a few loose threads, a creature that isn't any real animal, cosy and enormous, a monster
+> from a monster-battling game. 1990s TV anime cel art, hand-inked line art with varying line
+> weight, flat cel colours with one hard-edged shadow tone, soft airbrushed highlights,
+> hand-painted watercolour background of a bamboo grove at dusk, slight film grain, 4:3 screenshot
+> framing, original creature design, no text
+
+**S7b · Ticking panda** (an old striped mattress fabric, with a bamboo snack)
+> A huge round heavy monster with a soft padded hide like old mattress ticking, cream with faint
+> grey stripes and diamond quilting stitches, dark charcoal teardrop-shaped markings around its
+> droopy sleepy eyes, charcoal stubby legs like it's wearing thick socks, tiny dark round ears, a
+> broad flat muzzle chewing lazily on a bamboo shoot, a short tail with a green tassel, a creature
+> that isn't any real animal, calm and enormous, a monster from a monster-battling game. 1990s TV
+> anime cel art, hand-inked line art with varying line weight, flat cel colours with one hard-edged
+> shadow tone, soft airbrushed highlights, hand-painted watercolour background of a misty bamboo
+> forest, slight film grain, 4:3 screenshot framing, original creature design, no text
+
+**S7c · Futon roll** (a rolled-up futon of a creature, panda colours only in its markings)
+> A huge round heavy monster shaped like a thick rolled-up futon, its quilted hide in cream-white
+> with one broad charcoal-black band wrapped round its middle like a tied strap, small dark patches
+> over its half-closed eyes, tiny dark round ears, a wide yawning muzzle with a soft pink tongue,
+> stubby dark legs, a bamboo-green ribbon tied in a bow on its tail, a creature that isn't any real
+> animal, sleepy and enormous, a monster from a monster-battling game. 1990s TV anime cel art,
+> hand-inked line art with varying line weight, flat cel colours with one hard-edged shadow tone,
+> soft airbrushed highlights, hand-painted watercolour background of a tatami room with paper
+> screens at night, slight film grain, 4:3 screenshot framing, original creature design, no text
