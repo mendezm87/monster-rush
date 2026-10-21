@@ -4,7 +4,7 @@
 const P = (b, s, l) => ({ b, s, l });
 const DARK_EYE = '#1a1222';
 // Toshi's colours (from photos of the real dog), shared by Smugshi and Smugshogun
-const TOSHI = { coat: P('#d08548', '#a85e2c', '#e8a868'), white: P('#f7f1e6', '#e2d4bf', '#ffffff'), ear: '#f1dcc4' };
+const TOSHI = { coat: P('#d08548', '#a85e2c', '#e8a868'), white: P('#f7f1e6', '#e2d4bf', '#ffffff'), ear: '#f1dcc4', line: '#8c4a26', wline: '#b8a68c' };
 
 // Wings: flying monsters draw their wings through these, so buildSprites can make a second
 // "flap" frame (FLAP = 1): polygons swing down from the shoulder (their first point, or w.root;
@@ -156,6 +156,26 @@ function lying(src) {
 // Faces shared by rigged monsters: draws a pair of eyes (or one, in a side view) in the pose's
 // state. at(x, y) for each eye's top-left; normal() draws the usual open eye.
 // A mirrored pair of eyes (left one at x, the other mirrored in a grid W wide): the usual ones, or the pose's.
+// Softer inside lines (r112): a pixel artist colours the lines inside a sprite (where one part
+// overlaps another) as a dark shade of the fur round them and keeps black for the silhouette.
+// softLines(g, pick) recolours every outline pixel with nothing empty round it: pick(the colours
+// next to it) gives the new colour, or nothing to keep it black. Call it after the shapes and
+// before the face, so eyes, noses and mouths stay black.
+function softLines(g, pick) {
+  const ch = [];
+  for (let y = 0; y < g.h; y++) for (let x = 0; x < g.w; x++) {
+    if (g.get(x, y) !== OUTLINE) continue;
+    let open = false; const near = [];
+    for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) {
+      const c = g.get(x + i, y + j);
+      if (!c) open = true; else if (c !== OUTLINE && !(i && j)) near.push(c);
+    }
+    if (open || !near.length) continue;
+    const c = pick(near);
+    if (c) ch.push([x, y, c]);
+  }
+  for (const [x, y, c] of ch) g.set(x, y, c);
+}
 function rigEyes(h, R, W, x, y, w, normal) { if (!R.eyes) return normal(); for (const ex of [x, W - x - w]) rigEye(h, R, ex, y, () => {}, w); }
 // A mouth: the usual one, or open (w wide, 2 tall) or roaring (w + 2 wide, 3 tall) with a tongue, at x, y.
 function rigMouth(h, R, x, y, w, normal = () => {}) {

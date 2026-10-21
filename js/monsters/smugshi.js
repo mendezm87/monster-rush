@@ -1,5 +1,8 @@
 // The smugshi family: smugshi, smugshogun. Drawn with the helpers in js/sprites.js (PixGrid shapes, rigParts, rigEye...).
 // Each monster: MONSTER_ART (front, side, back), MONSTER_ART_DIAG (fside, bside) and its body type in RIGGED.
+// Hand touches (r112): the lines inside Toshi are a dark shade of the fur round them (black stays
+// for his silhouette, eyes, nose and mouth), and his ears, nose, mouth and cheeks are placed pixel by pixel.
+const toshiLines = g => softLines(g, cs => cs.some(c => c === TOSHI.coat.b || c === TOSHI.coat.s || c === TOSHI.coat.l || c === '#e8b4a4') ? TOSHI.line : TOSHI.wline);
 Object.assign(MONSTER_ART, {
   // Toshi, the owner's real-life Shiba Inu (drawn from photos): a soft ginger coat; a big
   // white bib, belly and legs; white cheeks up to his eyes; pale eyebrow spots; upright
@@ -23,7 +26,7 @@ Object.assign(MONSTER_ART, {
       b.ellipse(20, 22, 3.5, 4.5, C);                                                            // white chest
       legB.ellipse(11, 27.5, 1.9, 3, C, { edge: true }); legA.ellipse(21, 27.5, 1.9, 3, C, { edge: true });   // white legs
       b.poly([[13, 15], [16, 13.5], [19, 17], [22, 22], [18, 23], [15.5, 18.5]], C);             // white sash from the chest up over the neck
-      earB.poly([[14, 8], [13, 1], [17, 5]], O);                                                 // far ear
+      earB.poly([[14, 8], [13, 1], [17, 5]], P(O.s, TOSHI.line, O.b));                           // far ear, in shadow
       h.ellipse(19, 12, 6.5, 5.5, O, { edge: true });                                            // head
       b.px(13, 15, C.b); b.px(13, 16, C.b); b.px(14, 17, C.b);                                   // the ruff showing behind the head
       earA.poly([[17, 7], [19, 0], [22, 6]], O, { edge: true });                                 // near ear
@@ -31,8 +34,9 @@ Object.assign(MONSTER_ART, {
       h.poly([[21, 12], [28, 13.5], [27.5, 16.5], [20, 17.5]], C, { edge: true });               // white muzzle
       h.ellipse(19.5, 15.5, 3, 2, C);                                                            // white cheek
       h.px(21, 9, C.b); h.px(22, 9, C.b);                                                        // eyebrow spot
+      toshiLines(g);
       rigEye(h, R, 21, 11, () => { h.rect(21, 11, 3, 1, OUTLINE); h.px(22, 12, DARK_EYE); h.px(23, 12, DARK_EYE); }, 3);   // smug half-shut eye
-      h.rect(27, 13, 2, 2, OUTLINE);                                                             // nose
+      h.rect(27, 13, 2, 2, OUTLINE); h.px(27, 13, '#5a5060');                                    // nose
       if (R.mouth === 'roar') { h.rect(22, 15, 5, 3, OUTLINE); h.px(23, 17, TONGUE).px(24, 17, TONGUE); }
       else if (R.mouth === 'open') { h.rect(23, 16, 4, 2, OUTLINE); h.px(24, 17, TONGUE); h.px(25, 17, TONGUE); }
       else h.px(24, 17, OUTLINE).px(25, 17, OUTLINE).px(26, 16, OUTLINE);                       // flat little mouth
@@ -48,6 +52,7 @@ Object.assign(MONSTER_ART, {
       h.ellipseM(9, 15, 1.6, 1.6, C);                                                            // cheek fluff peeking out
       t.ellipse(16, 19, 5, 4.5, O, { edge: true });                                              // the famous curled tail
       t.ellipse(16, 18.5, 3, 2.6, C); t.px(16, 18, O.s); t.px(17, 18, O.s);
+      toshiLines(g);
       return;
     }
     t.ellipse(25.5, 17.5, 4.5, 4.5, O, { edge: true });                                          // curled tail behind him
@@ -58,17 +63,19 @@ Object.assign(MONSTER_ART, {
     b.ellipse(16, 23, 5.2, 6, C);                                                                // white chest
     earA.poly([[7, 10], [6.5, 0], [13.5, 5.5]], O, { edge: true }); earB.poly([[25, 10], [25.5, 0], [18.5, 5.5]], O, { edge: true });   // big upright ears, set wide
     earA.poly([[8.3, 8], [7.8, 2.5], [11.8, 5.8]], PINK); earB.poly([[23.7, 8], [24.2, 2.5], [20.2, 5.8]], PINK);   // pink insides
-    earA.px(9, 4, C.b).px(10, 6, C.b); earB.px(22, 4, C.b).px(21, 6, C.b);                       // white fur at the inner edge
+    earA.px(9, 6, C.b).px(10, 6, C.b).px(8, 7, C.b); earB.px(22, 6, C.b).px(21, 6, C.b).px(23, 7, C.b);   // white tufts at the base
     h.ellipse(16, 12, 8.5, 6.5, O, { edge: true });                                              // head
     h.ellipseM(10.5, 14.6, 2.8, 2.6, C);                                                         // white cheeks, up under the eyes
     h.ellipse(16, 15.6, 4.6, 3, C);                                                              // white muzzle
     h.rect(13, 17, 6, 3, C.b); h.rect(12, 18, 8, 2, C.b);                                        // white throat running into the chest (no chin line)
     h.rectM(11, 9, 2, 1, C.b);                                                                   // pale eyebrow spots
+    h.px(7, 14, C.b); h.rect(24, 14, 1, 3, OUTLINE);                                             // a tuft of cheek fluff; his cheek against the tail
+    toshiLines(g);
     for (const x of [10, 18]) rigEye(h, R, x + (R.eyes ? 1 : 0), 11, () => { h.rect(x, 11, 4, 1, OUTLINE); h.rect(x + 1, 12, 2, 1, DARK_EYE); });   // smug half-shut lids
-    h.rect(15, 13, 2, 2, OUTLINE); h.px(15, 13, '#5a5060');                                      // big black nose
+    h.rect(14, 13, 4, 1, OUTLINE); h.rect(15, 14, 2, 1, OUTLINE); h.px(15, 13, '#5a5060');       // big black nose
     if (R.mouth === 'roar') { h.rect(13, 16, 6, 3, OUTLINE); h.px(15, 18, TONGUE).px(16, 18, TONGUE); }
     else if (R.mouth === 'open') { h.rect(14, 16, 4, 2, OUTLINE); h.px(15, 17, TONGUE).px(16, 17, TONGUE); }
-    else { h.px(14, 17, OUTLINE).px(15, 17, OUTLINE).px(16, 17, OUTLINE).px(17, 17, OUTLINE); h.px(18, 16, OUTLINE); }   // flat, unimpressed mouth with a smug corner
+    else { h.rect(14, 16, 4, 1, OUTLINE); h.px(18, 15, OUTLINE); h.rect(14, 17, 4, 1, C.s); }    // flat, unimpressed mouth with a smug corner, and a chin
   },
   // ---- evolved starters (44px, their own designs) ----
   // Toshi all grown up: the same red Shiba with the cream mask, white socks, eyebrow
@@ -159,6 +166,7 @@ Object.assign(MONSTER_ART_DIAG, {
       h.ellipse(24.5, 14, 1.8, 1.8, C); h.ellipse(25.5, 12.5, 1.4, 1.4, C);                      // cheek and muzzle peeking out
       t.ellipse(13, 19, 5, 4.5, O, { edge: true });                                              // the famous curled tail
       t.ellipse(13, 18.5, 3, 2.6, C); t.px(13, 18, O.s); t.px(14, 18, O.s);
+      toshiLines(g);
       return;
     }
     t.ellipse(8, 17, 4.5, 4.5, O, { edge: true });                                               // curled tail behind him
@@ -170,19 +178,20 @@ Object.assign(MONSTER_ART_DIAG, {
     legB.px(14, 30, C.s); legA.px(20, 30, C.s);
     earA.poly([[9, 10], [9, 0], [15, 5]], O, { edge: true });                                    // near ear
     earA.poly([[10.3, 8], [10.3, 2.5], [13.5, 5.3]], PINK); earA.px(11, 4, C.b);
-    earB.poly([[20, 7], [24, 0], [26, 7]], O, { edge: true });                                   // far ear
+    earB.poly([[20, 7], [24, 0], [26, 7]], P(O.s, TOSHI.line, O.b), { edge: true });             // far ear, in shadow
     earB.poly([[21.5, 6], [23.6, 2.5], [24.6, 6]], PINK);
     h.ellipse(17.5, 12, 8, 6.5, O, { edge: true });                                              // head
     h.ellipse(12.5, 14.8, 2.6, 2.4, C); h.ellipse(23, 14.5, 1.6, 2, C);                          // white cheeks
     h.ellipse(20, 15.6, 4.4, 3, C);                                                              // white muzzle, turned his way
     h.rect(16, 17, 7, 3, C.b); h.rect(15, 18, 8, 2, C.b);                                        // white throat into the chest
     h.rect(13, 9, 2, 1, C.b); h.rect(21, 9, 2, 1, C.b);                                          // pale eyebrow spots
+    toshiLines(g);
     rigEye(h, R, 13, 11, () => { h.rect(12, 11, 4, 1, OUTLINE); h.rect(13, 12, 2, 1, DARK_EYE); });   // smug lids
     rigEye(h, R, 21, 11, () => { h.rect(20, 11, 3, 1, OUTLINE); h.rect(21, 12, 2, 1, DARK_EYE); });
     h.rect(21, 13, 2, 2, OUTLINE); h.px(21, 13, '#5a5060');                                      // big black nose
     if (R.mouth === 'roar') { h.rect(18, 16, 6, 3, OUTLINE); h.px(20, 18, TONGUE).px(21, 18, TONGUE); }
     else if (R.mouth === 'open') { h.rect(19, 16, 4, 2, OUTLINE); h.px(20, 17, TONGUE).px(21, 17, TONGUE); }
-    else h.px(19, 17, OUTLINE).px(20, 17, OUTLINE).px(21, 17, OUTLINE).px(22, 17, OUTLINE).px(23, 16, OUTLINE);   // flat mouth, smug corner
+    else { h.rect(19, 16, 4, 1, OUTLINE); h.px(23, 15, OUTLINE); h.rect(19, 17, 4, 1, C.s); }   // flat mouth, smug corner, and a chin
   },
   smugshogun(g, v) {
     const O = TOSHI.coat, C = TOSHI.white;
