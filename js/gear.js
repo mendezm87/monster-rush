@@ -210,6 +210,10 @@ function drawGear(g, id, v, gear) {
 // benched Coreature costs nothing, and the one that's out dresses a picture or two as it animates.
 // Layers are shared between frames where the head and legs sit the same.
 const GEAR_SETS = {};
+// Dressed pictures get a margin (r111) above and to each side, in sprite pixels, so a hat, an antenna
+// or glasses on a head thrown forward never get clipped at the edge of the art. drawMon lines pictures
+// up by their feet and centre, so the Coreature stays exactly where it was.
+const GEAR_PAD = 6;
 // The Glitched look (dungeon.js, GLITCH): colours rotated through the channels (red to green, green
 // to blue, blue to red), so the shading stays but the palette turns wrong, and two or three torn
 // rows slid sideways with a magenta or cyan leading edge. The dark outline stays. Seeded per
@@ -259,8 +263,9 @@ function gearSprites(id, gear) {
   const layer = v => {
     const Q = rig(), k = v + Q.head.join() + (Q.legs || [0, 0]).join();
     if (layers[k]) return layers[k];
-    const g = new PixGrid(sp.size, sp.size);
-    drawGear(g, id, v, gear);
+    const g = new PixGrid(sp.size + 2 * GEAR_PAD, sp.size + GEAR_PAD), at = part(g, GEAR_PAD, GEAR_PAD);
+    at.w = sp.size;                                                     // drawn in the sprite's own coordinates
+    drawGear(at, id, v, gear);
     g.outline();
     own.push(layers[k] = g.toCanvas());
     return layers[k];
@@ -270,8 +275,8 @@ function gearSprites(id, gear) {
     const out = {};
     for (const v of Object.keys(views)) Object.defineProperty(out, v, { enumerable: true, configurable: true, get() {
       const keep = RIG, src = views[v];
-      const c = document.createElement('canvas'); c.width = src.width; c.height = src.height;
-      try { RIG = pose ? { ...REST, ...pose } : null; const x = c.getContext('2d'); x.drawImage(src, 0, 0); x.drawImage(layer(v), 0, 0); if (glitch) glitchPaint(c, v + JSON.stringify(pose || 0)); }
+      const c = document.createElement('canvas'); c.width = src.width + 2 * GEAR_PAD; c.height = src.height + GEAR_PAD;   // room for gear past the art's edges
+      try { RIG = pose ? { ...REST, ...pose } : null; const x = c.getContext('2d'); x.drawImage(src, GEAR_PAD, GEAR_PAD); x.drawImage(layer(v), 0, 0); if (glitch) glitchPaint(c, v + JSON.stringify(pose || 0)); }
       finally { RIG = keep; }
       own.push(c);
       Object.defineProperty(out, v, { value: c, enumerable: true });
@@ -292,6 +297,7 @@ function gearSprites(id, gear) {
     }
   }
   Object.defineProperty(out, 'own', { value: own });
+  Object.defineProperty(out, 'pad', { value: GEAR_PAD });
   return GEAR_SETS[key] = out;
 }
 const gearSet = gearSprites;   // review pages (gear.html)

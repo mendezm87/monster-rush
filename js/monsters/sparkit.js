@@ -123,3 +123,7 @@ Object.assign(MONSTER_ART_DIAG, {
   },
 });
 Object.assign(RIGGED, { sparkit: 'biped' });
+// Fidgets (r111): a little routine each plays every so often while it stands around.
+Object.assign(FIDGETS, {
+  sparkit: { fps: 5, every: 8, frames: [{ arms: [2, 0] }, { arms: [3, 0], head: [0, -1], eyes: 'blink' }, { arms: [2, 0], head: [0, 1] }, { arms: [3, 0], eyes: 'blink' }, { }] },   // scratches behind its ear
+});

@@ -82,3 +82,7 @@ Object.assign(MONSTER_ART_DIAG, {
   },
 });
 Object.assign(RIGGED, { gearhulk: 'biped' });
+// Fidgets (r111): a little routine each plays every so often while it stands around.
+Object.assign(FIDGETS, {
+  gearhulk: { fps: 5, every: 10, frames: [{ head: [0, 1] }, { head: [0, -1], body: -1 }, { head: [0, -1] }, { }] },   // vents and resets
+});

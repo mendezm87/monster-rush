@@ -78,3 +78,7 @@ Object.assign(MONSTER_ART_DIAG, {
   },
 });
 Object.assign(RIGGED, { galewing: 'flier' });
+// Fidgets (r111): a little routine each plays every so often while it stands around.
+Object.assign(FIDGETS, {
+  galewing: { fps: 5, every: 9, frames: [{ head: [-1, 1], flap: -0.3 }, { head: [-1, 1], flap: -0.4 }, { }, { flap: 0.4 }, { }] },   // preens under its wing
+});

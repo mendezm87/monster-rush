@@ -236,3 +236,9 @@ Object.assign(MONSTER_ART_DIAG, {
   },
 });
 Object.assign(RIGGED, { gyroculus: 'floater', mindra: 'floater', stonicface: 'floater' });
+// Fidgets (r111): a little routine each plays every so often while it stands around.
+Object.assign(FIDGETS, {
+  gyroculus: { fps: 5, every: 8, frames: [{ ears: [1, 0] }, { ears: [0, 1] }, { ears: [1, 1] }, { }] },   // spins its rings
+  mindra: { fps: 5, every: 9, frames: [{ body: -1 }, { body: -1, eyes: 'blink' }, { body: 1 }, { }] },   // pulses with thought
+  stonicface: { fps: 5, every: 10, frames: [{ ears: [1, 0] }, { ears: [0, 1] }, { eyes: 'blink' }, { }] },   // turns its tablets
+});

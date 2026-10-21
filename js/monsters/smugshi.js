@@ -240,3 +240,7 @@ Object.assign(FIDGETS, { smugshi: { fps: 5, every: 9, frames: [
   { head: [-1, 0], tail: [-1, 0] },
   {},
 ] } });
+// Fidgets (r111): a little routine each plays every so often while it stands around.
+Object.assign(FIDGETS, {
+  smugshogun: { fps: 5, every: 9, frames: [{ head: [0, -1] }, { head: [0, -2], eyes: 'blink', tail: [1, -1] }, { head: [0, -2], eyes: 'blink', tail: [-1, -1] }, { head: [0, -1] }, { }] },   // lets its cape sway, chin up, eyes shut, very pleased with itself
+});

@@ -87,3 +87,7 @@ Object.assign(MONSTER_ART_DIAG, {
   },
 });
 Object.assign(RIGGED, { brawlix: 'biped' });
+// Fidgets (r111): a little routine each plays every so often while it stands around.
+Object.assign(FIDGETS, {
+  brawlix: { fps: 5, every: 8, frames: [{ arms: [3, -1] }, { arms: [-1, 3] }, { arms: [3, -1] }, { arms: [-1, 3] }, { }] },   // shadowboxes
+});

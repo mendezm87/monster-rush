@@ -58,3 +58,7 @@ Object.assign(MONSTER_ART_DIAG, {
   },
 });
 Object.assign(RIGGED, { venomire: 'slither' });
+// Fidgets (r111): a little routine each plays every so often while it stands around.
+Object.assign(FIDGETS, {
+  venomire: { fps: 5, every: 8, frames: [{ body: 1 }, { body: -1, mouth: 'open' }, { body: 1 }, { }] },   // bubbles
+});

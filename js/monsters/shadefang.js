@@ -75,3 +75,7 @@ Object.assign(MONSTER_ART_DIAG, {
   },
 });
 Object.assign(RIGGED, { shadefang: 'quad' });
+// Fidgets (r111): a little routine each plays every so often while it stands around.
+Object.assign(FIDGETS, {
+  shadefang: { fps: 5, every: 9, frames: [{ head: [1, 1] }, { head: [1, 2], ears: [1, 1] }, { head: [1, 1] }, { head: [0, -1] }, { }] },   // sniffs the ground
+});

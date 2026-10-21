@@ -67,3 +67,7 @@ Object.assign(MONSTER_ART_DIAG, {
   },
 });
 Object.assign(RIGGED, { boulderon: 'biped' });
+// Fidgets (r111): a little routine each plays every so often while it stands around.
+Object.assign(FIDGETS, {
+  boulderon: { fps: 5, every: 11, frames: [{ arms: [-2, -2] }, { arms: [-3, -3], body: -1 }, { arms: [-3, -3], body: -1, eyes: 'blink' }, { arms: [-1, -1] }, { }] },   // has a big stretch
+});

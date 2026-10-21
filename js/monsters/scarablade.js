@@ -78,3 +78,7 @@ Object.assign(MONSTER_ART_DIAG, {
   },
 });
 Object.assign(RIGGED, { scarablade: 'biped' });
+// Fidgets (r111): a little routine each plays every so often while it stands around.
+Object.assign(FIDGETS, {
+  scarablade: { fps: 5, every: 10, frames: [{ arms: [2, 2] }, { arms: [1, 3] }, { arms: [3, 1] }, { arms: [1, 3] }, { }] },   // sharpens its blades
+});

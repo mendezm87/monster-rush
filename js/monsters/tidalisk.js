@@ -198,3 +198,8 @@ Object.assign(MONSTER_ART_DIAG, {
   },
 });
 Object.assign(RIGGED, { tidalisk: 'slither', maelstrisk: 'slither' });
+// Fidgets (r111): a little routine each plays every so often while it stands around.
+Object.assign(FIDGETS, {
+  tidalisk: { fps: 5, every: 9, frames: [{ tail: [1, 0] }, { head: [1, -1], mouth: 'open' }, { head: [1, -1] }, { tail: [-1, 0] }, { }] },   // sways and tastes the air
+  maelstrisk: { fps: 5, every: 11, frames: [{ body: -1, head: [0, -1] }, { body: -1, head: [0, -2], eyes: 'blink' }, { body: -1, head: [0, -2], mouth: 'open' }, { }] },   // rises up in its coils
+});

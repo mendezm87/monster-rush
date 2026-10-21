@@ -78,3 +78,7 @@ Object.assign(MONSTER_ART_DIAG, {
   },
 });
 Object.assign(RIGGED, { coilizard: 'quad' });
+// Fidgets (r111): a little routine each plays every so often while it stands around.
+Object.assign(FIDGETS, {
+  coilizard: { fps: 5, every: 9, frames: [{ tail: [0, -2] }, { tail: [0, 1], body: 1 }, { tail: [0, -2] }, { head: [1, 0] }, { }] },   // bounces on its spring tail
+});

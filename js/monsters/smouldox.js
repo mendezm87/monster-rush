@@ -88,3 +88,7 @@ Object.assign(MONSTER_ART_DIAG, {
   },
 });
 Object.assign(RIGGED, { smouldox: 'quad' });
+// Fidgets (r111): a little routine each plays every so often while it stands around.
+Object.assign(FIDGETS, {
+  smouldox: { fps: 5, every: 9, frames: [{ legs: [2, 0] }, { body: 1 }, { legs: [2, 0], head: [1, 0] }, { body: 1, mouth: 'open' }, { }] },   // stamps a hoof and snorts
+});

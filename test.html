@@ -139,6 +139,61 @@ $('#game').addEventListener('load', async () => {
       : `${ALL.length} Coreatures: art, animations, gear spots, moves, types, items, evolutions, and each one appears somewhere`);
   } catch (e) { check('Coreatures', false, e.message); }
 
+  // ---------- relic gear stays attached: every worn relic on every Coreature, in every picture ----------
+  // Gear is laid over a Coreature from anchors found on its art (gear.js). Every piece must touch the
+  // Coreature in every view and animation frame (walks, attacks, fidgets, wing flaps...), and must not
+  // run off the edge of the picture, so changes to art or animation can't leave gear floating or cut off.
+  try {
+    const RELICS = G('RELICS'), ALL = G('ALL_MONS()'), bySpot = {};
+    for (const id of Object.keys(RELICS)) if (RELICS[id].gear) (bySpot[RELICS[id].gear] = bySpot[RELICS[id].gear] || []).push(id);
+    const outfits = [];   // every worn relic, a few full outfits (one piece per spot)
+    for (let i = 0; i < Math.max(...Object.values(bySpot).map(l => l.length)); i++) outfits.push(Object.values(bySpot).map(l => l[i % l.length]));
+    const pictures = set => {   // every picture in a sprite set, keyed the same way for the plain and the dressed set
+      const out = {};
+      const add = (vs, key) => { if (!vs) return; for (const v of VIEWS5) if (vs[v]) out[key + '/' + v] = vs[v]; add(vs.flapped, key + '/flap'); add(vs.half, key + '/half'); };
+      add(set.views, 'stand');
+      for (const [k, f] of Object.entries(set.frames || {})) if (k !== 'faint') [].concat(f).forEach((vs, i) => add(vs, Array.isArray(f) ? k + i : k));
+      return out;
+    };
+    const issues = [], loose = {};
+    for (const m of ALL) {
+      const plain = pictures(G('SPRITES')[m.id]);
+      for (const gear of outfits) {
+        const set = G('gearSet')(m.id, gear), dressed = pictures(set), PAD = set.pad || 0;
+        for (const [key, pc] of Object.entries(plain)) {
+          const dc = dressed[key]; if (!dc) continue;
+          // the plain picture laid into the dressed one's frame (dressed pictures have a margin, gear.js GEAR_PAD)
+          const W = dc.width, H = dc.height, b = dc.getContext('2d').getImageData(0, 0, W, H).data;
+          const pl = document.createElement('canvas'); pl.width = W; pl.height = H; pl.getContext('2d').drawImage(pc, PAD, PAD);
+          const a = pl.getContext('2d').getImageData(0, 0, W, H).data;
+          const isGear = new Uint8Array(W * H);
+          for (let i = 0; i < W * H; i++) if (b[i * 4 + 3] && (b[i * 4] !== a[i * 4] || b[i * 4 + 1] !== a[i * 4 + 1] || b[i * 4 + 2] !== a[i * 4 + 2] || b[i * 4 + 3] !== a[i * 4 + 3])) isGear[i] = 1;
+          const seen = new Uint8Array(W * H);
+          for (let i = 0; i < W * H; i++) {
+            if (!isGear[i] || seen[i]) continue;
+            let touches = false, edge = false, size = 0; const stack = [i]; seen[i] = 1;
+            while (stack.length) {
+              const j = stack.pop(), x = j % W, y = (j / W) | 0; size++;
+              if (a[j * 4 + 3]) touches = true;                                           // drawn over the Coreature
+              if (x === 0 || y === 0 || x === W - 1) edge = true;
+              for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+                const nx = x + dx, ny = y + dy; if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
+                const n = ny * W + nx;
+                if (isGear[n]) { if (!seen[n]) { seen[n] = 1; stack.push(n); } } else if (a[n * 4 + 3]) touches = true;
+              }
+            }
+            if ((!touches || edge) && size > 2) { const k2 = m.id + ' ' + (edge ? 'cut off' : 'floating') + ' (' + gear.join('+') + ')'; (loose[k2] = loose[k2] || []).push(key); }
+          }
+        }
+        G('forgetGear')(new Set());
+      }
+    }
+    for (const [k, keys] of Object.entries(loose)) issues.push(k + ': ' + keys.slice(0, 4).join(', ') + (keys.length > 4 ? ' +' + (keys.length - 4) : ''));
+    window.gearIssues = loose;
+    check('Gear fit', !issues.length, issues.length ? issues.slice(0, 10).join('; ') + (issues.length > 10 ? ` (and ${issues.length - 10} more)` : '')
+      : `every worn relic on all ${ALL.length} Coreatures stays attached in every view and frame (${outfits.length} outfits)`);
+  } catch (e) { check('Gear fit', false, e.message); }
+
   // ---------- every relic: effect, element tag, gear, icon; mods and events the game really uses ----------
   try {
     const bad = [], RELICS = G('RELICS'), TAGS = G('RELIC_TAGS'), GEAR = G('GEAR_ART'), ICONS = G('ICON_ART');

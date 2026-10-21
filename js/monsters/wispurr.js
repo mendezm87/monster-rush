@@ -74,3 +74,7 @@ Object.assign(MONSTER_ART_DIAG, {
   },
 });
 Object.assign(RIGGED, { wispurr: 'floater' });
+// Fidgets (r111): a little routine each plays every so often while it stands around.
+Object.assign(FIDGETS, {
+  wispurr: { fps: 5, every: 8, frames: [{ body: -1, tail: [1, 0] }, { body: -2, tail: [-1, 0] }, { body: -1, eyes: 'blink' }, { }] },   // drifts up and settles
+});

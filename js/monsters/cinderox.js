@@ -260,3 +260,8 @@ Object.assign(MONSTER_ART_DIAG, {
   },
 });
 Object.assign(RIGGED, { cinderox: 'quad', infernox: 'quad' });
+// Fidgets (r111): a little routine each plays every so often while it stands around.
+Object.assign(FIDGETS, {
+  cinderox: { fps: 5, every: 8, frames: [{ legs: [2, 0] }, { body: 1 }, { legs: [2, 0], head: [1, 0] }, { body: 1, mouth: 'open' }, { }] },   // stamps a hoof and snorts
+  infernox: { fps: 5, every: 10, frames: [{ legs: [2, 0], body: 1 }, { body: 1 }, { head: [1, -1], mouth: 'roar' }, { head: [1, -1], mouth: 'roar' }, { }] },   // stamps, then roars
+});

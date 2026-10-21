@@ -830,3 +830,12 @@ Object.assign(MONSTER_ART_DIAG, {
 });
 Object.assign(RIGGED, { magmabastion: 'quad', railwarden: 'biped', citadrone: 'floater' });
 Object.assign(FLYERS, { citadrone: { hover: 8, flap: 0 } });
+// Fidgets (r111): a little routine each plays every so often while it stands around.
+Object.assign(FIDGETS, {
+  shellmet: { fps: 5, every: 9, frames: [{ head: [0, 1], eyes: 'blink' }, { head: [-1, 2], eyes: 'sleep' }, { head: [-1, 2], eyes: 'sleep' }, { }] },   // ducks into its helmet
+  bulwarden: { fps: 5, every: 10, frames: [{ arms: [0, -2] }, { arms: [0, -3], head: [0, -1] }, { arms: [0, -3] }, { }] },   // flexes its cannon arm
+  garrishell: { fps: 5, every: 11, frames: [{ arms: [2, 0], head: [1, 1] }, { arms: [2, 0], head: [1, 1] }, { arms: [0, 2], head: [-1, 1] }, { }] },   // checks its cannons
+  magmabastion: { fps: 5, every: 11, frames: [{ body: 1 }, { }, { body: 1, mouth: 'open' }, { }] },   // rumbles
+  railwarden: { fps: 5, every: 10, frames: [{ arms: [-1, 0], body: 1 }, { arms: [2, 0] }, { }] },   // plants its lance
+  citadrone: { fps: 5, every: 9, frames: [{ head: [1, 0] }, { head: [1, 0] }, { head: [-1, 0] }, { head: [-1, 0] }, { }] },   // scans around
+});

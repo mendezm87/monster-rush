@@ -71,3 +71,7 @@ Object.assign(MONSTER_ART_DIAG, {
   },
 });
 Object.assign(RIGGED, { lumawool: 'quad' });
+// Fidgets (r111): a little routine each plays every so often while it stands around.
+Object.assign(FIDGETS, {
+  lumawool: { fps: 5, every: 10, frames: [{ body: 1 }, { body: -1 }, { body: 1 }, { body: -1 }, { eyes: 'blink' }, { }] },   // shakes out its wool
+});

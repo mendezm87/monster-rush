@@ -76,3 +76,7 @@ Object.assign(MONSTER_ART_DIAG, {
   },
 });
 Object.assign(RIGGED, { bellpaca: 'quad' });
+// Fidgets (r111): a little routine each plays every so often while it stands around.
+Object.assign(FIDGETS, {
+  bellpaca: { fps: 5, every: 10, frames: [{ head: [0, 1] }, { head: [0, -1] }, { head: [0, 1] }, { head: [0, -1], eyes: 'blink' }, { }] },   // rings its bell
+});

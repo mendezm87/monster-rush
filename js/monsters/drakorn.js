@@ -327,3 +327,7 @@ Object.assign(FIDGETS, { drakorn: { fps: 5, every: 10, frames: [
   { flap: 0.3 },
   {},
 ] } });
+// Fidgets (r111): a little routine each plays every so often while it stands around.
+Object.assign(FIDGETS, {
+  cosmite: { fps: 5, every: 9, frames: [{ arms: [1, 1] }, { head: [-1, 0], eyes: 'blink' }, { head: [-1, 0], tail: [1, 0] }, { }] },   // gives a smug look and flicks its tail
+});

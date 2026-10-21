@@ -86,3 +86,7 @@ Object.assign(MONSTER_ART_DIAG, {
   },
 });
 Object.assign(RIGGED, { mondaze: 'biped' });
+// Fidgets (r111): a little routine each plays every so often while it stands around.
+Object.assign(FIDGETS, {
+  mondaze: { fps: 5, every: 8, frames: [{ eyes: 'blink' }, { head: [0, 2], body: 1, eyes: 'sleep', arms: [-1, -1] }, { head: [0, 2], body: 1, eyes: 'sleep', mouth: 'open' }, { head: [0, 1] }, { }] },   // heaves a heavy sigh
+});

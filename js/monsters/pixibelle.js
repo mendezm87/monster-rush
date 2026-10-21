@@ -80,3 +80,7 @@ Object.assign(MONSTER_ART_DIAG, {
   },
 });
 Object.assign(RIGGED, { pixibelle: 'flier' });
+// Fidgets (r111): a little routine each plays every so often while it stands around.
+Object.assign(FIDGETS, {
+  pixibelle: { fps: 5, every: 9, frames: [{ flap: -0.4, head: [0, -1] }, { flap: 0.5 }, { flap: -0.4, eyes: 'blink' }, { flap: 0.5 }, { }] },   // twirls
+});
