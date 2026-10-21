@@ -161,10 +161,10 @@ function lying(src) {
 // softLines(g, pick) recolours every outline pixel with nothing empty round it: pick(the colours
 // next to it) gives the new colour, or nothing to keep it black. Call it after the shapes and
 // before the face, so eyes, noses and mouths stay black.
-function softLines(g, pick) {
+function softLines(g, pick, edgesOnly = false) {
   const ch = [];
   for (let y = 0; y < g.h; y++) for (let x = 0; x < g.w; x++) {
-    if (g.get(x, y) !== OUTLINE) continue;
+    if (g.get(x, y) !== OUTLINE || (edgesOnly && !g.ef[y * g.w + x])) continue;
     let open = false; const near = [];
     for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) {
       const c = g.get(x + i, y + j);
@@ -176,6 +176,20 @@ function softLines(g, pick) {
   }
   for (const [x, y, c] of ch) g.set(x, y, c);
 }
+// Soft inside lines for every Coreature (r113): when its pictures are built, the lines a shape
+// drew where it overlaps another (its edge, PixGrid.ef) become a dark shade of the darkest colour
+// next to them. Lines drawn on purpose (eyes, mouths, seams, with px or rect) and the silhouette
+// stay black, so no art function needs to change. HARD_LINES: the ones still to be redesigned.
+const HARD_LINES = new Set(['slumbear', 'venomire', 'scarablade', 'brawlix', 'thornback', 'boulderon']);
+const _lineCol = {};
+function lineColour(cs) {
+  let best = null, lum = 9;
+  for (const c of cs) { const [r, g, b] = hexRgb(c), l = (r * 0.3 + g * 0.59 + b * 0.11) / 255; if (l < lum) { lum = l; best = c; } }
+  if (_lineCol[best]) return _lineCol[best];
+  const a = hexRgb(best), o = hexRgb(OUTLINE), k = 0.5;
+  return (_lineCol[best] = '#' + a.map((v, i) => Math.round(v * (1 - k) + o[i] * k).toString(16).padStart(2, '0')).join(''));
+}
+const softEdges = (g, id) => { if (!HARD_LINES.has(id)) softLines(g, lineColour, true); };
 function rigEyes(h, R, W, x, y, w, normal) { if (!R.eyes) return normal(); for (const ex of [x, W - x - w]) rigEye(h, R, ex, y, () => {}, w); }
 // A mouth: the usual one, or open (w wide, 2 tall) or roaring (w + 2 wide, 3 tall) with a tongue, at x, y.
 function rigMouth(h, R, x, y, w, normal = () => {}) {
@@ -282,6 +296,7 @@ function* spriteSteps(mon) {
     for (const v of diag ? [...VIEWS, 'fside', 'bside'] : VIEWS) {
       const g = new PixGrid(size, size);
       (v === 'fside' || v === 'bside' ? MONSTER_ART_DIAG : MONSTER_ART)[mon.id](g, v);
+      softEdges(g, mon.id);
       g.outline();
       out[v] = g.toCanvas();
     }

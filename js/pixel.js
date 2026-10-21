@@ -7,10 +7,11 @@ class PixGrid {
   constructor(w, h) {
     this.w = w; this.h = h;
     this.c = new Array(w * h).fill(null);
+    this.ef = new Uint8Array(w * h);   // 1 where a shape's edge line is (see softEdges in sprites.js)
   }
   inb(x, y) { return x >= 0 && y >= 0 && x < this.w && y < this.h; }
   get(x, y) { return this.inb(x, y) ? this.c[y * this.w + x] : null; }
-  set(x, y, col) { if (this.inb(x, y)) this.c[y * this.w + x] = col; }
+  set(x, y, col) { if (this.inb(x, y)) { const i = y * this.w + x; this.c[i] = col; this.ef[i] = 0; } }
 
   // Fill every pixel whose centre passes `test`. `pal` is a flat colour or
   // {b: base, s: shade, l: light} for simple top-left lighting.
@@ -51,7 +52,7 @@ class PixGrid {
       }
       this.set(x, y, col);
     }
-    for (let i = 0; i < edgePx.length; i += 2) this.set(edgePx[i], edgePx[i + 1], OUTLINE);
+    for (let i = 0; i < edgePx.length; i += 2) { this.set(edgePx[i], edgePx[i + 1], OUTLINE); this.ef[edgePx[i + 1] * this.w + edgePx[i]] = 1; }
     return this;
   }
 
