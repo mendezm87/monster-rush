@@ -204,7 +204,7 @@ class Battle {
     for (const m of this.p) {
       if (!m.canEvolve || this.restoring) continue;
       if (m === this.P && m.visible) { this.startRestore(m); continue; }   // the one that's out gets the full moment
-      const from = m.def.name, to = ROSTER_BY_ID[m.def.evolve.to];   // a benched one Restores quietly
+      const from = m.def.name, to = evolveTarget(m.def, this.run);   // a benched one Restores quietly
       m.setDef(to); m.restorePending = false; m.mastery = 0;
       m.hp = Math.min(m.maxHp, m.hp + Math.round(m.maxHp * 0.25));
       this.ui.banner(`${from} RESTORED!`, `Its lost data came back: it's ${to.name} again`);
@@ -220,7 +220,7 @@ class Battle {
   // (.card), and the room fades back in. Drawn by drawRestore (render.js).
   startRestore(m) {
     m.restorePending = false;
-    this.restoring = { m, t: 0, from: m.def, to: ROSTER_BY_ID[m.def.evolve.to], pixels: [], broke: false, built: false };
+    this.restoring = { m, t: 0, from: m.def, to: evolveTarget(m.def, this.run), pixels: [], broke: false, built: false };
     this.trainerAct('brace', m);
     Sfx.beamCharge(RESTORE_T.glow);
   }

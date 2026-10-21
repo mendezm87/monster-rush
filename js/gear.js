@@ -155,6 +155,10 @@ const GEAR_ART = {
   leechLens(g, a, v, big) { glasses(g, a, v, big, '#ff4a6a'); },
   // Split Shot: 3D glasses, one red lens and one blue
   splitShot(g, a, v, big) { glasses(g, a, v, big, a.lenses.length > 1 ? ['#ff3a4a', '#3ad0ff'] : '#3ad0ff', GP.white, true); },
+  // Grandma's Cooking: a rice ball wrapped in nori, hung round the neck
+  grandma(g, a, v, big) {
+    pendant(g, a, v, big, (x, y) => { g.poly([[x + 0.5, y - 0.5], [x + 3.5, y + 3.5], [x - 2.5, y + 3.5]], P('#fbf8f0', '#d8d0c0', '#ffffff'), { edge: true }); g.rect(x - 1, y + 2, 3, 2, '#24402e'); });
+  },
   // Rain Bell: a little brass bell on a collar
   rainBell(g, a, v, big) {
     pendant(g, a, v, big, (x, y) => { g.poly([[x - 1, y], [x + 2, y], [x + 3, y + 3], [x - 2, y + 3]], GP.gold, { edge: true }); g.px(x, y + 4, '#a07a20'); g.px(x, y + 1, '#fff0a0'); });

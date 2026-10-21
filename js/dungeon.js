@@ -51,11 +51,20 @@ function glitchDef(def) {
   return { ...def, types, hp: Math.round(def.hp * GLITCH.hp), atk: def.atk * GLITCH.atk, glitched: true };
 }
 
+// Every form a Coreature can Restore into: its next form and any branches (evolve.alts).
+const evolveTos = def => (def.evolve ? [def.evolve.to, ...(def.evolve.alts || []).map(a => a.to)] : []);
+// What it Restores into now: a branch whose relic the party carries (Grandma's Cooking turns Smugshi
+// into Daimochi), or else its usual next form.
+function evolveTarget(def, run) {
+  if (!def.evolve) return null;
+  const alt = (def.evolve.alts || []).find(a => run && run.relics.includes(a.relic));
+  return ROSTER_BY_ID[alt ? alt.to : def.evolve.to];
+}
 function formStage(def) {
   if (LEGENDS.includes(def)) return 4;
   let n = 1, cur = def;
   for (let guard = 0; guard < 5; guard++) {
-    const from = [...ROSTER, ...EVOLVED].find(d => d.evolve && d.evolve.to === cur.id);
+    const from = [...ROSTER, ...EVOLVED].find(d => d.evolve && evolveTos(d).includes(cur.id));
     if (!from) break;
     n++; cur = from;
   }
@@ -133,6 +142,10 @@ const RELICS = {
     fused: { name: 'NOVA CORE', desc: 'Its blasts and strikes from above are 50% bigger.', mods: { blastMul: 1.5 } } },
   tideCharm:   { name: 'TIDE CHARM', desc: 'Water moves hit 20% harder.', tag: 'water', aura: 'tide', mods: { waterMul: 1.2 },
     fused: { name: 'RIPTIDE', desc: "This Coreature's water moves hit 45% harder.", mods: { waterMul: 1.45 } } },
+  // Grandma's Cooking (r116): a bento wrapped in a cloth. Besides the berries, a Smugshi that Restores
+  // while you carry it grows into Daimochi instead of Smugshogun (evolveTarget).
+  grandma:     { name: "GRANDMA'S COOKING", desc: 'Berries heal 30% more. A Smugshi that Restores while you carry this grows into Daimochi instead of Smugshogun.', tag: 'plant', gear: 'neck', mods: { berryHealMul: 1.3 },
+    fused: { name: "GRANDMA'S RECIPE", desc: 'It heals 10% of its HP whenever a room is cleared.', on: { clear(b, m) { healBy(b, m, 0.1); } } } },
   rainBell:    { name: 'RAIN BELL', desc: 'Clearing a room heals your whole party a little (8%).', tag: 'water', gear: 'neck',
     on: { clear(b) { for (const m of b.run.party) healBy(b, m, 0.08); } },
     fused: { name: 'STORM BELL', desc: 'It heals 20% of its HP whenever a room is cleared.', on: { clear(b, m) { healBy(b, m, 0.2); } } } },
@@ -288,8 +301,8 @@ function tryFloor(floorN, partyIds, relics, last, offers = 3) {
       // usually one of the area's bosses, now and then anyone
       r.enemies = [wildSpec(Math.random() < 0.8 ? pickRand(AREA_MONS[stage].bosses) : pickRand(ids), floorN, 'boss')];
       // the final boss is an evolved starter you didn't start with
-      const rivals = EVOLVED.filter(e => !partyIds.includes(e.from));
-      if (last) r.enemies = [wildSpec(pickRand(rivals.length ? rivals : EVOLVED).id, floorN, 'final')];
+      const mains = EVOLVED.filter(e => !e.needs), rivals = mains.filter(e => !partyIds.includes(e.from));   // branches (Daimochi) aren't final bosses
+      if (last) r.enemies = [wildSpec(pickRand(rivals.length ? rivals : mains).id, floorN, 'final')];
     }
     if (r.type === 'recruit') {   // two of the area's Coreatures and one from anywhere
       const local = shuffle(AREA_MONS[stage].natives.filter(id => !partyIds.includes(id))).slice(0, 2);
@@ -492,7 +505,7 @@ class RunState {
   // draw this floor's Coreatures (and what the party evolves into) in the background, a little at a time
   warm() {
     const ids = [];
-    for (const m of this.party) { ids.push(m.id); if (m.def.evolve) ids.push(m.def.evolve.to); ids.push(...Object.keys(m.def.branches || {})); }   // and what it can become
+    for (const m of this.party) { ids.push(m.id, ...evolveTos(m.def)); ids.push(...Object.keys(m.def.branches || {})); }   // and what it can become
     for (const r of this.floor.rooms) { for (const e of r.enemies) ids.push(e.id); if (r.offer) ids.push(...r.offer); }
     forgetSprites(new Set(ids));   // everyone else's pictures go (drawn again if they turn up)
     warmSprites(ids);
@@ -585,7 +598,7 @@ class RunState {
     if (releaseIdx >= 0) this.release(releaseIdx, m);
     else this.party.push(m);
     this.dress();
-    if (m.def.evolve) warmSprites([m.def.evolve.to]);
+    warmSprites(evolveTos(m.def));
     return m;
   }
   // Remove a party member (optionally putting a new one in its slot).

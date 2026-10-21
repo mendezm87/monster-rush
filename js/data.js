@@ -315,6 +315,9 @@ const ROSTER = [
 const EVOLVED = [
   { id: 'smugshogun', name: 'SMUGSHOGUN', types: ['beast', 'arcane'], hp: 1360, atk: 1.32, def: 1.1, spd: 114, size: 'L', item: 'snackPouch',
     moves: ['zoomiesMax', 'shibaRoar', 'supremeSmug', 'blanketNap'], from: 'smugshi' },
+  // A branch (r116): a Smugshi that Restores while the party carries Grandma's Cooking grows into Daimochi instead.
+  { id: 'daimochi', name: 'DAIMOCHI', types: ['beast', 'brawl'], hp: 1620, atk: 1.24, def: 1.28, spd: 96, size: 'L', item: 'snackPouch',
+    moves: ['bodySlam', 'shibaRoar', 'closeCombat', 'snack'], from: 'smugshi', needs: 'grandma' },
   { id: 'infernox', name: 'INFERNOX', types: ['fire', 'earth'], hp: 1400, atk: 1.26, def: 1.15, spd: 90, size: 'L', item: 'emberStone',
     moves: ['blazeRush', 'infernoBeam', 'fireBlast', 'magmaQuake'], from: 'cinderox' },
   { id: 'maelstrisk', name: 'MAELSTRISK', types: ['water', 'arcane'], hp: 1560, atk: 1.16, def: 1.22, spd: 88, size: 'L', item: 'mysticDrop',
@@ -333,7 +336,12 @@ const LEGENDS = [
     moves: ['droneSwarm', 'hydroCannon', 'magnetStorm', 'ironDefense'], from: 'garrishell', recipe: ['metal', 'wind'] },
 ];
 for (const l of LEGENDS) { const base = ROSTER.find(m => m.id === l.from); (base.branches = base.branches || {})[l.id] = l.recipe; }
-for (const e of EVOLVED) ROSTER.find(m => m.id === e.from).evolve = { to: e.id };   // it Restores into this form when its bar fills
+// It Restores into this form when its bar fills; a form that `needs` a relic is a branch, taken instead
+// when the party carries that relic (evolve.alts; see evolveTarget in dungeon.js).
+for (const e of EVOLVED) {
+  const base = ROSTER.find(m => m.id === e.from), ev = base.evolve = base.evolve || {};
+  if (e.needs) (ev.alts = ev.alts || []).push({ to: e.id, relic: e.needs }); else ev.to = e.id;
+}
 const ALL_MONS = () => [...ROSTER, ...EVOLVED, ...LEGENDS];
 const ROSTER_BY_ID = Object.fromEntries(ALL_MONS().map(m => [m.id, m]));
 

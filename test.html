@@ -115,7 +115,7 @@ $('#game').addEventListener('load', async () => {
     const AREA = G('AREA_MONS'), BYID = G('ROSTER_BY_ID'), ALL = G('ALL_MONS()');
     const found = new Set([...G('STARTERS'), ...G('EVOLVED').map(e => e.id)]);
     for (const a of Object.values(AREA)) for (const id of [...a.natives, ...a.bosses]) found.add(id);
-    for (let grew = true; grew;) { grew = false; for (const m of ALL) if (found.has(m.id)) for (const to of [m.evolve && m.evolve.to, ...Object.keys(m.branches || {})]) if (to && !found.has(to)) { found.add(to); grew = true; } }   // what they evolve into (levels and altar branches)
+    for (let grew = true; grew;) { grew = false; for (const m of ALL) if (found.has(m.id)) for (const to of [m.evolve && m.evolve.to, ...((m.evolve && m.evolve.alts) || []).map(a => a.to), ...Object.keys(m.branches || {})]) if (to && !found.has(to)) { found.add(to); grew = true; } }   // what they evolve into (levels and altar branches)
     for (const m of ALL) {
       const say = s => bad.push(`${m.id}: ${s}`);
       if (!G('MONSTER_ART')[m.id] || !G('MONSTER_ART_DIAG')[m.id]) say('art is missing a set of views');
@@ -126,6 +126,7 @@ $('#game').addEventListener('load', async () => {
       if (m.types.some(t => !TYPES[t])) say('unknown type');
       if (!ITEMS[m.item]) say('unknown item ' + m.item);
       if (m.evolve && !BYID[m.evolve.to]) say('bad evolution');
+      for (const a of (m.evolve && m.evolve.alts) || []) if (!BYID[a.to] || !G('RELICS')[a.relic]) say(`bad branch to ${a.to} (relic ${a.relic})`);
       for (const [to, recipe] of Object.entries(m.branches || {})) if (!BYID[to] || recipe.length !== 2 || recipe.some(t => !G('RELIC_TAGS').includes(t))) say(`bad altar branch ${to}`);
       if (!found.has(m.id)) say('never appears in the game (no area, starter or evolution)');
       for (const v of VIEWS5) {   // gear spots: on the picture, and in a sensible order

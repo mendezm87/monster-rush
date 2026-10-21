@@ -158,6 +158,7 @@ function doorSign(room) {
 // 14px icons for relics and shop goods.
 const ICON_ART = {
   tideCharm(g) { g.ellipse(7, 7, 5.5, 5.5, P('#4a90e8', '#2a5ab0', '#a8d8ff')); g.poly([[3, 8], [6, 5], [8, 7], [11, 4], [11, 8], [8, 10], [5, 9]], '#e6f6ff'); },
+  grandma(g) { g.rect(1, 8, 12, 5, '#c8303a'); g.rect(1, 8, 12, 1, '#e86060'); g.rect(6, 6, 2, 3, '#c8303a'); g.ellipse(4.5, 6, 2.2, 1.2, '#c8303a'); g.ellipse(9.5, 6, 2.2, 1.2, '#c8303a'); g.poly([[7, 0.5], [11, 6], [3, 6]], P('#fbf8f0', '#d8d0c0', '#ffffff')); g.rect(5, 4, 4, 2, '#24402e'); },   // a rice ball on a bento wrapped in a red cloth
   rainBell(g) { g.poly([[5, 3], [9, 3], [11, 10], [3, 10]], P('#e0b040', '#a07a20', '#fff0a0')); g.rect(2, 10, 10, 2, '#a07a20'); g.rect(6, 12, 2, 2, '#6a4a10'); g.px(4, 1, '#7ad0f0').px(10, 1, '#7ad0f0').px(12, 4, '#7ad0f0'); },
   stormCoil(g) { for (let y = 3; y < 13; y += 2) { g.rect(4, y, 6, 1, '#d87a3a'); g.rect(4, y + 1, 6, 1, '#8a4a1a'); } g.rect(6, 0, 2, 3, '#e8e8f0'); g.px(3, 1, '#7af0ff').px(11, 0, '#7af0ff').px(12, 2, '#d0faff'); },
   leechLens(g) { g.ellipse(6.5, 6.5, 5.5, 5.5, P('#c8d6ff', '#8a9ad0', '#ffffff')); g.ellipse(6.5, 6.5, 3, 3, P('#e8435a', '#a82a40', '#ffb0c0')); g.poly([[10, 10], [13, 13], [12, 14], [9, 11]], '#8a6a4a'); },
