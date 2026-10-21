@@ -77,6 +77,13 @@ function dragonLeg(p, view, x, pal) {
   p.ellipse(x - 0.5, 41, 2.6, 1.2, pal);
   p.px(x - 2, 42, NIGHT.CLAW).px(x, 42, NIGHT.CLAW).px(x + 1, 42, NIGHT.CLAW);
 }
+// The glowing nebula on its chest: a broad plate, wide at the chest and rounding off above the hips,
+// with plate lines and a teal glow in the middle (r100: a tall narrow stripe down to the hips read badly).
+function nebulaPlate(p, cx, top = 20) {
+  p.poly([[cx - 4, top], [cx + 4, top], [cx + 3.5, top + 5], [cx + 2, top + 8], [cx, top + 9], [cx - 2, top + 8], [cx - 3.5, top + 5]], NIGHT.Neb, { edge: true });
+  for (const [dy, w] of [[2, 7], [4, 7], [6, 5]]) p.rect(Math.round(cx - w / 2), top + dy, w, 1, NIGHT.Neb.s);
+  p.px(Math.round(cx), top + 3, NIGHT.TEAL).px(Math.round(cx) - 1, top + 5, NIGHT.TEAL).px(Math.round(cx), top + 6, '#ffffff');
+}
 // The glowing nebula along its throat and belly: pink-violet ellipses with plate lines and teal light.
 function nebulaStripe(p, ells, rows = []) {
   for (const [x, y, rx, ry] of ells) p.ellipse(x, y, rx, ry, NIGHT.Neb);
@@ -157,7 +164,7 @@ Object.assign(MONSTER_ART, {
       dragonLeg(legB, 'side', 21, SkD);
       b.ellipse(18, 32, 5, 4.5, Sk, { edge: true });                                                   // hips
       b.ellipse(23, 25, 5.5, 6.5, Sk, { edge: true });                                                 // chest, leaning forward
-      nebulaStripe(b, [[26.5, 27, 2, 7]], [[25, 24], [25, 27], [25, 30]]);
+      nebulaStripe(b, [[26.5, 24.5, 2, 5]], [[25, 23], [25, 25]]);
       dragonLeg(legA, 'side', 17, Sk);
       armA.poly([[25, 22], [28, 25], [29, 29], [27, 30], [26, 26], [23, 24]], Sk, { edge: true }); armA.px(28, 30, NIGHT.CLAW).px(29, 30, NIGHT.CLAW);
       dragonWing(b, { sh: [21, 18], wr: [15, 1], tips: [[3, 3], [2, 10], [6, 16]], scal: [[6, 7], [6, 13], [11, 17]], back: [18, 21] }, Wing,
@@ -198,7 +205,8 @@ Object.assign(MONSTER_ART, {
     b.ellipse(22, 31, 5.5, 4.5, Sk, { edge: true });                                                   // hips
     b.ellipse(22, 24, 6.5, 6.5, Sk, { edge: true });                                                   // chest
     b.ellipse(22, 16, 3.2, 4.5, Sk);                                                                   // neck
-    nebulaStripe(b, [[22, 17, 1.6, 3.5], [22, 26, 2.6, 9]], [[21, 21], [21, 24], [21, 27], [21, 30], [21, 33]]);   // the nebula, throat to belly
+    b.ellipse(22, 16.5, 1.4, 3, NIGHT.Neb);                                                            // the glow along its throat
+    nebulaPlate(b, 22);                                                                                // and its chest
     b.polyM([[19, 15], [16, 14], [19, 17]], Horn); b.polyM([[18, 19], [15, 19], [18, 21]], Horn);        // spines down the sides of its neck
     dragonLeg(legA, 'front', 18, Sk); dragonLeg(legB, 'front', 26, Sk);
     armA.poly([[17, 20], [19, 22], [17, 27], [16, 30], [14, 29], [15, 25]], Sk, { edge: true }); armA.px(14, 30, NIGHT.CLAW).px(16, 30, NIGHT.CLAW);
@@ -273,7 +281,8 @@ Object.assign(MONSTER_ART_DIAG, {
     b.ellipse(22, 31, 5.5, 4.5, Sk, { edge: true });
     b.ellipse(23, 24, 6.5, 6.5, Sk, { edge: true });
     b.ellipse(24, 17, 3.2, 4, Sk);
-    nebulaStripe(b, [[25, 17, 1.5, 3.5], [24.5, 26, 2.6, 9]], [[23, 21], [23, 24], [23, 27], [23, 30], [23, 33]]);
+    b.ellipse(25, 16.5, 1.3, 3, NIGHT.Neb);
+    nebulaPlate(b, 24.5);
     b.poly([[21, 15], [18, 14], [21, 17]], Horn); b.poly([[20, 19], [17, 19], [20, 21]], Horn);
     dragonLeg(legA, 'front', 27, Sk);
     armB.poly([[18, 21], [17, 26], [16, 29], [18, 28], [19, 23]], Sk, { edge: true });

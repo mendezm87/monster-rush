@@ -239,6 +239,25 @@ const RELIC_AURA = {
   },
 };
 
+// Auras some Coreatures always have, drawn the same way as relic auras (RELIC_AURA below).
+// Nyxdrake (id drakorn): Arcane light rising off the nebula on its chest.
+const SPECIES_AURA = { drakorn: 'nebula' };
+RELIC_AURA.nebula = (ctx, b, m, X, Y) => {
+  const cy = Y - m.h * 0.42, cols = ['#f2aaff', '#5af0e8', '#d062e0', '#a88ae8'];
+  // a pulse of Arcane light rippling out from its chest every 1.4 s
+  const pulse = (b.time / 1.4) % 1;
+  if (pulse < 0.6) {
+    const r = 3 + pulse * 22, n = 12;
+    for (let i = 0; i < n; i++) { const a = i * TAU / n + b.time * 0.5; auraPx(ctx, X + Math.cos(a) * r, cy + Math.sin(a) * r * 0.7, i % 2 ? cols[0] : cols[1]); }
+  }
+  // motes of pink, violet and teal light drifting up and out from it, some bigger
+  for (let i = 0; i < 12; i++) {
+    const ph = (b.time * 0.6 + i / 12) % 1, side = Math.sin(i * 2.3 + Math.floor(b.time * 0.6 + i / 12) * 1.7);
+    auraPx(ctx, X + side * (3 + ph * m.r * 1.1), cy - ph * 22, ph < 0.15 ? '#ffffff' : cols[i % 4], i % 3 === 0 && ph < 0.6 ? 2 : 1);
+  }
+  if (Math.sin(b.time * 3) > 0.5) auraPx(ctx, X + Math.sin(b.time * 11) * 3, cy, '#ffffff', 2);   // a twinkle at its heart
+};
+
 // Lazily tinted sprite variants (freeze / burn / paralysis / buff glow).
 const _tint = {};
 function tinted(id, color, view = 'front') {
@@ -675,6 +694,7 @@ mixInto(Battle, class {
       for (const id of [...this.run.relics, ...(m.fused || [])]) if (RELICS[id] && RELICS[id].aura) kinds.add(RELICS[id].aura);
       for (const k of kinds) RELIC_AURA[k](ctx, this, m, X, Math.round(Y + sink - hover), moving);
     }
+    if (SPECIES_AURA[m.id] && !m.fainted && !m.restoreHide) RELIC_AURA[SPECIES_AURA[m.id]](ctx, this, m, X, Math.round(Y + sink - hover), moving);
 
     if (m.status === 'frz' && !m.fainted) {
       ctx.strokeStyle = 'rgba(220,250,255,0.9)'; ctx.fillStyle = 'rgba(160,230,255,0.25)';
