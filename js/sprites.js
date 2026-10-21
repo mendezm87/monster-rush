@@ -161,7 +161,8 @@ function rigEye(h, R, x, y, normal, w = 2) {
 // float). drawMon lifts them off their shadow and swaps in the flap frame (SPRITES[id].flap).
 // Monsters whose art is rigged (draws its parts through part() and reads rig()), and their body type (RIG_FRAMES).
 const RIGGED = {};   // filled in by each monster's file in js/monsters/
-const FLYERS = { galewing: { hover: 8, flap: 4 }, pixibelle: { hover: 7, flap: 6 }, drakorn: { hover: 6, flap: 3 }, wispurr: { hover: 6, flap: 0 } };
+const FLYERS = { galewing: { hover: 8, flap: 4 }, pixibelle: { hover: 7, flap: 6 }, drakorn: { hover: 6, flap: 3 }, wispurr: { hover: 6, flap: 0 },
+  gyroculus: { hover: 5, flap: 0 }, mindra: { hover: 6, flap: 0 }, stonicface: { hover: 6, flap: 0 } };   // the mind line floats (r97)
 
 const MONSTER_ART = {};        // each monster's front / side / back art, from its file in js/monsters/
 
