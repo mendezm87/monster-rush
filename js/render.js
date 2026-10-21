@@ -241,7 +241,28 @@ const RELIC_AURA = {
 
 // Auras some Coreatures always have, drawn the same way as relic auras (RELIC_AURA below).
 // Nyxdrake (id drakorn): Arcane light rising off the nebula on its chest.
-const SPECIES_AURA = { drakorn: 'nebula', railwarden: 'coils' };
+const SPECIES_AURA = { drakorn: 'nebula', railwarden: 'coils', magmabastion: 'volcano', citadrone: 'citadel' };
+// Magma Bastion: lava sparks thrown up from its crater and falling back, steam rising off its slopes.
+RELIC_AURA.volcano = (ctx, b, m, X, Y) => {
+  const top = Y - m.h * 0.88;
+  for (let i = 0; i < 6; i++) {   // sparks: up in an arc and down again
+    const ph = (b.time * 0.8 + i / 6) % 1, dir = Math.sin(i * 2.1 + Math.floor(b.time * 0.8 + i / 6) * 1.3);
+    auraPx(ctx, X + dir * ph * 10, top - ph * 16 + ph * ph * 22, ph < 0.3 ? '#ffd34a' : ph < 0.7 ? '#ff7a1c' : '#c8401a', i % 3 ? 1 : 2);
+  }
+  for (let i = 0; i < 6; i++) {   // steam drifting up off its slopes
+    const ph = (b.time * 0.4 + i / 6) % 1, x = X + (i % 2 ? 1 : -1) * m.h * (0.3 + (i % 3) * 0.04), y = Y - m.h * 0.45 - ph * 14;
+    auraPx(ctx, x + Math.sin(b.time * 2 + i) * 2, y, ph < 0.6 ? '#eef0f4' : '#c4c8d4', ph < 0.4 ? 2 : 1);
+  }
+};
+// Citadrone: three little drone turrets circling it, and its engines flickering underneath.
+RELIC_AURA.citadel = (ctx, b, m, X, Y) => {
+  for (let i = 0; i < 3; i++) {
+    const a = b.time * 1.3 + i * TAU / 3, x = X + Math.cos(a) * m.h * 0.55, y = Y - m.h * 0.75 + Math.sin(a) * 5;
+    auraPx(ctx, x - SPR_SCALE, y, '#5a606c'); auraPx(ctx, x, y, '#a8b0bc'); auraPx(ctx, x + SPR_SCALE, y, '#5a606c');   // a drone
+    auraPx(ctx, x, y + SPR_SCALE, Math.sin(b.time * 9 + i) > 0 ? '#4af0d8' : '#c0fff4');
+  }
+  for (let i = 0; i < 4; i++) { const ph = (b.time * 3 + i / 4) % 1; auraPx(ctx, X + (i - 1.5) * m.h * 0.18, Y - 2 + ph * 6, ph < 0.5 ? '#c0fff4' : '#4af0d8'); }   // engine flicker
+};
 // Railwarden: lightning crackling between the tips of its three coil spires, jumping every few frames.
 RELIC_AURA.coils = (ctx, b, m, X, Y) => {
   const step = Math.floor(b.time / 0.08), seed = (step * 9301 + (m.uid || (m.uid = _uid++)) * 49297) % 233280;

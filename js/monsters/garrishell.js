@@ -396,6 +396,7 @@ Object.assign(RIGGED, { shellmet: 'quad', bulwarden: 'biped', garrishell: 'biped
 // a thick railgun lance with a glowing channel, a heater shield, lunging clawed legs, a knight's helm.
 const RAIL = {
   SK: P('#5a8a3a', '#3a6226', '#7aa856'), SKD: P('#4a7430', '#30521e', '#5e8a44'), SHELL: P('#6a6a3e', '#48482a', '#8a8a56'),
+  PL: P('#b8c47a', '#8a9a52', '#d8e0a0'),   // the pale plastron on its chest
   RIM: P('#d8a838', '#a07220', '#f0cc68'), E: '#7af0ff', E2: '#d0faff', GOLD: '#d8a838', CLAW: '#c8c0a0',
   CU: '#e08a44', CUD: '#9a5220', CAP: '#e8e8f0',
 };
@@ -444,74 +445,128 @@ const railKit = {
     railLine(p, x0 + 4, y0 + 10, x0 + 9, y0 + 4, M.l); railLine(p, x0 + 5, y0 + 11, x0 + 10, y0 + 5, M.l);
   },
 };
+// Magma Bastion's and Citadrone's parts (r107 redraws, the owner: "show me what you can do").
+const MAGMA = {
+  SK: P('#3a5a2e', '#24401c', '#527a3e'), ROCK: P('#4a3e38', '#2e2622', '#6a5a50'), MOSS: P('#3e5a2a', '#28401a', '#567a3a'),
+  BASALT: P('#2e2a2a', '#1a1818', '#46403e'), STONE: P('#8a7c6a', '#5e5446', '#aa9c88'),
+  L: '#ff7a1c', HOT: '#ffd34a', DEEP: '#c8401a', WATER: '#7ad0f0', WATER2: '#d8f4ff', CLAW: '#c8c0a0', EYE: '#fff4d0', EYE2: '#ffb040',
+};
+const magmaKit = {
+  // the shell: a whole volcanic mountain, mossy green round its foot, lava rivers running down from
+  // the crater, a ruined castle on one slope (castleX, or none), seawater pouring off its rim
+  mountain(b, cx, castleX, flip = 1) {
+    const { ROCK, MOSS, STONE, L, HOT, DEEP, WATER, WATER2 } = MAGMA;
+    const pts = [[-20, 30], [-18, 24], [-14, 19], [-11, 15], [-7, 8], [-4, 5], [4, 5], [7, 8], [11, 14], [15, 19], [18, 24], [20, 30]];
+    b.poly(pts.map(([x, y]) => [cx + x, y]), ROCK, { edge: true });
+    b.poly([[cx - 20, 30], [cx - 18, 25], [cx - 12, 24], [cx - 5, 26], [cx + 3, 25], [cx + 10, 26], [cx + 17, 24], [cx + 20, 30]], MOSS);   // mossy green round its foot
+    for (const [x, y] of [[-15, 27], [-10, 28], [-4, 28], [2, 28], [8, 28], [14, 27]]) b.px(cx + x, y, MOSS.s).px(cx + x + 1, y, MOSS.s);   // scales
+    b.rect(cx - 4, 5, 8, 2, DEEP); b.rect(cx - 3, 5, 6, 1, L); b.px(cx - 1, 5, HOT).px(cx + 1, 5, HOT);    // the crater, glowing
+    const river = (x0, x1, seed) => { for (let y = 7; y < 26; y++) { const f = (y - 7) / 19, x = Math.round(x0 + (x1 - x0) * f + Math.sin(y * 0.9 + seed) * 0.8); b.px(x, y, (y + seed) % 4 ? L : HOT); if (y % 5 === 0) b.px(x + 1, y, DEEP); } };
+    river(cx - 2 * flip, cx - 9 * flip, 0); river(cx + 2 * flip, cx + 11 * flip, 2);
+    if (castleX !== null) {   // a ruined castle on its slope: a broken tower and a stretch of wall
+      const x = castleX;
+      b.rect(x, 13, 4, 8, STONE.b); b.rect(x, 13, 1, 8, STONE.l); b.px(x, 12, STONE.b).px(x + 2, 12, STONE.b); b.px(x + 1, 15, OUTLINE).px(x + 1, 16, OUTLINE);
+      const wx = flip > 0 ? x + 4 : x - 6;
+      b.rect(wx, 17, 6, 4, STONE.b); b.px(wx, 16, STONE.b).px(wx + 2, 16, STONE.b).px(wx + 4, 16, STONE.b);
+    }
+    for (const s of [-1, 1]) { const x = cx + s * 19; b.px(x, 27, WATER).px(x, 28, WATER2).px(x, 29, WATER).px(x - s, 30, WATER); }   // seawater pouring off
+  },
+  // a pillar leg: green scales on top, black basalt below cracked with lava, clawed
+  pillar(p, x, big) {
+    const { SK, BASALT, L, CLAW } = MAGMA, w = big ? 6 : 5;
+    p.ellipse(x, 32, w, 4, SK, { edge: true });
+    p.poly([[x - w + 0.5, 32], [x + w - 0.5, 32], [x + w, 41], [x - w, 41]], BASALT, { edge: true });
+    p.px(x - 2, 34, L).px(x - 1, 35, L).px(x - 1, 36, MAGMA.HOT).px(x + 2, 37, L).px(x + 1, 38, L);
+    p.rect(x - w, 41, w * 2, 1, BASALT.s); p.px(x - w + 1, 42, CLAW).px(x - 1, 42, CLAW).px(x + w - 2, 42, CLAW);
+  },
+  // the small armoured head, low at the front, one white-hot eye behind the visor
+  head(h, Q, cx, cy) {
+    const { M, BORE } = LEGEND_PAL, { SK, EYE, EYE2, L } = MAGMA;
+    h.ellipse(cx, cy + 1, 6, 4.5, SK, { edge: true });
+    h.poly([[cx - 6, cy], [cx - 4, cy - 4], [cx + 4, cy - 4], [cx + 6, cy], [cx + 6, cy + 2], [cx - 6, cy + 2]], M, { edge: true });
+    h.rect(cx - 4, cy - 2, 8, 2, BORE);
+    rigEye(h, Q, cx, cy - 2, () => { h.rect(cx, cy - 2, 3, 2, EYE); h.px(cx + 2, cy - 1, EYE2); }, 3);
+    h.ellipse(cx, cy + 4, 3.5, 2, SK, { edge: true }); h.px(cx - 2, cy + 3, L).px(cx + 2, cy + 4, L);
+  },
+};
+const CITA = {
+  M: P('#7a8290', '#4e5462', '#a8b0bc'), MD: P('#545a68', '#363a46', '#6e7484'), SK: P('#5a8a3a', '#3a6226', '#7aa856'),
+  T: '#4af0d8', T2: '#c0fff4', JET: P('#4af0d8', '#20a090', '#c0fff4'), HATCH: '#2a2e38', ROOF: P('#3a7a74', '#22504c', '#5aa8a0'),
+};
+const citaKit = {
+  // the armoured flying disc: its hull, a rim band with glowing panel lines, the dark underside
+  disc(b, cx) {
+    const { M, MD, T } = CITA;
+    b.ellipse(cx, 29, 19, 4.5, MD, { edge: true });                                               // underside
+    b.ellipse(cx, 26, 20, 6, M, { edge: true });                                                  // the hull
+    b.rect(cx - 19, 27, 38, 1, MD.s);                                                             // its rim band
+    for (const x of [-15, -9, -3, 3, 9, 15]) b.px(cx + x, 27, T);                                 // glowing panel lights
+    for (const x of [-12, 0, 12]) b.rect(cx + x - 2, 24, 4, 1, T);                                // panel lines
+  },
+  // the citadel on top: a ring of battlements with a round tower at each end
+  walls(b, cx, w = 15) {
+    const { M, MD, ROOF, T } = CITA;
+    b.rect(cx - w, 18, w * 2, 4, MD.b); b.rect(cx - w, 18, w * 2, 1, M.l);
+    for (let x = cx - w; x < cx + w; x += 3) b.rect(x, 16, 2, 2, MD.b);                            // crenellations
+    for (const s of [-1, 1]) {
+      const x = cx + s * (w - 1);
+      b.poly([[x - 2.5, 21], [x + 2.5, 21], [x + 2.5, 12], [x - 2.5, 12]], M, { edge: true });    // tower
+      b.poly([[x - 3.5, 12], [x + 3.5, 12], [x, 7]], ROOF, { edge: true });                       // its teal-lit roof
+      b.px(x, 15, T).px(x, 16, T);                                                                 // a lit window
+    }
+  },
+  // a green scaly arm out of a hatch under its rim, holding a stubby cannon pointing down at the enemy
+  arm(p, x, dir) {
+    const { SK, M, HATCH, T } = CITA;
+    p.rect(x - 2, 28, 4, 3, HATCH);
+    p.ellipse(x, 31, 2.5, 2.5, SK, { edge: true });
+    p.poly([[x - 2, 32], [x + 2, 32], [x + 2 + dir, 37], [x - 2 + dir, 37]], M, { edge: true });
+    p.rect(x - 1 + dir, 37, 2, 1, T);
+  },
+
+  // glowing teal engines beneath (on the tail part so they sway)
+  jets(t, xs) {
+    const { JET, T2 } = CITA;
+    for (const x of xs) { t.poly([[x - 2, 31], [x + 2, 31], [x + 1, 39], [x - 1, 39]], JET); t.px(x, 33, T2).px(x, 34, T2); }
+  },
+};
 const LEGEND_PAL = {
   M: P('#8a909c', '#5a606c', '#b4bac4'), D: P('#4a4e58', '#30333c', '#64687a'), BORE: '#1c2430',
   STEAM: P('#eef0f4', '#c4c8d4', '#ffffff'), LAVA: P('#ff7a1c', '#c8401a', '#ffd34a'),
 };
 Object.assign(MONSTER_ART, {
-  // Magma Bastion (fire): a walking volcano island. Its shell is a whole volcano with a ruined
-  // castle on its slopes, erupting at the top; seawater pours off it and hisses into steam
-  // geysers (water/fire); four huge pillar legs cracked with magma; a small helm low at the front.
+  // Magma Bastion (fire relics; redrawn in r107): a walking volcano island. Its shell is a whole
+  // volcanic mountain, mossy green round its foot, lava rivers running down from the glowing
+  // crater, a ruined castle on one slope, seawater pouring off its rim (water/fire); four pillar
+  // legs of black basalt cracked with lava; a small armoured head low at the front with one
+  // white-hot eye. In the game it erupts sparks and steams (SPECIES_AURA volcano).
   magmabastion(g, v = 'front') { // 44x44
-    const { M, BORE, STEAM, LAVA } = LEGEND_PAL;
-    const SK = P('#3a5a2e', '#24401c', '#527a3e'), ROCK = P('#4a3e38', '#2e2622', '#6a5a50'), SHELL = P('#3e4a2a', '#28321a', '#566440');
-    const L = '#ff7a1c', HOT = '#ffd34a', WATER = '#7ad0f0', CLAW = '#c8c0a0', EYE = '#fff4d0', EYE2 = '#ffb040', STONE = '#7a6a5a';
+    const { M, BORE } = LEGEND_PAL;
+    const { SK, EYE, EYE2, L } = MAGMA;
     const { Q, b, h, t, legA, legB } = rigParts(g, v);
-    const cone = (x0, peakL, peakR, x1, base = 24) => {   // the volcano, with lava running down from its crater
-      b.poly([[x0, base], [peakL, 7], [peakR, 7], [x1, base]], ROCK, { edge: true });
-      b.rect(peakL, 6, peakR - peakL, 2, '#c8401a'); b.rect(peakL + 1, 6, peakR - peakL - 2, 1, L);
-      for (let y = 8; y < base - 1; y++) { b.px(peakL + 2 + ((y - 8) >> 2), y, y % 3 ? L : HOT); b.px(peakR - 2 + ((y - 8) >> 1), y, L); }
-    };
-    const castle = x => { b.rect(x, 15, 5, 4, STONE); b.px(x, 14, STONE).px(x + 2, 14, STONE).px(x + 4, 14, STONE); b.px(x + 2, 16, OUTLINE).px(x + 2, 17, OUTLINE); };
-    const shell = (cx, rx) => {
-      b.ellipse(cx, 25, rx, 7.5, SHELL, { edge: true });
-      for (const [x, y] of [[-12, 24], [-11, 25], [-10, 24], [-9, 26], [7, 23], [8, 24], [9, 25], [11, 24], [-3, 28], [-2, 29], [3, 28]]) b.px(cx + x, y, L);
-      b.px(cx - rx + 1, 27, WATER).px(cx - rx + 1, 28, WATER).px(cx + rx - 2, 27, WATER).px(cx + rx - 2, 28, WATER);   // seawater pouring off
-    };
-    const plume = (x) => {   // the eruption and the steam geysers (on the tail part, so they sway)
-      t.poly([[x - 3, 6], [x, 0], [x + 3, 6]], LAVA, { edge: true }); t.px(x, 2, HOT);
-    };
-    const geyser = (x, dir) => { for (const [dx, y, r] of [[0, 15, 2], [-1.5, 11, 2.8], [-2.5, 7, 3.4]]) t.ellipse(x + dir * dx, y, r, r * 0.85, STEAM, { edge: true }); t.px(x, 18, WATER).px(x + dir, 17, WATER); };   // a puffy steam geyser, seawater at its foot
-    const pillar = (p, x, big) => {
-      p.ellipse(x, 35, big ? 6 : 5, big ? 6.5 : 5.5, SK, { edge: true });
-      p.ellipse(x, 40, big ? 6.5 : 5.5, 2.5, SK, { edge: true });
-      p.px(x - 2, 33, L).px(x - 1, 34, L).px(x + 1, 36, L).px(x, 37, L).px(x + 2, 33, L);
-      p.px(x - 4, 42, CLAW).px(x - 1, 42, CLAW).px(x + 2, 42, CLAW);
-    };
+    const K = magmaKit;
     if (v === 'side') {
-      plume(17); geyser(5, 1);
-      t.poly([[5, 30], [0, 33], [6, 33]], SK, { edge: true });                                  // stubby tail
-      pillar(legA, 10, false); pillar(legB, 28, false);                                         // far legs
-      cone(7, 14, 21, 30); castle(22);
-      shell(19, 17);
-      pillar(legB, 13, true); pillar(legA, 31, true);                                          // near legs
-      h.ellipse(33, 32, 4, 3, SK);                                                              // neck
-      h.ellipse(37, 32, 5, 4.5, SK, { edge: true });
-      h.poly([[32, 30], [34, 27], [39, 27], [42, 30], [42, 33], [33, 33]], M, { edge: true });   // small helm
-      h.rect(37, 29, 5, 2, BORE);
-      rigEye(h, Q, 39, 29, () => { h.rect(39, 29, 2, 2, EYE); h.px(40, 30, EYE2); }, 2);
-      h.px(35, 35, L).px(36, 36, L);
+      t.poly([[5, 30], [0, 33], [6, 33]], SK, { edge: true });                                   // stubby tail
+      K.pillar(legA, 10, false); K.pillar(legB, 27, false);                                      // far legs
+      K.mountain(b, 19, 8, 1);                                                                   // the volcano, castle on its back slope
+      K.pillar(legB, 13, true); K.pillar(legA, 31, true);                                        // near legs
+      h.ellipse(35, 31, 4, 3, SK);                                                               // neck
+      h.ellipse(38, 32, 5, 4, SK, { edge: true });
+      h.poly([[33, 30], [35, 27], [40, 27], [43, 30], [43, 33], [34, 33]], M, { edge: true });   // small helm
+      h.rect(38, 29, 5, 2, BORE);
+      rigEye(h, Q, 40, 29, () => { h.rect(40, 29, 2, 2, EYE); h.px(41, 30, EYE2); }, 2);
+      h.px(36, 35, L).px(37, 36, L);
       return;
     }
     if (v === 'back') {
-      pillar(legA, 10, true); pillar(legB, 34, true);
       t.poly([[20, 31], [24, 31], [22, 38]], SK, { edge: true });                               // tail
-      plume(22); geyser(7, 1); geyser(37, -1);
-      cone(11, 18, 26, 33); castle(26);
-      shell(22, 20);
+      K.mountain(b, 22, 29, -1);
+      K.pillar(legA, 9, true); K.pillar(legB, 35, true);
       return;
     }
-    plume(22); geyser(7, 1); geyser(37, -1);
-    cone(11, 18, 26, 33); castle(13);
-    shell(22, 20);
-    pillar(legA, 10, true); pillar(legB, 34, true);
-    h.ellipse(22, 33, 6.5, 5, SK, { edge: true });                                              // head, low at the front
-    h.poly([[16, 30], [18, 26], [26, 26], [28, 30], [28, 33], [16, 33]], M, { edge: true });     // helm
-    h.rect(18, 29, 8, 2, BORE);                                                                 // visor
-    rigEye(h, Q, 22, 29, () => { h.rect(22, 29, 3, 2, EYE); h.px(24, 30, EYE2); }, 3);           // one white-hot eye
-    h.px(19, 32, BORE).px(21, 32, BORE).px(23, 32, BORE).px(25, 32, BORE);                      // grille
-    h.ellipse(22, 36, 4, 2.2, SK, { edge: true });                                              // snout
-    h.px(20, 35, L).px(25, 36, L);
+    K.mountain(b, 22, 11, 1);                                                                    // the volcano shell
+    K.pillar(legA, 9, true); K.pillar(legB, 35, true);                                           // pillar legs
+    K.head(h, Q, 22, 33);                                                                        // small armoured head
   },
 
   // Railwarden (storm relics; redrawn in r106 from the owner's art): a lean, muscular turtle lancer
@@ -539,7 +594,8 @@ Object.assign(MONSTER_ART, {
       armB.poly([[16, 15], [20, 15], [20, 32], [16, 32]], M, { edge: true }); armB.rect(19, 15, 1, 17, RAIL.GOLD);   // the shield, edge on
       b.ellipse(19, 28, 5, 4, SK, { edge: true });                                                  // hips
       b.poly([[14, 13], [25, 13], [26, 22], [23, 28], [16, 28], [14, 21]], SK, { edge: true });     // lean, muscled body
-      b.rect(23, 16, 2, 1, SK.s).rect(23, 20, 2, 1, SK.s).rect(22, 24, 2, 1, SK.s);
+      b.poly([[22, 14], [26, 14], [26, 22], [23, 27], [21, 24]], RAIL.PL);                          // pale plastron
+      b.rect(22, 18, 4, 1, RAIL.PL.s).rect(22, 22, 3, 1, RAIL.PL.s);
       b.ellipse(14, 17, 3, 6, SHELL, { edge: true });                                               // shell rim under the pack
       K.leg(legA, 21, 27);                                                                          // front leg, lunging
       h.poly([[19, 7], [22, 4], [27, 5], [30, 8], [30, 15], [20, 15]], M, { edge: true });          // helm, side-on
@@ -565,13 +621,13 @@ Object.assign(MONSTER_ART, {
     }
     K.pack(b, 12, 32, 9, 21);                                                                       // capacitor pack, behind
     K.coil(b, 13, 2, 9); K.coil(b, 22, 0, 9); K.coil(b, 31, 2, 9);                                 // three tall coil spires
-    t.poly([[24, 29], [30, 34], [28, 36], [23, 32]], SK, { edge: true });                            // tail
+    t.poly([[19, 29], [22, 31], [11, 38], [7, 37]], SK, { edge: true }); t.rect(12, 34, 3, 2, D.b);   // tail, curling out behind its leg, iron cuff
     b.ellipse(22, 17, 11, 7, SHELL, { edge: true });                                                // shell rim behind its shoulders
     K.leg(legA, 17, 12); K.leg(legB, 27, 32);                                                       // a wide, lunging stance
     b.ellipse(22, 28, 6, 4, SK, { edge: true });                                                    // hips
     b.poly([[14, 14], [30, 14], [29, 22], [26, 28], [18, 28], [15, 22]], SK, { edge: true });       // muscled chest
-    b.rect(17, 16, 4, 1, SK.l).rect(23, 16, 4, 1, SK.l).rect(17, 18, 4, 1, SK.s).rect(23, 18, 4, 1, SK.s);   // pecs
-    b.rect(21, 20, 1, 7, SK.s).rect(19, 23, 5, 1, SK.s).rect(19, 26, 5, 1, SK.s);                  // abs
+    b.poly([[17, 15], [27, 15], [26.5, 23], [22, 28], [17.5, 23]], RAIL.PL, { edge: true });        // pale plastron
+    b.rect(22, 15, 1, 12, RAIL.PL.s).rect(18, 19, 9, 1, RAIL.PL.s).rect(19, 23, 7, 1, RAIL.PL.s);   // its scutes
     b.rect(20, 12, 4, 3, SK);                                                                       // neck
     armB.ellipse(31, 16, 3, 3, SK, { edge: true });                                                 // shield arm
     K.shield(armB, 27, 15);
@@ -580,113 +636,62 @@ Object.assign(MONSTER_ART, {
     helmFront(22);
   },
 
-  // Citadrone (iron): a flying citadel. The shell is a huge armoured disc with teal panel lines
-  // and a cockpit dome, hover engines underneath and no legs; the head and cannon arms poke out
-  // of hatches; small drone turrets fly alongside it.
+  // Citadrone (iron relics; redrawn in r107): a flying citadel. An armoured disc with glowing teal
+  // panel lines, a ring of battlements on top with a round tower at each end, its head in a
+  // cockpit-like dome helm with one teal eye behind the visor, green scaly arms out of side hatches
+  // holding cannons, and teal engines beneath. In the game drones circle it and its engines
+  // flicker (SPECIES_AURA citadel).
   citadrone(g, v = 'front') { // 44x44
-    const { D, BORE } = LEGEND_PAL;
-    const SK = P('#5a8a3a', '#3a6226', '#7aa856'), M = P('#7a8290', '#4e5462', '#a8b0bc'), HM = P('#8a909c', '#5a606c', '#b4bac4');
-    const T = '#4af0d8', T2 = '#c0fff4', JET = P('#4af0d8', '#20a090', '#c0fff4'), HATCH = '#2a2e38';
-    const { Q, b, h, t, earA, earB, armA, armB } = rigParts(g, v);
-    const drone = (p, x, y) => { p.ellipse(x, y, 3.5, 1.5, M, { edge: true }); p.ellipse(x, y - 1, 1.6, 1, P(T, '#20a090', T2)); p.px(x, y + 2, T); };
-    const jets = xs => { for (const x of xs) { t.poly([[x - 2, 30], [x + 2, 30], [x + 1, 39], [x - 1, 39]], JET); t.px(x, 32, T2); } };
-    const cannon = (p, x0, x1) => { p.poly([[x0, 24], [x1, 24], [x1, 29], [x0, 29]], D, { edge: true }); p.rect(Math.min(x0, x1) + 3, 24, 1, 5, T); };
-    const panels = (cx) => {
-      b.rect(cx - 19, 25, 38, 1, '#3a404c');
-      for (const [x, y] of [[-12, 15], [-11, 16], [-10, 17], [12, 15], [11, 16], [10, 17], [-6, 13], [6, 13], [-15, 22], [15, 22], [-2, 27], [2, 27]]) b.px(cx + x, y, T);
-      b.rect(cx - 8, 20, 4, 1, T); b.rect(cx + 5, 20, 4, 1, T);
+    const { BORE } = LEGEND_PAL;
+    const { M, SK, T, T2 } = CITA;
+    const { Q, b, h, t, armA, armB } = rigParts(g, v);
+    const K = citaKit;
+    const dome = (cx, eye) => {
+      h.ellipse(cx, 21, 4, 2, SK, { edge: true });                                               // its green chin, out of the hatch
+      h.ellipse(cx, 15, 6, 5.5, M, { edge: true });                                              // the dome helm
+      h.rect(cx - 1, 9, 2, 2, M.l);
+      if (eye) {
+        h.rect(cx - 5, 14, 10, 2, BORE);                                                         // visor slit
+        rigEye(h, Q, cx + eye, 14, () => { h.rect(cx + eye, 14, 2, 2, T); h.px(cx + eye, 14, T2); }, 2);   // one teal eye
+      } else { h.rect(cx - 4, 15, 8, 1, M.s); h.px(cx - 3, 13, T).px(cx + 3, 13, T); }
     };
     if (v === 'side') {
-      drone(earA, 6, 5); drone(earB, 38, 3);
-      jets([14, 26]);
-      b.ellipse(22, 24, 20, 6, M, { edge: true });                                              // the disc, from the side
-      b.ellipse(19, 18, 13, 7, M, { edge: true });                                              // armoured dome
-      b.ellipse(20, 11, 3.5, 2, JET, { edge: true });                                           // cockpit
-      b.rect(3, 25, 38, 1, '#3a404c'); b.px(12, 15, T).px(13, 16, T).px(25, 14, T).px(26, 15, T).px(9, 22, T).px(30, 22, T);
-      b.ellipse(35, 22, 4, 4, HATCH);                                                           // front hatch
-      h.ellipse(36, 23, 3.5, 3, SK, { edge: true });
-      h.poly([[33, 21], [35, 18], [39, 18], [41, 21], [41, 23], [34, 23]], HM, { edge: true });
-      h.rect(37, 20, 4, 2, BORE);
-      rigEye(h, Q, 38, 20, () => { h.rect(38, 20, 2, 2, T); h.px(38, 20, T2); }, 2);
-      armA.ellipse(31, 27, 2.5, 2, SK, { edge: true });
-      cannon(armA, 31, 43);
+      K.jets(t, [16, 26]);
+      K.disc(b, 22);
+      K.walls(b, 20, 13);
+      dome(28, 3);
+      K.arm(armA, 33, 1);
       return;
     }
     if (v === 'back') {
-      drone(earA, 5, 6); drone(earB, 39, 6);
-      jets([14, 22, 30]);
-      cannon(armA, 1, 9); cannon(armB, 35, 43);
-      b.ellipse(22, 24, 21, 7, M, { edge: true });
-      b.ellipse(22, 18, 14, 8, M, { edge: true });
-      b.ellipse(22, 11, 4, 2.5, JET, { edge: true });
-      panels(22);
-      b.ellipse(15, 26, 3, 1.6, JET); b.ellipse(29, 26, 3, 1.6, JET);                           // rear thrusters
+      K.jets(t, [14, 22, 30]);
+      K.arm(armA, 8, -1); K.arm(armB, 36, 1);
+      K.disc(b, 22);
+      dome(22, 0);
+      K.walls(b, 22);
       return;
     }
-    drone(earA, 5, 6); drone(earB, 39, 6);
-    jets([14, 22, 30]);
-    b.ellipse(22, 24, 21, 7, M, { edge: true });                                                // the citadel disc
-    b.ellipse(22, 18, 14, 8, M, { edge: true });                                                // armoured dome
-    b.ellipse(22, 11, 4, 2.5, JET, { edge: true });                                             // cockpit
-    panels(22);
-    b.ellipse(22, 22, 6, 5, HATCH);                                                             // hatch
-    armA.ellipse(9, 25, 3, 2.5, SK, { edge: true }); armB.ellipse(35, 25, 3, 2.5, SK, { edge: true });   // arms, half out
-    cannon(armA, 1, 8); cannon(armB, 36, 43);
-    armA.px(1, 26, BORE).px(1, 27, BORE); armB.px(42, 26, BORE).px(42, 27, BORE);
-    h.ellipse(22, 23, 4, 3.5, SK, { edge: true });                                              // head in the hatch
-    h.poly([[18, 21], [19, 18], [25, 18], [26, 21], [26, 24], [18, 24]], HM, { edge: true });
-    h.rect(19, 20, 6, 2, BORE);
-    rigEye(h, Q, 22, 20, () => { h.rect(22, 20, 2, 2, T); h.px(22, 20, T2); }, 2);               // one teal eye
+    K.jets(t, [14, 22, 30]);
+    K.disc(b, 22);
+    K.walls(b, 22);
+    dome(22, 0.5);
+    K.arm(armA, 8, -1); K.arm(armB, 36, 1);                                                      // arms and cannons out of side hatches
   },
 });
 Object.assign(MONSTER_ART_DIAG, {
   magmabastion(g, v) {
-    const { M, BORE, STEAM, LAVA } = LEGEND_PAL;
-    const SK = P('#3a5a2e', '#24401c', '#527a3e'), ROCK = P('#4a3e38', '#2e2622', '#6a5a50'), SHELL = P('#3e4a2a', '#28321a', '#566440');
-    const L = '#ff7a1c', HOT = '#ffd34a', WATER = '#7ad0f0', CLAW = '#c8c0a0', EYE = '#fff4d0', EYE2 = '#ffb040', STONE = '#7a6a5a';
     const { Q, b, h, t, legA, legB } = rigParts(g, v);
-    const cone = (x0, peakL, peakR, x1, base = 24) => {
-      b.poly([[x0, base], [peakL, 7], [peakR, 7], [x1, base]], ROCK, { edge: true });
-      b.rect(peakL, 6, peakR - peakL, 2, '#c8401a'); b.rect(peakL + 1, 6, peakR - peakL - 2, 1, L);
-      for (let y = 8; y < base - 1; y++) { b.px(peakL + 2 + ((y - 8) >> 2), y, y % 3 ? L : HOT); b.px(peakR - 2 + ((y - 8) >> 1), y, L); }
-    };
-    const castle = x => { b.rect(x, 15, 5, 4, STONE); b.px(x, 14, STONE).px(x + 2, 14, STONE).px(x + 4, 14, STONE); b.px(x + 2, 16, OUTLINE).px(x + 2, 17, OUTLINE); };
-    const shell = (cx, rx) => {
-      b.ellipse(cx, 25, rx, 7.5, SHELL, { edge: true });
-      for (const [x, y] of [[-12, 24], [-11, 25], [-10, 24], [-9, 26], [7, 23], [8, 24], [9, 25], [11, 24], [-3, 28], [-2, 29], [3, 28]]) b.px(cx + x, y, L);
-      b.px(cx - rx + 1, 27, WATER).px(cx - rx + 1, 28, WATER).px(cx + rx - 2, 27, WATER).px(cx + rx - 2, 28, WATER);
-    };
-    const plume = x => { t.poly([[x - 3, 6], [x, 0], [x + 3, 6]], LAVA, { edge: true }); t.px(x, 2, HOT); };
-    const geyser = (x, dir) => { for (const [dx, y, r] of [[0, 15, 2], [-1.5, 11, 2.8], [-2.5, 7, 3.4]]) t.ellipse(x + dir * dx, y, r, r * 0.85, STEAM, { edge: true }); t.px(x, 18, WATER).px(x + dir, 17, WATER); };   // a puffy steam geyser, seawater at its foot
-    const pillar = (p, x, big) => {
-      p.ellipse(x, 35, big ? 6 : 5, big ? 6.5 : 5.5, SK, { edge: true });
-      p.ellipse(x, 40, big ? 6.5 : 5.5, 2.5, SK, { edge: true });
-      p.px(x - 2, 33, L).px(x - 1, 34, L).px(x + 1, 36, L).px(x, 37, L).px(x + 2, 33, L);
-      p.px(x - 4, 42, CLAW).px(x - 1, 42, CLAW).px(x + 2, 42, CLAW);
-    };
+    const K = magmaKit, { SK } = MAGMA;
     if (v === 'bside') {
-      pillar(legB, 10, true); pillar(legA, 33, false);
-      t.poly([[17, 31], [21, 31], [14, 37]], SK, { edge: true });
-      plume(20); geyser(6, 1); geyser(35, -1);
-      h.poly([[34, 27], [37, 25], [41, 26], [43, 29], [42, 32], [35, 32]], M, { edge: true });    // the helm, peeking out past the shell
-      h.rect(41, 28, 2, 2, BORE); h.px(42, 28, EYE);
-      cone(9, 16, 24, 31); castle(24);
-      shell(20, 19);
+      t.poly([[16, 31], [20, 31], [17, 38]], SK, { edge: true });
+      K.mountain(b, 21, 28, -1);
+      K.pillar(legB, 9, true); K.pillar(legA, 34, true);
+      h.ellipse(37, 33, 3, 2.5, SK);                                                              // the edge of its head, just showing
       return;
     }
-    t.poly([[4, 30], [0, 33], [5, 33]], SK, { edge: true });
-    plume(20); geyser(6, 1); geyser(35, -1);
-    cone(8, 15, 23, 31); castle(10);
-    shell(20, 19);
-    pillar(legB, 9, false); pillar(legA, 34, true);
-    h.ellipse(26, 33, 6, 5, SK, { edge: true });
-    h.poly([[20, 30], [22, 26], [30, 26], [32, 30], [32, 33], [20, 33]], M, { edge: true });
-    h.rect(21, 27, 2, 6, M.s);                                                                 // its side
-    h.rect(23, 29, 8, 2, BORE);
-    rigEye(h, Q, 27, 29, () => { h.rect(27, 29, 3, 2, EYE); h.px(29, 30, EYE2); }, 3);
-    h.px(24, 32, BORE).px(26, 32, BORE).px(28, 32, BORE).px(30, 32, BORE);
-    h.ellipse(27, 36, 4, 2.2, SK, { edge: true });
-    h.px(25, 35, L);
+    K.mountain(b, 21, 10, 1);
+    K.pillar(legB, 9, false); K.pillar(legA, 34, true);
+    K.head(h, Q, 27, 33);                                                                        // head, turned its way
   },
   railwarden(g, v) {
     const { M, D, BORE } = LEGEND_PAL;
@@ -714,7 +719,8 @@ Object.assign(MONSTER_ART_DIAG, {
     K.leg(legB, 18, 13, SKD); K.leg(legA, 27, 32);
     b.ellipse(22, 28, 6, 4, SK, { edge: true });
     b.poly([[15, 14], [30, 14], [29, 22], [26, 28], [19, 28], [16, 22]], SK, { edge: true });
-    b.rect(19, 18, 3, 1, SK.s).rect(24, 18, 4, 1, SK.s).rect(23, 20, 1, 7, SK.s).rect(21, 23, 5, 1, SK.s);
+    b.poly([[19, 15], [28, 15], [27.5, 23], [23.5, 28], [19.5, 23]], RAIL.PL, { edge: true });
+    b.rect(24, 15, 1, 12, RAIL.PL.s).rect(20, 19, 8, 1, RAIL.PL.s).rect(21, 23, 6, 1, RAIL.PL.s);
     b.rect(21, 12, 4, 3, SK);
     armB.ellipse(16, 16, 2.6, 2.6, SK, { edge: true });                                             // far arm: the shield, half hidden
     K.shield(armB, 6, 15);
@@ -728,41 +734,25 @@ Object.assign(MONSTER_ART_DIAG, {
     for (const x of [22, 24, 26, 28]) h.px(x, 14, BORE);
   },
   citadrone(g, v) {
-    const { D, BORE } = LEGEND_PAL;
-    const SK = P('#5a8a3a', '#3a6226', '#7aa856'), M = P('#7a8290', '#4e5462', '#a8b0bc'), HM = P('#8a909c', '#5a606c', '#b4bac4');
-    const T = '#4af0d8', T2 = '#c0fff4', JET = P('#4af0d8', '#20a090', '#c0fff4'), HATCH = '#2a2e38';
-    const { Q, b, h, t, earA, earB, armA, armB } = rigParts(g, v);
-    const drone = (p, x, y) => { p.ellipse(x, y, 3.5, 1.5, M, { edge: true }); p.ellipse(x, y - 1, 1.6, 1, P(T, '#20a090', T2)); p.px(x, y + 2, T); };
-    const jets = xs => { for (const x of xs) { t.poly([[x - 2, 30], [x + 2, 30], [x + 1, 39], [x - 1, 39]], JET); t.px(x, 32, T2); } };
-    const cannon = (p, x0, x1) => { p.poly([[x0, 24], [x1, 24], [x1, 29], [x0, 29]], D, { edge: true }); p.rect(Math.min(x0, x1) + 3, 24, 1, 5, T); };
-    drone(earA, 5, 6); drone(earB, 39, 5);
-    jets([13, 21, 29]);
+    const { BORE } = LEGEND_PAL;
+    const { M, SK, T, T2 } = CITA;
+    const { Q, b, h, t, armA, armB } = rigParts(g, v);
+    const K = citaKit;
+    K.jets(t, [15, 23, 31]);
     if (v === 'bside') {
-      cannon(armB, 1, 8); cannon(armA, 35, 43);
-      h.poly([[30, 14], [33, 12], [37, 13], [38, 16], [37, 19], [31, 19]], HM, { edge: true });   // helm peeking over the front rim
-      h.rect(36, 15, 2, 2, BORE); h.px(37, 15, T);
-      b.ellipse(21, 24, 21, 7, M, { edge: true });
-      b.ellipse(20, 18, 14, 8, M, { edge: true });
-      b.ellipse(20, 11, 4, 2.5, JET, { edge: true });
-      b.rect(2, 25, 38, 1, '#3a404c');
-      for (const [x, y] of [[8, 15], [9, 16], [10, 17], [30, 15], [29, 16], [28, 17], [5, 22], [35, 22]]) b.px(x, y, T);
-      b.ellipse(13, 26, 3, 1.6, JET); b.ellipse(27, 26, 3, 1.6, JET);
+      K.arm(armB, 8, -1); K.arm(armA, 36, 1);
+      K.disc(b, 22);
+      h.ellipse(25, 15, 6, 5.5, M, { edge: true }); h.rect(21, 15, 8, 1, M.s); h.px(29, 14, T);  // the back of the dome
+      K.walls(b, 22);
       return;
     }
-    b.ellipse(21, 24, 21, 7, M, { edge: true });
-    b.ellipse(21, 18, 14, 8, M, { edge: true });
-    b.ellipse(21, 11, 4, 2.5, JET, { edge: true });
-    b.rect(2, 25, 38, 1, '#3a404c');
-    for (const [x, y] of [[9, 15], [10, 16], [11, 17], [31, 15], [30, 16], [29, 17], [15, 13], [27, 13], [6, 22], [36, 22]]) b.px(x, y, T);
-    b.ellipse(25, 22, 6, 5, HATCH);
-    armB.ellipse(10, 25, 2.5, 2.2, SK, { edge: true }); cannon(armB, 2, 9);
-    armA.ellipse(36, 25, 3, 2.5, SK, { edge: true }); cannon(armA, 36, 43);
-    armA.px(42, 26, BORE).px(42, 27, BORE);
-    h.ellipse(25, 23, 4, 3.5, SK, { edge: true });
-    h.poly([[21, 21], [22, 18], [28, 18], [29, 21], [29, 24], [21, 24]], HM, { edge: true });
-    h.rect(21, 19, 2, 5, HM.s);
-    h.rect(23, 20, 6, 2, BORE);
-    rigEye(h, Q, 26, 20, () => { h.rect(26, 20, 2, 2, T); h.px(26, 20, T2); }, 2);
+    K.disc(b, 22);
+    K.walls(b, 22);
+    h.ellipse(25, 21, 4, 2, SK, { edge: true });
+    h.ellipse(25, 15, 6, 5.5, M, { edge: true }); h.rect(24, 9, 2, 2, M.l);
+    h.rect(21, 14, 9, 2, BORE);
+    rigEye(h, Q, 26, 14, () => { h.rect(26, 14, 2, 2, T); h.px(26, 14, T2); }, 2);
+    K.arm(armB, 8, -1); K.arm(armA, 36, 1);
   },
 });
 Object.assign(RIGGED, { magmabastion: 'quad', railwarden: 'biped', citadrone: 'floater' });
