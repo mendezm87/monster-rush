@@ -199,28 +199,40 @@ Object.assign(MONSTER_ART, {
       speckle(b, [[19, 26], [25, 30]]);
       return;
     }
-    for (const s of [1, -1]) dragonWing(b, mirrorWing({ sh: [17, 20], wr: [9, 4], tips: [[1, 7], [2, 16], [7, 23]], scal: [[5, 12], [6, 19], [11, 23]], back: [16, 26] }, s), Wing,
-      mirrorPts([[5, 10], [7, 13], [4, 16], [8, 17]], s));                                              // big boned wings
+    // Front (r102 redraw, the owner: front and three-quarter "still look pretty bad"): a tall thin neck,
+    // a wedge of a head with its snout pointing down at you, a V-shaped chest, knees bent outward, and
+    // narrower wings raised high.
+    const Snout = P('#3e4282', '#262a5a', '#5c62b0');
+    for (const s of [1, -1]) dragonWing(b, mirrorWing({ sh: [17, 19], wr: [7, 1], tips: [[2, 6], [2, 13], [6, 19]], scal: [[5, 9], [5, 16], [10, 20]], back: [16, 24] }, s), Wing,
+      mirrorPts([[6, 6], [7, 9], [5, 12], [8, 14]], s));                                               // wings raised high
     dragonTail(t, [[26, 37], [30, 39], [34, 39], [37, 36], [38, 32], [38, 29]], [38, 26]);
-    b.ellipse(22, 31, 5.5, 4.5, Sk, { edge: true });                                                   // hips
-    b.ellipse(22, 24, 6.5, 6.5, Sk, { edge: true });                                                   // chest
-    b.ellipse(22, 16, 3.2, 4.5, Sk);                                                                   // neck
-    b.ellipse(22, 16.5, 1.4, 3, NIGHT.Neb);                                                            // the glow along its throat
-    nebulaPlate(b, 22);                                                                                // and its chest
-    b.polyM([[19, 15], [16, 14], [19, 17]], Horn); b.polyM([[18, 19], [15, 19], [18, 21]], Horn);        // spines down the sides of its neck
-    dragonLeg(legA, 'front', 18, Sk); dragonLeg(legB, 'front', 26, Sk);
-    armA.poly([[17, 20], [19, 22], [17, 27], [16, 30], [14, 29], [15, 25]], Sk, { edge: true }); armA.px(14, 30, NIGHT.CLAW).px(16, 30, NIGHT.CLAW);
-    armB.poly([[27, 20], [25, 22], [27, 27], [28, 30], [30, 29], [29, 25]], Sk, { edge: true }); armB.px(28, 30, NIGHT.CLAW).px(30, 30, NIGHT.CLAW);
-    earA.poly([[20, 6], [16, 2], [14, 0], [17, 1], [22, 4]], Horn, { edge: true }); earB.poly([[24, 6], [28, 2], [30, 0], [27, 1], [22, 4]], Horn, { edge: true });   // long horns
-    h.polyM([[19, 8], [15, 6], [16, 5], [20, 7]], Horn);                                               // the smaller horns
-    h.ellipse(22, 8, 5, 4.2, Sk, { edge: true });                                                      // head
-    h.ellipse(22, 12, 3, 2.5, P('#3e4282', '#262a5a', '#5c62b0'), { edge: true });                     // snout, coming toward you
-    h.px(21, 12, OUTLINE).px(23, 12, OUTLINE);
-    h.polyM([[18, 9], [15, 10], [18, 11]], Horn);                                                     // cheek spikes
-    h.rectM(17, 6, 3, 1, OUTLINE);
-    rigEyes(h, Q, 44, 18, 7, 2, () => h.rectM(18, 7, 2, 1, GOLD));
+    b.ellipse(22, 30, 5, 4, Sk, { edge: true });                                                       // hips
+    for (const [p, s] of [[legA, 1], [legB, -1]]) {                                                    // legs bent outward at the knee, big clawed feet
+      const x = 22 - s * 5;
+      p.ellipse(x, 32, 3.5, 4, Sk, { edge: true });
+      p.poly([[x - 1.5, 35], [x + 1.5, 35], [x + 0.5 - s * 1.5, 40], [x - 2.5 - s * 1.5, 40]].map(([px, py]) => [px, py]), Sk, { edge: true });
+      const fx = x - s * 1.5 - 1;
+      p.poly([[fx - 3, 40], [fx + 3, 40], [fx + 3, 42], [fx - 3, 42]], Sk, { edge: true });
+      p.px(Math.round(fx - 3), 42, NIGHT.CLAW).px(Math.round(fx), 42, NIGHT.CLAW).px(Math.round(fx + 2), 42, NIGHT.CLAW);
+    }
+    b.poly([[15, 18], [29, 18], [28, 25], [25.5, 31], [18.5, 31], [16, 25]], Sk, { edge: true });     // V-shaped chest
+    nebulaPlate(b, 22, 20);                                                                            // the glowing nebula on its chest
+    b.ellipse(22, 14, 2.6, 5, Sk, { edge: true });                                                     // a tall, thin neck
+    for (const y of [12, 14, 16]) b.rect(21, y, 3, 1, Sk.l);                                           // scales down its throat
+    b.polyM([[20, 13], [17, 12], [20, 15]], Horn); b.polyM([[20, 17], [17, 17], [20, 19]], Horn);     // spines down the sides of its neck
+    armA.poly([[17, 19], [19, 21], [16, 26], [14, 28], [12, 27], [14, 23]], Sk, { edge: true }); armA.px(12, 28, NIGHT.CLAW).px(14, 29, NIGHT.CLAW);
+    armB.poly([[27, 19], [25, 21], [28, 26], [30, 28], [32, 27], [30, 23]], Sk, { edge: true }); armB.px(32, 28, NIGHT.CLAW).px(30, 29, NIGHT.CLAW);
+    earA.poly([[19, 5], [13, 2], [11, 2], [14, 1], [20, 3]], Horn, { edge: true });                    // long horns swept back and out
+    earB.poly([[25, 5], [31, 2], [33, 2], [30, 1], [24, 3]], Horn, { edge: true });
+    h.polyM([[19, 7], [15, 6], [16, 5], [20, 6]], Horn);                                               // the smaller horns
+    h.ellipse(22, 6, 5.5, 3.8, Sk, { edge: true });                                                    // the top of its head
+    h.poly([[17.5, 6], [26.5, 6], [25.5, 11], [22, 13.5], [18.5, 11]], Snout, { edge: true });         // its snout, pointing down at you
+    h.px(20, 12, OUTLINE).px(24, 12, OUTLINE);                                                         // nostrils
+    h.polyM([[18, 8], [15, 9], [18, 10]], Horn);                                                       // cheek spikes
+    h.pxM(16, 5, OUTLINE).pxM(17, 5, OUTLINE).pxM(18, 5, OUTLINE).pxM(19, 6, OUTLINE);                 // brows slanting in
+    rigEyes(h, Q, 44, 17, 6, 3, () => { h.rectM(17, 6, 3, 1, GOLD); h.pxM(17, 7, GOLD); });
     rigMouth(h, Q, 21, 13, 2);
-    speckle(b, [[18, 23], [26, 22], [19, 31]]); speckle(h, [[20, 6], [25, 9]]);
+    speckle(b, [[18, 21], [26, 22], [19, 29]]); speckle(h, [[20, 4], [24, 5]]);
   },
 });
 Object.assign(MONSTER_ART_DIAG, {
@@ -275,31 +287,35 @@ Object.assign(MONSTER_ART_DIAG, {
       dragonWing(b, { sh: [27, 19], wr: [35, 3], tips: [[43, 6], [42, 15], [37, 22]], scal: [[39, 11], [38, 18], [32, 23]], back: [28, 25] }, Wing, [[39, 9], [37, 12], [40, 15]]);
       return;
     }
-    dragonWing(b, { sh: [18, 20], wr: [11, 4], tips: [[3, 7], [4, 15], [8, 22]], scal: [[7, 11], [7, 18], [12, 23]], back: [17, 26] }, WingD);   // far wing
-    dragonTail(t, [[19, 34], [15, 36], [11, 37], [7, 35], [5, 31], [5, 28]], [5, 25]);
-    dragonLeg(legB, 'front', 19, SkD);
-    b.ellipse(22, 31, 5.5, 4.5, Sk, { edge: true });
-    b.ellipse(23, 24, 6.5, 6.5, Sk, { edge: true });
-    b.ellipse(24, 17, 3.2, 4, Sk);
-    b.ellipse(25, 16.5, 1.3, 3, NIGHT.Neb);
-    nebulaPlate(b, 24.5);
-    b.poly([[21, 15], [18, 14], [21, 17]], Horn); b.poly([[20, 19], [17, 19], [20, 21]], Horn);
-    dragonLeg(legA, 'front', 27, Sk);
-    armB.poly([[18, 21], [17, 26], [16, 29], [18, 28], [19, 23]], Sk, { edge: true });
-    armA.poly([[29, 20], [31, 25], [32, 29], [30, 30], [29, 26], [27, 22]], Sk, { edge: true }); armA.px(31, 30, NIGHT.CLAW).px(32, 30, NIGHT.CLAW);
-    dragonWing(b, { sh: [27, 19], wr: [36, 3], tips: [[43, 6], [43, 14], [38, 21]], scal: [[39, 10], [39, 17], [33, 22]], back: [28, 25] }, Wing,
-      [[39, 8], [37, 11], [40, 14], [38, 17]]);                                                         // near wing
-    earB.poly([[22, 6], [18, 2], [17, 1], [19, 1], [24, 4]], Horn, { edge: true });                    // far horn
-    h.ellipse(25, 8, 4.5, 3.8, Sk, { edge: true });                                                     // head
-    h.ellipse(27.5, 11.5, 3.2, 2.3, P('#3e4282', '#262a5a', '#5c62b0'), { edge: true });               // snout, turned its way
-    h.px(27, 12, OUTLINE).px(29, 12, OUTLINE);
-    earA.poly([[28, 6], [32, 2], [34, 0], [31, 1], [26, 4]], Horn, { edge: true });                    // near horn
-    h.poly([[30, 9], [33, 10], [30, 11]], Horn);
-    h.rect(20, 6, 3, 1, OUTLINE); h.rect(26, 6, 3, 1, OUTLINE);
-    rigEye(h, Q, 21, 7, () => h.rect(21, 7, 2, 1, GOLD));
-    rigEye(h, Q, 27, 7, () => h.rect(27, 7, 2, 1, GOLD));
-    rigMouth(h, Q, 26, 13, 2);
-    speckle(b, [[20, 23], [27, 22], [21, 31]]); speckle(h, [[23, 6], [27, 9]]);
+    // Three-quarter front (r102 redraw): built from the side view, which the owner liked: the neck
+    // curving up and forward, the head turned to show its long snout, and the wings sweeping back.
+    const Snout = P('#3e4282', '#262a5a', '#5c62b0');
+    dragonWing(b, { sh: [27, 18], wr: [35, 3], tips: [[42, 7], [41, 13], [37, 18]], scal: [[38, 10], [38, 15], [33, 19]], back: [28, 22] }, WingD);   // far wing, behind
+    dragonTail(t, [[18, 33], [14, 36], [10, 37], [6, 35], [4, 31], [5, 28]], [5, 25]);
+    dragonLeg(legB, 'front', 26, SkD);                                                                 // far leg
+    b.ellipse(21, 30, 5, 4, Sk, { edge: true });                                                       // hips
+    b.poly([[17, 19], [28, 18], [28, 25], [26, 30], [19, 31], [17, 25]], Sk, { edge: true });         // chest, turned its way
+    nebulaPlate(b, 24, 20);
+    dragonLeg(legA, 'front', 19, Sk);                                                                  // near leg
+    b.ellipse(26, 15, 2.6, 4.5, Sk, { edge: true });                                                   // the neck curving up and forward
+    for (const y of [13, 15, 17]) b.rect(26, y, 2, 1, Sk.l);
+    for (const [x, y] of [[24, 13], [23, 16], [20, 19]]) b.poly([[x, y - 1], [x - 3, y - 1], [x, y + 1]], Horn);   // spines down its neck
+    armB.poly([[19, 21], [17, 26], [18, 28], [20, 24]], Sk, { edge: true });
+    armA.poly([[28, 20], [31, 24], [31, 28], [29, 28], [28, 24], [26, 21]], Sk, { edge: true }); armA.px(30, 29, NIGHT.CLAW).px(31, 29, NIGHT.CLAW);
+    dragonWing(b, { sh: [22, 18], wr: [15, 1], tips: [[4, 3], [3, 10], [7, 16]], scal: [[7, 7], [7, 13], [12, 17]], back: [19, 22] }, Wing,
+      [[9, 6], [11, 9], [7, 11], [10, 13]]);                                                          // near wing, sweeping back
+    earB.poly([[27, 5], [22, 2], [23, 1], [28, 3]], Horn);                                             // far horn
+    h.ellipse(27.5, 10.5, 2.4, 3, Sk);
+    h.ellipse(29, 7, 5, 3.8, Sk, { edge: true });                                                      // head
+    h.poly([[30, 4], [39, 7], [39, 10], [31, 12], [28, 10]], Snout, { edge: true });                   // long snout, turned toward you
+    h.px(38, 8, OUTLINE).px(34, 10, OUTLINE);
+    earA.poly([[30, 4], [24, 0], [22, 0], [25, 1], [31, 3]], Horn, { edge: true });                    // near horn, swept back
+    h.poly([[27, 9], [24, 10], [27, 11]], Horn);                                                       // cheek spike
+    h.rect(26, 5, 2, 1, OUTLINE); h.rect(30, 5, 3, 1, OUTLINE);
+    rigEye(h, Q, 27, 6, () => h.px(27, 6, GOLD));
+    rigEye(h, Q, 31, 6, () => { h.rect(31, 6, 3, 1, GOLD); h.px(31, 7, GOLD); }, 3);
+    rigMouth(h, Q, 32, 11, 4);
+    speckle(b, [[20, 22], [26, 27], [21, 30]]); speckle(h, [[28, 5], [33, 7]]);
   },
 });
 Object.assign(RIGGED, { cosmite: 'biped', drakorn: 'flier' });
