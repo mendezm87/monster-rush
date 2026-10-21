@@ -2,19 +2,23 @@
 // jumbled-bears mock-up and asked for a J2 version to compare: the same mix of bears, but the jumble shows as
 // blocky sections of different bears' fur that don't quite line up (each block nudged a pixel), with faintly
 // glowing data seams between them, and a sloth bear's shaggy mane round its shoulders.
+// r127 (the owner liked its colours but asked to reel the glow back to one or two seams): only the split down
+// its face and the short break in its golden chest crescent glow; the other blocks just meet, shaded.
 // To see it: (0, eval)(await (await fetch('docs/samples/slumbear-j2.js')).text()) adds 'slumbearJ2'.
 (function () {
   const G = P('#8a5a3a', '#6a4028', '#a87850'), WH = P('#f1eee8', '#d2ccc0', '#ffffff'), K = P('#3a3640', '#25222a', '#56525e');
   const CIN = P('#b8703e', '#8c522c', '#d6905c'), SUN = P('#e2b264', '#b88a44', '#f2d49a'), RING = '#efe0b8', MUZ = P('#e8dcc0', '#c8b898', '#f8f0dc');
   const MANE = P('#2a262c', '#18161a', '#423c46'), DATA = '#8ee4ff', DATAD = '#4aa8d0', NOSE = '#1e1a22';
   // one block of fur: the part of the ellipse (cx, cy, rx, ry) inside the box x0..x1, y0..y1, nudged by (dx, dy)
-  // so blocks don't quite line up; its top and left edges are a glowing data seam
-  const block = (p, [cx, cy, rx, ry], x0, y0, x1, y1, pal, dx = 0, dy = 0) => {
+  // so blocks don't quite line up; its top and left edges are shaded, and with glow set its left edge is
+  // a glowing data seam instead (r127, the owner: only one or two glowing seams)
+  const block = (p, [cx, cy, rx, ry], x0, y0, x1, y1, pal, dx = 0, dy = 0, glow = false) => {
     for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) {
       const X = x - dx, Y = y - dy;
       if (((X + 0.5 - cx) / rx) ** 2 + ((Y + 0.5 - cy) / ry) ** 2 > 1) continue;
       const k = ((x - x0) / Math.max(1, x1 - x0)) * 0.4 + ((y - y0) / Math.max(1, y1 - y0)) * 0.9;
-      p.px(x, y, (y === y0 || x === x0) && (y0 > cy - ry + 1 || x0 > cx - rx + 1) ? ((x + y) % 3 ? DATA : DATAD) : k > 0.95 ? pal.s : k < 0.22 ? pal.l : pal.b);
+      const top = y === y0 && y0 > cy - ry + 1, left = x === x0 && x0 > cx - rx + 1;
+      p.px(x, y, glow && left ? ((x + y) % 3 ? DATA : DATAD) : top || left ? pal.s : k > 0.95 ? pal.s : k < 0.22 ? pal.l : pal.b);
     }
   };
   const mane = (p, cx, cy, w, h) => {   // a sloth bear's shaggy black mane: a jagged fringe
@@ -40,7 +44,7 @@
       earB.ellipse(20.5, 7, 2.4, 2.4, P(WH.s, '#b8b2a6', WH.b));
       const HE = [26, 14, 9, 7.8];
       block(h, HE, 16, 5, 28, 23, G);                                  // its head: grizzly at the back...
-      block(h, HE, 28, 5, 36, 23, WH, 0, 1);                           // ...polar at the front, a pixel off
+      block(h, HE, 28, 5, 36, 23, WH, 0, 1, true);                     // ...polar at the front, a pixel off, along a glowing seam
       earA.ellipse(23.5, 6.5, 3, 3, K, { edge: true });
       h.ellipse(30, 13.5, 2.6, 2.2, RING);                             // spectacled bear's eye ring
       rigEye(h, Q, 29, 13, () => { h.rect(29, 13, 2, 1, NOSE); }, 3);
@@ -58,7 +62,7 @@
       mane(b, 22, 21, 13, 6);
       earA.ellipse(32, 6, 3.2, 3, K, { edge: true }); earB.ellipse(12, 6, 3.2, 3, WH, { edge: true });
       const HE = [22, 13, 11, 8.5];
-      block(h, HE, 10, 4, 22, 23, WH, 0, 1); block(h, HE, 22, 4, 35, 23, G);
+      block(h, HE, 10, 4, 22, 23, WH, 0, 1); block(h, HE, 22, 4, 35, 23, G, 0, 0, true);
       t.ellipse(22, 37, 2.6, 2.2, K, { edge: true });
       return;
     }
@@ -77,7 +81,7 @@
     earA.ellipse(12, 6, 3.2, 3, K, { edge: true }); earB.ellipse(32, 6, 3.2, 3, WH, { edge: true });
     const HE = [22, 13, 11, 8.5];
     block(h, HE, 10, 4, 22, 23, G);                                    // its face: two halves, a pixel apart
-    block(h, HE, 22, 4, 35, 23, WH, 0, 1);
+    block(h, HE, 22, 4, 35, 23, WH, 0, 1, true);                       // (the one long glowing seam, down its face)
     h.poly([[13, 10], [19, 10.5], [19, 14.5], [14, 15]], K);           // panda's eye patch on one side
     h.ellipse(27.5, 13.5, 3.2, 2.6, RING);                             // spectacled bear's eye ring on the other
     rigEyes(h, Q, 44, 15, 12, 3, () => { h.rect(15, 12, 3, 1, '#e6ddcc'); h.px(17, 12, '#fffaf2'); h.rect(26, 13, 3, 1, NOSE); });
