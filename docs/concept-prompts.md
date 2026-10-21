@@ -380,3 +380,81 @@ light and myth, so the evolved forms lean into ancient ruins.
 > colours with one hard-edged shadow tone, soft airbrushed highlights, hand-painted watercolour
 > background of a sunken palace under a stormy moonlit sea, slight film grain, 4:3 screenshot framing,
 > original creature design, no text
+
+---
+
+## Round 3: Mindra and Drakorn (r97; the owner: "move on to Mindra and Drakorn")
+
+Both are Arcane (the old world's mind, light and myth) and both still read as one specific Pokémon:
+Mindra is a lilac cat with a forked tail and a red gem on its forehead, and Drakorn an orange dragon
+with a cream belly and purple wings. Neither evolves, so **pick one design each** (or mix and say
+what you like from each). Names, types, moves and personality stay.
+
+As before, they need to work as 32px sprites: one clear silhouette, two or three main colours, one
+strong feature. **Mindra floats** (no legs; the game bobs it in the air) and **Drakorn flies** (the
+game flaps its wings), so keep those.
+
+### Mindra (Arcane; Psybeam, Mind Orbs, Foresight, Calm Mind): a quick, fragile mind-reader
+
+Stay away from: a cat or fox with a gem on its forehead, a forked or split tail, lilac or pink fur.
+Foresight drops an attack where an enemy is about to be, so it "sees ahead".
+
+**MI1 · Oracle jelly**
+> A small floating creature shaped like a jellyfish made of pale violet glass, a glowing core inside
+> its bell shaped like a softly lit brain, trailing long thin ribbon tendrils that curl like smoke,
+> two calm narrowed eyes glowing white on the front of the bell, three small glowing orbs orbiting
+> around it, serene and a little unsettling, a monster from a monster-battling game. 1990s TV anime
+> cel art, hand-inked line art with varying line weight, flat cel colours with one hard-edged shadow
+> tone, soft airbrushed highlights, hand-painted watercolour background of a dark crystal cave lit
+> violet, slight film grain, 4:3 screenshot framing, original creature design, no text
+
+**MI2 · Mask spirit**
+> A small spirit that is an ancient carved stone mask floating in the air, the mask cracked and
+> weathered with faded gold paint, two eye holes glowing bright violet, behind the mask a small body
+> of drifting violet light and wisps instead of a body, a ring of three carved stone tablets with
+> glowing symbols orbiting it, mysterious and watchful, a monster from a monster-battling game. 1990s
+> TV anime cel art, hand-inked line art with varying line weight, flat cel colours with one
+> hard-edged shadow tone, soft airbrushed highlights, hand-painted watercolour background of a ruined
+> temple at night with moonlight through broken columns, slight film grain, 4:3 screenshot framing,
+> original creature design, no text
+
+**MI3 · Astrolabe sprite**
+> A small floating creature built like an ancient brass astrolabe, two thin brass rings spinning
+> around a glowing violet orb that is its single calm eye, little star-shaped markings engraved on
+> the rings, a short tail of floating brass beads trailing behind, tiny glowing star motes drifting
+> around it, curious and clever, a monster from a monster-battling game. 1990s TV anime cel art,
+> hand-inked line art with varying line weight, flat cel colours with one hard-edged shadow tone,
+> soft airbrushed highlights, hand-painted watercolour background of an old observatory under a
+> starry sky, slight film grain, 4:3 screenshot framing, original creature design, no text
+
+### Drakorn (Arcane; Dragon Pulse, Dragon Claw, Starfall, Dragon Dance): a strong flying attacker
+
+Stay away from: an orange dragon with a cream belly, a flame on its tail, a stout upright dinosaur
+body with bat wings, a chubby friendly dragon with small wings.
+
+**DR1 · Star-chart wyvern**
+> A lean, fierce wyvern whose wings are also its arms, deep indigo scales speckled with tiny white
+> stars like a night sky, the wing membranes showing glowing gold constellation lines, a crown of
+> three swept-back horns, a long whip tail ending in a four-pointed star-shaped fin, sharp gold eyes,
+> diving through the air with its claws out, a monster from a monster-battling game. 1990s TV anime
+> cel art, hand-inked line art with varying line weight, flat cel colours with one hard-edged shadow
+> tone, soft airbrushed highlights, hand-painted watercolour background of a tower top at night under
+> falling stars, slight film grain, 4:3 screenshot framing, original creature design, no text
+
+**DR2 · Relic drake**
+> A lean dragon whose wings are made of floating slabs of carved ancient stone held in place by
+> beams of golden light instead of membranes, a slate-grey and gold body, a horn like a broken stone
+> column on its snout, glowing gold runes running down its spine, piercing glowing gold eyes, hovering
+> in a proud battle stance, a monster from a monster-battling game. 1990s TV anime cel art, hand-inked
+> line art with varying line weight, flat cel colours with one hard-edged shadow tone, soft airbrushed
+> highlights, hand-painted watercolour background of a sky above ruined towers at sunset, slight film
+> grain, 4:3 screenshot framing, original creature design, no text
+
+**DR3 · Comet raptor**
+> A sleek feathered dragon built like a hunting raptor, ultramarine blue body with white and gold
+> feathered wings, a long tail of feathers that streams behind it like the tail of a comet, a sharp
+> beak-like snout with a row of small fangs, a crest of white feathers, fierce golden eyes, streaking
+> through the sky leaving sparkles, a monster from a monster-battling game. 1990s TV anime cel art,
+> hand-inked line art with varying line weight, flat cel colours with one hard-edged shadow tone, soft
+> airbrushed highlights, hand-painted watercolour background of a night sky with a comet over
+> mountains, slight film grain, 4:3 screenshot framing, original creature design, no text
