@@ -46,6 +46,7 @@ New play links (with the example name above):
 ## Game work waiting its turn
 
 - [x] **Make transformations look cool (done in r91):** the Restore moment (spotlight, the Coreature breaking into its own pixels, swirling data, the new form assembling, flash, burst and its new name). Possible extras: a music sting, per-type flourishes.
+- [ ] **The ominous figure (owner's idea, 2026-10-21):** now and then, on entering a room, a shadowy figure is standing in it. The music cuts to something creepy, and the figure quickly slips out of the room (through a door or into the dark) before you can reach it. It's part of an event: a recurring mystery across runs, tied to the story (who's watching the trainer in the ruins?). To decide with the owner: who or what it is, how rare it is, whether following it or catching it does something (a secret room, a rare reward, a boss later), and its look and creepy theme.
 
 ## Before any release or real product
 
