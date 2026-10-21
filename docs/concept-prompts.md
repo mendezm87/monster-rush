@@ -239,3 +239,144 @@ green scales and ONE glowing eye behind a visor slit.
 > art, hand-inked line art with varying line weight, flat cel colours with one hard-edged shadow
 > tone, soft airbrushed highlights, hand-painted watercolour background of a pirate cove at sunset,
 > slight film grain, 4:3 screenshot framing, original creature design, no text
+
+---
+
+## Round 2: the starter lines (r96, before release; the owner: "start with those")
+
+Both starter lines still read as one specific Pokémon line. Cinderox is navy on top and cream below
+with flames on its back (Cyndaquil), and Tidalisk is a blue serpent with fin-ears (Dratini), with
+Maelstrisk a sea dragon in that family. Each line keeps its **name, types, moves and personality**;
+only the look changes. **Pick one pair per line** (a first form and the evolved form with the same
+number), or mix: send back the images you like and say which go together.
+
+Things that help them work as 32px sprites (the evolved forms are 44px): one clear silhouette, two or
+three main colours, and one strong feature you'd recognise from across the room. Cinderox stays a
+four-legged calf and Infernox a four-legged bull; Tidalisk and Maelstrisk stay coiled, slithering
+bodies (the game animates them that way). Lesson from the turtle branches: describe the new body,
+don't restate the old look, or the generator copies it.
+
+### Cinderox (Fire; Flame Wheel, Flamethrower, Rock Slide, Eruption) and Infernox (Fire/Earth)
+
+Stay away from: navy-and-cream colouring, and a ring or crest of flames coming out of the back.
+
+**C1 · Kiln calf** (a calf made like fired clay; grows into I1)
+> A sturdy young bull calf whose hide looks like terracotta clay fired in a kiln, warm rust-red with
+> darker baked patches, thin cracks in its glaze glowing ember-orange, two short black obsidian horn
+> nubs, a small stone chimney vent on each shoulder puffing grey smoke, a heavy clay hoof stamping,
+> head lowered ready to charge, glowing amber eyes, determined and stubborn, a baby monster from a
+> monster-battling game. 1990s TV anime cel art, hand-inked line art with varying line weight, flat cel
+> colours with one hard-edged shadow tone, soft airbrushed highlights, hand-painted watercolour
+> background of an old potter's kiln yard at dusk, slight film grain, 4:3 screenshot framing, original
+> creature design, no text
+
+**I1 · Kiln bull** (evolved: Infernox)
+> A massive bull monster built like a walking furnace, a hide of baked rust-red clay and dark brick,
+> broad shoulders made of stacked firebrick with a furnace door in its chest glowing white-hot through
+> the grate, two great curved black obsidian horns, smoke pouring from tall stone chimneys on its back,
+> molten cracks glowing across its legs, eyes like burning coals, a nose ring of black iron, immensely
+> strong and calm, a fully evolved monster from a monster-battling game. 1990s TV anime cel art,
+> hand-inked line art with varying line weight, flat cel colours with one hard-edged shadow tone, soft
+> airbrushed highlights, hand-painted watercolour background of a foundry at night lit by molten metal,
+> slight film grain, 4:3 screenshot framing, original creature design, no text
+
+**C2 · Basalt calf** (a calf of cooled lava; grows into I2)
+> A stocky young bull calf with a hide of dark grey basalt rock in rough plates, bright orange lava
+> glowing in the seams between the plates, a short blaze of flame on its forehead only, stubby horns of
+> black glassy obsidian, ash puffing from its nostrils, small but heavy, scuffing the ground with one
+> hoof, fierce orange eyes, a baby monster from a monster-battling game. 1990s TV anime cel art,
+> hand-inked line art with varying line weight, flat cel colours with one hard-edged shadow tone, soft
+> airbrushed highlights, hand-painted watercolour background of a black lava field with glowing
+> fissures, slight film grain, 4:3 screenshot framing, original creature design, no text
+
+**I2 · Basalt bull** (evolved: Infernox)
+> A huge bull monster made of dark basalt and flowing lava, its body armoured in heavy black rock
+> plates with rivers of molten orange running between them, a mane of molten lava pouring down its
+> neck and dripping like a waterfall, two long curved obsidian horns glowing red at the tips, each
+> hoofstep melting the ground, eyes glowing white-hot, steam and ash rising around it, unstoppable
+> and furious, a fully evolved monster from a monster-battling game. 1990s TV anime cel art, hand-inked
+> line art with varying line weight, flat cel colours with one hard-edged shadow tone, soft airbrushed
+> highlights, hand-painted watercolour background of an erupting volcano at night, slight film grain,
+> 4:3 screenshot framing, original creature design, no text
+
+**C3 · Ember calf, second take** (closest to today's line, with the Cyndaquil marks removed; grows into I3)
+> A sturdy young bull calf with a deep crimson hide and a charcoal-black face mask and legs, a single
+> flame burning on its forehead between two short cream horns, a tufted tail tip that glows like a hot
+> coal, small iron cuffs on its front legs, smoke snorting from its nose, head down mid-charge,
+> confident amber eyes, a baby monster from a monster-battling game. 1990s TV anime cel art, hand-inked
+> line art with varying line weight, flat cel colours with one hard-edged shadow tone, soft airbrushed
+> highlights, hand-painted watercolour background of a volcanic ridge at sunset, slight film grain, 4:3
+> screenshot framing, original creature design, no text
+
+**I3 · Ember bull** (evolved: Infernox)
+> A towering crimson bull monster with a charcoal-black face and legs, a blazing mane of fire that
+> streams back from its forehead and along its spine, huge curved cream horns, heavy rock plates on its
+> shoulders cracked with glowing lava, iron cuffs on its forelegs and an iron nose ring, eyes glowing
+> gold, breath of fire, proud and powerful, a fully evolved monster from a monster-battling game. 1990s
+> TV anime cel art, hand-inked line art with varying line weight, flat cel colours with one hard-edged
+> shadow tone, soft airbrushed highlights, hand-painted watercolour background of a crater rim at night
+> lit by lava, slight film grain, 4:3 screenshot framing, original creature design, no text
+
+### Tidalisk (Water; Hydro Cannon, Bubble Beam, Ice Shard, Whirlpool) and Maelstrisk (Water/Arcane)
+
+Stay away from: a smooth blue serpent with a white belly and fins for ears, a pearl on the neck or tail,
+a koi or carp turning into a dragon, and a gaping sea-monster mouth. Arcane is the old world's mind,
+light and myth, so the evolved forms lean into ancient ruins.
+
+**S1 · Rune serpent** (a serpent with a carved stone horn; grows into M1)
+> A small sea serpent coiled up on itself, smooth sea-green scales with a darker teal back, a single
+> horn on its brow carved from pale stone like a tiny obelisk with glowing aqua runes on it, a frilled
+> fin running down its back like a wave crest, a forked fin at the tip of its tail, water swirling
+> around its coils, wise narrowed eyes, calm but alert, a baby monster from a monster-battling game.
+> 1990s TV anime cel art, hand-inked line art with varying line weight, flat cel colours with one
+> hard-edged shadow tone, soft airbrushed highlights, hand-painted watercolour background of a flooded
+> stone temple with shafts of light through the water, slight film grain, 4:3 screenshot framing,
+> original creature design, no text
+
+**M1 · Rune leviathan** (evolved: Maelstrisk)
+> A great coiled sea serpent that wears the ruins of an ancient temple: deep teal and sea-green scales,
+> broken carved stone rings and a crown of stone obelisk horns grown into its body, every carving
+> glowing with aqua runes, a long wave-crest fin down its back, a whirlpool turning around its coils,
+> eyes glowing pale aqua, ancient and majestic and quietly menacing, a fully evolved monster from a
+> monster-battling game. 1990s TV anime cel art, hand-inked line art with varying line weight, flat cel
+> colours with one hard-edged shadow tone, soft airbrushed highlights, hand-painted watercolour
+> background of sunken ruins in a stormy sea, slight film grain, 4:3 screenshot framing, original
+> creature design, no text
+
+**S2 · Shell serpent** (a little serpent living in a spiral shell; grows into M2)
+> A small eel-like serpent living inside a big spiral seashell like a hermit, its front half coiled out
+> of the shell's mouth, deep blue-violet scales with bright aqua spots, the shell cream and coral with a
+> whirlpool pattern spiralling into its point, water spraying from a vent on top of the shell, a sharp
+> little fin on its head, a cheeky confident look, a baby monster from a monster-battling game. 1990s TV
+> anime cel art, hand-inked line art with varying line weight, flat cel colours with one hard-edged
+> shadow tone, soft airbrushed highlights, hand-painted watercolour background of a tide pool on a rocky
+> shore, slight film grain, 4:3 screenshot framing, original creature design, no text
+
+**M2 · Whirlpool wyrm** (evolved: Maelstrisk)
+> A huge sea serpent whose long blue-violet body coils out of an enormous spiral shell that has become a
+> swirling vortex of water, the shell's spiral now a turning maelstrom with glowing aqua light at its
+> heart, aqua spots along its body glowing like runes, a crest of sharp fins on its head like a crown,
+> spray and spinning water all around it, commanding and dangerous, a fully evolved monster from a
+> monster-battling game. 1990s TV anime cel art, hand-inked line art with varying line weight, flat cel
+> colours with one hard-edged shadow tone, soft airbrushed highlights, hand-painted watercolour
+> background of a vast whirlpool at sea under a storm, slight film grain, 4:3 screenshot framing,
+> original creature design, no text
+
+**S3 · Tide naga** (a serpent with arms; grows into M3)
+> A small serpent creature with a coiled snake-like lower body and a short upper body with two little
+> clawed arms, ink-blue scales with a sandy gold belly, a hood of thin fins that fans out around its
+> head like a cobra's, glowing aqua markings on the hood, holding a ball of spinning water between its
+> claws, proud and a little smug, a baby monster from a monster-battling game. 1990s TV anime cel art,
+> hand-inked line art with varying line weight, flat cel colours with one hard-edged shadow tone, soft
+> airbrushed highlights, hand-painted watercolour background of a moonlit lagoon, slight film grain, 4:3
+> screenshot framing, original creature design, no text
+
+**M3 · Tide sovereign** (evolved: Maelstrisk)
+> A tall regal serpent monster with a massive coiled lower body and a strong upper body with four arms,
+> ink-blue scales with a sandy gold belly, a huge fanned hood of fins framing its head like a halo,
+> covered in glowing aqua markings, golden bands on its arms, two hands raised summoning a tower of
+> spiralling water, eyes glowing aqua, ancient and commanding, a fully evolved monster from a
+> monster-battling game. 1990s TV anime cel art, hand-inked line art with varying line weight, flat cel
+> colours with one hard-edged shadow tone, soft airbrushed highlights, hand-painted watercolour
+> background of a sunken palace under a stormy moonlit sea, slight film grain, 4:3 screenshot framing,
+> original creature design, no text
