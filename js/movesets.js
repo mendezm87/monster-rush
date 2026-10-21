@@ -16,7 +16,7 @@ const COVERAGE = {
   beast: ['brawl', 'earth'], brawl: ['earth', 'beast', 'metal'], fire: ['earth', 'arcane', 'beast'], water: ['ice', 'arcane', 'beast'],
   plant: ['earth', 'glitch'], electric: ['metal', 'beast'], ice: ['water', 'wind'], earth: ['fire', 'metal', 'brawl'],
   wind: ['beast', 'arcane'], metal: ['earth', 'electric'], glitch: ['shade', 'plant'], arcane: ['phantom', 'plant', 'beast'],
-  shade: ['phantom', 'glitch', 'brawl'], phantom: ['shade', 'arcane', 'glitch'],
+  shade: ['phantom', 'glitch', 'brawl'], phantom: ['shade', 'arcane', 'glitch'], dragonkin: ['fire', 'wind', 'earth'],
 };
 
 const _pools = {};

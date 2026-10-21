@@ -1,7 +1,8 @@
 // Game data: types, type chart, moves, items and the Coreature roster.
 
-// The 14 types (owner-approved 2026-10-20, replacing the 18 copied from Pokémon): plain names for the
-// elements, our own for the six that are only ours (Glitch, Arcane, Shade, Phantom, Beast, Brawl).
+// The 15 types (owner-approved 2026-10-20, replacing the 18 copied from Pokémon): plain names for the
+// elements, our own for the seven that are only ours (Glitch, Arcane, Shade, Phantom, Beast, Brawl, and
+// Dragonkin, added 2026-10-21: the old world's living legends).
 // fx = the palette effects use when a move has no `style` of its own (see MOVES).
 const TYPES = {
   fire:     { name: 'FIRE', color: '#f0642a', fx: ['#ff4a1c', '#ffa424', '#fff3b0'] },
@@ -18,6 +19,7 @@ const TYPES = {
   phantom:  { name: 'PHANTOM', color: '#7a8acf', fx: ['#3a2a6a', '#8a6ad8', '#e0d4ff'] },
   beast:    { name: 'BEAST', color: '#c89a6a', fx: ['#ff8a2a', '#ffd36b', '#fffbe6'] },
   brawl:    { name: 'BRAWL', color: '#d8504a', fx: ['#b0281e', '#ff6a3a', '#ffe0c8'] },
+  dragonkin: { name: 'DRAGONKIN', color: '#4a62c8', fx: ['#2a3aa8', '#6a8aff', '#e0e8ff'] },
 };
 
 // Why each type hits hard (2x) or barely hurts (1/2): every matchup has a reason a player could guess,
@@ -28,21 +30,22 @@ const TYPE_WHY = {
   electric: {"water": "water carries the shock", "metal": "metal carries the shock", "wind": "lightning strikes fliers"},
   plant:    {"water": "plants drink water up", "earth": "roots crack rock"},
   earth:    {"fire": "smothers fire", "electric": "grounds lightning", "ice": "shatters ice", "wind": "rocks knock fliers down"},
-  ice:      {"water": "freezes water", "plant": "frost kills plants", "wind": "ices up wings"},
+  ice:      {"water": "freezes water", "plant": "frost kills plants", "wind": "ices up wings", "dragonkin": "cold makes dragons sluggish"},
   wind:     {"plant": "blows leaves and bugs away", "beast": "strikes from the sky, out of reach", "brawl": "strikes from the sky, out of reach"},
-  metal:    {"earth": "drills and picks break rock", "ice": "smashes ice"},
+  metal:    {"earth": "drills and picks break rock", "ice": "smashes ice", "dragonkin": "dragon-slaying blades"},
   glitch:   {"metal": "corrupts machines", "electric": "scrambles power", "arcane": "corrupts the old world's code"},
   arcane:   {"shade": "light drives out darkness", "glitch": "the old code repairs corruption", "phantom": "light banishes spirits"},
   shade:    {"arcane": "darkness swallows light", "beast": "animals fear the dark"},
   phantom:  {"phantom": "it takes a ghost to catch a ghost", "brawl": "a fighter can't block what it can't touch"},
   beast:    {"plant": "tears through plants", "glitch": "raw instinct can't be hacked"},
   brawl:    {"earth": "punches through rock", "beast": "skill beats raw instinct"},
+  dragonkin: {"dragonkin": "it takes a dragon to fight a dragon", "beast": "dragons rule over beasts", "wind": "dragons own the sky"},
 };
 const TYPE_WHY_HALF = {
-  fire:     {"water": "water puts it out", "earth": "rock doesn't burn", "fire": "fire on fire"},
+  fire:     {"water": "water puts it out", "earth": "rock doesn't burn", "fire": "fire on fire", "dragonkin": "its scales are fireproof"},
   water:    {"plant": "plants soak it up", "water": "water on water"},
   electric: {"earth": "rock is grounded", "electric": "lightning on lightning"},
-  plant:    {"fire": "plants burn up", "metal": "can't cut metal", "wind": "vines can't reach the sky", "plant": "plant on plant"},
+  plant:    {"fire": "plants burn up", "metal": "can't cut metal", "wind": "vines can't reach the sky", "plant": "plant on plant", "dragonkin": "vines can't pierce dragon hide"},
   earth:    {"metal": "metal is harder", "beast": "tough hides shrug off rocks", "phantom": "rocks pass right through"},
   ice:      {"fire": "ice melts", "ice": "ice on ice"},
   wind:     {"earth": "rock doesn't budge", "ice": "cold wind only chills it", "electric": "storms ride the wind"},
@@ -51,8 +54,9 @@ const TYPE_WHY_HALF = {
   arcane:   {"arcane": "mind on mind"},
   shade:    {"glitch": "data feels no fear", "shade": "dark on dark"},
   phantom:  {"metal": "machines can't be haunted", "glitch": "data can't be haunted"},
-  beast:    {"metal": "claws can't scratch metal", "shade": "you can't bite a shadow", "phantom": "claws pass right through", "brawl": "trained fighters dodge wild swings"},
+  beast:    {"metal": "claws can't scratch metal", "shade": "you can't bite a shadow", "phantom": "claws pass right through", "brawl": "trained fighters dodge wild swings", "dragonkin": "claws can't get through scales"},
   brawl:    {"phantom": "fists pass right through", "wind": "hard to hit a flier", "arcane": "muscle can't touch the mind"},
+  dragonkin: {"metal": "dragon-slayer steel turns its bite", "arcane": "the old world's magic bound the dragons"},
 };
 // attacker -> defender -> multiplier (missing = 1); no immunities: the weakest hit is 1/2
 const CHART = Object.fromEntries(Object.keys(TYPES).map(a => [a, {
@@ -145,10 +149,10 @@ const MOVES = {
   blizzard:     { name: 'Blizzard', type: 'ice', kind: 'burst', power: 230, cd: 7, r: 130, delay: 0.35, cone: 0.55, blow: 0.6, status: ['frz', 0.25] },
   frostArmor:   { name: 'Frost Armor', type: 'ice', kind: 'buff', buff: { def: 1.5 }, dur: 8, cd: 15 },
   // dragon
-  dragonPulse:  { name: 'Dragon Pulse', type: 'arcane', style: 'dragon', kind: 'beam', power: 270, cd: 5, charge: 0.45, dur: 0.55, width: 12, len: 290 },
-  dragonClaw:   { name: 'Dragon Claw', type: 'arcane', style: 'dragon', kind: 'dash', power: 165, cd: 2.4, speed: 340, dur: 0.3, fx: 'claw' },
+  dragonPulse:  { name: 'Dragon Pulse', type: 'dragonkin', style: 'dragon', kind: 'beam', power: 270, cd: 5, charge: 0.45, dur: 0.55, width: 12, len: 290 },
+  dragonClaw:   { name: 'Dragon Claw', type: 'dragonkin', style: 'dragon', kind: 'dash', power: 165, cd: 2.4, speed: 340, dur: 0.3, fx: 'claw' },
   starfall:     { name: 'Starfall', type: 'arcane', style: 'dragon', kind: 'zone', power: 200, cd: 9, r: 26, delay: 1.0, count: 4, scatter: 50, fx: 'meteor' },
-  dragonDance:  { name: 'Dragon Dance', type: 'arcane', style: 'dragon', kind: 'buff', buff: { atk: 1.3, spd: 1.3 }, dur: 8, cd: 15 },
+  dragonDance:  { name: 'Dragon Dance', type: 'dragonkin', style: 'dragon', kind: 'buff', buff: { atk: 1.3, spd: 1.3 }, dur: 8, cd: 15 },
   // rock
   rockSlide:    { name: 'Rock Slide', type: 'earth', style: 'rock', kind: 'zone', power: 145, cd: 4, r: 20, delay: 0.7, count: 4, scatter: 40, fx: 'rock' },
   rollout:      { name: 'Rollout', type: 'earth', style: 'rock', kind: 'dash', power: 185, cd: 3.2, speed: 280, dur: 0.55, fx: 'roll' },
@@ -250,7 +254,10 @@ const ROSTER = [
     moves: ['megaBeam', 'bodySlam', 'heavyStomp', 'snack'] },
   { id: 'frostling', name: 'FROSTLING', types: ['ice'],      hp: 960,  atk: 1.1,  def: 0.92, spd: 96,  size: 'M', item: 'quickCharm',
     moves: ['iceShard', 'frostRay', 'blizzard', 'frostArmor'] },
-  { id: 'drakorn',   name: 'DRAKORN',   types: ['arcane'],   hp: 1200, atk: 1.2,  def: 1.0,  spd: 88,  size: 'M', item: 'powerBand',
+  // The night-sky dragons (r98, the owner's design): smug little Cosmite grows into Drakorn. Dragonkin/Shade.
+  { id: 'cosmite',   name: 'COSMITE',   types: ['dragonkin', 'shade'], hp: 980, atk: 1.05, def: 1.0, spd: 84, size: 'M', item: 'powerBand',
+    moves: ['gloomOrb', 'dragonClaw', 'starfall', 'dragonDance'], evolve: { to: 'drakorn' } },
+  { id: 'drakorn',   name: 'DRAKORN',   types: ['dragonkin', 'shade'], hp: 1350, atk: 1.25, def: 1.05, spd: 90, size: 'L', item: 'powerBand',
     moves: ['dragonPulse', 'dragonClaw', 'starfall', 'dragonDance'] },
   { id: 'boulderon', name: 'BOULDERON', types: ['earth'], hp: 1420, atk: 1.15, def: 1.38, spd: 55, size: 'L', item: 'ironPlate',
     moves: ['rockSlide', 'quicksand', 'rollout', 'quake'] },

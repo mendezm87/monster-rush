@@ -129,6 +129,7 @@ const TYPE_ICON_ART = {
   phantom:  ['.111.', '11111', '1.1.1', '11111', '1.1.1'],
   beast:    ['1.1.1', '.....', '.111.', '11111', '.111.'],
   brawl:    ['1111.', '11111', '11111', '.1111', '..11.'],
+  dragonkin: ['1...1', '11.11', '.111.', '.111.', '..1..'],   // a dragon's horned head
 };
 const _typeIcons = {}, _typeIconURLs = {};
 function typeIcon(t) {
