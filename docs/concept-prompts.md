@@ -732,3 +732,61 @@ it reads as a sleepy quilted creature first and a panda only on a second look.
 > hand-inked line art with varying line weight, flat cel colours with one hard-edged shadow tone,
 > soft airbrushed highlights, hand-painted watercolour background of a tatami room with paper
 > screens at night, slight film grain, 4:3 screenshot framing, original creature design, no text
+
+### Round 6d: more S7a, the patchwork panda (the owner: "S7a is heading in the right direction, give me more prompts")
+
+A 44px pixel mock-up of S7a is in `docs/samples/slumbear-s7a.js` (seen in the game in r123). These
+explore S7a further; mix what you like.
+
+**S7a-1 · Character sheet** (front, side and back, so the sprite can match every view)
+> Character turnaround sheet of one creature, front view, side view and back view side by side on a
+> plain cream background: a huge round heavy monster with a soft padded hide stitched in a diamond
+> quilted pattern like an old mattress, cream-white, with charcoal-black fabric patches sewn on
+> around its small sleepy eyes, over its tiny round ears, on its stubby arms and legs and as a band
+> across its shoulders, stitches showing along every patch edge, a broad rounded muzzle like a
+> hippo's, a big cloth-covered button on its round belly, a square patch sewn on its back, a stubby
+> tail, a creature that isn't any real animal, a monster from a monster-battling game. 1990s TV
+> anime cel art, hand-inked line art with varying line weight, flat cel colours with one
+> hard-edged shadow tone, original creature design, no text
+
+**S7a-2 · Mismatched patches** (mended over years with whatever dark fabric was to hand)
+> A huge round sleepy monster with a soft cream quilted hide like an old mattress, its panda-like
+> markings made of mismatched dark patches sewn on by hand: charcoal corduroy over one eye, black
+> denim over the other, a dark plaid patch on one shoulder, dark felt ears, each patch a slightly
+> different shape with big uneven stitches, a broad hippo-like muzzle mid-yawn, a cloth button on
+> its belly, a little stuffing poking out of one seam, cosy and enormous, a monster from a
+> monster-battling game. 1990s TV anime cel art, hand-inked line art with varying line weight, flat
+> cel colours with one hard-edged shadow tone, soft airbrushed highlights, hand-painted watercolour
+> background of a cosy workshop at night, slight film grain, 4:3 screenshot framing, original
+> creature design, no text
+
+**S7a-3 · Battle-ready** (awake, grumpy, firing its beam)
+> A huge round heavy monster woken up and grumpy, a soft cream quilted hide like an old mattress
+> with charcoal-black patches sewn round its eyes, ears, stubby arms and legs and across its
+> shoulders, half-open annoyed eyes, a broad hippo-like mouth opened wide firing a thick white beam
+> of energy, bits of stuffing and loose threads flying off it, planting its stubby legs, a cloth
+> button on its belly, powerful and enormous, a monster from a monster-battling game. 1990s TV anime
+> cel art, hand-inked line art with varying line weight, flat cel colours with one hard-edged shadow
+> tone, soft airbrushed highlights, dramatic speed lines, hand-painted watercolour background of a
+> stone arena, slight film grain, 4:3 screenshot framing, original creature design, no text
+
+**S7a-4 · Old and well loved** (faded, darned and a bit lumpy)
+> A huge round sleepy monster with a faded cream quilted hide like a very old, well-loved mattress,
+> a little lumpy, darned in places with big cross-stitches, faded charcoal patches sewn round its
+> drowsy eyes, ears, stubby limbs and across its shoulders, one patch half come loose and flapping, a
+> mismatched button sewn on its belly, a broad soft hippo-like muzzle with a slow content smile, a
+> worn pillowcase tied on its head like a nightcap, gentle and enormous, a monster from a
+> monster-battling game. 1990s TV anime cel art, hand-inked line art with varying line weight, flat
+> cel colours with one hard-edged shadow tone, soft airbrushed highlights, hand-painted watercolour
+> background of an old attic with moonlight through a round window, slight film grain, 4:3
+> screenshot framing, original creature design, no text
+
+**S7a-5 · Curled up asleep** (to see its silhouette when it naps)
+> A huge round monster curled up fast asleep on its side like a big cushion, a soft cream quilted
+> hide like an old mattress with charcoal-black patches sewn round its closed eyes, ears, stubby arms
+> and legs and across its shoulders, its broad hippo-like muzzle resting on its paws, a cloth button
+> on its belly, a tiny bubble from its nose, a few floating Z shapes made of thread, peaceful and
+> enormous, a monster from a monster-battling game. 1990s TV anime cel art, hand-inked line art with
+> varying line weight, flat cel colours with one hard-edged shadow tone, soft airbrushed highlights,
+> hand-painted watercolour background of a sunny bamboo grove, slight film grain, 4:3 screenshot
+> framing, original creature design, no text
