@@ -6,7 +6,7 @@ import os, sys, glob
 RUSH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 args = sys.argv[1:]
 STADIUM = args[args.index('--stadium') + 1] if '--stadium' in args else os.path.join(os.path.dirname(RUSH), 'monster-battle-stadium')
-SHARED = ['js/sprites.js', 'js/monsters.js', 'js/fx.js', 'js/audio.js', 'js/describe.js', 'js/movesets.js']
+SHARED = ['js/fx-sheets.js', 'js/sprites.js', 'js/monsters.js', 'js/fx.js', 'js/audio.js', 'js/describe.js', 'js/movesets.js']
 
 def read(root, rel):
     p = os.path.join(root, rel)

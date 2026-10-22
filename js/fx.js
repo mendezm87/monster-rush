@@ -45,7 +45,7 @@ const FXLayer = (() => {
     begin(camX, camY) {
       c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, w, h);
       c.setTransform(1 / FX_PX, 0, 0, 1 / FX_PX, -camX / FX_PX, -camY / FX_PX);
-      c.lineJoin = 'round'; c.lineCap = 'round'; c.globalAlpha = 1;
+      c.lineJoin = 'round'; c.lineCap = 'round'; c.globalAlpha = 1; c.imageSmoothingEnabled = false;   // sheet frames stay crisp pixels
       return c;
     },
     // hard pixel edges (no half-see-through fringes), then onto the screen
@@ -332,6 +332,8 @@ const FX_PARTS = {
       for (let i = 0; i < 8; i++) { const a = i * TAU / 8 + t; FXD.star(c, m.x + Math.cos(a) * r, m.cy + Math.sin(a) * r * 0.7, 4 * (1 - t) + 1, 1.5, 4, a, i % 2 ? '#ffe066' : '#ffffff', 2.4); }
     }
   },
+  // a sheet's frames played in order (sheetPart)
+  sheet(c, p, k) { drawSheet(c, p.id, p.frames[Math.min(p.frames.length - 1, Math.floor((1 - k) * p.frames.length))], p.x, p.y, p.o); },
   // a hit landing: its look's own impact (IMPACT_ART)
   hit(c, p, k) {
     const age = 1 - k;
@@ -641,253 +643,52 @@ const DASH_TRAIL = {
   deadlineDash: { shape: 'paper', rate: 16, size: [3, 4] },
   bodySlam: { shape: 'puff', rate: 18, size: [3.4, 5.4], fx: ['#a8987a', '#d8ccb0', '#f2ead8'] },
   woolTackle: { shape: 'puff', rate: 20, size: [3, 4.6], fx: ['#8a90a0', '#c8ccd8', '#ffffff'] },
-  flameWheel: { shape: 'flame', rate: 34, size: [2.6, 4], rise: true },
-  blazeRush: { shape: 'flame', rate: 30, size: [2.6, 4], rise: true },
   zoomies: { shape: 'star', rate: 18, size: [2.6, 3.6], fx: ['#ffa424', '#ffd36b', '#fffbe6'] },
   zoomiesMax: { shape: 'star', rate: 24, size: [2.6, 3.8], fx: ['#ffa424', '#ffd36b', '#fffbe6'] },
 };
 
-// ---------- fire, drawn as one continuous mass of flame (r151, from the owner's references F1-F8 in docs/refs) ----------
-// Every fire shape is a jagged outline of merged tongues filled in four bands, from a deep red, inked edge
-// through orange and yellow to a white-hot core, each band a smaller copy of the one outside it, all
-// flickering: never a pile of separate little flame sprites (the owner: "look more like flames").
-const FIRE = ['#b01e10', '#ff5a1c', '#ffb02e', '#fff3b0'];
-const SMOKE = ['#3a3440', '#55505e', '#6e6878'];
-const fillPts = (c, pts, fill, ink) => {
-  const path = () => { pts.forEach(([x, y], i) => (i ? c.lineTo(x, y) : c.moveTo(x, y))); c.closePath(); };
-  if (ink) FXD.ink(c, path, fill); else { c.beginPath(); path(); c.fillStyle = fill; c.fill(); }
-};
-const FIRED = {
-  // a ring of fire (Flame Wheel) round (x, y): a band W across, tongues licking out off the rim and leaning
-  // back against the spin
-  ring(c, x, y, W, th, lick, spin, T, sq = 1) {
-    const n = 48;
-    for (let k = 0; k < 4; k++) {
-      const sc = 1 - k * 0.27, out = [], inn = [];
-      for (let i = 0; i <= n; i++) {
-        const a = i / n * TAU, rel = a - spin;
-        const h = Math.pow(Math.max(0, Math.sin(rel * 5 + Math.sin(rel * 3) * 0.6)), 2) * (0.65 + 0.35 * Math.sin(T * 22 + i * 1.3)) + 0.18 * Math.max(0, Math.sin(rel * 12 + T * 9));
-        const R = W + th * 0.5 * sc + lick * h * sc, aa = a - 0.4 * h;
-        out.push([x + Math.cos(aa) * R, y + Math.sin(aa) * R * sq]);
-        const Ri = W - th * 0.5 * sc;
-        inn.push([x + Math.cos(a) * Ri, y + Math.sin(a) * Ri * sq]);
-      }
-      const path = () => {
-        out.forEach(([px, py], i) => (i ? c.lineTo(px, py) : c.moveTo(px, py))); c.closePath();
-        inn.reverse().forEach(([px, py], i) => (i ? c.lineTo(px, py) : c.moveTo(px, py))); c.closePath();
-      };
-      if (k === 0) FXD.ink(c, path, FIRE[0]); else { c.beginPath(); path(); c.fillStyle = FIRE[k]; c.fill(); }
-    }
-  },
-  // a pillar of fire (Blaze Rush catching fire): from an ellipse at its feet up into tall tongues, h of Hh tall
-  column(c, x, y, rx, ry, Hh, T, seed = 0) {
-    for (let k = 0; k < 4; k++) {
-      const sc = 1 - k * 0.23, pts = [];
-      for (let i = 0; i <= 10; i++) { const a = i / 10 * Math.PI; pts.push([x + Math.cos(a) * rx * sc, y + Math.sin(a) * ry * sc]); }
-      const m = 14;
-      for (let i = 0; i <= m; i++) {
-        const u = i / m, env = Math.sin(u * Math.PI), spike = i % 2 ? 0.5 : 1, fl = 0.72 + 0.28 * Math.sin(T * 20 + i * 2.1 + seed);
-        pts.push([x + (u * 2 - 1) * rx * sc * 0.95 + Math.sin(T * 12 + i) * 1.2, y - Hh * sc * (0.3 + 0.7 * env) * spike * fl - ry * 0.3]);
-      }
-      fillPts(c, pts, FIRE[k], k === 0);
-    }
-  },
-  // a comet of fire pointing along `ang` (a fireball, Blaze Rush charging): a round head rh across, a tail L long
-  comet(c, x, y, ang, rh, L, T, seed = 0) {
-    c.save(); c.translate(x, y); c.rotate(ang);
-    for (let k = 0; k < 4; k++) {
-      const sc = 1 - k * 0.24, cx0 = rh * 0.3 * k, pts = [];
-      for (let i = 0; i <= 8; i++) { const a = -Math.PI / 2 + i / 8 * Math.PI; pts.push([cx0 + Math.cos(a) * rh * sc, Math.sin(a) * rh * sc]); }
-      const n = 12;
-      for (let j = 0; j <= n; j++) {   // along the bottom edge, out to the tip
-        const t = j / n, w = Math.pow(1 - t, 0.75), sp = j % 2 ? 0.7 : 1.25, fl = 0.8 + 0.2 * Math.sin(T * 26 + j * 1.9 + seed);
-        pts.push([cx0 - t * L * sc * fl, rh * sc * w * sp]);
-      }
-      for (let j = n; j >= 0; j--) {   // and back along the top edge
-        const t = j / n, w = Math.pow(1 - t, 0.75), sp = j % 2 ? 1.25 : 0.7, fl = 0.8 + 0.2 * Math.sin(T * 24 + j * 2.3 + seed + 1);
-        pts.push([cx0 - t * L * sc * fl * 0.92, -rh * sc * w * sp]);
-      }
-      fillPts(c, pts, FIRE[k], k === 0);
-    }
-    c.restore();
-  },
-  // a burst of fire, round with a spiky rim (explosions)
-  burst(c, x, y, r, T, seed = 0, sq = 1) {
-    for (let k = 0; k < 4; k++) {
-      const sc = 1 - k * 0.25, pts = [], n = 22;
-      for (let i = 0; i < n; i++) {
-        const a = i / n * TAU + seed, sp = i % 2 ? 0.78 : 1.18 + 0.12 * Math.sin(T * 30 + i * 2.7 + seed);
-        pts.push([x + Math.cos(a) * r * sc * sp, y + Math.sin(a) * r * sc * sp * sq]);
-      }
-      fillPts(c, pts, FIRE[k], k === 0);
-    }
-  },
-  // a puff of smoke
-  smoke(c, x, y, r, k = 0) { FXD.circle(c, x, y, r, SMOKE[Math.min(2, k)]); },
-  // one tall tongue of flame rising from (x, y), h tall, w wide at the base
-  tongue(c, x, y, w, h, T, seed = 0) {
-    for (let k = 0; k < 4; k++) {
-      const sc = 1 - k * 0.24, hh = h * (1 - k * 0.2), ww = w * sc, sway = Math.sin(T * 14 + seed) * w * 0.55 * (1 - k * 0.25), flick = 1 + 0.12 * Math.sin(T * 31 + seed * 2);
-      const path = () => {
-        c.moveTo(x - ww, y);
-        c.quadraticCurveTo(x - ww * 1.15, y - hh * 0.45, x - ww * 0.35 + sway * 0.4, y - hh * 0.62);   // the left side curving in
-        c.quadraticCurveTo(x + sway * 0.7, y - hh * 0.78, x + sway * 1.3, y - hh * flick);            // up to the tip, swaying
-        c.quadraticCurveTo(x + ww * 0.45 + sway * 0.6, y - hh * 0.62, x + ww * 0.7 + sway * 0.2, y - hh * 0.36);
-        c.quadraticCurveTo(x + ww * 1.15, y - hh * 0.15, x + ww, y);
-        c.closePath();
-      };
-      if (k === 0) FXD.ink(c, path, FIRE[0]); else { c.beginPath(); path(); c.fillStyle = FIRE[k]; c.fill(); }
-    }
-  },
-  // a soft, billowing cloud of fire (Flamethrower): lumpy, not spiky
-  cloud(c, x, y, r, T, seed = 0) {
-    for (let k = 0; k < 4; k++) {
-      const sc = 1 - k * 0.24, pts = [], n = 16;
-      for (let i = 0; i < n; i++) { const a = i / n * TAU + seed, rr = r * sc * (i % 2 ? 0.9 : 1.04 + 0.06 * Math.sin(T * 16 + i * 1.9 + seed)); pts.push([x + Math.cos(a) * rr - k * r * 0.08, y + Math.sin(a) * rr * 0.85 - k * r * 0.06]); }
-      fillPts(c, pts, FIRE[k], k === 0);
-    }
-  },
-};
-
-// Flame Wheel (F1): it rolls inside a ring of roaring fire; behind it (cut out where the body is) the whole ring,
-// a burning trail; in front, the leading arc of the ring.
-DASH_ART.flameWheel = (c, R, T, fx, back) => {
-  const W = R + 6;
-  if (back) {
-    FIRED.comet(c, -W * 0.4, R * 0.55, Math.PI, R * 0.32, R * 1.6, T, 3);   // the burning track behind
-    FIRED.ring(c, 0, 0, W, 9, 12, T * 12, T);
-    return;
+// ---------- attacks played from the owner's sheets (r152) ----------
+// The owner: "these don't really look like the sprite sheets I gave you". Drawing their references again in code
+// lost what made them good, so now the sheets themselves are the art: tools/fx-sheets.py cuts each reference in
+// docs/refs into frames at one pixel per sprite pixel (js/fx-sheets.js, FX_SHEET_DATA), and these play them.
+const FXS = {};
+for (const [id, d] of Object.entries(typeof FX_SHEET_DATA !== 'undefined' ? FX_SHEET_DATA : {})) {
+  const img = new Image(); img.src = d.src;
+  FXS[id] = { img, frames: d.frames };
+}
+// Draw frame i of sheet id at (x, y) in world units on the effect layer. o: sc (size, 1 = one pixel per sprite
+// pixel), ax/ay (the anchor, 0..1 of the frame), dir (turn it to point that way; a sheet drawn going right is
+// mirrored rather than turned upside down when it points left), flip (mirror it), sx/sy (stretch).
+function drawSheet(c, id, i, x, y, o = {}) {
+  const S = FXS[id];
+  if (!S || !S.img.complete || !S.img.naturalWidth) return;
+  const f = S.frames[clamp(i | 0, 0, S.frames.length - 1)], sc = o.sc || 1;
+  const w = f[2] * FX_PX * sc * (o.sx || 1), h = f[3] * FX_PX * sc * (o.sy || 1);
+  c.save(); c.translate(x, y);
+  if (o.dir !== undefined) {
+    const cs = Math.cos(o.dir), sn = Math.sin(o.dir);
+    if (cs < 0) { c.scale(-1, 1); c.rotate(Math.atan2(sn, -cs)); } else c.rotate(o.dir);
   }
-  c.save(); c.beginPath(); c.rect(R * 0.65, -W - 16, W + 18, W * 2 + 32); c.clip();   // the leading arc only, clear of its face
-  FIRED.ring(c, 0, 0, W, 9, 12, T * 12, T);
+  if (o.flip) c.scale(-1, 1);
+  c.drawImage(S.img, f[0], f[1], f[2], f[3], -w * (o.ax ?? 0.5), -h * (o.ay ?? 0.5), w, h);
   c.restore();
-};
-// Blaze Rush (F2): it bursts into a pillar of fire, then charges as a comet of flame.
-DASH_ART.blazeRush = (c, R, T, fx, back, a, pre) => {
-  if (a && a.t <= pre) {   // catching fire: the pillar grows up round it (drawn upright, whatever way it faces)
-    const k = Math.min(1, a.t / (pre * 0.8));
-    c.save(); c.rotate(-a.dir);
-    if (back) FIRED.column(c, 0, R * 0.8, R + 12, R * 0.5, (R * 3 + 18) * k + 4, T, 1);
-    else for (let i = 0; i < 5; i++) FIRED.tongue(c, (i - 2) * R * 0.42, R * 0.85, R * 0.3, (R * (i % 2 ? 1.1 : 1.6) + 4) * k + 2, T, i);   // flames engulfing it, in front
-    c.restore();
-    return;
-  }
-  if (back) {
-    FIRED.comet(c, R * 0.3, 0, 0, R + 5, R * 2.8 + 26, T, 1);
-    for (let i = 0; i < 3; i++) FIRED.smoke(c, -R * 2.6 - 10 - i * 7, (i - 1) * 6 + Math.sin(T * 8 + i) * 2, 4 + i, i);
-    return;
-  }
-  c.save(); c.beginPath(); c.rect(R * 0.3, -R - 14, R + 20, R * 2 + 28); c.clip();   // the blazing front of the comet
-  FIRED.comet(c, R * 0.3, 0, 0, R + 5, R * 2.8 + 26, T, 1);
-  c.restore();
-};
+}
+const sheetFrames = id => (FXS[id] ? FXS[id].frames.length : 0);
+const sheetSize = (id, i) => (FXS[id] ? FXS[id].frames[i] : [0, 0, 1, 1]);
+// a frame's world size at sc 1
+const sheetW = (id, i) => sheetSize(id, i)[2] * FX_PX, sheetH = (id, i) => sheetSize(id, i)[3] * FX_PX;
 
-// Fire's own effects as particles: an explosion (Fire Blast, Blaze Rush, Flame Wheel), Eruption's ring of fire,
-// Steam Eruption's geyser (F7)
-Object.assign(FX_PARTS, {
-  // a big ball of fire with a spiky rim, then rolling smoke and embers
-  fireball(c, p, k) {
-    const age = 1 - k, r = p.size * (age < 0.2 ? 0.4 + age / 0.2 * 0.6 : 1 - (age - 0.2) * 0.4);
-    if (age > 0.45) for (let i = 0; i < 6; i++) { const a = i * TAU / 6 + p.seed, d = r * (0.6 + age * 0.6); FIRED.smoke(c, p.x + Math.cos(a) * d, p.y + Math.sin(a) * d * 0.7 - age * 10, r * 0.35 * (1.2 - age), i % 3); }
-    if (age < 0.7) FIRED.burst(c, p.x, p.y, r * (age < 0.45 ? 1 : 1 - (age - 0.45) * 2), age * 6, p.seed, 0.9);
-  },
-  // Eruption: a ring of cracks glowing with lava, fire geysers bursting up all round it, then cooling
-  eruption(c, p, k) {
-    const age = 1 - k, R = p.r, x = p.x, y = p.y, sq = 0.45, PT = age * 8;
-    // the cracked ring on the ground
-    c.beginPath(); c.ellipse(x, y, R, R * sq, 0, 0, TAU); c.strokeStyle = INK; c.lineWidth = 7; c.stroke(); c.strokeStyle = '#4a3020'; c.lineWidth = 5; c.stroke();
-    c.strokeStyle = age < 0.8 ? '#ffb02e' : '#c85a1a'; c.lineWidth = 1.6; c.stroke();
-    for (let i = 0; i < 10; i++) { const a = i / 10 * TAU + 0.3; FXD.line(c, [[x + Math.cos(a) * R * 0.85, y + Math.sin(a) * R * 0.85 * sq], [x + Math.cos(a) * R * 1.12, y + Math.sin(a) * R * 1.12 * sq]], 1.4, '#ff8a2a'); }
-    // the fire: tongues all round the ring, the far ones first
-    const up = age < 0.15 ? age / 0.15 : age < 0.5 ? 1 : Math.max(0, 1 - (age - 0.5) / 0.4), n = 12;
-    if (up > 0.02) {
-      const order = [...Array(n).keys()].sort((a, b) => Math.sin(a / n * TAU) - Math.sin(b / n * TAU));
-      for (const i of order) {
-        const a = i / n * TAU, h = R * (0.6 + 0.4 * ((i * 37) % 5) / 5) * up * (0.85 + 0.15 * Math.sin(PT * 20 + i));
-        FIRED.tongue(c, x + Math.cos(a) * R * 0.92, y + Math.sin(a) * R * 0.92 * sq, R * 0.24, h, PT + i * 0.3, i);
-      }
-    }
-  },
-  // Steam Eruption: cracks bubble, then a geyser of white steam shoots up with fire inside it, then billows away
-  steamGeyser(c, p, k) {
-    const age = 1 - k, x = p.x, y = p.y, R = p.r, T = age * 8 + p.seed;
-    if (age < 0.75) {   // glowing cracks round the spot
-      for (let i = 0; i < 7; i++) { const a = i / 7 * TAU + 0.4; FXD.line(c, [[x, y], [x + Math.cos(a) * R * 0.9, y + Math.sin(a) * R * 0.45]], 3.2, INK); FXD.line(c, [[x, y], [x + Math.cos(a) * R * 0.9, y + Math.sin(a) * R * 0.45]], 1.5, '#ff7a2a'); }
-    }
-    const shoot = age < 0.12 ? age / 0.12 : 1, H = R * 3.2 * shoot;
-    if (age < 0.55) {   // the geyser: a column of steam with fire inside
-      const w = R * 0.75, pts = [];
-      for (let i = 0; i <= 8; i++) { const u = i / 8; pts.push([x - w * (1 - u * 0.4) + Math.sin(T * 18 + i) * 2, y - H * u]); }
-      for (let i = 8; i >= 0; i--) { const u = i / 8; pts.push([x + w * (1 - u * 0.4) + Math.sin(T * 17 + i + 2) * 2, y - H * u]); }
-      fillPts(c, pts, '#e8f0f8', true);
-      for (let i = 0; i < 4; i++) FXD.circle(c, x + (i - 1.5) * w * 0.55, y - H - 2 + Math.sin(T * 9 + i) * 2, w * 0.45, i % 2 ? '#ffffff' : '#e8f0f8');
-      for (let i = 0; i < 3; i++) FIRED.tongue(c, x + (i - 1) * w * 0.4, y, w * 0.24, H * (i === 1 ? 0.75 : 0.5), T + i, i);
-    } else {   // billowing away
-      const b = (age - 0.55) / 0.45;
-      for (let i = 0; i < 7; i++) { const lift = i / 6, sx = Math.sin(i * 2.3) * R * (0.5 + b * 0.6); FXD.circle(c, x + sx, y - R * (0.6 + lift * 2.8) - b * 14, R * (0.7 - lift * 0.25) * (1.1 - b * 0.55), i % 2 ? '#ffffff' : '#d8e0ea'); }   // billowing up into a column
-    }
-  },
-});
-
-mixInto(Battle, class {
-  // Flamethrower (F3): a white-hot nozzle flash, a twisting jet that widens into billowing clouds of flame with
-  // dark smoke at their edges, embers flying off.
-  drawFireStream(c, len, w, T, grow) {
-    const n = Math.max(2, Math.floor(len / 6));
-    for (let s = 0; s < 3; s++) {   // the twisting jet
-      const pts = [];
-      for (let i = 0; i <= n; i++) { const x = i / n * len * 0.7, wid = 2 + x / len * w * 0.9; pts.push([x, Math.sin(x * 0.12 - T * 34 + s * 2.1) * wid * 0.45]); }
-      FXD.line(c, pts, 12 - s * 3, INK); FXD.line(c, pts, 9 - s * 3, FIRE[1 + s]);
-    }
-    for (let i = 0; i < 11; i++) {   // the clouds of flame billowing out, merging, bigger toward the far end
-      const u = 0.35 + i / 10 * 0.65, x = len * u, r = w * (0.3 + u * u * 0.9) * (0.85 + 0.15 * Math.sin(T * 24 + i * 2));
-      const y = Math.sin(T * 9 + i * 1.7) * w * 0.25;
-      if (i > 2 && i % 2) FIRED.smoke(c, x + r * 0.3, y - r * 0.8, r * 0.55, 1);
-      FIRED.cloud(c, x, y, r, T, i * 1.3);
-    }
-    FXD.star(c, 0, 0, 7, 2.5, 8, T * 20, '#fff3b0');   // the nozzle flash
-  }
-  // Inferno Beam (F6): a thick white-hot core, flame ribbons spiralling round it, roaring flame edges, a flare at
-  // the source and a blaze where it hits.
-  drawInfernoBeam(c, len, w, T) {
-    const n = Math.max(2, Math.floor(len / 5)), top = [], bot = [];
-    for (let i = 0; i <= n; i++) {   // the flame-edged body
-      const x = i / n * len, sp = i % 2 ? 1 : 1.35, f = 0.85 + 0.15 * Math.sin(T * 30 + i * 1.7), hw = w * 0.5 * Math.min(1, 0.4 + x / 20);
-      top.push([x - (i % 2 ? 0 : 3), -hw * sp * f]); bot.push([x - (i % 2 ? 3 : 0), hw * (i % 2 ? 1.35 : 1) * f]);
-    }
-    for (let k = 0; k < 4; k++) {
-      const sc = 1 - k * 0.24;
-      fillPts(c, [...top.map(([x, y]) => [x, y * sc]), [len + w * 0.3 * sc, 0], ...bot.reverse().map(([x, y]) => [x, y * sc])], FIRE[k], k === 0);
-      bot.reverse();
-    }
-    for (const ph of [0, Math.PI]) {   // the spiralling ribbons
-      const pts = [];
-      for (let x = 0; x <= len; x += 3) pts.push([x, Math.sin(x * 0.065 - T * 22 + ph) * w * 0.6]);
-      FXD.line(c, pts, 3.6, INK); FXD.line(c, pts, 1.8, FIRE[1]);
-    }
-    FIRED.burst(c, 0, 0, w * 0.75, T, 1, 1);          // the flare at the source
-    FIRED.burst(c, len, 0, w * 0.9, T, 2.3, 1);       // the blaze where it hits
-  }
-  // Magma Wave (F8): a wave of lava curls up in front and rolls out across the cone, a dark crust on its back,
-  // blobs of lava flung off its crest.
-  drawMagmaWave(c, m, a) {
-    const mv = a.mv, T = this.time, k = Math.min(1, a.blowT / mv.blow), d = a.r * (0.25 + 0.75 * k), fade = a.blowT > mv.blow * 0.75 ? 1 - (a.blowT - mv.blow * 0.75) / (mv.blow * 0.25) : 1;
-    const ux = Math.cos(a.dir), uy = Math.sin(a.dir), px = -uy, py = ux, span = Math.sin(mv.cone) * d * 1.05, Hh = 30 * fade + 4, n = 14;
-    const ground = u => [m.x + ux * (d - Math.abs(u) * d * 0.22) + px * u * span, m.y - 2 + (uy * (d - Math.abs(u) * d * 0.22) + py * u * span) * 0.7];
-    // the wall, back to front in four bands: a deep red body, orange, a yellow band and a white-hot lip along the crest
-    for (let k2 = 0; k2 < 4; k2++) {
-      const pts = [], lo = [0, 0.35, 0.62, 0.84][k2], hi = [1, 0.95, 0.88, 0.97][k2];
-      for (let i = 0; i <= n; i++) { const u = i / n * 2 - 1, [gx, gy] = ground(u), curl = (0.8 + 0.2 * Math.sin(T * 14 + i * 1.3)) * Hh; pts.push([gx + ux * curl * 0.35 * hi, gy - curl * hi]); }
-      for (let i = n; i >= 0; i--) { const u = i / n * 2 - 1, [gx, gy] = ground(u), curl = (0.8 + 0.2 * Math.sin(T * 14 + i * 1.3)) * Hh; pts.push([gx + ux * curl * 0.35 * lo, gy - curl * lo]); }
-      fillPts(c, pts, ['#8a1a10', FIRE[1], FIRE[2], FIRE[3]][k2], k2 === 0);
-    }
-    for (let i = 0; i <= 6; i++) {   // the dark cooling crust low on its back
-      const u = i / 6 * 2 - 1, [gx, gy] = ground(u);
-      FXD.ink(c, () => c.ellipse(gx - ux * 3, gy - Hh * 0.18, 3.6, 2.2, 0, 0, TAU), '#3a3036');
-    }
-    for (let i = 0; i < 3; i++) { const [gx, gy] = ground((i - 1) * 0.6); FIRED.smoke(c, gx - ux * 6, gy - Hh - 6 - Math.sin(T * 6 + i) * 2, 3.4, i % 3); }
-  }
-});
+// How each move plays its sheet. Frames are numbered as on the sheet, left to right, row by row.
+const SHEET_MOVES = {
+  // dashes: frames round the dasher (the hole in them sized to its body); `pre` while it winds up, `go` looping while
+  // it travels, `hit` played at the target when it connects. upright: not turned (a pillar of fire stays upright).
+  flameWheel: { dash: true, pre: [0], go: [1, 2], hit: [3, 4], hole: 0.36 },
+  blazeRush:  { dash: true, pre: [0, 1], preUpright: true, go: [2], hit: [3, 4], hole: 0.42, tilt: -0.62, ax: 0.7, ay: 0.68 },   // its comet is drawn heading down-right
+};
+// a frame sequence played as a particle (an explosion, a geyser)
+function sheetPart(b, id, frames, x, y, life, o = {}) {
+  b.particles.push({ kind: 'sheet', id, frames, x, y, life, max: life, o });
+}
 
 mixInto(Battle, class {
   // ---------------------------------------------------------- spawning effects
@@ -940,7 +741,8 @@ mixInto(Battle, class {
     this.fxDebris(tgt.x, tgt.cy, mv, big ? Math.min(5, 2 + dmg / 90) : 0, big ? 120 : 70, 3);
     // signature hits
     const toward = src ? Math.atan2(tgt.cy - src.cy, tgt.x - src.x) : 0;
-    if (big && (mv.id === 'blazeRush' || mv.id === 'flameWheel')) this.particles.push({ kind: 'fireball', x: tgt.x, y: tgt.cy, size: 18 + dmg / 30, seed: rand(0, 6), life: 0.6, max: 0.6 });
+    const SM = SHEET_MOVES[mv.id];
+    if (big && SM && SM.hit) sheetPart(this, mv.id, SM.hit, tgt.x, tgt.cy, 0.5, { sc: tgt.r * 3 / sheetW(mv.id, SM.hit[0]) });   // its sheet's impact
     if (mv.fx === 'claw') this.particles.push({ kind: 'claw', x: tgt.x, y: tgt.cy, size: 34, rot: toward + Math.PI / 2 + rand(-0.3, 0.3), color: fx[1], life: 0.3, max: 0.3 });
     if (mv.fx === 'slash') this.particles.push({ kind: 'slash', x: tgt.x, y: tgt.cy, size: 22, rot: toward + rand(-0.4, 0.4), color: fx[1], life: 0.28, max: 0.28 });
     if (mv.fx === 'flurry') {   // fists everywhere at once
@@ -954,8 +756,12 @@ mixInto(Battle, class {
   // Blowing a cone (Blizzard, Gust): snow or wind pouring out in front of the user.
   fxCone(m, a) {
     const mv = a.mv, fx = fxOf(mv), speed = a.r / 0.35, snow = styleOf(mv) === 'ice';
-    if (mv.id === 'magmaWave') {   // blobs of lava flung off the crest, and smoke
-      if (Math.random() < 0.6) { const ang = a.dir + rand(-mv.cone, mv.cone), s = speed * rand(0.5, 0.9); this.particles.push({ kind: 'deb', shape: 'mud', fx: FIRE, x: m.x + Math.cos(a.dir) * 16, y: m.y - 6, vx: Math.cos(ang) * s, vy: Math.sin(ang) * s * 0.7 - 40, grav: 300, drag: 1.5, life: 0.5, max: 0.5, size: rand(2.5, 4), rot: 0, seed: Math.random() * 1e6 }); }
+    if (mv.id === 'magmaWave') {   // the wave is the sheet (drawSheetMagma); when it's spent, a pool of lava stays a moment
+      if (!a.pooled && a.blowT + 1 / 30 >= mv.blow) {
+        a.pooled = true;
+        const d = a.r * 0.85, flip = Math.cos(a.dir) < 0;
+        sheetPart(this, 'magmaWave', [4], m.x + Math.cos(a.dir) * d, m.y + Math.sin(a.dir) * d, 0.7, { sc: 0.85, ay: 1, flip });
+      }
       return;
     }
     for (let i = 0; i < (snow ? 4 : 3); i++) {
@@ -973,13 +779,10 @@ mixInto(Battle, class {
   // A blast going off at (x, y) with radius r: shockwaves, debris, and a type flourish.
   fxBlast(x, y, r, mv) {
     const fx = fxOf(mv);
-    // fire's own (F4, F5, F7)
-    if (mv.id === 'fireBlast') this.particles.push({ kind: 'fireball', x, y: y - 4, size: r * 1.3, seed: rand(0, 6), life: 0.8, max: 0.8 });
-    if (mv.id === 'eruption') {
-      this.particles.push({ kind: 'eruption', x, y, r: r * 0.85, life: 1.1, max: 1.1 });
-      for (let i = 0; i < 9; i++) { const a = rand(0, TAU); this.particles.push({ kind: 'deb', shape: 'rock', fx: ['#2a2024', '#5a4a44', '#ff8a2a'], x: x + Math.cos(a) * r * 0.7, y: y + Math.sin(a) * r * 0.3, vx: Math.cos(a) * 40, vy: -rand(160, 260), grav: 520, drag: 0.6, life: rand(0.7, 1), max: 1, size: rand(3, 4.5), rot: a, seed: Math.random() * 1e6 }); }
-    }
-    if (mv.id === 'steamEruption') { this.particles.push({ kind: 'steamGeyser', x, y, r: r * 0.8, seed: rand(0, 6), life: 1, max: 1 }); return; }
+    // played from the owner's sheets (r152)
+    if (mv.id === 'fireBlast') { sheetPart(this, 'fireBlast', [2, 3, 3, 4], x, y - 4, 0.75, { sc: r * 2.4 / sheetW('fireBlast', 3) }); this.addShake(5); return; }
+    if (mv.id === 'eruption') { const sc = r * 1.25 / sheetW('eruption', 0); sheetPart(this, 'eruption', [1, 2, 2, 3, 4], x, y + sheetH('eruption', 0) * sc / 2, 1.1, { sc, ay: 1 }); this.addShake(8); return; }
+    if (mv.id === 'steamEruption') { const sc = r * 1.4 / sheetW('steamEruption', 0); sheetPart(this, 'steamEruption', [1, 2, 2, 3, 4], x, y + sheetH('steamEruption', 0) * sc / 2, 1.1, { sc, ay: 1 }); return; }
     this.particles.push({ kind: 'wave', x, y: y - 2, r0: 4, r1: r, life: 0.32, max: 0.32, color: fx[2], w: 4 });
     this.particles.push({ kind: 'wave', x, y: y - 2, r0: 2, r1: r * 0.7, life: 0.42, max: 0.42, color: fx[1], w: 3 });
     this.fxDebris(x, y - 4, mv, Math.round(10 + r / 6), r * 2.4, 4.2, 4);
@@ -1032,8 +835,8 @@ mixInto(Battle, class {
       if (a.kind === 'vortex') this.drawVortex(c, m, a);
       if (a.kind === 'burst' && !a.done) this.drawCharge(c, m, a);
       if (a.kind === 'burst' && a.done && a.mv.ripple) this.drawRipple(c, m, a);
-      if (a.kind === 'dash' && (a.t > 0.1 || a.phase === 'combo' || a.mv.windup)) this.drawDashFx(c, m, a);
-      if (a.kind === 'burst' && a.done && a.mv.id === 'magmaWave') this.drawMagmaWave(c, m, a);
+      if (a.kind === 'dash' && (a.t > 0.1 || a.phase === 'combo' || a.mv.windup || SHEET_MOVES[a.mv.id])) this.drawDashFx(c, m, a);
+      if (a.kind === 'burst' && a.done && a.mv.id === 'magmaWave') this.drawSheetMagma(c, m, a);
     }
     for (const p of this.projectiles) this.drawProjectile(c, p);
     this.drawZoneFalls(c);
@@ -1041,8 +844,22 @@ mixInto(Battle, class {
   }
 
   // Dashes with a look of their own, drawn round the moving monster.
+  // A dash played from its sheet: the frames round the dasher, the hole in them sized to its body.
+  drawSheetDash(c, m, a, SM) {
+    const id = a.mv.id, pre = 0.1 + (a.mv.windup || 0), T = this.time;
+    if (a.t <= pre) {
+      const fr = SM.pre[Math.min(SM.pre.length - 1, Math.floor(a.t / pre * SM.pre.length))], sc = m.r * 2.2 / (sheetW(id, fr) * SM.hole);
+      if (SM.preUpright) drawSheet(c, id, fr, m.x, m.y + 3, { sc, ay: 1 });
+      else drawSheet(c, id, fr, m.x, m.cy, { sc, dir: a.dir });
+      return;
+    }
+    const fr = SM.go[Math.floor(T / 0.07) % SM.go.length], sc = m.r * 2.2 / (sheetW(id, fr) * SM.hole);
+    drawSheet(c, id, fr, m.x, m.cy, { sc, dir: a.dir + (SM.tilt || 0), ax: SM.ax ?? 0.5, ay: SM.ay ?? 0.5 });
+  }
+
   drawDashFx(c, m, a) {
     const mv = a.mv, fx = fxOf(mv), T = this.time, cx = m.x, cy = m.cy, R = m.r + 7;
+    if (SHEET_MOVES[mv.id] && SHEET_MOVES[mv.id].dash && a.phase !== 'combo') { this.drawSheetDash(c, m, a, SHEET_MOVES[mv.id]); return; }
     // its own art (DASH_ART), drawn in its frame; the ones with an older look of their own (fx) keep it
     const art = DASH_ART[mv.id] || (!mv.fx || mv.fx === 'claw' || mv.fx === 'slash' ? DASH_ART._default : null);
     if (art && a.phase !== 'combo') {
@@ -1231,16 +1048,25 @@ mixInto(Battle, class {
   // a blast winding up: energy gathering at the user's feet
   drawCharge(c, m, a) {
     const fx = fxOf(a.mv), k = clamp(a.t / a.mv.delay, 0, 1);
-    if (a.mv.id === 'eruption') {   // the ground cracks round it, lava glowing through
-      const R = a.r * 0.85 * (0.5 + k * 0.5);
-      c.beginPath(); c.ellipse(m.x, m.y, R, R * 0.45, 0, 0, TAU); c.strokeStyle = INK; c.lineWidth = 5; c.stroke(); c.strokeStyle = '#4a3020'; c.lineWidth = 3; c.stroke(); c.strokeStyle = '#ffb02e'; c.lineWidth = 1.2 * k + 0.3; c.stroke();
+    if (a.mv.id === 'eruption') {   // the ground cracks round it, lava glowing through (sheet frame 0)
+      const sc = a.r * 1.25 / sheetW('eruption', 0) * (0.6 + 0.4 * k);
+      drawSheet(c, 'eruption', 0, m.x, m.y, { sc });
       return;
     }
-    if (a.mv.id === 'magmaWave') { FIRED.burst(c, m.x + Math.cos(a.dir) * 14, m.y - 4, 3 + k * 8, this.time, 0.4, 0.6); return; }   // lava welling up in front
+    if (a.mv.id === 'magmaWave') {   // the lava rising in front of it (sheet frame 0)
+      drawSheet(c, 'magmaWave', 0, m.x + Math.cos(a.dir) * 18, m.y + Math.sin(a.dir) * 12 + 2, { sc: 0.5 + k * 0.5, ay: 1, flip: Math.cos(a.dir) < 0 });
+      return;
+    }
     for (let i = 0; i < 6; i++) {
       const ang = i / 6 * TAU + this.time * 5, rr = (1 - k) * 22 + 6;
       FXD.dot(c, m.x + Math.cos(ang) * rr, m.y - 2 + Math.sin(ang) * rr * 0.6, 1.8, i % 2 ? fx[1] : fx[2]);
     }
+  }
+
+  // Magma Wave: the wave rolls out across its cone, rising, curling over, crashing (sheet frames 1-3)
+  drawSheetMagma(c, m, a) {
+    const mv = a.mv, k = Math.min(1, a.blowT / mv.blow), d = a.r * (0.25 + 0.6 * k), fr = 1 + Math.min(2, Math.floor(k * 3));
+    drawSheet(c, 'magmaWave', fr, m.x + Math.cos(a.dir) * d, m.y + Math.sin(a.dir) * d, { sc: 0.85, ay: 1, flip: Math.cos(a.dir) < 0 });
   }
 
   drawProjectile(c, p) {
@@ -1292,9 +1118,8 @@ mixInto(Battle, class {
         }
         FXD.circle(c, x, y, R, fx[0]); FXD.dot(c, x, y, R * 0.62, fx[1]); FXD.dot(c, x - R * 0.2, y - R * 0.2, R * 0.3, '#ffffff');
         break;
-      case 'fire':   // a fireball (F4): a comet of fire, its white-hot core swirling
-        FIRED.comet(c, x, y, a, R * 1.05, R * 3.4, T, p.spin);
-        { const sw = []; for (let i = 0; i < 12; i++) { const an = -T * 14 + i * 0.55, rr = i * R * 0.06; sw.push([x + Math.cos(an) * rr, y + Math.sin(an) * rr]); } FXD.line(c, sw, 1.4, '#ffffff'); }
+      case 'fire':   // a fireball, from the owner's sheet (F4): its head at the shot
+        drawSheet(c, 'fireBlast', 1, x, y, { dir: a, ax: 0.78, sc: p.r / 8 });
         break;
       case 'dragon': case 'ghost':
         FXD.flame(c, x, y, a, R * 1.05, fx, T);
@@ -1355,11 +1180,21 @@ mixInto(Battle, class {
     }
   }
 
+  // Flamethrower and Inferno Beam from their sheets: a spark or orb while it charges, then the stream stretched to
+  // the beam's length (flickering between its two full frames), then the fading frame.
+  drawSheetBeam(c, m, a, ox, oy) {
+    const mv = a.mv, id = mv.id, T = this.time, n = sheetFrames(id);
+    if (a.phase === 'charge') { drawSheet(c, id, 0, ox, oy, { sc: 0.4 + a.t / mv.charge * 0.6 }); return; }
+    const full = n === 5 ? [2, 3] : [1, 2], fr = a.t < 0.08 ? 1 : mv.dur - a.t < 0.15 ? n - 1 : full[Math.floor(T / 0.08) % 2];
+    const sx = mv.len / sheetW(id, fr);
+    drawSheet(c, id, fr, ox, oy, { dir: a.dir, ax: 0, ay: 0.5, sx, sy: Math.min(sx, 1.25) });
+  }
+
   drawBeam(c, m, a) {
     if (a.mv.fx === 'stare') { this.drawStare(c, m, a); return; }
     const mv = a.mv, fx = fxOf(mv), T = this.time;
     const ox = m.x + Math.cos(a.dir) * 6, oy = m.cy + Math.sin(a.dir) * 6;
-    if (a.phase === 'charge' && styleOf(mv) === 'fire') { FIRED.burst(c, ox, oy, 3 + a.t / mv.charge * mv.width * 0.6, T, 0.7); return; }   // fire gathering at the mouth
+    if (mv.id === 'flamethrower' || mv.id === 'infernoBeam') { this.drawSheetBeam(c, m, a, ox, oy); return; }   // from the owner's sheets
     if (a.phase === 'charge') {   // a ball of energy growing at the muzzle
       const k = a.t / mv.charge, r = 2.5 + k * mv.width * 0.55;
       FXD.circle(c, ox, oy, r, fx[0]); FXD.dot(c, ox, oy, r * 0.65, fx[1]); FXD.dot(c, ox, oy, r * 0.3, '#ffffff');
@@ -1369,11 +1204,6 @@ mixInto(Battle, class {
     const grow = Math.min(1, a.t / 0.08), fade = Math.min(1, (mv.dur - a.t) / 0.15);
     const len = mv.len * grow, w = mv.width * Math.max(0.25, fade) * 1.6;
     c.save(); c.translate(ox, oy); c.rotate(a.dir);
-    if (styleOf(mv) === 'fire') {   // fire is drawn as fire (F3, F6)
-      if (mv.id === 'infernoBeam') this.drawInfernoBeam(c, len, w, T); else this.drawFireStream(c, len, w, T, grow);
-      c.restore();
-      return;
-    }
     if (styleOf(mv) === 'electric') {   // twisting lightning instead of a solid beam
       const seed = ((T * 22) | 0) * 31;
       for (let i = 0; i < 3; i++) FXD.bolt(c, 0, 0, len, 0, seed + i * 7, w * (i ? 0.35 : 0.5), i ? fx[0] : fx[1], w * 0.9, i === 0);
@@ -1451,10 +1281,8 @@ mixInto(Battle, class {
       } else if (z.mv.fx === 'rock' && left < 0.35) {
         const k = 1 - left / 0.35;
         FXD.rock(c, zx, zy - 150 * (1 - k * k) - 6, z.id, 8, FX_STYLES.rock, z.id);
-      } else if (z.mv.id === 'steamEruption') {   // the ground bubbling and cracking before the geyser
-        const k = 1 - left / z.delay;
-        for (let i = 0; i < 5; i++) { const a = i / 5 * TAU + 0.3, L = z.r * 0.8 * k; FXD.line(c, [[zx, zy], [zx + Math.cos(a) * L, zy + Math.sin(a) * L * 0.45]], 3, INK); FXD.line(c, [[zx, zy], [zx + Math.cos(a) * L, zy + Math.sin(a) * L * 0.45]], 1.4, '#ff7a2a'); }
-        if (Math.sin(this.time * 30 + z.id) > 0) FXD.dot(c, zx + Math.sin(this.time * 7 + z.id) * 4, zy - 3 - k * 4, 1.4, '#e8f0f8');
+      } else if (z.mv.id === 'steamEruption') {   // the ground bubbling and cracking before the geyser (sheet frame 0)
+        drawSheet(c, 'steamEruption', 0, zx, zy, { sc: z.r * 1.4 / sheetW('steamEruption', 0) * (0.5 + 0.5 * (1 - left / z.delay)) });
       } else if (z.mv.fx === 'bolt' && left < 0.25) {   // a crackle in the clouds before it strikes
         FXD.bolt(c, zx + 10, zy - 200, zx - 6, zy - 150, ((this.time * 25) | 0) + z.id, 2, fx[1], 6, false);
       }

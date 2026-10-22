@@ -2,7 +2,7 @@
 
 Prompts for the attacks' art (the Coreatures' and trainers' prompts are in `docs/concept-prompts.md`). The
 audit and the plan are in `docs/attack-art.md`. Run a batch in Gemini and send back the images you like;
-Claude draws the batch from them.
+Claude cuts them into the game's frames (tools/fx-sheets.py) and plays them as the attacks.
 
 The owner's picks are kept in `docs/refs/` (tracked in git, unlike other pictures), named after their prompt
 (`d1-volt-rush.png`), so later sessions can see what each attack was drawn from.
