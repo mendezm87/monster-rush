@@ -182,3 +182,20 @@ is welcome).
 > into a glowing pool. 16-bit pixel art visual effect sprite sheet for an action game, frames in a row from left to
 > right (rising, rolling, crest, crash, pool), chunky pixels with a dark 1-pixel outline, limited bright palette
 > with hard-edged shading, no creature or character, plain dark navy background, no text
+
+## Fixes: sheets to redo (r154)
+
+**What to ask for from now on (the owner: "some of it looks cut off ... you can tell when the sprites change"):** Gemini
+sometimes runs out of room in a frame and slices the effect off in a straight line, and 4-5 very different frames
+make the swaps visible. So prompts now ask for **8 frames, each small change from the last**, and **each frame
+fully inside its own space with empty background all round it, nothing touching the edges or cut off**.
+
+**F8b · Magma Wave, smoother** (the first sheet's waves were cut off flat at the back)
+> A wave of molten lava rolling to the right along the ground, 8 frames in a row, each only a small step from the
+> one before: lava swelling up out of the ground, rising into a wave, the crest growing taller, curling over, the
+> curl at its tallest, starting to break, crashing down in a splash of lava blobs, settling into a glowing pool.
+> A glowing orange and yellow crest, a dark cooling crust on its back, smoke rising. Every frame complete and fully
+> inside its own space with empty background all round it, nothing touching the edges or cut off, all frames the
+> same size and evenly spaced. 16-bit pixel art visual effect sprite sheet for an action game, chunky pixels with
+> a dark 1-pixel outline, limited bright palette with hard-edged shading, no creature or character, plain dark navy
+> background, no text
