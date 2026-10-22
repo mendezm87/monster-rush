@@ -278,7 +278,7 @@ const ROSTER = [
     moves: ['airSlash', 'gust', 'razorGale', 'tornado'] },
   { id: 'venomire',  name: 'VENOMIRE',  types: ['glitch'],   hp: 1020, atk: 1.02, def: 1.08, spd: 78,  size: 'M', item: 'toxicVial',
     moves: ['sludgeBomb', 'toxicPool', 'acidSpray', 'venomJet'] },
-  { id: 'scarablade',name: 'SCARABLADE',types: ['plant', 'brawl'], hp: 950, atk: 1.1, def: 1.05, spd: 82, size: 'M', item: 'powerBand',
+  { id: 'scarablade',name: 'BUGILIST',  types: ['plant', 'brawl'], hp: 950, atk: 1.1, def: 1.05, spd: 82, size: 'M', item: 'powerBand',
     moves: ['megahorn', 'pinMissile', 'beetleBarrage', 'bulkUp'] },
   { id: 'wispurr',   name: 'WISPURR',   types: ['phantom'],    hp: 950,  atk: 1.25, def: 0.88, spd: 104, size: 'M', item: 'quickCharm',
     moves: ['shadowBall', 'phantomStrike', 'spiritFlames', 'spectralRay'] },
