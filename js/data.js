@@ -321,11 +321,11 @@ const EVOLVED = [
   // Slumbear's three bears (r134, the owner's idea): his jumbled bear data sorts itself into one bear when he
   // Restores, decided by the area he's in (`areas`): the cold ones make a polar bear, the green ones a panda,
   // anywhere else a grizzly. Sleepy names, like his.
-  { id: 'polarest', name: 'POLAREST', types: ['beast', 'ice'], hp: 2200, atk: 1.3, def: 1.25, spd: 62, size: 'L', item: 'snackPouch',
+  { id: 'polarest', name: 'POLAROAR', types: ['beast', 'ice'], hp: 2200, atk: 1.3, def: 1.25, spd: 62, size: 'L', item: 'snackPouch',
     moves: ['megaBeam', 'bodySlam', 'blizzard', 'snack'], from: 'slumbear', areas: ['summit', 'grotto'] },
-  { id: 'bambooze', name: 'BAMBOOZE', types: ['beast', 'plant'], hp: 2350, atk: 1.2, def: 1.32, spd: 52, size: 'L', item: 'snackPouch',
+  { id: 'bambooze', name: 'PANDAWN', types: ['beast', 'plant'], hp: 2350, atk: 1.2, def: 1.32, spd: 52, size: 'L', item: 'snackPouch',
     moves: ['megaBeam', 'bodySlam', 'seedBomb', 'snack'], from: 'slumbear', areas: ['meadow', 'ruins'] },
-  { id: 'grizzleep', name: 'GRIZZLEEP', types: ['beast', 'earth'], hp: 2300, atk: 1.4, def: 1.28, spd: 54, size: 'L', item: 'snackPouch',
+  { id: 'grizzleep', name: 'GRIZZQUAKE', types: ['beast', 'earth'], hp: 2300, atk: 1.4, def: 1.28, spd: 54, size: 'L', item: 'snackPouch',
     moves: ['megaBeam', 'bodySlam', 'quake', 'snack'], from: 'slumbear' },
   { id: 'infernox', name: 'INFERNOX', types: ['fire', 'earth'], hp: 1400, atk: 1.26, def: 1.15, spd: 90, size: 'L', item: 'emberStone',
     moves: ['blazeRush', 'infernoBeam', 'fireBlast', 'magmaQuake'], from: 'cinderox' },
