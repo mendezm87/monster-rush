@@ -2,7 +2,7 @@
 
 // Shown on the title screen so players can tell whether their browser has the latest
 // build (GitHub Pages lets browsers cache files for up to 10 minutes). Bump on every release.
-const VERSION = '2026.10.22-r149';
+const VERSION = '2026.10.22-r150';
 
 const App = {
   endless: false,   // the mode picked on the title screen
@@ -713,7 +713,7 @@ function frame(now) {
   Input.poll();
   const b = App.battle;
   if (b) {
-    if (!App.paused && b.state !== 'pick') b.update(dt);
+    if (!App.paused && b.state !== 'pick') b.update(dt * (App.timeScale || 1));   // timeScale: slow motion on the attack test page (moves.html)
     // a move learned on a level-up waits for a calm moment between fights
     if (!App.paused && b.state === 'explore' && App.run && App.run.learnQueue.length) openLearn();
     if (!App.paused && b.state === 'explore' && (App.savedAt === undefined || clockT - App.savedAt > 3)) { App.savedAt = clockT; saveRun(); }

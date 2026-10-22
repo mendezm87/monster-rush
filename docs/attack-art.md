@@ -44,6 +44,8 @@ The same rules as the Coreature art checklist (CLAUDE.md), applied to attacks:
 
 ## 3. The plan, in batches (worst first)
 
+**r150, the owner's review of batch 1:** flames drawn as many small flame sprites look pasted together; fire should be one continuous mass of flame. Attacks should look stronger (a clear wind-up, bigger, layered, a big finish), and many animations can't be read at game speed. So from here the batches go **type by type** (fire first: prompts F1-F8), each attack with a clear wind-up, travel and finish, checked in slow motion on moves.html (its new speed setting) and at full speed.
+
 1. **Dashes** (13), **done in r147**: replace the coloured block with a drawn motion trail per move (speed lines and afterimages
    of the Coreature itself, sparks for Volt Rush, a water jet for Aqua Jet, a horn-shaped lance of light for
    Megahorn, a dive streak with feathers for Brave Dive, a ghostly trail for Phantom Strike...), and a proper

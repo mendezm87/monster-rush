@@ -112,3 +112,73 @@ The shared style, already in every prompt:
 > palette with hard-edged shading, no creature or character, plain dark navy background, no text
 
 - Volt Rush: travel from d1-volt-rush.png (bolts streaming back, no figure), impact from d1b-volt-rush.png (a zigzag bolt striking into the star); d1b's running humanoid of lightning doesn't fit four-legged and floating Coreatures.
+
+## Batch 2: fire (r150; the owner: "I don't think we prompted any fire attacks. Blaze Rush should engulf the user in flames and then he dashes. Flame Wheel should look more like flames instead of small fire sprites pasted together")
+
+Every fire attack, asking for **one big continuous body of fire** (roaring tongues that merge, a hot white-yellow
+core, orange, then deep red edges and dark smoke) instead of separate little flames, and for each attack to look
+**strong**: big, layered, with a clear wind-up and a big finish. Send back the ones you like (a second take of any
+is welcome).
+
+**F1 · Flame Wheel** (a dash)
+> A roaring wheel of continuous fire rolling forward: one thick ring of merged flames wrapped around an empty
+> creature-sized space, big tongues of flame licking backwards off the rim as it spins, a hot white-yellow core
+> band inside the orange flames, sparks and embers flung off, a burning track left on the ground behind it, then a
+> fiery explosion of flame on impact. 16-bit pixel art visual effect sprite sheet for an action game, frames in a
+> row from left to right (wind-up, travel, impact, fade), chunky pixels with a dark 1-pixel outline, limited
+> bright palette with hard-edged shading, the effect wraps around an empty creature-sized space in the middle (no
+> creature drawn, not a solid ball), plain dark navy background, no text
+
+**F2 · Blaze Rush** (a dash: it bursts into flames first, then charges)
+> First a creature-sized space bursts into flames: a pillar of roaring fire engulfs it from the ground up, flames
+> rising tall above it; then the whole blaze charges forward like a comet of fire, the flames streaming far back
+> behind it, embers and smoke trailing; then a big burst of fire on impact. 16-bit pixel art visual effect sprite
+> sheet for an action game, frames in a row from left to right (ignite, engulfed, charge, impact, fade), chunky
+> pixels with a dark 1-pixel outline, limited bright palette with hard-edged shading, the effect wraps around an
+> empty creature-sized space in the middle (no creature drawn, not a solid ball), plain dark navy background, no
+> text
+
+**F3 · Flamethrower** (a stream of fire from the mouth)
+> A roaring stream of fire blasting out to the right from a small point: a bright white-hot nozzle flash, a
+> twisting jet of flame that widens into billowing rolling flame clouds with dark smoke at the edges, embers
+> scattering, then the far end splashing into a burst of fire. 16-bit pixel art visual effect sprite sheet for an
+> action game, frames in a row from left to right (spark, stream starting, full blast, fading), chunky pixels with
+> a dark 1-pixel outline, limited bright palette with hard-edged shading, no creature or character, plain dark
+> navy background, no text
+
+**F4 · Fire Blast** (a big fireball)
+> A big fireball flying to the right: a swirling white-hot core, layers of churning orange and red fire around
+> it, a long flickering comet tail of flame and smoke, then it slams into a huge explosion: a ball of fire with a
+> ring of flame tongues bursting outwards and smoke puffs. 16-bit pixel art visual effect sprite sheet for an
+> action game, frames in a row from left to right (forming, flying, impact, explosion, smoke), chunky pixels with
+> a dark 1-pixel outline, limited bright palette with hard-edged shading, no creature or character, plain dark
+> navy background, no text
+
+**F5 · Eruption** (fire bursting up all around the user)
+> The ground cracks in a ring around an empty creature-sized space, glowing lava showing through the cracks, then
+> a ring of fire geysers erupts upwards all around it, molten rocks and blobs of lava thrown high into the air,
+> then they rain down and the cracks glow and cool. 16-bit pixel art visual effect sprite sheet for an action
+> game, frames in a row from left to right (cracks, eruption, peak, falling rocks, cooling), chunky pixels with a
+> dark 1-pixel outline, limited bright palette with hard-edged shading, no creature drawn, plain dark navy
+> background, no text
+
+**F6 · Inferno Beam** (a huge beam of fire)
+> A massive beam of white-hot fire blasting to the right: a blinding muzzle flare at the source, a thick core of
+> white and yellow, flames spiralling around the beam, roaring flame edges, embers thrown off, and a big fiery
+> explosion where it hits. 16-bit pixel art visual effect sprite sheet for an action game, frames in a row from
+> left to right (charging, firing, full power, fading), chunky pixels with a dark 1-pixel outline, limited bright
+> palette with hard-edged shading, no creature or character, plain dark navy background, no text
+
+**F7 · Steam Eruption** (geysers of scalding steam and fire from the ground)
+> Spots on the ground bubble and crack, then geysers of scalding white steam shoot up with orange fire glowing
+> inside them, hot water droplets flying, then the steam billows out into clouds and fades. 16-bit pixel art
+> visual effect sprite sheet for an action game, frames in a row from left to right (bubbling, bursting, peak,
+> billowing, fading), chunky pixels with a dark 1-pixel outline, limited bright palette with hard-edged shading,
+> no creature or character, plain dark navy background, no text
+
+**F8 · Magma Wave** (a wave of lava rolling out in front)
+> A wave of molten lava rolling forward to the right along the ground: a glowing orange crest curling over, a dark
+> cooling crust on its back, blobs and droplets of lava splashing off, smoke rising, then it crashes and spreads
+> into a glowing pool. 16-bit pixel art visual effect sprite sheet for an action game, frames in a row from left to
+> right (rising, rolling, crest, crash, pool), chunky pixels with a dark 1-pixel outline, limited bright palette
+> with hard-edged shading, no creature or character, plain dark navy background, no text
