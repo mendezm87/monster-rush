@@ -362,6 +362,7 @@ mixInto(Battle, class {
       p.life -= dt;
       if (p.vx !== undefined) {
         if (p.drag) { p.vx *= Math.exp(-p.drag * dt); p.vy *= Math.exp(-p.drag * dt); }
+        if (p.grav) p.vy += p.grav * dt;   // bits that fall (or rise, if negative)
         p.x += p.vx * dt; p.y += p.vy * dt;
       }
     }

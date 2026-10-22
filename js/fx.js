@@ -204,6 +204,9 @@ const FX_PARTS = {
       case 'ring': FXD.ring(c, p.x, p.y, s * (2 - k), fx[1], 1.4, 0.7); break;
       case 'bolt': FXD.bolt(c, p.x, p.y, p.x + Math.cos(a) * s * 2.6, p.y + Math.sin(a) * s * 2.6, p.seed, 2, fx[1], 3, false); break;
       case 'feather': FXD.crescent(c, p.x, p.y, a, s * 1.1, fx[2]); break;
+      case 'paper': c.save(); c.translate(p.x, p.y); c.rotate(p.rot + p.life * 12); FXD.ink(c, () => c.rect(-s * 0.8, -s * 0.6, s * 1.6, s * 1.2), '#ffffff'); FXD.line(c, [[-s * 0.5, -s * 0.15], [s * 0.5, -s * 0.15]], 0.8, '#8a8aa0'); c.restore(); break;
+      case 'puff': FXD.circle(c, p.x, p.y, s * (1.3 - 0.5 * k), k > 0.5 ? fx[2] : fx[1]); break;
+      case 'spark': FXD.line(c, [[p.x, p.y], [p.x - p.vx * 0.05, p.y - p.vy * 0.05]], 3.4, INK); FXD.line(c, [[p.x, p.y], [p.x - p.vx * 0.05, p.y - p.vy * 0.05]], 1.6, k > 0.5 ? fx[2] : fx[1]); break;
       default: FXD.star(c, p.x, p.y, s, s * 0.45, 4, p.rot + p.life * 6, fx[1]);
     }
   },
@@ -330,7 +333,12 @@ const FX_PARTS = {
     }
   },
   // a hit landing: its look's own impact (IMPACT_ART)
-  hit(c, p, k) { (IMPACT_ART[p.art] || IMPACT_ART.normal)(c, p.x, p.y, 1 - k, p.size, p.rot, p.fx, p.seed); },
+  hit(c, p, k) {
+    const age = 1 - k;
+    if (p.big) FXD.ring(c, p.x, p.y, p.size * (0.35 + age * 1.05), p.fx[2], 2.6 * k + 0.6, 0.8);   // a shock ring rolling out
+    (IMPACT_ART[p.art] || IMPACT_ART.normal)(c, p.x, p.y, age, p.size, p.rot, p.fx, p.seed);
+    if (age < 0.1) { const f = 1 - age / 0.1; FXD.star(c, p.x, p.y, p.size * 0.5 * f + 1, p.size * 0.12 * f + 0.4, 4, p.rot + Math.PI / 4, '#ffffff'); }   // the flash as it lands
+  },
   // a speed streak behind a dashing monster
   streak(c, p, k) {
     const pts = [[p.x, p.y], [p.x - p.sx * 0.07 * k, p.y - p.sy * 0.07 * k]];
@@ -480,11 +488,12 @@ const DASH_ART = {
     if (back) {
       for (let i = 0; i < 5; i++) {
         const y = (i - 2) * R * 0.36, L = R * 1.6 + 22 + ((i * 7 + ((T * 30) | 0)) % 3) * 8;
-        FXD.bolt(c, R * 0.3, y, R * 0.3 - L, y + (i % 2 ? 8 : -8), ((T * 24) | 0) * 5 + i, 3, fx[0], 7, i % 2 === 0);
+        FXD.bolt(c, R * 0.3, y, R * 0.3 - L, y + (i % 2 ? 8 : -8), ((T * 24) | 0) * 5 + i, 4.2, i % 2 ? fx[0] : fx[1], 7, i % 2 === 0);
       }
       return;
     }
-    DASH_ART._edge(c, R, fx[0], '#ffffff', 1.4);
+    DASH_ART._edge(c, R, fx[0], '#ffffff', 2.6);
+    DASH_ART._edge(c, R * 1.25, fx[1], '#ffffff', 1);
     if (Math.sin(T * 50) > 0) FXD.star(c, R * 0.9, -R * 0.75, 2.8, 0.8, 4, 0, '#ffffff', 2.2);
   },
   // a torpedo of water: two streams sweeping back round the body, a white foam spearhead at the front
@@ -493,12 +502,13 @@ const DASH_ART = {
       for (const s of [-1, 1]) {
         const pts = [];
         for (let i = 0; i <= 10; i++) { const t = i / 10; pts.push([R * 0.9 - t * (R * 2.8 + 30), s * (R * 0.45 + Math.sin(t * Math.PI) * R * 0.55 + Math.sin(T * 30 + t * 6) * 1.5)]); }
-        FXD.line(c, pts, 7, INK); FXD.line(c, pts, 4.6, fx[1]); FXD.line(c, pts.slice(0, 7), 1.6, fx[2]);
+        FXD.line(c, pts, 11, INK); FXD.line(c, pts, 8, fx[0]); FXD.line(c, pts, 5, fx[1]); FXD.line(c, pts.slice(0, 7), 2.2, fx[2]);
       }
       for (let i = 0; i < 3; i++) FXD.dot(c, -R - 8 - ((T * 120 + i * 9) % 22), ((i * 37) % 3 - 1) * R * 0.6, 1.2, fx[2]);
       return;
     }
-    FXD.ink(c, () => { c.moveTo(R + 12, 0); c.lineTo(R - 2, -R * 0.55); c.lineTo(R + 1, 0); c.lineTo(R - 2, R * 0.55); c.closePath(); }, '#e6f6ff');
+    FXD.ink(c, () => { c.moveTo(R + 16, 0); c.lineTo(R - 3, -R * 0.75); c.lineTo(R + 2, 0); c.lineTo(R - 3, R * 0.75); c.closePath(); }, '#e6f6ff');
+    FXD.ink(c, () => { c.moveTo(R + 10, 0); c.lineTo(R - 1, -R * 0.4); c.lineTo(R + 3, 0); c.lineTo(R - 1, R * 0.4); c.closePath(); }, '#ffffff', 0);
   },
   // a glowing green horn lance thrust forward, leaf-shaped streaks and torn leaves behind
   megahorn(c, R, T, fx, back) {
@@ -506,13 +516,14 @@ const DASH_ART = {
       for (const s of [-1, 1]) {
         const pts = [];
         for (let i = 0; i <= 8; i++) { const t = i / 8; pts.push([R * 0.6 - t * (R * 2.6 + 26), s * (R * 0.4 + t * R * 0.6)]); }
-        FXD.line(c, pts, 5.4, INK); FXD.line(c, pts, 3, fx[1]); FXD.line(c, pts.slice(0, 4), 1.2, fx[2]);
+        FXD.line(c, pts, 8.5, INK); FXD.line(c, pts, 5.6, fx[0]); FXD.line(c, pts, 3.4, fx[1]); FXD.line(c, pts.slice(0, 4), 1.6, fx[2]);
       }
       for (let i = 0; i < 3; i++) { const x = -R - ((T * 90 + i * 14) % 30), y = (i - 1) * R * 0.8; FXD.leaf(c, x, y, T * 8 + i, 3, fx[1], fx[0]); }
       return;
     }
-    FXD.ink(c, () => { c.moveTo(R * 0.7, -4); c.lineTo(R + 24, 0); c.lineTo(R * 0.7, 4); c.closePath(); }, fx[1]);
-    FXD.line(c, [[R * 0.8, 0], [R + 18, 0]], 1.4, fx[2]);
+    FXD.ink(c, () => { c.moveTo(R * 0.6, -6.5); c.lineTo(R + 32, 0); c.lineTo(R * 0.6, 6.5); c.closePath(); }, fx[0]);
+    FXD.ink(c, () => { c.moveTo(R * 0.7, -3.5); c.lineTo(R + 26, 0); c.lineTo(R * 0.7, 3.5); c.closePath(); }, fx[1], 0);
+    FXD.line(c, [[R * 0.8, 0], [R + 22, 0]], 1.8, '#ffffff');
   },
   // riveted steel plates closing into a wedge at its front, sparks scraping off behind
   ironSlam(c, R, T, fx, back) {
@@ -538,29 +549,32 @@ const DASH_ART = {
       for (const s of [-1, 1]) {
         const pts = [];
         for (let i = 0; i <= 10; i++) { const t = i / 10; pts.push([R + 8 - t * (R * 3 + 26), s * (t * R * 1.15 + Math.sin(t * 7 - T * 25) * 2 * t)]); }
-        FXD.line(c, pts, 6, INK); FXD.line(c, pts, 3.6, fx[1]); FXD.line(c, pts.slice(0, 5), 1.5, '#ffffff');
+        FXD.line(c, pts, 9.5, INK); FXD.line(c, pts, 6.4, fx[0]); FXD.line(c, pts, 3.8, fx[1]); FXD.line(c, pts.slice(0, 5), 1.8, '#ffffff');
       }
       return;
     }
-    FXD.ink(c, () => { c.moveTo(R + 14, 0); c.lineTo(R + 2, -5); c.lineTo(R + 5, 0); c.lineTo(R + 2, 5); c.closePath(); }, '#ffffff');
+    FXD.ink(c, () => { c.moveTo(R + 20, 0); c.lineTo(R, -9); c.lineTo(R + 6, 0); c.lineTo(R, 9); c.closePath(); }, fx[1]);
+    FXD.ink(c, () => { c.moveTo(R + 16, 0); c.lineTo(R + 3, -4.5); c.lineTo(R + 7, 0); c.lineTo(R + 3, 4.5); c.closePath(); }, '#ffffff', 0);
   },
   // a lance of blue-white light thrust forward, coils of current round the body
   lanceCharge(c, R, T, fx, back) {
     if (back) {
       for (let i = 0; i < 3; i++) {
         const x = -R * 0.6 + i * R * 0.5 + ((T * 40) % (R * 0.5));
-        c.beginPath(); c.ellipse(x, 0, 2.6, R + 4, 0, 0, TAU); c.strokeStyle = INK; c.lineWidth = 4.4; c.stroke(); c.strokeStyle = i === 1 ? '#ffffff' : '#7ac8ff'; c.lineWidth = 1.8; c.stroke();
+        c.beginPath(); c.ellipse(x, 0, 3, R + 5, 0, 0, TAU); c.strokeStyle = INK; c.lineWidth = 5.6; c.stroke(); c.strokeStyle = i === 1 ? '#ffffff' : '#7ac8ff'; c.lineWidth = 2.8; c.stroke();
       }
       if (Math.sin(T * 40) > 0.2) FXD.bolt(c, -R, -R * 0.6, -R - 14, -R * 0.2, (T * 30) | 0, 1.4, '#c8ecff', 3, false);
       return;
     }
-    FXD.ink(c, () => { c.moveTo(R * 0.6, -3); c.lineTo(R + 26, -1.2); c.lineTo(R + 34, 0); c.lineTo(R + 26, 1.2); c.lineTo(R * 0.6, 3); c.closePath(); }, '#7ac8ff');
-    FXD.line(c, [[R * 0.7, 0], [R + 30, 0]], 1.4, '#ffffff');
+    FXD.ink(c, () => { c.moveTo(R * 0.6, -5); c.lineTo(R + 30, -2); c.lineTo(R + 42, 0); c.lineTo(R + 30, 2); c.lineTo(R * 0.6, 5); c.closePath(); }, '#4a9eff');
+    FXD.ink(c, () => { c.moveTo(R * 0.6, -2.6); c.lineTo(R + 36, 0); c.lineTo(R * 0.6, 2.6); c.closePath(); }, '#9fd8ff', 0);
+    FXD.line(c, [[R * 0.7, 0], [R + 34, 0]], 1.6, '#ffffff');
+    if (Math.sin(T * 60) > 0) FXD.star(c, R + 42, 0, 5, 1.2, 4, 0, '#ffffff', 2.2);
   },
   // a ghostly lunge: spirit flames streaming back, a violet crescent at its front
   phantomStrike(c, R, T, fx, back) {
-    if (back) { for (let i = 0; i < 4; i++) FXD.flame(c, -R * 0.85, (i - 1.5) * R * 0.45, 0, R * 0.34 + (i % 2) * 2, fx, T * 1.3 + i); return; }   // heads at its back, tails streaming away
-    DASH_ART._edge(c, R, fx[1], fx[2]);
+    if (back) { for (let i = 0; i < 4; i++) FXD.flame(c, -R * 0.85, (i - 1.5) * R * 0.45, 0, R * 0.46 + (i % 2) * 2, fx, T * 1.3 + i); return; }   // heads at its back, tails streaming away
+    DASH_ART._edge(c, R, fx[1], fx[2], 2.4);
   },
   // Mondaze racing a deadline: sheets of paper, clock faces and coffee flying off behind
   deadlineDash(c, R, T, fx, back) {
@@ -576,8 +590,8 @@ const DASH_ART = {
   },
   // a heavy body charging: big dust clouds kicked up behind, a crescent of force at the front
   bodySlam(c, R, T, fx, back) {
-    if (back) { for (let i = 0; i < 4; i++) { const t = (T * 2.6 + i * 0.25) % 1, x = -R * 0.6 - t * 26; FXD.circle(c, x, R * 0.7 - t * 4, 3 + t * 4, i % 2 ? '#d8ccb0' : '#c8b898'); } return; }
-    DASH_ART._edge(c, R, '#e8d4a8', '#fffbe6');
+    if (back) { for (let i = 0; i < 4; i++) { const t = (T * 2.6 + i * 0.25) % 1, x = -R * 0.6 - t * 26; FXD.circle(c, x, R * 0.7 - t * 6, 4 + t * 6, i % 2 ? '#d8ccb0' : '#c8b898'); } return; }
+    DASH_ART._edge(c, R, '#e8d4a8', '#fffbe6', 2.4);
   },
   // a puffy cloud of storm-grey wool with sparks crackling in it (all round, so drawn in front)
   woolTackle(c, R, T, fx, back) {
@@ -595,7 +609,7 @@ const DASH_ART = {
     for (let i = 0; i < 2; i++) {
       const pts = [];
       for (let j = 0; j <= 12; j++) { const a = T * 14 + i * Math.PI + j * 0.32; pts.push([Math.cos(a) * (R + 5) - j * 1.6, Math.sin(a) * (R + 3) * 0.7]); }
-      FXD.line(c, pts, 5.4, INK); FXD.line(c, pts, 3, i ? '#ffd36b' : '#ffa424'); FXD.line(c, pts.slice(0, 4), 1.2, '#fffbe6');
+      FXD.line(c, pts, 8, INK); FXD.line(c, pts, 5, i ? '#ffd36b' : '#ffa424'); FXD.line(c, pts.slice(0, 5), 2, '#fffbe6');
     }
     for (let i = 0; i < 3; i++) {   // paw-print puffs
       const t = (T * 2.4 + i / 3) % 1, x = -R - t * 22, y = (i - 1) * R * 0.55;
@@ -606,15 +620,30 @@ const DASH_ART = {
   // any other dash: speed lines in its colours and an edge of force at its front
   _default(c, R, T, fx, back) {
     if (back) { for (let i = 0; i < 4; i++) { const x = -R * 0.3 - ((T * 150 + i * 10) % 30), y = (i - 1.5) * R * 0.45; FXD.line(c, [[x, y], [x - 12, y]], 3.4, INK); FXD.line(c, [[x, y], [x - 12, y]], 1.5, i % 2 ? fx[1] : fx[2]); } return; }
-    DASH_ART._edge(c, R, fx[1], fx[2]);
+    DASH_ART._edge(c, R, fx[1], fx[2], 2);
   },
   // the bright edge of force hugging the front of a dashing Coreature (a thin crescent just ahead of it)
   _edge(c, R, col, hi, k = 1) {
     FXD.ink(c, () => { c.arc(R * 0.15, 0, R + 3 + 2 * k, -1.0, 1.0); c.arc(R * 0.45, 0, R + 1, 0.85, -0.85, true); c.closePath(); }, col);
-    c.beginPath(); c.arc(R * 0.15, 0, R + 2.6, -0.7, 0.7); c.strokeStyle = hi; c.lineWidth = 1.1; c.stroke();
+    c.beginPath(); c.arc(R * 0.15, 0, R + 2 + k, -0.7, 0.7); c.strokeStyle = hi; c.lineWidth = 1 + k * 0.4; c.stroke();
   },
 };
 DASH_ART.zoomiesMax = DASH_ART.zoomies;
+// Bits flying off a dash as it goes (fxDashTrail): debris shape, colours (else the move's), sizes, how many a second.
+const DASH_TRAIL = {
+  voltRush: { shape: 'bolt', rate: 34, size: [3, 5] },
+  aquaJet: { shape: 'drop', rate: 34, size: [2.6, 4] },
+  megahorn: { shape: 'leaf', rate: 22, size: [2.6, 3.6] },
+  ironSlam: { shape: 'spark', rate: 40, size: [2, 3], fx: ['#a86a1a', '#ffd23f', '#fff3b0'] },
+  braveDive: { shape: 'feather', rate: 22, size: [3, 4.4] },
+  lanceCharge: { shape: 'bolt', rate: 26, size: [2.4, 3.6], fx: ['#2a6ad8', '#9fd8ff', '#ffffff'] },
+  phantomStrike: { shape: 'flame', rate: 26, size: [3, 4.6], rise: true },
+  deadlineDash: { shape: 'paper', rate: 16, size: [3, 4] },
+  bodySlam: { shape: 'puff', rate: 18, size: [3.4, 5.4], fx: ['#a8987a', '#d8ccb0', '#f2ead8'] },
+  woolTackle: { shape: 'puff', rate: 20, size: [3, 4.6], fx: ['#8a90a0', '#c8ccd8', '#ffffff'] },
+  zoomies: { shape: 'star', rate: 18, size: [2.6, 3.6], fx: ['#ffa424', '#ffd36b', '#fffbe6'] },
+  zoomiesMax: { shape: 'star', rate: 24, size: [2.6, 3.8], fx: ['#ffa424', '#ffd36b', '#fffbe6'] },
+};
 
 mixInto(Battle, class {
   // ---------------------------------------------------------- spawning effects
@@ -628,15 +657,42 @@ mixInto(Battle, class {
     }
   }
 
+  // A dash under way (r148): a burst as it launches, then bits of its look flying off behind (DASH_TRAIL).
+  fxDashTrail(m, a, dt) {
+    const tr = DASH_TRAIL[a.mv.id];
+    if (!tr) return;
+    const fx = tr.fx || fxOf(a.mv), back = a.dir + Math.PI;
+    if (!a.launched) {   // the launch: a ring and a spray of bits backwards
+      a.launched = true;
+      this.particles.push({ kind: 'ring', x: m.x, y: m.y - 2, r0: 4, r1: m.r + 22, life: 0.26, max: 0.26, color: fx[2], w: 3.5 });
+      this.particles.push({ kind: 'ring', x: m.x, y: m.y - 2, r0: 2, r1: m.r + 12, life: 0.34, max: 0.34, color: fx[1], w: 3 });
+      for (let i = 0; i < 10; i++) {
+        const ang = back + rand(-0.9, 0.9), sp = rand(90, 200);
+        this.particles.push({ kind: 'deb', shape: tr.shape, fx, x: m.x, y: m.cy, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp * 0.75, drag: 3.4, grav: tr.rise ? -60 : 120,
+          life: rand(0.3, 0.5), max: 0.5, size: rand(...tr.size) * 1.2, rot: rand(0, TAU), seed: Math.random() * 1e6 });
+      }
+      this.addShake(2);
+    }
+    a.trailT = (a.trailT || 0) - dt;
+    while (a.trailT <= 0) {
+      a.trailT += 1 / tr.rate;
+      const side = rand(-1, 1) * m.r * 0.8, nx = -Math.sin(back), ny = Math.cos(back);
+      const ang = back + rand(-0.45, 0.45), sp = rand(40, 130);
+      this.particles.push({ kind: 'deb', shape: tr.shape, fx, x: m.x + Math.cos(back) * m.r * 0.6 + nx * side, y: m.cy + Math.sin(back) * m.r * 0.6 + ny * side * 0.7,
+        vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp * 0.75, drag: 3, grav: tr.rise ? -50 : 90,
+        life: rand(0.25, 0.45), max: 0.45, size: rand(...tr.size), rot: rand(0, TAU), seed: Math.random() * 1e6 });
+    }
+  }
+
   // Where a hit lands: a "pow" star, debris of the move's type, and white sparks.
   fxImpact(tgt, mv, dmg, eff, mult, src) {
     const fx = fxOf(mv), big = mult >= 1;
     if (!big && Math.random() > 0.35) return;   // beam and vortex ticks: only now and then
-    const size = big ? clamp(12 + dmg / 18, 14, 30) * (eff >= 2 ? 1.25 : 1) : 9;
+    const size = big ? clamp(16 + dmg / 14, 18, 38) * (eff >= 2 ? 1.25 : 1) : 10;
     // its look's own impact, on the side the hit came from, so the target stays visible (IMPACT_ART, r147)
     const from = src ? Math.atan2(src.cy - tgt.cy, src.x - tgt.x) : rand(0, TAU), off = tgt.r * 0.55;
     this.particles.push({ kind: 'hit', art: impactArtOf(mv), x: tgt.x + Math.cos(from) * off + rand(-3, 3), y: tgt.cy + Math.sin(from) * off * 0.7 + rand(-3, 3), size, rot: rand(0, TAU),
-      fx, seed: (Math.random() * 1e6) | 0, life: big ? 0.34 : 0.22, max: big ? 0.34 : 0.22 });
+      fx, seed: (Math.random() * 1e6) | 0, big, life: big ? 0.38 : 0.22, max: big ? 0.38 : 0.22 });
     this.fxDebris(tgt.x, tgt.cy, mv, big ? Math.min(5, 2 + dmg / 90) : 0, big ? 120 : 70, 3);
     // signature hits
     const toward = src ? Math.atan2(tgt.cy - src.cy, tgt.x - src.x) : 0;
