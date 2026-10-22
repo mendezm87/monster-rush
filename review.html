@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Deep Archive Art Review</title>
+  <!-- Claude's self-review sheet for Coreature art (not linked). review.html?ids=polarest,bambooze&with=slumbear,garrishell&save=bears
+       draws every view (and the facing-left pictures of two-sided designs), the silhouettes in solid black, a line-up at game
+       scale next to the `with` Coreatures, and an animation frame sheet. With &save=name it also posts the sheet to
+       tools/recv.py (python tools/recv.py), which saves it as name.png in the repo root (ignored by git). -->
+  <style>
+    body { margin: 0; background: #1c1e24; color: #ddd; font: 14px sans-serif; }
+    p { margin: 8px 12px; }
+    canvas { display: block; image-rendering: pixelated; max-width: 100%; }
+  </style>
+</head>
+<body>
+  <p id="note">Drawing...</p>
+  <canvas id="sheet"></canvas>
+  <script src="js/data.js"></script>
+  <script src="js/pixel.js"></script>
+  <script src="js/trainers.js"></script>
+  <script src="js/sprites.js"></script>
+  <script src="js/monsters.js"></script>
+  <script src="js/arena.js"></script>
+  <script>
+  {   // in a block, so nothing here clashes with the game's globals
+    const VIEWS = ['front', 'fside', 'side', 'bside', 'back'];
+    const FRAME_ROW = [['walk', 0, 'side'], ['walk', 1, 'side'], ['walk', 2, 'side'], ['walk', 3, 'side'], ['lunge', null, 'front'],
+      ['roar', null, 'side'], ['hurt', null, 'front'], ['faint', null, 'front'], ['fidget', 1, 'front'], ['fidget', 2, 'front']];
+    // one section: rows of pictures drawn bottom-centred in cells, with a title above
+    function section(title, rows, scale, bg, cell = 48) {
+      const cw = cell * scale, cols = Math.max(...rows.map(r => r.length));
+      return { title, rows, scale, bg, cw, w: cw * cols, h: cw * rows.length + 22 };
+    }
+    function blackout(im) {   // the silhouette: every solid pixel black
+      const c = document.createElement('canvas'); c.width = im.width; c.height = im.height;
+      const x = c.getContext('2d'); x.drawImage(im, 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = '#000'; x.fillRect(0, 0, c.width, c.height);
+      return c;
+    }
+    function pick(id, key, i, v) {
+      const S = SPRITES[id]; if (!S) return null;
+      let set = key === 'views' ? S.views : S.frames && S.frames[key];
+      if (set && i != null) set = set[i];
+      return set && set[v] || null;
+    }
+    function reviewSheet(ids, withIds = []) {
+      const secs = [];
+      const viewsOf = id => VIEWS.concat(TWO_SIDED[id] ? ['sideL', 'fsideL', 'bsideL'] : []);
+      secs.push(section('Every view' + (ids.some(id => TWO_SIDED[id]) ? ' (then the facing-left pictures)' : ''),
+        ids.map(id => viewsOf(id).map(v => pick(id, 'views', null, v))), 6, '#4a5a48'));
+      secs.push(section('Silhouettes: does the shape read on its own?',
+        ids.map(id => VIEWS.map(v => { const im = pick(id, 'views', null, v); return im && blackout(im); })), 3, '#e8e4dc'));
+      const line = ids.concat(withIds);
+      secs.push(section('At game scale, next to others: ' + withIds.join(', '),
+        [line.map(id => pick(id, 'views', null, 'front')), line.map(id => pick(id, 'views', null, 'side'))], 2, '#5a6e4e'));
+      secs.push(section('Frames: walk, lunge, roar, hurt, faint, fidget',
+        ids.map(id => FRAME_ROW.map(([k, i, v]) => pick(id, k, i, v))), 3, '#4a5a48'));
+      const c = document.getElementById('sheet');
+      c.width = Math.max(...secs.map(s => s.w)); c.height = secs.reduce((a, s) => a + s.h, 0);
+      const x = c.getContext('2d'); x.imageSmoothingEnabled = false;
+      let y = 0;
+      for (const s of secs) {
+        x.fillStyle = '#1c1e24'; x.fillRect(0, y, c.width, 22); x.fillStyle = '#ddd'; x.font = '14px sans-serif'; x.fillText(s.title, 8, y + 16);
+        y += 22; x.fillStyle = s.bg; x.fillRect(0, y, c.width, s.h - 22);
+        s.rows.forEach((row, r) => row.forEach((im, i) => {
+          if (!im) return;
+          x.drawImage(im, i * s.cw + (s.cw - im.width * s.scale) / 2, y + r * s.cw + s.cw - im.height * s.scale, im.width * s.scale, im.height * s.scale);
+        }));
+        y += s.h - 22;
+      }
+      return c;
+    }
+    window.reviewSheet = reviewSheet;
+    const q = new URLSearchParams(location.search);
+    const ids = (q.get('ids') || 'smugshi').split(',').filter(Boolean), withIds = (q.get('with') || '').split(',').filter(Boolean);
+    const bad = ids.concat(withIds).filter(id => !MONSTER_ART[id]);
+    const c = reviewSheet(ids.filter(id => MONSTER_ART[id]), withIds.filter(id => MONSTER_ART[id]));
+    document.getElementById('note').textContent = (bad.length ? 'Unknown: ' + bad.join(', ') + '. ' : '') + 'Sheet for ' + ids.join(', ') + '.';
+    if (q.get('save')) fetch('http://127.0.0.1:8139/?name=' + encodeURIComponent(q.get('save')) + '.png', { method: 'POST', body: c.toDataURL() })
+      .then(() => document.getElementById('note').textContent += ' Saved as ' + q.get('save') + '.png.')
+      .catch(() => document.getElementById('note').textContent += ' (Not saved: start python tools/recv.py.)');
+  }
+  </script>
+</body>
+</html>

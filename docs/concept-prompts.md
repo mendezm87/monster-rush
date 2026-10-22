@@ -9,6 +9,17 @@ becomes the monster's pixel sprite in the game.
 looks like a monster from another game, say so and try again: the point of the redesigns is that
 they are original.
 
+**The second picture: a pixel-art guide (r138).** Once you like a design, run this too, with the
+creature's description pasted in where it says. It won't be clean enough to use as it is, but Claude
+turns it into a grid of colours and traces it for proportions and pose, which is the hardest part
+to get right from words:
+
+> Pixel art game sprite of [the creature's description], 44 pixels tall, standing in its battle pose,
+> seen from the front, then the same creature from the side facing right, side by side, limited
+> palette, dark outline, plain flat grey background, no text, no shadow, crisp pixels, no blur
+
+For a small Coreature say 32 pixels tall instead of 44.
+
 The shared style, already in every prompt:
 
 > 1990s TV anime cel art, hand-inked line art with varying line weight, flat cel colours with one

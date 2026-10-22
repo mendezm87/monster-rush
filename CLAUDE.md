@@ -225,6 +225,23 @@ The 7 new regulars are in the arena's roster with stats tuned for 1v1 there (Rus
 
 Which other monsters evolve and into what (to design together); more relics and unlock types (a reward for beating the final boss?); whether 6 floors is the right length and whether the final boss should be a monster of its own; whether the evolved starters' designs are what the owner wants; a title-screen song.
 
+## Drawing Coreatures: the art checklist (r138, the owner: "is there any way to teach you or help you draw those sprites better the first time?")
+
+Designs that started from the owner's pictures (Garrishell, Railwarden, Nyxdrake, the starters) landed fast; ones drawn from words alone (the r135-r136 bears, the first Nyxdrake) took rounds of "looks pretty bad". So:
+
+- **Ask the owner for pictures before drawing a new design or a big redesign.** The owner's rule: "whatever you need from me, use the prompts if it's image renders, or just tell me if it's anything else". So write Gemini prompts into `docs/concept-prompts.md` (a new round, the shared 90s cel style block) and, once a design is picked, the **pixel-art guide prompt** at the top of that file (the same creature as a 44px or 32px sprite, front and side). Turn the guide into a colour grid (PIL, or draw it to a canvas and read the pixels) and trace it for proportions and pose. For anything else just ask in plain words: a quality bar ("as detailed as Railwarden?"), and the silhouette and pose ("hunched or upright? arms out or close?") when only a mood was given ("fierce", "lean").
+- **Shape rules** (each learned the hard way):
+  - each limb, tail and neck is **one tapering polygon** (shoulder, elbow, forearm, paw), never stacked ellipses, which read as blobs or beads (Sparkit's tail, the r138 bears);
+  - leave **gaps between arms, legs and body**: a big body with limbs filling the space beside it turns into a box (the first r138 pass);
+  - the silhouette must read in solid black; big shapes first, details last;
+  - keep a dark head off dark shapes (Nyxdrake's wing), and props off the silhouette's main lines (Pandawn's bamboo quiver read as a cage);
+  - if a long snout shows in profile, draw one eye;
+  - an element's colour needs contrast with the body (Polaroar's ice went deeper blue against white fur);
+  - `rect`, `px` and `rigMouth` take whole pixels (a y of 18.5 smears);
+  - top-level names in an art file are **globals shared with every other art file**: prefix helpers with the family (`bearMirror`, `iceShard`); a clash (`mirrorPts`, already in drakorn.js) silently stops the other file loading, and test.html then reports that family's sprites missing;
+  - when asked to improve a design, keep it and raise the detail; don't redesign unless asked.
+- **Review before the owner sees anything.** Start `python tools/recv.py` (saves posted pictures as PNGs in the repo root, ignored by git) and open `review.html?ids=a,b&with=c,d&save=name` (not linked): every view (plus the facing-left pictures of `TWO_SIDED` designs) at 6x, the silhouettes in solid black, a line-up at game scale next to the `with` Coreatures (pick ones of the same size), and a frame sheet (walk, lunge, roar, hurt, faint, fidget). Look at `name.png`, fix, and repeat until it would pass the owner's eye; then gear sheets if it wears relics, test.html, and only then show the owner.
+
 ## Rules carried over from the arena game (keep these)
 
 - **Art style: pixel art at 32px (44px for big monsters).** The owner chose pixel art over a smooth cartoon style (2026-10-17). A 64px "HD" Toshi was tried (`art-test.html`) but looked wrong next to everything else at 32px; HD only works if the whole game (monsters, trainer, rooms, effects) moves to it together, which would be a big job to agree with the owner first.
