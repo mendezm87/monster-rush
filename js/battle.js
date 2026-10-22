@@ -814,7 +814,7 @@ class Battle {
 
     const lock = (m.action && m.action.lock) || m.stunT > 0 || m.status === 'frz';
     const a = m.action;
-    if (a && a.kind === 'dash' && a.t > 0.1 && a.phase !== 'combo') {
+    if (a && a.kind === 'dash' && a.t > 0.1 + (a.mv.windup || 0) && a.phase !== 'combo') {
       m.vx = Math.cos(a.dir) * a.mv.speed; m.vy = Math.sin(a.dir) * a.mv.speed;
     } else {
       const spd = m.speed();

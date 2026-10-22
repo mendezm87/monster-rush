@@ -276,8 +276,9 @@ mixInto(Battle, class {
           }
           break;
         }
-        if (a.t <= 0.1) {
-          if (a.t < 0.03) { const f = this.foe(m); if (f) { a.tgt = f; a.dir = this.aim(m, f, mv); } }
+        const pre = 0.1 + (mv.windup || 0);   // a wind-up before it goes (Blaze Rush catches fire first)
+        if (a.t <= pre) {
+          if (a.t < pre - 0.07) { const f = this.foe(m); if (f) { a.tgt = f; a.dir = this.aim(m, f, mv); } }
           break;
         }
         this.emit('dash', m, a, dt);   // e.g. Ember Tracks leaves fire behind
@@ -308,7 +309,7 @@ mixInto(Battle, class {
           this.decalAt(foe.x, foe.y, 8);
           break;
         }
-        if (a.t >= 0.1 + mv.dur) { m.action = null; m.vx *= 0.3; m.vy *= 0.3; }
+        if (a.t >= pre + mv.dur) { m.action = null; m.vx *= 0.3; m.vy *= 0.3; }
         break;
       }
 

@@ -817,7 +817,7 @@ mixInto(Battle, class {
         }
         ctx.setLineDash([]); ctx.lineDashOffset = 0;
       }
-      if (a.kind === 'dash' && a.t <= 0.1) {
+      if (a.kind === 'dash' && a.t <= 0.1 + (a.mv.windup || 0)) {
         ctx.globalAlpha = 0.5; ctx.strokeStyle = fxOf(a.mv)[2];
         ctx.beginPath(); ctx.moveTo(X, Y);
         ctx.lineTo(X + Math.cos(dir) * 40, Y + Math.sin(dir) * 40); ctx.stroke();
