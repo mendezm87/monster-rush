@@ -685,6 +685,16 @@ const SHEET_MOVES = {
   flameWheel: { dash: true, pre: [0], go: [1, 2], hit: [3, 4], hole: 0.36 },
   blazeRush:  { dash: true, pre: [0, 1], preUpright: true, go: [2], hit: [3, 4], hole: 0.42, tilt: -0.62, ax: 0.7, ay: 0.68 },   // its comet is drawn heading down-right
 };
+// Where Magma Wave's waves stand: along the arc of its cone at distance d (squashed like the floor, as its
+// warning wedge is), enough of them side by side to fill it, the far ones first so the near ones overlap them.
+function magmaFront(a, mv, d, sc) {
+  const segW = sheetW('magmaWave', 2) * sc * 0.62, span = 2 * Math.sin(mv.cone) * d, n = Math.max(2, Math.ceil(span / segW) + 1), out = [];
+  for (let i = 0; i < n; i++) {
+    const ang = a.dir + (i / (n - 1) * 2 - 1) * mv.cone * 0.92;
+    out.push({ i, x: Math.cos(ang) * d, y: Math.sin(ang) * d * 0.7, sc });
+  }
+  return out.sort((p, q) => p.y - q.y);
+}
 // a frame sequence played as a particle (an explosion, a geyser)
 function sheetPart(b, id, frames, x, y, life, o = {}) {
   b.particles.push({ kind: 'sheet', id, frames, x, y, life, max: life, o });
@@ -759,8 +769,8 @@ mixInto(Battle, class {
     if (mv.id === 'magmaWave') {   // the wave is the sheet (drawSheetMagma); when it's spent, a pool of lava stays a moment
       if (!a.pooled && a.blowT + 1 / 30 >= mv.blow) {
         a.pooled = true;
-        const d = a.r * 0.85, flip = Math.cos(a.dir) < 0;
-        sheetPart(this, 'magmaWave', [4], m.x + Math.cos(a.dir) * d, m.y + Math.sin(a.dir) * d, 0.7, { sc: 0.85, ay: 1, flip });
+        const flip = Math.cos(a.dir) < 0;
+        for (const w of magmaFront(a, mv, a.r * 0.92, 0.85)) sheetPart(this, 'magmaWave', [4], m.x + w.x, m.y + w.y, 0.7, { sc: w.sc, ay: 1, flip });
       }
       return;
     }
@@ -1063,10 +1073,15 @@ mixInto(Battle, class {
     }
   }
 
-  // Magma Wave: the wave rolls out across its cone, rising, curling over, crashing (sheet frames 1-3)
+  // Magma Wave: a front of waves rolls out across its whole cone (the wedge you see before it goes off), each
+  // wave rising, curling over and crashing (sheet frames 1-3), side by side along the arc and growing as they go
+  // (r153, the owner: it looked small and didn't fill the cone).
   drawSheetMagma(c, m, a) {
-    const mv = a.mv, k = Math.min(1, a.blowT / mv.blow), d = a.r * (0.25 + 0.6 * k), fr = 1 + Math.min(2, Math.floor(k * 3));
-    drawSheet(c, 'magmaWave', fr, m.x + Math.cos(a.dir) * d, m.y + Math.sin(a.dir) * d, { sc: 0.85, ay: 1, flip: Math.cos(a.dir) < 0 });
+    const mv = a.mv, k = Math.min(1, a.blowT / mv.blow);
+    for (const w of magmaFront(a, mv, a.r * (0.3 + 0.62 * k), 0.75 + 0.45 * k)) {
+      const fr = 1 + Math.min(2, Math.floor(k * 3 + w.i % 2 * 0.35));
+      drawSheet(c, 'magmaWave', fr, m.x + w.x, m.y + w.y, { sc: w.sc, ay: 1, flip: Math.cos(a.dir) < 0 });
+    }
   }
 
   drawProjectile(c, p) {
