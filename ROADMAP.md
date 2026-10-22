@@ -64,7 +64,7 @@ The roguelikes people play for hundreds of hours are built on **builds**: items 
 
 ## Phase 3: Bosses and the world
 
-- [ ] **Hand-made bosses:** each area gets 2-3 boss Coreatures with their own attack patterns, phases and arenas (today bosses are just bigger wild Coreatures). About 15-20 by release.
+- [ ] **Hand-made bosses:** the owner (2026-10-22): **not a boss on every floor**, bosses at the end of a set of floors. Research on loved MMO raid bosses (WoW, FFXIV, Destiny, GW2, Lost Ark, Hades) and 40 mechanics adapted to our game are in `docs/boss-research.md`; its suggestion is three acts of two floors (bosses after floors 2, 4, 6; the other floors end with a gatekeeper), about 9 act bosses plus the final one, each with phases, a signature mechanic and an arena that takes part. Waiting on the owner's pick of structure and mechanics.
 - [ ] **A true final boss** with its own design and story weight (the owner's open question: a Coreature of its own?), and a **secret final floor** for players who meet a hidden condition.
 - [ ] **Alternate areas:** two choices per floor (like Isaac's alt paths), so a run's route varies: 6 floors -> 10-12 areas.
 - [ ] **The story of the fallen civilization**, told a little each run (Hades-style): terminals in the ruins, the altar's machine, what the Arc-cores really are, why Coreatures lost their forms. Multiple endings.

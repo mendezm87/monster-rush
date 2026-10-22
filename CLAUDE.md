@@ -223,6 +223,10 @@ Mobile browsers (iPhone Safari above all) cap the memory all canvases may use an
 
 The 7 new regulars are in the arena's roster with stats tuned for 1v1 there (Rush keeps its own numbers), and the evolved starters plus Garrishell's legends are a separate tier behind the arena team screen's Legends switch. Descriptions and tooltips moved from info.js into the shared `js/describe.js`. When a new monster is made here, add it to the arena too (and tune it with its round robin; see the arena's CLAUDE.md).
 
+### Hand-made bosses (planning, 2026-10-22)
+
+The owner: **not a boss on every floor**, but bosses at the end of a set of floors. They asked for research on well-liked MMO raid bosses (WoW and FFXIV first) and a log of every good mechanic we could use: `docs/boss-research.md` (the loved bosses and why, what players disliked, design lessons, 40 mechanics each adapted to our game and rated, and run-structure options with sources). Claude's suggestion there: three acts of two floors (bosses after floors 2, 4 and 6, gatekeepers ending the other floors). Nothing built yet; the owner picks the structure and the mechanics first. Earlier idea for the first boss: Slumbear, flickering between his three bears in later phases.
+
 ### Not decided yet (ask the owner when it matters)
 
 Which other monsters evolve and into what (to design together); more relics and unlock types (a reward for beating the final boss?); whether 6 floors is the right length and whether the final boss should be a monster of its own; whether the evolved starters' designs are what the owner wants; a title-screen song.
