@@ -1,93 +1,77 @@
 // Brawlix: brawlix. Drawn with the helpers in js/sprites.js (PixGrid shapes, rigParts, rigEye...).
 // Each monster: MONSTER_ART (front, side, back), MONSTER_ART_DIAG (fside, bside) and its body type in RIGGED.
+//
+// Redesigned in r131 (it read as Hitmonchan): a living punching bag from an old training hall. A heavy bag of
+// worn brown leather with stitched seams, a red band round it and a dent where it's been punched a thousand
+// times; its face is on the bag; stubby arms end in fists wrapped in white tape; the chain it once hung
+// from still dangles from its top (it rides the ears, so it swings). Colours in BRAWL.
+const BRAWL = { LEATHER: P('#9a6236', '#6e4224', '#ba8250'), TOP: P('#ae7444', '#7a4c2a', '#c8925e'), BAND: P('#c43a32', '#8a2420', '#e86058'),
+  TAPE: P('#f0ece0', '#c8c0ac', '#ffffff'), CHAIN: P('#a8adb6', '#6c707a', '#d8dce4'), STITCH: '#e0c89a', BOOT: P('#3a3036', '#24202a', '#544a52') };
+
 Object.assign(MONSTER_ART, {
   brawlix(g, v = 'front') {
-    const T = P('#d9a066', '#a8703e', '#f2c896'), R = P('#d23a3a', '#9a2222', '#ff7a6a'), Q = rig(), TONGUE = '#e8607a';
-    const side = v === 'side', fwd = side ? Q.head[0] : 0;
-    const b = part(g, 0, Q.body), h = part(g, fwd, Q.head[1]), tails = part(g, fwd + Q.tail[0], Q.head[1] + Q.tail[1]);
-    const leg = i => part(g, side && Q.legs[i] ? 1 : 0, -Q.legs[i]), legA = leg(0), legB = leg(1);
-    const arm = i => part(g, side ? Q.arms[i] : 0, Q.body - (side ? 0 : Q.arms[i])), armA = arm(0), armB = arm(1);
-    const mouth = (x, y) => { if (Q.mouth === 'roar') { h.rect(x - 1, y, 4, 2, OUTLINE); h.px(x, y + 1, TONGUE); } else if (Q.mouth === 'open') h.rect(x, y, 2, 2, OUTLINE); else h.rect(x, y, 2, 1, OUTLINE); };
+    const { LEATHER, TOP, BAND, TAPE, CHAIN, STITCH, BOOT } = BRAWL;
+    const { Q, b, h, earA, legA, legB, armA, armB } = rigParts(g, v), side = v === 'side';
+    const chain = (p, x) => { p.ellipse(x, 6, 1.4, 1.2, CHAIN, { edge: true }); p.ellipse(x, 3.6, 1.2, 1.4, CHAIN, { edge: true }); p.rect(x - 1, 1, 3, 1, CHAIN.s); };
+    const bag = (x0, x1) => {   // the heavy bag: leather body, a rounded top, stitched seams, a red band
+      b.poly([[x0, 9], [x1, 9], [x1 + 1, 11], [x1 + 1, 25], [x1, 27], [x0, 27], [x0 - 1, 25], [x0 - 1, 11]], LEATHER, { edge: true });
+      b.ellipse((x0 + x1) / 2, 9, (x1 - x0) / 2 + 0.5, 2, TOP, { edge: true });
+      b.rect(x0 - 1, 22, x1 - x0 + 3, 2, BAND.b); b.rect(x0 - 1, 23, x1 - x0 + 3, 1, BAND.s);
+    };
+    const stitches = (p, x, y0, y1) => { for (let y = y0; y <= y1; y += 2) p.px(x, y, STITCH); };
     if (side) {
-      tails.poly([[11, 8], [4, 5], [5, 10]], '#d23a3a');
-      legB.ellipse(12, 29, 2.2, 2, T, { edge: true }); legA.ellipse(19, 29, 2.2, 2, T, { edge: true });
-      armB.ellipse(11, 20, 3.2, 3.2, R, { edge: true });
-      b.ellipse(16, 21, 6, 6, T, { edge: true });
-      b.ellipse(16, 26, 5.5, 2.6, '#3a5ab8', { edge: true });
-      h.ellipse(17, 11, 6, 5.5, T, { edge: true });
-      h.rect(11, 8, 12, 2, '#d23a3a');
-      armA.ellipse(19, 18, 2.5, 3.5, T, { edge: true });
-      armA.ellipse(23, 20, 3.5, 3.5, R, { edge: true });
-      rigEye(h, Q, 20, 11, () => { h.rect(20, 11, 2, 2, DARK_EYE); h.px(20, 11, '#ffffff'); });
-      h.px(19, 10, OUTLINE); h.px(20, 10, OUTLINE); h.px(21, 10, OUTLINE);
-      if (Q.mouth) mouth(21, 14); else h.px(22, 14, OUTLINE);
+      legB.ellipse(13.5, 28.5, 2.3, 1.6, P(BOOT.s, '#18141a', BOOT.b), { edge: true });
+      armB.ellipse(13, 17, 1.8, 3, P(LEATHER.s, '#4a2c18', LEATHER.b));
+      bag(11, 20);
+      stitches(b, 15, 11, 21); stitches(b, 15, 25, 26);
+      b.px(12, 15, LEATHER.s).px(12, 16, LEATHER.s).px(13, 17, LEATHER.s);                        // the dent
+      earA.ellipse(15.5, 6, 1.4, 1.2, CHAIN, { edge: true }); earA.ellipse(15.5, 3.6, 1.2, 1.4, CHAIN, { edge: true }); earA.rect(14.5, 1, 3, 1, CHAIN.s);
+      legA.ellipse(17.5, 28.5, 2.4, 1.6, BOOT, { edge: true });
+      rigEye(h, Q, 19, 13, () => { h.rect(19, 13, 2, 1, OUTLINE); h.px(20, 14, OUTLINE); h.px(18, 12, OUTLINE).px(19, 12, OUTLINE); }, 2);   // a scowl
+      rigMouth(h, Q, 19, 17, 2, () => { h.rect(19, 17, 2, 1, OUTLINE); });
+      armA.ellipse(21, 17, 1.8, 3, LEATHER, { edge: true });
+      armA.ellipse(24.5, 19, 3.3, 3, TAPE, { edge: true }); armA.px(23, 18, TAPE.s).px(25, 19, TAPE.s).px(23, 20, TAPE.s);   // taped fist up
       return;
     }
+    legA.ellipse(12.5, 28.5, 2.5, 1.6, BOOT, { edge: true }); legB.ellipse(19.5, 28.5, 2.5, 1.6, BOOT, { edge: true });
+    bag(10, 22);
+    chain(earA, 16);
+    armA.ellipse(7.5, 16, 1.8, 3, LEATHER, { edge: true }); armB.ellipse(24.5, 16, 1.8, 3, LEATHER, { edge: true });
+    armA.ellipse(6, 20.5, 3.3, 3, TAPE, { edge: true }); armB.ellipse(26, 20.5, 3.3, 3, TAPE, { edge: true });   // taped fists
+    armA.px(5, 19, TAPE.s).px(7, 20, TAPE.s).px(5, 21, TAPE.s); armB.px(26, 19, TAPE.s).px(24, 20, TAPE.s).px(26, 21, TAPE.s);
     if (v === 'back') {
-      legA.ellipse(12, 29, 2.2, 2, T, { edge: true }); legB.ellipse(20, 29, 2.2, 2, T, { edge: true });
-      b.ellipse(16, 21, 6.5, 6, T, { edge: true });
-      b.ellipse(16, 26, 6, 2.6, '#3a5ab8', { edge: true });
-      armA.ellipse(10, 18, 2.5, 3.5, T, { edge: true }); armB.ellipse(22, 18, 2.5, 3.5, T, { edge: true });
-      armA.ellipse(6.5, 21, 3.5, 3.5, R, { edge: true }); armB.ellipse(25.5, 21, 3.5, 3.5, R, { edge: true });
-      h.ellipse(16, 11, 6, 5.5, T, { edge: true });
-      h.rect(10, 8, 12, 2, '#d23a3a');
-      h.rect(15, 8, 2, 3, '#9a2222');
-      tails.poly([[15, 10], [12, 16], [15, 15]], '#d23a3a'); tails.poly([[17, 10], [20, 16], [17, 15]], '#d23a3a');
-      b.rect(14, 19, 4, 1, '#a8703e');
+      stitches(b, 13, 11, 21); stitches(b, 19, 11, 21); stitches(b, 13, 25, 26); stitches(b, 19, 25, 26);
+      b.rect(14, 14, 4, 4, LEATHER.l); b.rect(14, 14, 4, 1, STITCH); b.rect(14, 17, 4, 1, STITCH);   // a stitched-on patch
       return;
     }
-    tails.poly([[21, 8], [28, 5], [27, 10]], '#d23a3a');                                         // headband tails
-    legA.ellipse(12, 29, 2.2, 2, T, { edge: true }); legB.ellipse(20, 29, 2.2, 2, T, { edge: true });
-    b.ellipse(16, 21, 6.5, 6, T, { edge: true });
-    b.ellipse(16, 26, 6, 2.6, '#3a5ab8', { edge: true });
-    armA.ellipse(10, 18, 2.5, 3.5, T, { edge: true }); armB.ellipse(22, 18, 2.5, 3.5, T, { edge: true });
-    armA.ellipse(6.5, 21, 3.5, 3.5, R, { edge: true }); armB.ellipse(25.5, 21, 3.5, 3.5, R, { edge: true });
-    h.ellipse(16, 11, 6, 5.5, T, { edge: true });
-    h.rect(10, 8, 12, 2, '#d23a3a');
-    for (const x of [13, 17]) rigEye(h, Q, x, 11, () => { h.rect(x, 11, 2, 2, DARK_EYE); h.px(x, 11, '#ffffff'); });
-    h.px(12, 9, OUTLINE).px(13, 9, OUTLINE).px(14, 10, OUTLINE).px(15, 10, OUTLINE);            // angry brows
-    h.px(19, 9, OUTLINE).px(18, 9, OUTLINE).px(17, 10, OUTLINE).px(16, 10, OUTLINE);
-    mouth(15, 14);
-    b.rect(14, 19, 4, 1, '#a8703e');
+    stitches(b, 11, 11, 21); stitches(b, 21, 11, 21);
+    b.px(19, 18, LEATHER.s).px(20, 19, LEATHER.s).px(20, 20, LEATHER.s).px(19, 21, LEATHER.s);       // the dent
+    rigEyes(h, Q, 32, 13, 13, 2, () => { h.rectM(13, 13, 2, 1, OUTLINE); h.pxM(14, 14, OUTLINE); h.pxM(12, 12, OUTLINE); h.pxM(13, 12, OUTLINE); });   // a fierce scowl
+    rigMouth(h, Q, 14, 17, 4, () => { h.rect(14, 17, 4, 1, OUTLINE); h.px(15, 18, TAPE.b); h.px(16, 18, TAPE.b); });   // gritted teeth
   },
 });
 Object.assign(MONSTER_ART_DIAG, {
-  brawlix(g, v) {
-    const T = P('#d9a066', '#a8703e', '#f2c896'), R = P('#d23a3a', '#9a2222', '#ff7a6a'), Q = rig(), TONGUE = '#e8607a';
-    const b = part(g, 0, Q.body), h = part(g, Q.head[0], Q.head[1]), tails = part(g, Q.head[0] + Q.tail[0], Q.head[1] + Q.tail[1]);
-    const leg = i => part(g, Q.legs[i] ? 1 : 0, -Q.legs[i]), legA = leg(0), legB = leg(1);
-    const arm = i => part(g, Q.arms[i], Q.body), armA = arm(0), armB = arm(1);
-    const legs = () => { legB.ellipse(12, 29, 2.2, 2, T, { edge: true }); legA.ellipse(19.5, 29, 2, 1.9, T, { edge: true }); };
-    if (v === 'bside') {
-      legs();
-      b.ellipse(16, 21, 6.5, 6, T, { edge: true });
-      b.ellipse(16, 26, 6, 2.6, '#3a5ab8', { edge: true });
-      armB.ellipse(10, 18, 2.5, 3.5, T, { edge: true }); armA.ellipse(22, 18, 2.2, 3.2, T, { edge: true });
-      armB.ellipse(6.5, 21, 3.5, 3.5, R, { edge: true }); armA.ellipse(25.5, 21, 3.2, 3.2, R, { edge: true });
-      h.ellipse(17, 11, 6, 5.5, T, { edge: true });
-      h.rect(11, 8, 12, 2, '#d23a3a');
-      h.rect(15, 8, 2, 3, '#9a2222');                                                            // headband knot
-      tails.poly([[15, 10], [12, 16], [15, 15]], '#d23a3a'); tails.poly([[17, 10], [19, 16], [17, 15]], '#d23a3a');
-      b.rect(14, 19, 4, 1, '#a8703e');
-      return;
-    }
-    tails.poly([[11, 8], [4, 5], [5, 10]], '#d23a3a');                                           // headband tails
-    legs();
-    b.ellipse(16, 21, 6.5, 6, T, { edge: true });
-    b.ellipse(16, 26, 6, 2.6, '#3a5ab8', { edge: true });
-    armB.ellipse(10, 18, 2.5, 3.5, T, { edge: true }); armA.ellipse(22, 18, 2.2, 3.2, T, { edge: true });
-    armB.ellipse(6.5, 21, 3.5, 3.5, R, { edge: true }); armA.ellipse(25, 20.5, 3.2, 3.2, R, { edge: true });   // gloves up
-    h.ellipse(17, 11, 6, 5.5, T, { edge: true });
-    h.rect(11, 8, 12, 2, '#d23a3a');
-    for (const x of [14, 20]) rigEye(h, Q, x, 11, () => { h.rect(x, 11, 2, 2, DARK_EYE); h.px(x, 11, '#ffffff'); });
-    h.px(13, 9, OUTLINE).px(14, 9, OUTLINE).px(15, 10, OUTLINE).px(16, 10, OUTLINE);
-    h.px(22, 9, OUTLINE).px(21, 9, OUTLINE).px(20, 10, OUTLINE).px(19, 10, OUTLINE);
-    if (Q.mouth === 'roar') { h.rect(16, 14, 4, 2, OUTLINE); h.px(17, 15, TONGUE); } else if (Q.mouth === 'open') h.rect(17, 14, 2, 2, OUTLINE); else h.rect(17, 14, 2, 1, OUTLINE);
-    b.rect(15, 19, 4, 1, '#a8703e');
+  brawlix(g, v) {   // turned a little right
+    const { LEATHER, TOP, BAND, TAPE, CHAIN, STITCH, BOOT } = BRAWL;
+    const { Q, b, h, earA, legA, legB, armA, armB } = rigParts(g, v);
+    legA.ellipse(12, 28.5, 2.5, 1.6, BOOT, { edge: true }); legB.ellipse(19, 28.5, 2.4, 1.6, BOOT, { edge: true });
+    b.poly([[10, 9], [21, 9], [22, 11], [22, 25], [21, 27], [10, 27], [9, 25], [9, 11]], LEATHER, { edge: true });
+    b.ellipse(15.5, 9, 6, 2, TOP, { edge: true });
+    b.rect(9, 22, 14, 2, BAND.b); b.rect(9, 23, 14, 1, BAND.s);
+    earA.ellipse(16, 6, 1.4, 1.2, CHAIN, { edge: true }); earA.ellipse(16, 3.6, 1.2, 1.4, CHAIN, { edge: true }); earA.rect(15, 1, 3, 1, CHAIN.s);
+    armA.ellipse(7.5, 16, 1.8, 3, LEATHER, { edge: true }); armB.ellipse(23.5, 16, 1.6, 2.8, LEATHER, { edge: true });
+    armA.ellipse(6, 20.5, 3.3, 3, TAPE, { edge: true }); armB.ellipse(25.5, 20.5, 2.9, 2.7, TAPE, { edge: true });
+    armA.px(5, 19, TAPE.s).px(7, 20, TAPE.s); armB.px(25, 19, TAPE.s).px(24, 21, TAPE.s);
+    for (let y = 11; y <= 21; y += 2) b.px(v === 'bside' ? 14 : 11, y, STITCH).px(v === 'bside' ? 20 : 20, y, STITCH);
+    if (v === 'bside') { b.rect(15, 14, 4, 4, LEATHER.l); b.rect(15, 14, 4, 1, STITCH); b.rect(15, 17, 4, 1, STITCH); return; }
+    b.px(20, 18, LEATHER.s).px(21, 19, LEATHER.s).px(21, 20, LEATHER.s);
+    rigEye(h, Q, 14, 13, () => { h.rect(14, 13, 2, 1, OUTLINE); h.px(15, 14, OUTLINE); h.px(13, 12, OUTLINE).px(14, 12, OUTLINE); }, 2);
+    rigEye(h, Q, 18, 13, () => { h.rect(18, 13, 2, 1, OUTLINE); h.px(18, 14, OUTLINE); h.px(19, 12, OUTLINE).px(20, 12, OUTLINE); }, 2);
+    rigMouth(h, Q, 15, 17, 4, () => { h.rect(15, 17, 4, 1, OUTLINE); h.px(16, 18, TAPE.b); h.px(17, 18, TAPE.b); });
   },
 });
 Object.assign(RIGGED, { brawlix: 'biped' });
 // Fidgets (r111): a little routine each plays every so often while it stands around.
 Object.assign(FIDGETS, {
-  brawlix: { fps: 5, every: 8, frames: [{ arms: [3, -1] }, { arms: [-1, 3] }, { arms: [3, -1] }, { arms: [-1, 3] }, { }] },   // shadowboxes
+  brawlix: { fps: 5, every: 8, frames: [{ arms: [3, -1] }, { arms: [-1, 3] }, { arms: [3, -1] }, { arms: [-1, 3], ears: [1, 0] }, { }] },   // shadowboxes, chain swinging
 });

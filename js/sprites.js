@@ -180,7 +180,7 @@ function softLines(g, pick, edgesOnly = false) {
 // drew where it overlaps another (its edge, PixGrid.ef) become a dark shade of the darkest colour
 // next to them. Lines drawn on purpose (eyes, mouths, seams, with px or rect) and the silhouette
 // stay black, so no art function needs to change. HARD_LINES: the ones still to be redesigned.
-const HARD_LINES = new Set(['venomire', 'scarablade', 'brawlix', 'thornback', 'boulderon']);   // Slumbear was redesigned in r130
+const HARD_LINES = new Set();   // empty since r131 (Slumbear r130, the last five r131); add a Coreature here to keep its black lines
 const _lineCol = {};
 function lineColour(cs) {
   let best = null, lum = 9;
