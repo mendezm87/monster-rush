@@ -110,3 +110,5 @@ The shared style, already in every prompt:
 > burst of silver scales and violet energy), glitch (broken magenta and cyan pixel blocks). 16-bit pixel art
 > visual effect sprite sheet for an action game, chunky pixels with a dark 1-pixel outline, limited bright
 > palette with hard-edged shading, no creature or character, plain dark navy background, no text
+
+- Volt Rush: travel from d1-volt-rush.png (bolts streaming back, no figure), impact from d1b-volt-rush.png (a zigzag bolt striking into the star); d1b's running humanoid of lightning doesn't fit four-legged and floating Coreatures.
