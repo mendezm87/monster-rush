@@ -854,3 +854,87 @@ different bear: grizzly, polar, panda, sun bear (the golden crescent on its ches
 > weight, flat cel colours with one hard-edged shadow tone, soft airbrushed highlights,
 > hand-painted watercolour background of a snowy mountain pass, slight film grain, 4:3 screenshot
 > framing, original creature design, no text
+
+---
+
+## Round 7: the redesigned five, for Gemini (r133; the owner: "let's get descriptions of these to get into Gemini")
+
+Each describes the design as it is in the game now, so Gemini can draw a proper version to refine the
+sprite from. Add "character turnaround sheet, front, side and back views" to the end of any prompt
+for a sheet that shows every angle.
+
+Style block (already in each): 1990s TV anime cel art, hand-inked line art with varying line weight,
+flat cel colours with one hard-edged shadow tone, soft airbrushed highlights, hand-painted watercolour
+background, original creature design, no text
+
+**V · Venomire** (Glitch)
+> A round purple slime monster sitting in a spreading puddle of its own slime, two horn-like antennae
+> with glowing yellow-green tips, yellow-green speckles across its body, a pale lilac belly, small beady
+> eyes, and a perfectly round mouth like a garbage disposal: a ring of sharp white teeth all round the rim
+> pointing inward toward a dark throat, with a spinning metal blender blade in the middle, menacing but a
+> little goofy, a monster from a monster-battling game. 1990s TV anime cel art, hand-inked line art with
+> varying line weight, flat cel colours with one hard-edged shadow tone, soft airbrushed highlights,
+> hand-painted watercolour background of a dim flooded archive, original creature design, no text
+
+**H · Brawlix** (Brawl)
+> A lean brown-grey hare monster standing upright in a boxer's stance, broad shoulders, a cream belly,
+> tall ears with one notched from old fights, a small scar under one eye, fierce amber eyes under heavy
+> angry brows, a red fighter's headband with its tails flying, paws wrapped in white boxing tape raised in
+> a guard by its chin, big strong hind feet, a cotton tail, a monster from a monster-battling game. 1990s
+> TV anime cel art, hand-inked line art with varying line weight, flat cel colours with one hard-edged
+> shadow tone, soft airbrushed highlights, hand-painted watercolour background of a dusty training yard,
+> original creature design, no text
+
+**T · Thornback** (Plant/Earth)
+> A long sandy desert lizard monster with a round green ribbed barrel cactus growing out of the middle of
+> its back, white spines along the cactus ribs, a pink cactus flower blooming on top, two little brown
+> horns over its eyes, a long thin tail, legs splayed wide, a friendly little smile, a monster from a
+> monster-battling game. 1990s TV anime cel art, hand-inked line art with varying line weight, flat cel
+> colours with one hard-edged shadow tone, soft airbrushed highlights, hand-painted watercolour
+> background of red desert rocks at sunset, original creature design, no text
+
+**C · Boulderon** (Earth)
+> A big golem made of flat standing stones balanced in a stack like a cairn or a stone snowman, each
+> stone a slightly different grey, moss on their tops and cracks in their faces, the top stone carved by
+> an ancient civilization with two glowing teal eye slits and a rune on its brow, a small pebble balanced
+> on top of its head, fists made of stacked pebbles, stubby stone feet, calm and ancient, a monster from a
+> monster-battling game. 1990s TV anime cel art, hand-inked line art with varying line weight, flat cel
+> colours with one hard-edged shadow tone, soft airbrushed highlights, hand-painted watercolour
+> background of overgrown temple ruins, original creature design, no text
+
+### Bugilist (Plant/Brawl): a new look and a new name (the owner: "we need to work on Bugilist and his name")
+
+Moves: Megahorn, Pin Missile, Beetle Barrage, Bulk Up. Today: a round lime-green beetle standing like a
+martial artist, a red headband, a pale horn. Three directions; each comes with name ideas.
+
+**B0 · As it is now** (to get a cleaner version of the current design)
+> A round green rhinoceros beetle monster standing upright like a martial artist, a glossy lime-green
+> shell split down the middle, short black limbs, a pale curved horn, a red headband with its tails
+> flying, glowing yellow eyes, fists raised, a monster from a monster-battling game. 1990s TV anime cel
+> art, hand-inked line art with varying line weight, flat cel colours with one hard-edged shadow tone,
+> soft airbrushed highlights, hand-painted watercolour background of a forest dojo, original creature
+> design, no text
+
+**B1 · Sumo beetle** (names: Sumobug, Beetlezeki, Yokozumite)
+> A heavy, round rhinoceros beetle monster built like a sumo wrestler, a broad moss-green shell with
+> leaf-vein patterns, a thick curved horn, a belt of woven green grass and vines tied round its middle like
+> a sumo belt, short powerful legs planted wide in a stomping stance, small determined eyes, a monster
+> from a monster-battling game. 1990s TV anime cel art, hand-inked line art with varying line weight,
+> flat cel colours with one hard-edged shadow tone, soft airbrushed highlights, hand-painted watercolour
+> background of a forest clearing ring of stones, original creature design, no text
+
+**B2 · Scarab strongman** (a dung beetle that trains by rolling a mossy boulder; names: Scarabell, Rollbrawl, Mossmauler)
+> A muscular scarab beetle monster standing upright, a glossy bronze-green shell, thick strong forearms,
+> pushing and lifting a big round mossy boulder over its head like a weightlifter, a short blunt horn, a
+> sweatband of braided leaves, a confident grin, a monster from a monster-battling game. 1990s TV anime
+> cel art, hand-inked line art with varying line weight, flat cel colours with one hard-edged shadow
+> tone, soft airbrushed highlights, hand-painted watercolour background of a sunny meadow, original
+> creature design, no text
+
+**B3 · Karate beetle** (names: Dojobug, Hornjab, Kickbeetle)
+> A lean leaf-green beetle monster in a martial-arts stance, a white karate gi worn open over its shell,
+> tied with a belt made of a twisted vine, a long straight horn like a training staff, wings folded
+> under its shell, one leg raised mid-kick, sharp focused eyes, a monster from a monster-battling game.
+> 1990s TV anime cel art, hand-inked line art with varying line weight, flat cel colours with one
+> hard-edged shadow tone, soft airbrushed highlights, hand-painted watercolour background of a bamboo
+> dojo yard, original creature design, no text

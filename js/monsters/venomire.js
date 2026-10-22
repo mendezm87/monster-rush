@@ -1,20 +1,25 @@
 // Venomire: venomire. Drawn with the helpers in js/sprites.js (PixGrid shapes, rigParts, rigEye...).
 // Each monster: MONSTER_ART (front, side, back), MONSTER_ART_DIAG (fside, bside) and its body type in RIGGED.
-// A maw ringed with sharp fangs (r132, the owner: "give it sharp fangs all around the inside of its mouth"):
-// always open, a row of fangs along the top, long canines at the corners, a row along the bottom (between
-// the top ones), a purple tongue; a roar opens it a row wider. w = how many pixels wide inside.
-function venomMaw(h, x0, y, w, mouth) {
-  const O = OUTLINE, D = '#2a0838', W = '#f4eefa', T = '#c060a0', extra = mouth === 'roar' ? 2 : mouth === 'open' ? 1 : 0;
-  const top = i => (i % 2 === 0 && i < w / 2) || ((w - 1 - i) % 2 === 0 && i >= w / 2);
-  h.rect(x0 + 1, y, w, 1, O);                                                                    // upper lip
-  for (let r = 1; r <= 3 + extra; r++) { h.px(x0, y + r, O); h.px(x0 + w + 1, y + r, O); }        // the corners
-  for (let i = 0; i < w; i++) {
-    const x = x0 + 1 + i, mid = i === Math.floor((w - 1) / 2) || i === Math.ceil((w - 1) / 2);
-    h.px(x, y + 1, top(i) ? W : D);                                                              // the top fangs
-    for (let r = 2; r <= 2 + extra; r++) h.px(x, y + r, (i === 0 || i === w - 1) && r === 2 ? W : mid && r === 2 + extra ? T : D);   // canines, tongue
-    h.px(x, y + 3 + extra, !top(i) && i > 0 && i < w - 1 ? W : D);                               // the bottom fangs
+// Its mouth (r133, the owner: "I was expecting teeth like a blender or garbage disposal"): a round
+// grinder, always open, ringed with teeth pointing in toward a dark throat, with a blender's metal blade
+// spinning in the middle (it turns a step whenever its mouth opens, so it whirls as it attacks). The
+// ellipse at (cx, cy) is the mouth; an open mouth or a roar opens it wider.
+function venomGrinder(h, cx, cy, rx, ry, mouth) {
+  const D = '#2a0838', W = '#f4eefa', Wd = '#c8bcd8', M = '#b8bec8', Ms = '#7a808c', grow = mouth === 'roar' ? 1.2 : mouth === 'open' ? 0.6 : 0;
+  rx += grow; ry += grow;
+  h.ellipse(cx, cy, rx + 1, ry + 1, OUTLINE);                                                    // its rim
+  h.ellipse(cx, cy, rx, ry, D);                                                                  // the throat
+  const n = Math.max(8, Math.round((rx + ry) * 2.2));
+  for (let k = 0; k < n; k++) {                                                                  // teeth all round, pointing in
+    const a = (k / n) * Math.PI * 2, c = Math.cos(a), s2 = Math.sin(a);
+    h.px(Math.round(cx - 0.5 + c * (rx - 0.5)), Math.round(cy - 0.5 + s2 * (ry - 0.5)), W);
+    if (k % 2 === 0 && rx > 3.5) h.px(Math.round(cx - 0.5 + c * (rx - 1.5)), Math.round(cy - 0.5 + s2 * (ry - 1.5)), Wd);   // a second row when it's open wide
   }
-  h.rect(x0 + 1, y + 4 + extra, w, 1, O);                                                        // lower lip
+  const x = Math.round(cx - 0.5), y = Math.round(cy - 0.5), turn = mouth ? 1 : 0;                 // the spinning blade
+  h.px(x, y, M);
+  const arms = turn ? [[1, 0], [-1, 0], [0, 1], [0, -1]] : [[1, 1], [-1, -1], [1, -1], [-1, 1]];
+  for (const [dx, dy] of arms) h.px(x + dx, y + dy, M);
+  h.px(x + arms[0][0] * 2, y + arms[0][1] * 2, Ms).px(x + arms[1][0] * 2, y + arms[1][1] * 2, Ms);
 }
 Object.assign(MONSTER_ART, {
   venomire(g, v = 'front') {
@@ -30,7 +35,7 @@ Object.assign(MONSTER_ART, {
       b.ellipse(21.5, 21, 3, 4.5, '#e4b8f4');
       spots([[6, 25], [22, 27], [12, 20], [11, 13], [26, 24]], 17);
       rigEye(h, Q, 21, 13, () => { h.rect(21, 13, 2, 3, '#3a0a4a'); h.px(21, 13, '#ffffff'); });
-      venomMaw(h, 20, 16, 4, Q.mouth);                                                          // its fanged maw
+      venomGrinder(h, 22.5, 20.5, 1.6, 2.8, Q.mouth);                                             // its grinder mouth, side on
       return;
     }
     if (v === 'back') {
@@ -48,7 +53,7 @@ Object.assign(MONSTER_ART, {
     b.ellipse(16, 21, 4.5, 4.5, '#e4b8f4');                                                     // belly
     spots([[8, 25], [22, 27], [25, 23], [5, 24], [17, 9], [11, 20]], 16);
     rigEyes(h, Q, 32, 12, 13, 2, () => h.eyes(12, 13, '#3a0a4a'));
-    venomMaw(h, 12, 16, 6, Q.mouth);                                                            // a maw ringed with fangs
+    venomGrinder(h, 16, 21, 3.4, 2.8, Q.mouth);                                               // a round grinder of a mouth
     g.px(4, 28, '#6e2e94'); g.px(27, 28, '#6e2e94');                                             // drips
   },
 });
@@ -69,7 +74,7 @@ Object.assign(MONSTER_ART_DIAG, {
     spots([[6, 25], [22, 27], [25, 23], [11, 20], [13, 10]]);
     rigEye(h, Q, 14, 13, () => { h.rect(14, 13, 2, 3, '#3a0a4a'); h.px(14, 13, '#ffffff'); });
     rigEye(h, Q, 21, 13, () => { h.rect(21, 13, 2, 3, '#3a0a4a'); h.px(21, 13, '#ffffff'); });
-    venomMaw(h, 15, 16, 6, Q.mouth);                                                            // a maw ringed with fangs
+    venomGrinder(h, 18.5, 21, 3, 2.8, Q.mouth);                                             // a round grinder of a mouth
     g.px(4, 28, '#6e2e94'); g.px(27, 28, '#6e2e94');                                             // drips
   },
 });
