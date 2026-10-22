@@ -50,7 +50,7 @@ class Battle {
     this.look = trainerLook(run.trainer, run.look);   // pixel.js: which of the 8 trainer looks
     this.trainerImg = Object.fromEntries(TRAINER_VIEWS.map(v => [v, trainerCanvas(this.look, v)]));
     this.trainerWalk = Object.fromEntries(TRAINER_VIEWS.map(v => [v, trainerWalk(this.look, v)]));
-    this.projectiles = []; this.zones = []; this.particles = []; this.floats = []; this.texts = []; this.deploys = [];
+    this.projectiles = []; this.zones = []; this.hazards = []; this.particles = []; this.floats = []; this.texts = []; this.deploys = [];
     this.pickups = room.pickups;
     this.weather = Array.from({ length: 70 }, () => this.newFlake(true));
     this.state = 'explore'; this.stateT = 0; this.time = 0;
@@ -140,13 +140,19 @@ class Battle {
         if (spec.boss) { x = (F.x0 + F.x1) / 2 + rand(-40, 40); y = P.y > (F.y0 + F.y1) / 2 ? F.y0 + 90 : F.y1 - 70; }
       } while (tries++ < 40 && (Math.hypot(x - P.x, y - P.y) < 170 || this.e.some(o => Math.hypot(o.x - x, o.y - y) < 60)));
       if (spec.champ === 'glitch') { m.glitched = true; m.setDef(m.def); m.hp = m.maxHp; m.gear = ['glitch']; }   // already corrupted
+      m.baseId = spec.id; m.gate = !!spec.gate;   // what it was when the fight started (a boss may change form); a gatekeeper
+      if (spec.glitch && typeof bossGlitch === 'function') bossGlitch(m);   // a Glitched boss (bosses.js)
+      if (spec.script && typeof BossBrain === 'function') m.ai = m.brain = new BossBrain(m, spec.script);   // a hand-made boss drives itself
       m.x = x; m.y = y; m.face = x < P.x ? 1 : -1;
       m.spawnT = 0.7 + i * 0.35;
       return m;
     });
     this.state = 'fight'; this.stateT = 0;
     this.doorFx('close');
-    if (this.boss) this.ui.banner(this.boss.final ? 'FINAL BOSS!' : 'BOSS!', this.boss.final ? this.boss.def.name : '');
+    if (this.boss) {
+      if (typeof bossIntro === 'function') bossIntro(this, this.boss);   // bosses.js: its banner, by kind
+      else this.ui.banner(this.boss.final ? 'FINAL BOSS!' : 'BOSS!', this.boss.final ? this.boss.def.name : '');
+    }
   }
 
   clearRoom() {
@@ -157,10 +163,11 @@ class Battle {
     for (const m of this.run.party) if (m.fused && m.fused.length) this.emit('clear', m, true);
     this.evolveReady();
     this.glitchReady();
-    if (this.boss && this.hooks.bossBeaten) this.hooks.bossBeaten(this.boss.id);
+    if (this.boss && this.hooks.bossBeaten) this.hooks.bossBeaten(this.boss.baseId || this.boss.id);
     this.state = 'explore'; this.stateT = 0;
     this.projectiles = this.projectiles.filter(p => p.owner.side === 'player');
     this.zones = this.zones.filter(z => z.owner.side === 'player');
+    this.hazards = [];
     this.doorFx('open');
     if (this.room.type === 'boss') {
       if (!this.run.endless && this.run.floorN >= RUN_FLOORS) {
@@ -404,7 +411,7 @@ class Battle {
     this.ui.banner(`${m.def.name} FAINTED!`);
     this.trainerAct('crouch', m);
     for (const e of this.e) e.action = null;
-    this.projectiles = []; this.zones = [];
+    this.projectiles = []; this.zones = []; this.hazards = [];
     this.state = 'faint'; this.stateT = 0;
   }
 
@@ -484,6 +491,7 @@ class Battle {
     if (m.boss || Math.random() < 0.12 * this.mod(null, 'berryOddsMul')) this.spawnPickup('berry', m.x, m.y);
     if (m.champ === 'shiny') { for (let i = 0; i < 10; i++) this.spawnPickup('coin', m.x, m.y); this.spawnPickup('chest', m.x, m.y); }
     if (m.champ === 'glitch') this.spawnPickup('glitchShard', m.x, m.y);
+    if (m.bossGlitch) { for (let i = 0; i < 2; i++) this.spawnPickup('glitchShard', m.x, m.y); this.spawnPickup('chest', m.x, m.y); }   // a Glitched boss's spoils
   }
 
   // the room's reward (shown over its doors) pops out in the middle once it's cleared
@@ -597,6 +605,7 @@ class Battle {
         if (this.state === 'fight') this.updateChampions(dt);
         this.updateProjectiles(dt);
         this.updateZones(dt);
+        if (this.state === 'fight' && this.updateHazards) this.updateHazards(dt);   // bosses.js
         if (this.state === 'faint') break;
         this.updatePickups(dt);
         if (this.state === 'fight' && this.e.length && this.e.every(m => m.fainted) && this.deploys.length === 0) this.clearRoom();

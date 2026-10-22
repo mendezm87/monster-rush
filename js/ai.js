@@ -82,6 +82,7 @@ class AI {
 
   // Returns a unit vector to dodge along, or null.
   threat(me, b) {
+    if (b.hazardThreat) { const h = b.hazardThreat(me); if (h) return h; }   // a boss's warned attacks (bosses.js)
     let best = null, bestT = Infinity;
     for (const p of b.projectiles) {
       if (p.owner.side === me.side) continue;

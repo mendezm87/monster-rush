@@ -468,6 +468,8 @@ function monAnim(m, phase, flying) {
       if (a.kind === 'vortex') return out(F.roar);
       if (a.kind === 'burst') return out(a.done ? F.attack : a.t > (a.delay || 0.3) * 0.7 && F.lunge ? F.lunge : F.windup);
       if (a.pose === 'proud') return out(F.proud);
+      if (a.pose === 'roar') return out(F.roar);       // a boss's roar or crouch for as long as it lasts (Rush's bosses.js)
+      if (a.pose === 'windup') return out(F.windup);
       if (a.pose === 'heal') return healPose();
       const k = a.t / a.dur;   // wind up, lunge into it, throw, and ease back
       return out(k < 0.35 ? F.windup : k < 0.55 && F.lunge ? F.lunge : k < 0.85 || !F.recover ? F.throw : F.recover);

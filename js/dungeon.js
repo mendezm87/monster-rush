@@ -1,6 +1,14 @@
 // Floors (a grid of rooms joined by doors, Isaac-style) and the state of a run.
 
 const RUN_FLOORS = 6;                                    // floors in a normal run; the last one has the final boss
+// Acts (r143, the owner: "at least three floors per act"): a boss only at the end of an act; the other
+// floors end with a gatekeeper (a tough Coreature guarding the stairs). A normal run is two acts:
+// the act 1 boss on floor 3 (a hand-made boss, bosses.js) and the final boss on floor 6.
+const ACT_FLOORS = 3;
+const actOf = floorN => Math.ceil(floorN / ACT_FLOORS);
+const actEnd = floorN => floorN % ACT_FLOORS === 0;
+// how often an act boss (or the final boss) is Glitched: corrupted beyond what a party Coreature can be (bosses.js BOSS_GLITCH)
+const bossGlitchOdds = floorN => (floorN <= 3 ? 0.3 : 0.5);
 const FLOOR_STAGES = ['meadow', 'crater', 'summit', 'grotto', 'ruins', 'spire'];   // one per floor; endless mode loops through them
 // Each floor theme's song (Sfx.music.SONGS); boss rooms and the shop have their own.
 const STAGE_SONGS = { meadow: 'rush', crater: 'magma', summit: 'summit', grotto: 'deep', ruins: 'deep', spire: 'spire' };
@@ -82,6 +90,10 @@ function wildSpec(id, floorN, kind) {
   // the final boss: an evolved starter, bigger and tougher than any other boss
   if (kind === 'final') return { id, hpMul: 1.6 + 0.5 * f, atkMul: 0.75 + 0.13 * f, scale: 1.45, boss: true, final: true, ai: 'boss' };
   if (kind === 'boss') return { id, hpMul: 1.3 + 0.45 * f, atkMul: 0.7 + 0.12 * f, scale: 1.35, boss: true, ai: 'boss' };
+  // a hand-made act boss (bosses.js BOSSES[id]): its own phases and attacks
+  if (kind === 'act') return { id, hpMul: 1.8 + 1.0 * f, atkMul: 0.72 + 0.12 * f, scale: 1.4, boss: true, act: true, script: id, ai: 'boss' };
+  // a gatekeeper: the floor's guardian when it isn't the end of an act, a step down from a boss
+  if (kind === 'gate') return { id, hpMul: 1.0 + 0.38 * f, atkMul: 0.64 + 0.11 * f, scale: 1.25, boss: true, gate: true, ai: 'boss' };
   if (kind === 'tough') return { id, hpMul: 0.65 + 0.25 * f, atkMul: 0.5 + 0.12 * f, scale: 1.15, ai: 'wild' };
   return { id, hpMul: 0.3 + 0.15 * f, atkMul: 0.36 + 0.11 * f, ai: 'wild' };
 }
@@ -171,14 +183,15 @@ function shuffle(a) {
 }
 
 // Each area's own Coreatures: most wild Coreatures, recruits and bosses on a floor come from
-// here (AREA_ODDS), the rest from anywhere, so every area feels different but can surprise.
+// here (AREA_ODDS), the rest from anywhere, so every area feels different but can surprise. `bosses` are the
+// gatekeepers (and endless fallbacks); Slumbear isn't one, he's the act 1 boss (bosses.js).
 const AREA_MONS = {
-  meadow: { natives: ['sparkit', 'thornback', 'slumbear', 'pixibelle', 'galewing', 'scarablade', 'lumawool', 'smugshi', 'bellpaca', 'shellmet'], bosses: ['slumbear', 'thornback', 'galewing'] },
+  meadow: { natives: ['sparkit', 'thornback', 'slumbear', 'pixibelle', 'galewing', 'scarablade', 'lumawool', 'smugshi', 'bellpaca', 'shellmet'], bosses: ['thornback', 'galewing', 'bellpaca'] },
   crater: { natives: ['cinderox', 'boulderon', 'cosmite', 'brawlix', 'venomire', 'thornback', 'gearhulk', 'coilizard', 'smouldox'], bosses: ['boulderon', 'drakorn', 'cinderox'] },
-  summit: { natives: ['frostling', 'galewing', 'boulderon', 'brawlix', 'slumbear', 'cosmite', 'lumawool', 'coilizard', 'bellpaca', 'shellmet', 'bulwarden', 'gyroculus'], bosses: ['frostling', 'slumbear', 'boulderon'] },
+  summit: { natives: ['frostling', 'galewing', 'boulderon', 'brawlix', 'slumbear', 'cosmite', 'lumawool', 'coilizard', 'bellpaca', 'shellmet', 'bulwarden', 'gyroculus'], bosses: ['frostling', 'boulderon', 'bulwarden'] },
   grotto: { natives: ['mindra', 'wispurr', 'shadefang', 'pixibelle', 'lumawool', 'venomire', 'gearhulk', 'voltergeist', 'garrishell', 'bulwarden', 'gyroculus'], bosses: ['gearhulk', 'mindra', 'wispurr'] },
   ruins:  { natives: ['tidalisk', 'venomire', 'scarablade', 'wispurr', 'shadefang', 'mondaze', 'gearhulk', 'mindra', 'smouldox', 'garrishell', 'stonicface'], bosses: ['tidalisk', 'shadefang', 'mondaze', 'garrishell', 'stonicface'] },
-  spire:  { natives: ['drakorn', 'mindra', 'shadefang', 'pixibelle', 'galewing', 'gearhulk', 'wispurr', 'brawlix', 'voltergeist', 'stonicface'], bosses: ['drakorn', 'gearhulk', 'slumbear'] },
+  spire:  { natives: ['drakorn', 'mindra', 'shadefang', 'pixibelle', 'galewing', 'gearhulk', 'wispurr', 'brawlix', 'voltergeist', 'stonicface'], bosses: ['drakorn', 'gearhulk', 'stonicface'] },
 };
 const AREA_ODDS = 0.75;
 // n different wild Coreature ids for an area
@@ -289,7 +302,9 @@ function tryFloor(floorN, partyIds, relics, last, offers = 3) {
   const ids = ROSTER.map(m => m.id);
   for (const r of rooms) {
     r.type = r === start ? 'start' : r === boss ? 'boss' : r === recruit ? 'recruit' : r === shop ? 'shop' : r === treasure ? 'treasure' : r === altar ? 'altar' : 'fight';
-    const sizeKey = r.type === 'boss' ? 'boss' : r.type === 'fight' ? pickRand(['s', 's', 'wide', 'tall', 'big']) : 's';
+    const bossKind = r.type !== 'boss' ? null : last ? 'final' : actEnd(floorN) ? 'act' : 'gate';
+    if (bossKind) r.bossKind = bossKind;
+    const sizeKey = bossKind === 'gate' ? 'big' : r.type === 'boss' ? 'boss' : r.type === 'fight' ? pickRand(['s', 's', 'wide', 'tall', 'big']) : 's';
     [r.w, r.h] = ROOM_SIZES[sizeKey];
     r.seed = (Math.random() * 1e9) | 0;
     r.cleared = r.type !== 'fight' && r.type !== 'boss';
@@ -298,11 +313,18 @@ function tryFloor(floorN, partyIds, relics, last, offers = 3) {
     r.enemies = r.type === 'fight' ? makeWave(floorN, sizeKey, stage) : [];
     if (r.type === 'fight') r.reward = pickReward();
     if (r.type === 'boss') {
-      // usually one of the area's bosses, now and then anyone
-      r.enemies = [wildSpec(Math.random() < 0.8 ? pickRand(AREA_MONS[stage].bosses) : pickRand(ids), floorN, 'boss')];
+      // a gatekeeper: usually one of the area's bosses, now and then anyone
+      const areaPick = () => (Math.random() < 0.8 ? pickRand(AREA_MONS[stage].bosses) : pickRand(ids));
+      r.enemies = [wildSpec(areaPick(), floorN, 'gate')];
+      if (bossKind === 'act') {   // a hand-made boss for this act (bosses.js); endless past them: any of them, or an area boss
+        const all = typeof BOSSES !== 'undefined' ? Object.keys(BOSSES) : [];
+        const pool = all.filter(id => BOSSES[id].act === actOf(floorN)), any = pool.length ? pool : floorN > RUN_FLOORS ? all : [];
+        r.enemies = [any.length ? wildSpec(pickRand(any), floorN, 'act') : { ...wildSpec(areaPick(), floorN, 'boss'), act: true }];
+      }
       // the final boss is an evolved starter you didn't start with
       const mains = EVOLVED.filter(e => !e.needs && STARTERS.includes(e.from)), rivals = mains.filter(e => !partyIds.includes(e.from));   // only the starters' main forms are final bosses
       if (last) r.enemies = [wildSpec(pickRand(rivals.length ? rivals : mains).id, floorN, 'final')];
+      if (bossKind !== 'gate' && Math.random() < bossGlitchOdds(floorN)) r.enemies[0].glitch = true;
     }
     if (r.type === 'recruit') {   // two of the area's Coreatures and one from anywhere
       const local = shuffle(AREA_MONS[stage].natives.filter(id => !partyIds.includes(id))).slice(0, 2);
@@ -506,7 +528,10 @@ class RunState {
   warm() {
     const ids = [];
     for (const m of this.party) { ids.push(m.id, ...evolveTos(m.def)); ids.push(...Object.keys(m.def.branches || {})); }   // and what it can become
-    for (const r of this.floor.rooms) { for (const e of r.enemies) ids.push(e.id); if (r.offer) ids.push(...r.offer); }
+    for (const r of this.floor.rooms) {
+      for (const e of r.enemies) { ids.push(e.id); if (e.script && typeof BOSSES !== 'undefined') ids.push(...BOSSES[e.script].forms); }   // a boss's other forms
+      if (r.offer) ids.push(...r.offer);
+    }
     forgetSprites(new Set(ids));   // everyone else's pictures go (drawn again if they turn up)
     warmSprites(ids);
   }

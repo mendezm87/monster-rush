@@ -5,8 +5,9 @@ World of Warcraft and Final Fantasy XIV (and elsewhere), and log every good mech
 at the end. Most "best boss" lists are opinion pieces and forum threads, not polls, so the favourites below
 are the names that came up again and again.
 
-**The owner's decision so far:** not a boss on every floor. Bosses come **at the end of a set of floors**.
-See "How bosses fit a run" near the end for the options.
+**The owner's decisions:** not a boss on every floor; bosses come at the end of an act of **at least three floors**
+(so a 6-floor run is two acts: bosses after floors 3 and 6, gatekeepers on the others). The first hand-made boss,
+Slumbear the Jumbled King, is in the game (r143; CLAUDE.md has the details).
 
 ---
 

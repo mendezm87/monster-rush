@@ -82,6 +82,8 @@ mixInto(Battle, class {
             y: clamp(foe.y + Math.sin(a) * rr, F.y0 + 8, F.y1 - 8),
             r: mv.r * this.mod(m, 'blastMul'), t: 0, delay: mv.delay + k * 0.18, mv, owner: m, done: false, tick: 0, id: _uid++,
           });
+          // a Glitched boss's strikes come again a moment later: its corrupted data replays them (bosses.js)
+          if (m.bossGlitch) { const z = this.zones[this.zones.length - 1]; this.zones.push({ ...z, delay: z.delay + BOSS_GLITCH.echo, echo: true, id: _uid++ }); }
         }
         m.action = { kind: 'cast', t: 0, dur: 0.25, lock: true, mv, pose: 'throw' };
         Sfx.move(mv, 'cast');
@@ -137,8 +139,12 @@ mixInto(Battle, class {
     const itemMul = src.item.boostType === mv.type ? src.item.mul : 1;
     const crit = mult >= 1 && Math.random() < (mv.crit || 0.06);
     let dmg = DMG_SCALE * mv.power * mult * (src.atk() / tgt.defense()) * stab * eff * itemMul * (crit ? 1.5 : 1) * (mv.type === 'water' ? this.mod(src, 'waterMul') : 1) * rand(0.9, 1.05);
+    if (tgt.exposedT > 0) dmg *= 1.5;   // a boss knocked dizzy or staggered takes more (bosses.js)
+    if (src.brain && !mv.boss) dmg *= BOSS_MOVE_MUL;   // a hand-made boss's own moves hit softer than its warned attacks
     dmg = Math.max(1, Math.round(dmg));
     tgt.hp = Math.max(0, tgt.hp - dmg);
+    if (tgt.brain) tgt.brain.hurt(this, dmg, mult);          // a hand-made boss counts the damage (interrupts, stagger checks)
+    if (src.brain && tgt === this.P) src.brain.landed(this, tgt, mv, mult);
     src.dmgDealt += dmg;
     if (tgt === this.P && mult >= 1 && dmg >= tgt.maxHp * 0.1) this.trainerAct('wince', tgt);
     tgt.flash = 0.12;

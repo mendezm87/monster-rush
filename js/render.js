@@ -147,7 +147,7 @@ const PICKUP_IMG = { coin: COIN_IMG, berry: BERRY_IMG, shard: SHARD_IMG, glitchS
 const REWARD_IMG = { coins: COIN_IMG, berries: BERRY_IMG, xp: SHARD_IMG, move: DISC_IMG, chest: CHEST_IMG, glitch: GLITCH_SHARD_IMG };
 function doorSign(room) {
   if (room.type === 'fight') return room.cleared ? null : { img: REWARD_IMG[room.reward], c: '#e8e0f0' };
-  if (room.type === 'boss') return room.cleared ? null : { img: SKULL_IMG, c: '#e8433a' };
+  if (room.type === 'boss') return room.cleared ? null : { img: SKULL_IMG, c: room.bossKind === 'gate' ? '#e8943a' : '#e8433a' };   // a gatekeeper's door is orange
   if (room.type === 'shop') return { img: COIN_IMG, c: '#ffd23f' };
   if (room.type === 'treasure') return room.taken ? null : { img: CHEST_IMG, c: '#ffffff' };
   if (room.type === 'altar') return room.used ? null : { img: ALTAR_IMG, c: '#c87aff' };
@@ -572,6 +572,7 @@ mixInto(Battle, class {
         ctx.lineWidth = 2.5; ctx.strokeStyle = '#15111f'; ctx.strokeText(c.name, m.x, y - 3); ctx.fillStyle = c.color; ctx.fillText(c.name, m.x, y - 3);
       }
     }
+    if (this.drawBossBits) this.drawBossBits(ctx);   // bosses.js: interrupt and stagger bars, frostbite
   }
 
   // The Restore moment (Battle.startRestore): a spotlight, the swirling data, the new name.
@@ -635,11 +636,11 @@ mixInto(Battle, class {
     // flying Coreatures hover above their shadow with a slow bob and flap their wings (they drop
     // to the ground when frozen or fainted)
     const fly = sp.fly, grounded = m.status === 'frz' || m.fainted, phase = (m.x0 ?? (m.x0 = Math.random() * 10));
-    const hover = fly && !grounded ? Math.round(fly.hover + Math.sin(this.time * 2.4 + phase) * 1.5) : 0;
+    const hover = (fly && !grounded ? Math.round(fly.hover + Math.sin(this.time * 2.4 + phase) * 1.5) : 0) + Math.round(m.fainted ? 0 : m.jump || 0);   // jump: a boss leaping (bosses.js)
     m.hover = hover;
     // how it looks right now (sprites.js monAnim): a rigged Coreature's animation frame, or a hop / dip
     const still = m.status === 'frz' || m.stunT > 0 || m.lift > 0.01;
-    const pose = still && !m.fainted ? { views: sp.views, sq: 0, sh: 0, dy: 0 } : monAnim(m, phase, !!hover);
+    const pose = still && !m.fainted ? { views: sp.views, sq: 0, sh: 0, dy: 0 } : monAnim(m, phase, !!fly && !grounded);
     const bob = -pose.dy;
     // wings in four steps (r110): up, half-way, down, half-way
     const beat = fly && sp.flap && !grounded && m.stunT <= 0 && !pose.noFlap ? Math.floor(((this.time * fly.flap * (moving ? 1.3 : 1) + phase) % 1) * 4) : 0;
@@ -814,6 +815,7 @@ mixInto(Battle, class {
         ctx.lineTo(X + Math.cos(dir) * 40, Y + Math.sin(dir) * 40); ctx.stroke();
       }
     }
+    if (this.drawHazards) this.drawHazards(ctx, outlines);   // a boss's warned attacks (bosses.js)
     ctx.globalAlpha = 1;
   }
 

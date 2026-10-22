@@ -181,7 +181,13 @@ const UI = {
     bb.classList.toggle('hidden', !showBoss);
     if (showBoss) {
       const c = this.hudCache.boss || (this.hudCache.boss = { ghost: boss.hp });
-      if (c.id !== boss.id) { c.id = boss.id; bb.querySelector('.boss-name').textContent = (boss.final ? 'FINAL BOSS · ' : '') + boss.def.name; c.ghost = boss.hp; }
+      // its name (bosses.js bossLabel: gatekeeper, act boss title, Glitched) and its types, which a hand-made boss may change mid-fight
+      const label = typeof bossLabel === 'function' ? bossLabel(boss) : (boss.final ? 'FINAL BOSS · ' : '') + boss.def.name, key = label + boss.def.types.join();
+      if (c.key !== key) {
+        if (c.id !== boss.baseId) c.ghost = boss.hp;
+        c.key = key; c.id = boss.baseId;
+        bb.querySelector('.boss-name').innerHTML = boss.def.types.map(t => `<img class="ticon" src="${typeIconURL(t)}" alt="">`).join('') + ' ' + label;
+      }
       c.ghost = c.ghost > boss.hp ? Math.max(boss.hp, c.ghost - boss.maxHp * 0.4 / 60) : boss.hp;
       bb.querySelector('.fill').style.width = (boss.hp / boss.maxHp * 100) + '%';
       bb.querySelector('.ghost').style.width = (c.ghost / boss.maxHp * 100) + '%';

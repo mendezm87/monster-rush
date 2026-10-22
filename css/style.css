@@ -92,6 +92,7 @@ html, body {
 #title-stats { font: 700 3cqh system-ui, sans-serif; opacity: .8; min-height: 3cqh; }
 #boss-bar { position: absolute; left: 50%; transform: translateX(-50%); bottom: 3cqh; width: 70cqh; text-align: center; }
 .boss-name { font-size: 4cqh; color: #ffe066; -webkit-text-stroke: 0.5cqh #3a1d05; paint-order: stroke fill; margin-bottom: 0.6cqh; }
+.boss-name .ticon { width: 1em; height: 1em; vertical-align: -0.12em; margin-right: 0.2em; image-rendering: pixelated; }
 #boss-bar .hpbar { height: 3.4cqh; }
 #boss-bar .fill { background: #e8433a; }
 
