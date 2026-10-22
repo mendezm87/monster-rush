@@ -57,16 +57,19 @@ function sceneBuffer() {
 }
 
 // Room rewards (see ROOM_REWARDS): an Arc-core Shard (XP), a move disc, a treasure chest; a skull marks the boss's door.
-const SHARD_IMG = gridFromMap([   // an Arc-core Shard (XP): a sliver of a broken Archive Core, glowing with leftover data
-  '..k..',
-  '.kwk.',
-  'kwaAk',
-  'kaaAk',
-  'kaaAk',
-  'kaAAk',
-  '.kAk.',
-  '..k..',
-], { k: OUTLINE, a: '#ffd84a', A: '#e0961e', w: '#fff8d0' }).toCanvas();
+const SHARD_IMG = gridFromMap([   // an Arc-core Shard (XP): a tall sliver of a broken Archive Core, cyan with leftover data (r149: was gold, too like a coin)
+  '...k...',
+  '..kwk..',
+  '..kwak.',
+  '.kwaAk.',
+  '.kwaAk.',
+  'kwaaAAk',
+  'kaaaAAk',
+  '.kaaAk.',
+  '.kaAAk.',
+  '..kAk..',
+  '...k...',
+], { k: OUTLINE, a: '#5ae8ff', A: '#2a8ad0', w: '#eafcff' }).toCanvas();
 const GLITCH_SHARD_IMG = gridFromMap([   // a Corrupted Shard: a shard torn into magenta and cyan
   '..k...',
   '.kwk..',
@@ -511,6 +514,10 @@ mixInto(Battle, class {
       const sq = k.kind === 'coin' ? Math.max(0.3, Math.abs(Math.cos(this.time * 5 + k.x * 0.3))) : 1;
       const w = img.width * 1.5 * sq, h = img.height * 1.5;
       ctx.drawImage(img, Math.round(X - w / 2), Math.round(Y - h - bob), Math.max(1, Math.round(w)), h);
+      if (k.kind === 'shard' && (this.time * 1.3 + k.x * 0.07) % 1 < 0.35) {   // a data shard twinkles now and then
+        const sx = Math.round(X + w / 2 - 1), sy = Math.round(Y - h - bob + 2);
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(sx - 2, sy, 5, 1); ctx.fillRect(sx, sy - 2, 1, 5);
+      }
     }
   }
 

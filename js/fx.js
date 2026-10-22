@@ -629,6 +629,35 @@ const DASH_ART = {
   },
 };
 DASH_ART.zoomiesMax = DASH_ART.zoomies;
+// Flame Wheel (r149, the owner: "it should look more like flames and it could animate a bit"): it rolls
+// inside a spinning wheel of fire, a thick burning band with tongues of flame licking back against the
+// spin and flaring outwards, flickering as they go, and leaves a trail of fire behind. Behind the body:
+// the whole wheel (cut out where the Coreature is) and the trail; in front: the leading half of the band.
+DASH_ART.flameWheel = (c, R, T, fx, back) => {
+  const W = R + 6, spin = T * 13;
+  const band = (a0, a1) => {
+    c.beginPath(); c.arc(0, 0, W, a0, a1);
+    c.strokeStyle = INK; c.lineWidth = 8; c.stroke();
+    c.strokeStyle = fx[0]; c.lineWidth = 5.6; c.stroke();
+    c.strokeStyle = fx[1]; c.lineWidth = 3.2; c.stroke();
+    c.setLineDash([5, 4]); c.lineDashOffset = -T * 120; c.strokeStyle = fx[2]; c.lineWidth = 1.8; c.stroke(); c.setLineDash([]); c.lineDashOffset = 0;
+  };
+  if (back) {
+    for (let i = 0; i < 4; i++) {   // the fire it leaves behind, flickering
+      const fl = R * 0.32 + Math.sin(T * 30 + i * 2) * 1.6;
+      FXD.flame(c, -W * 0.7 - i * 2, (i - 1.5) * R * 0.42, 0, fl, fx, T * 1.4 + i);
+    }
+    band(0, TAU);
+    for (let i = 0; i < 7; i++) {   // big tongues of flame round the wheel, licking back against the spin and flaring out, each its own size
+      const ang = spin + i * TAU / 7, fl = [5.4, 3.6, 4.6, 6.2, 3.8, 5, 4.2][i] + Math.sin(T * 30 + i * 1.7) * 1.4;
+      FXD.flame(c, Math.cos(ang) * (W + 1), Math.sin(ang) * (W + 1), ang + Math.PI / 2 - 0.75, fl, fx, T + i);
+    }
+    for (let i = 0; i < 5; i++) { const ang = -spin * 0.6 + i * TAU / 5; FXD.dot(c, Math.cos(ang) * (W - 2), Math.sin(ang) * (W - 2), 1.2, '#fff3b0'); }   // sparks riding the band
+    return;
+  }
+  band(-0.55, 0.55);   // the leading edge, in front of it
+  FXD.flame(c, W + 1, 0, 0, 4.4 + Math.sin(T * 40) * 1.2, fx, T * 2);
+};
 // Bits flying off a dash as it goes (fxDashTrail): debris shape, colours (else the move's), sizes, how many a second.
 const DASH_TRAIL = {
   voltRush: { shape: 'bolt', rate: 34, size: [3, 5] },
@@ -641,6 +670,8 @@ const DASH_TRAIL = {
   deadlineDash: { shape: 'paper', rate: 16, size: [3, 4] },
   bodySlam: { shape: 'puff', rate: 18, size: [3.4, 5.4], fx: ['#a8987a', '#d8ccb0', '#f2ead8'] },
   woolTackle: { shape: 'puff', rate: 20, size: [3, 4.6], fx: ['#8a90a0', '#c8ccd8', '#ffffff'] },
+  flameWheel: { shape: 'flame', rate: 34, size: [2.6, 4], rise: true },
+  blazeRush: { shape: 'flame', rate: 30, size: [2.6, 4], rise: true },
   zoomies: { shape: 'star', rate: 18, size: [2.6, 3.6], fx: ['#ffa424', '#ffd36b', '#fffbe6'] },
   zoomiesMax: { shape: 'star', rate: 24, size: [2.6, 3.8], fx: ['#ffa424', '#ffd36b', '#fffbe6'] },
 };
@@ -664,8 +695,8 @@ mixInto(Battle, class {
     const fx = tr.fx || fxOf(a.mv), back = a.dir + Math.PI;
     if (!a.launched) {   // the launch: a ring and a spray of bits backwards
       a.launched = true;
-      this.particles.push({ kind: 'ring', x: m.x, y: m.y - 2, r0: 4, r1: m.r + 22, life: 0.26, max: 0.26, color: fx[2], w: 3.5 });
-      this.particles.push({ kind: 'ring', x: m.x, y: m.y - 2, r0: 2, r1: m.r + 12, life: 0.34, max: 0.34, color: fx[1], w: 3 });
+      this.particles.push({ kind: 'ring', x: m.x, y: m.y - 2, r0: 4, r1: m.r + 26, life: 0.22, max: 0.22, color: fx[2], w: 2.2 });
+      this.particles.push({ kind: 'ring', x: m.x, y: m.y - 2, r0: 2, r1: m.r + 16, life: 0.3, max: 0.3, color: fx[1], w: 1.8 });
       for (let i = 0; i < 10; i++) {
         const ang = back + rand(-0.9, 0.9), sp = rand(90, 200);
         this.particles.push({ kind: 'deb', shape: tr.shape, fx, x: m.x, y: m.cy, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp * 0.75, drag: 3.4, grav: tr.rise ? -60 : 120,
