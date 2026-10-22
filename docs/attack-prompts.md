@@ -199,3 +199,15 @@ fully inside its own space with empty background all round it, nothing touching 
 > same size and evenly spaced. 16-bit pixel art visual effect sprite sheet for an action game, chunky pixels with
 > a dark 1-pixel outline, limited bright palette with hard-edged shading, no creature or character, plain dark navy
 > background, no text
+
+**D1c · Volt Rush, hollow** (r156: in the first sheet the travel frames are a solid ball of lightning, so the
+Coreature vanishes inside it; the other dashes work because their frames wrap a hollow middle)
+> A creature-sized hollow cage of crackling electricity charging forward to the right, 8 frames in a row, each a
+> small step from the one before: sparks gathering in a ring around an empty middle, the ring crackling brighter,
+> jagged yellow and white lightning bolts streaming back from a bright crescent at the front, the bolts growing
+> longer, a trail of fading afterimage outlines, then a zigzag electric impact star splitting into small bolts,
+> fading sparks. The middle of every travel frame stays EMPTY (dark background showing through), like a hoop or a
+> cage, never a solid ball. Every frame complete and fully inside its own space with empty background all round it,
+> nothing touching the edges or cut off, all frames the same size and evenly spaced. 16-bit pixel art visual effect
+> sprite sheet for an action game, chunky pixels with a dark 1-pixel outline, limited bright palette with
+> hard-edged shading, no creature or character, plain dark navy background, no text

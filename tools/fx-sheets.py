@@ -21,6 +21,19 @@ SHEETS = {
     'infernoBeam':   ('f6-inferno-beam.png', 34, [2, 2]),
     'steamEruption': ('f7-steam-eruption.png', 80, [5]),
     'magmaWave':     ('f8b-magma-wave.png', 52, [4, 4]),   # the owner's second sheet: 8 frames, nothing cut off
+    # batch 1 (dashes D1-D10, hit impacts I1)
+    'voltRush':      ('d1-volt-rush.png', 46, [5]),
+    'voltRushB':     ('d1b-volt-rush.png', 46, [5]),
+    'aquaJet':       ('d2-aqua-jet.png', 46, [5]),
+    'megahorn':      ('d3-megahorn.png', 46, [5]),
+    'ironSlam':      ('d4-iron-slam.png', 46, [5]),
+    'braveDive':     ('d5-brave-dive.png', 46, [5]),
+    'lanceCharge':   ('d6-lance-charge.png', 46, [5]),
+    'phantomStrike': ('d7-phantom-strike.png', 46, [5]),
+    'deadlineDash':  ('d8-deadline-dash.png', 46, [5]),
+    'slamWool':      ('d9-body-slam-wool-tackle.webp', 46, [5, 5]),   # row 1 Body Slam, row 2 Wool Tackle
+    'zoomies':       ('d10-zoomies.png', 46, [5]),
+    'impacts':       ('i1-impacts.webp', 24, [5] * 15),   # one row per look: fire, water, electric, ice, plant, earth, wind, metal, arcane, shade, phantom, beast, brawl, dragonkin, glitch
 }
 
 def bg_mask(im):
@@ -67,8 +80,16 @@ def frames_of(im, m, counts):
     """The frames: each row of the sheet split into its known number of frames, at the emptiest columns near
     where the boundaries would be if they were evenly spaced (sparks often bridge the gaps)."""
     w, h = im.size
-    rows = spans([1 if sum(1 for x in range(w) if not m[y][x]) > 2 else 0 for y in range(h)], 26, 30)
-    assert len(rows) == len(counts), f'{len(rows)} rows found, {len(counts)} expected'
+    rowc = [sum(1 for x in range(w) if not m[y][x]) for y in range(h)]
+    rows = spans([1 if c > 2 else 0 for c in rowc], 26, 30)
+    if len(rows) != len(counts):   # rows packed tight (a grid): split at the emptiest rows near even spacing
+        ys = [y for y in range(h) if rowc[y] > 2]; a, b = ys[0], ys[-1]; n = len(counts)
+        cuts = [a - 1]
+        for i in range(1, n):
+            e, r = a + (b - a) * i / n, (b - a) / n * 0.3
+            cuts.append(min(range(int(e - r), int(e + r) + 1), key=lambda y: (rowc[y], abs(y - e))))
+        cuts.append(b + 1)
+        rows = [[cuts[i] + 1, cuts[i + 1] - 1] for i in range(n)]
     out = []
     for (y0, y1), n in zip(rows, counts):
         cols = [sum(1 for y in range(y0, y1 + 1) if not m[y][x]) for x in range(w)]
@@ -125,9 +146,14 @@ def build(only=None, sheet=False):
         meta, x = [], 0
         for f in frames:
             strip.paste(f, (x, 0)); meta.append([x, 0, f.size[0], f.size[1]]); x += f.size[0] + 1
-        alpha = strip.getchannel('A')
-        q = strip.convert('RGB').quantize(colors=20, method=Image.Quantize.MEDIANCUT).convert('RGB').convert('RGBA')
-        q.putalpha(alpha)
+        # a tidy palette of 20 colours per row of the sheet (a sheet whose rows are different looks, like the
+        # impacts' 15 types, would turn muddy sharing one palette)
+        q = Image.new('RGBA', strip.size, (0, 0, 0, 0)); i = 0
+        for n in counts:
+            x0 = meta[i][0]; x1 = meta[i + n - 1][0] + meta[i + n - 1][2]; i += n
+            part = strip.crop((x0, 0, x1, strip_h))
+            pq = part.convert('RGB').quantize(colors=20, method=Image.Quantize.MEDIANCUT).convert('RGB').convert('RGBA')
+            pq.putalpha(part.getchannel('A')); q.paste(pq, (x0, 0))
         buf = io.BytesIO(); q.save(buf, 'PNG', optimize=True)
         data[sid] = {'src': 'data:image/png;base64,' + base64.b64encode(buf.getvalue()).decode(), 'frames': meta}
         review.append((sid, q, meta))

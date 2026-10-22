@@ -669,6 +669,7 @@ function drawSheet(c, id, i, x, y, o = {}) {
     const cs = Math.cos(o.dir), sn = Math.sin(o.dir);
     if (cs < 0) { c.scale(-1, 1); c.rotate(Math.atan2(sn, -cs)); } else c.rotate(o.dir);
   }
+  if (o.tilt) c.rotate(o.tilt);   // a sheet drawn pointing some other way than right (its own angle, undone)
   if (o.flip) c.scale(-1, 1);
   c.drawImage(S.img, f[0], f[1], f[2], f[3], -w * (o.ax ?? 0.5), -h * (o.ay ?? 0.5), w, h);
   c.restore();
@@ -677,6 +678,8 @@ const sheetFrames = id => (FXS[id] ? FXS[id].frames.length : 0);
 const sheetSize = (id, i) => (FXS[id] ? FXS[id].frames[i] : [0, 0, 1, 1]);
 // a frame's world size at sc 1
 const sheetW = (id, i) => sheetSize(id, i)[2] * FX_PX, sheetH = (id, i) => sheetSize(id, i)[3] * FX_PX;
+// the hit impacts sheet (I1): one row of 5 frames per look, in this order
+const IMPACT_ROWS = ['fire', 'water', 'electric', 'ice', 'grass', 'rock', 'flying', 'steel', 'psychic', 'dark', 'ghost', 'normal', 'fighting', 'dragon', 'glitch'];
 
 // How each move plays its sheet. Frames are numbered as on the sheet, left to right, row by row.
 const SHEET_MOVES = {
@@ -684,6 +687,19 @@ const SHEET_MOVES = {
   // it travels, `hit` played at the target when it connects. upright: not turned (a pillar of fire stays upright).
   flameWheel: { dash: true, pre: [0], go: [1, 2], hit: [3, 4], hole: 0.36 },
   blazeRush:  { dash: true, pre: [0, 1], preUpright: true, go: [2], hit: [3, 4], hole: 0.42, tilt: -0.62, ax: 0.7, ay: 0.68 },   // its comet is drawn heading down-right
+  // batch 1 (r156, the owner's D1-D10): wind-up, travel (looping), impact; fit = its height as a share of the
+  // dasher's; tilt undoes the angle a sheet was drawn at (measured by its frames' long axis)
+  voltRush:      { dash: true, pre: [0], go: [1, 2], hit: [3, 4], hitSheet: 'voltRushB', fit: 1.5 },   // the owner: D1's travel, D1b's impact
+  aquaJet:       { dash: true, pre: [0], go: [1, 2], hit: [3, 4], fit: 1.5 },
+  megahorn:      { dash: true, pre: [0], go: [1, 2], hit: [3, 4], fit: 1.5 },
+  ironSlam:      { dash: true, pre: [0], go: [1, 2], hit: [3, 4], fit: 1.6, tilt: 60 * Math.PI / 180 },
+  braveDive:     { dash: true, pre: [0], go: [1, 2], hit: [3, 4], fit: 1.6, tilt: 56 * Math.PI / 180 },
+  lanceCharge:   { dash: true, pre: [0], go: [1, 2], hit: [3, 4], fit: 1.7, tilt: 54 * Math.PI / 180 },
+  phantomStrike: { dash: true, pre: [0], go: [1, 2], hit: [3, 4], fit: 1.5 },
+  deadlineDash:  { dash: true, pre: [0], go: [1, 2], hit: [3, 4], fit: 1.5 },
+  bodySlam:      { dash: true, sheet: 'slamWool', pre: [0], go: [1, 2], hit: [3, 4], fit: 1.5 },
+  woolTackle:    { dash: true, sheet: 'slamWool', pre: [5], go: [6, 7], hit: [8, 9], fit: 1.5 },
+  zoomies:       { dash: true, pre: [0], go: [1, 2], hit: [3, 4], fit: 1.5, tilt: 48 * Math.PI / 180 },
 };
 // Where Magma Wave's waves stand: along the arc of its cone at distance d (squashed like the floor, as its
 // warning wedge is), enough of them side by side to fill it, the far ones first so the near ones overlap them.
@@ -717,6 +733,7 @@ mixInto(Battle, class {
     const tr = DASH_TRAIL[a.mv.id];
     if (!tr) return;
     const fx = tr.fx || fxOf(a.mv), back = a.dir + Math.PI;
+    if (!a.launched && SHEET_MOVES[a.mv.id]) { a.launched = true; this.addShake(2); }   // a sheet dash has its own wind-up
     if (!a.launched) {   // the launch: a ring and a spray of bits backwards
       a.launched = true;
       this.particles.push({ kind: 'ring', x: m.x, y: m.y - 2, r0: 4, r1: m.r + 26, life: 0.22, max: 0.22, color: fx[2], w: 2.2 });
@@ -728,6 +745,7 @@ mixInto(Battle, class {
       }
       this.addShake(2);
     }
+    if (SHEET_MOVES[a.mv.id]) return;   // its sheet has its own sparks and splashes
     a.trailT = (a.trailT || 0) - dt;
     while (a.trailT <= 0) {
       a.trailT += 1 / tr.rate;
@@ -746,13 +764,16 @@ mixInto(Battle, class {
     const size = big ? clamp(16 + dmg / 14, 18, 38) * (eff >= 2 ? 1.25 : 1) : 10;
     // its look's own impact, on the side the hit came from, so the target stays visible (IMPACT_ART, r147)
     const from = src ? Math.atan2(src.cy - tgt.cy, src.x - tgt.x) : rand(0, TAU), off = tgt.r * 0.55;
-    this.particles.push({ kind: 'hit', art: impactArtOf(mv), x: tgt.x + Math.cos(from) * off + rand(-3, 3), y: tgt.cy + Math.sin(from) * off * 0.7 + rand(-3, 3), size, rot: rand(0, TAU),
+    const hx = tgt.x + Math.cos(from) * off + rand(-3, 3), hy = tgt.cy + Math.sin(from) * off * 0.7 + rand(-3, 3), row = IMPACT_ROWS.indexOf(impactArtOf(mv));
+    if (FXS.impacts && row >= 0) {   // the owner's impact sheet (I1, r156): its look's row of five frames
+      sheetPart(this, 'impacts', [0, 1, 2, 3, 4].map(i => row * 5 + i), hx, hy, big ? 0.36 : 0.22, { sc: size / 30 });
+    } else this.particles.push({ kind: 'hit', art: impactArtOf(mv), x: hx, y: hy, size, rot: rand(0, TAU),
       fx, seed: (Math.random() * 1e6) | 0, big, life: big ? 0.38 : 0.22, max: big ? 0.38 : 0.22 });
-    this.fxDebris(tgt.x, tgt.cy, mv, big ? Math.min(5, 2 + dmg / 90) : 0, big ? 120 : 70, 3);
+    if (!(FXS.impacts && row >= 0)) this.fxDebris(tgt.x, tgt.cy, mv, big ? Math.min(5, 2 + dmg / 90) : 0, big ? 120 : 70, 3);   // (the impact sheet has its own debris)
     // signature hits
     const toward = src ? Math.atan2(tgt.cy - src.cy, tgt.x - src.x) : 0;
     const SM = SHEET_MOVES[mv.id];
-    if (big && SM && SM.hit) sheetPart(this, mv.id, SM.hit, tgt.x, tgt.cy, 0.5, { sc: tgt.r * 3 / sheetW(mv.id, SM.hit[0]) });   // its sheet's impact
+    if (big && SM && SM.hit) { const hs = SM.hitSheet || SM.sheet || mv.id; sheetPart(this, hs, SM.hit, tgt.x, tgt.cy, 0.5, { sc: tgt.r * 3 / sheetW(hs, SM.hit[0]) }); }   // its sheet's impact
     if (mv.fx === 'claw') this.particles.push({ kind: 'claw', x: tgt.x, y: tgt.cy, size: 34, rot: toward + Math.PI / 2 + rand(-0.3, 0.3), color: fx[1], life: 0.3, max: 0.3 });
     if (mv.fx === 'slash') this.particles.push({ kind: 'slash', x: tgt.x, y: tgt.cy, size: 22, rot: toward + rand(-0.4, 0.4), color: fx[1], life: 0.28, max: 0.28 });
     if (mv.fx === 'flurry') {   // fists everywhere at once
@@ -856,15 +877,17 @@ mixInto(Battle, class {
   // Dashes with a look of their own, drawn round the moving monster.
   // A dash played from its sheet: the frames round the dasher, the hole in them sized to its body.
   drawSheetDash(c, m, a, SM) {
-    const id = a.mv.id, pre = 0.1 + (a.mv.windup || 0), T = this.time;
+    const id = SM.sheet || a.mv.id, pre = 0.1 + (a.mv.windup || 0), T = this.time;
+    // its size: the hole in the frames fits its body (hole), or the frames are fit times its height
+    const size = fr => (SM.hole ? m.r * 2.2 / (sheetW(id, fr) * SM.hole) : m.h * SM.fit / sheetH(id, SM.go[0]));
     if (a.t <= pre) {
-      const fr = SM.pre[Math.min(SM.pre.length - 1, Math.floor(a.t / pre * SM.pre.length))], sc = m.r * 2.2 / (sheetW(id, fr) * SM.hole);
-      if (SM.preUpright) drawSheet(c, id, fr, m.x, m.y + 3, { sc, ay: 1 });
-      else drawSheet(c, id, fr, m.x, m.cy, { sc, dir: a.dir });
+      const fr = SM.pre[Math.min(SM.pre.length - 1, Math.floor(a.t / pre * SM.pre.length))];
+      if (SM.preUpright) drawSheet(c, id, fr, m.x, m.y + 3, { sc: size(fr), ay: 1 });
+      else drawSheet(c, id, fr, m.x, m.cy, { sc: size(fr), dir: a.dir, tilt: SM.tilt });
       return;
     }
-    const fr = SM.go[Math.floor(T / 0.07) % SM.go.length], sc = m.r * 2.2 / (sheetW(id, fr) * SM.hole);
-    drawSheet(c, id, fr, m.x, m.cy, { sc, dir: a.dir + (SM.tilt || 0), ax: SM.ax ?? 0.5, ay: SM.ay ?? 0.5 });
+    const fr = SM.go[Math.floor(T / 0.07) % SM.go.length];
+    drawSheet(c, id, fr, m.x, m.cy, { sc: size(fr), dir: a.dir, tilt: SM.tilt, ax: SM.ax ?? 0.5, ay: SM.ay ?? 0.5 });
   }
 
   drawDashFx(c, m, a) {
