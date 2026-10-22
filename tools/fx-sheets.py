@@ -20,7 +20,7 @@ SHEETS = {
     'eruption':      ('f5-eruption.png', 90, [5]),
     'infernoBeam':   ('f6-inferno-beam.png', 34, [2, 2]),
     'steamEruption': ('f7-steam-eruption.png', 80, [5]),
-    'magmaWave':     ('f8-magma-wave.png', 64, [5]),
+    'magmaWave':     ('f8b-magma-wave.png', 52, [4, 4]),   # the owner's second sheet: 8 frames, nothing cut off
 }
 
 def bg_mask(im):
@@ -35,6 +35,21 @@ def bg_mask(im):
         for x in range(w):
             r, g, b = px[x, y]
             row[x] = abs(r - bg[0]) + abs(g - bg[1]) + abs(b - bg[2]) < 30
+    # small patches of background-like colour inside an effect (dark crust, smoke shading) are part of it: only
+    # patches touching the edge of the picture, or big ones (the hole in a ring of fire), are background
+    seen = [[False] * w for _ in range(h)]
+    for sy in range(h):
+        for sx in range(w):
+            if not m[sy][sx] or seen[sy][sx]: continue
+            stack, comp, edge = [(sx, sy)], [], False
+            seen[sy][sx] = True
+            while stack:
+                x, y = stack.pop(); comp.append((x, y))
+                if x in (0, w - 1) or y in (0, h - 1): edge = True
+                for nx, ny in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+                    if 0 <= nx < w and 0 <= ny < h and m[ny][nx] and not seen[ny][nx]: seen[ny][nx] = True; stack.append((nx, ny))
+            if not edge and len(comp) < 400:
+                for x, y in comp: m[y][x] = False
     return m
 
 def spans(counts, gap, minlen):

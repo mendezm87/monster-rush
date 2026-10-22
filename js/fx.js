@@ -770,7 +770,7 @@ mixInto(Battle, class {
       if (!a.pooled && a.blowT + 1 / 30 >= mv.blow) {
         a.pooled = true;
         const flip = Math.cos(a.dir) < 0;
-        for (const w of magmaFront(a, mv, a.r * 0.92, 0.85)) sheetPart(this, 'magmaWave', [4], m.x + w.x, m.y + w.y, 0.7, { sc: w.sc, ay: 1, flip });
+        for (const w of magmaFront(a, mv, a.r * 0.92, 0.85)) sheetPart(this, 'magmaWave', [7], m.x + w.x, m.y + w.y, 0.7, { sc: w.sc, ay: 1, flip });
       }
       return;
     }
@@ -1074,12 +1074,12 @@ mixInto(Battle, class {
   }
 
   // Magma Wave: a front of waves rolls out across its whole cone (the wedge you see before it goes off), each
-  // wave rising, curling over and crashing (sheet frames 1-3), side by side along the arc and growing as they go
+  // wave rising, curling over and crashing (sheet frames 1-6, then the pool, 7), side by side along the arc and growing as they go
   // (r153, the owner: it looked small and didn't fill the cone).
   drawSheetMagma(c, m, a) {
     const mv = a.mv, k = Math.min(1, a.blowT / mv.blow);
     for (const w of magmaFront(a, mv, a.r * (0.3 + 0.62 * k), 0.75 + 0.45 * k)) {
-      const fr = 1 + Math.min(2, Math.floor(k * 3 + w.i % 2 * 0.35));
+      const fr = 1 + Math.min(5, Math.floor(k * 6 + w.i % 2 * 0.35));   // frames 1-6: rising, curling, breaking, crashing
       drawSheet(c, 'magmaWave', fr, m.x + w.x, m.y + w.y, { sc: w.sc, ay: 1, flip: Math.cos(a.dir) < 0 });
     }
   }
