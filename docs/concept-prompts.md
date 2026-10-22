@@ -949,3 +949,79 @@ martial artist, a red headband, a pale horn. Three directions; each comes with n
 > 1990s TV anime cel art, hand-inked line art with varying line weight, flat cel colours with one
 > hard-edged shadow tone, soft airbrushed highlights, hand-painted watercolour background of a bamboo
 > dojo yard, original creature design, no text
+
+---
+
+## Round 8: attack art, batch 1: dashes and hit impacts (r144; the owner: "a lot of them look like basic squares or circles, we need to treat them as important as sprites")
+
+The audit and the plan are in `docs/attack-art.md`. Dashes are the worst (a flat coloured block behind the
+Coreature and a white blob on the target), and the white impact blob shows up on almost every hit. Run these
+in Gemini and send back the ones you like. Each asks for a **pixel-art effect sheet** (frames left to right),
+which Claude uses as a guide for shapes, timing and colours; the creature is left out on purpose, so only the
+effect is drawn.
+
+The shared style, already in every prompt:
+
+> 16-bit pixel art visual effect sprite sheet for an action game, frames in a row from left to right
+> (wind-up, travel, impact, fade), chunky pixels with a dark 1-pixel outline, limited bright palette with
+> hard-edged shading, no creature or character, plain dark navy background, no text
+
+**D1 · Volt Rush** (Electric dash)
+> A body-shaped burst of crackling electricity charging forward: jagged yellow and white lightning bolts
+> streaming back from a bright leading edge, sparks peeling off, a trail of fading afterimage outlines, then a
+> zigzag electric impact star that splits into small bolts. 16-bit pixel art visual effect sprite sheet for an
+> action game, frames in a row from left to right (wind-up, travel, impact, fade), chunky pixels with a dark
+> 1-pixel outline, limited bright palette with hard-edged shading, no creature or character, plain dark navy
+> background, no text
+
+**D2 · Aqua Jet** (Water dash)
+> A torpedo-shaped jet of water rushing forward: a pointed spearhead of white foam, a twisting body of blue
+> water behind it, droplets and spray flying off the sides, then a crashing splash impact with a ring of
+> droplets. (style block)
+
+**D3 · Megahorn** (Plant dash)
+> A long glowing green horn-shaped lance of energy thrusting forward, with leaf-shaped speed streaks and torn
+> leaves swirling behind it, then a piercing impact: a sharp green starburst with leaf shards. (style block)
+
+**D4 · Iron Slam** (Metal dash)
+> A heavy steel shockwave charging forward: a wedge of grey metal plates with rivets and bright white glints,
+> heavy speed lines, sparks scraping off the ground, then a clanging impact: a flat white-and-steel star with
+> a ring of metal fragments and sparks. (style block)
+
+**D5 · Brave Dive** (Wind dash)
+> A diving streak through the air: a bright white-blue arrowhead of wind, swept-back air currents curling
+> behind it like a comet's tail, loose feathers spinning off, then a wind-burst impact that flattens into
+> curved gust lines. (style block)
+
+**D6 · Lance Charge** (Electric dash with a railgun lance)
+> A straight lance of blue-white electric light thrusting forward, a coil of current spiralling round it,
+> blue sparks, then a piercing flash impact with a cross-shaped burst and lingering sparks. (style block)
+
+**D7 · Phantom Strike** (Phantom dash)
+> A ghostly lunge: a trail of three or four translucent violet afterimages fading behind, wisps of spectral
+> purple flame streaming off them, then a spooky impact: a violet slash mark with a skull-shaped puff of
+> smoke that fades. (style block)
+
+**D8 · Deadline Dash** (Shade dash; Mondaze, a burnt-out coffee sloth, sprinting before a deadline)
+> A frantic dash trail made of flying sheets of paper, clock-face symbols and dark coffee splashes, with
+> panicked speed lines, then a comic impact: a dark starburst with papers scattering. (style block)
+
+**D9 · Body Slam / Wool Tackle** (Beast dashes)
+> Body Slam: a heavy body-shaped shockwave charging forward with big round dust clouds kicking up behind and
+> a heavy ground-shaking impact with a burst of dust and a crack in the ground. Wool Tackle: a puffy cloud of
+> storm-grey wool charging forward with little sparks crackling inside, then a soft but powerful impact of
+> wool tufts and sparks. (style block)
+
+**D10 · Zoomies** (Beast dash; Smugshi, a Shiba Inu, running in silly circles)
+> A comic zig-zagging speed trail of golden-orange motion lines, little paw-print puffs of dust, and cartoon
+> speed swooshes, then a bonk impact: a bouncy yellow star with tiny spinning stars. (style block)
+
+**I1 · Hit impacts, one per type** (to replace the white blob on every hit)
+> A sheet of 15 small hit-impact effects, each 4 frames, one row per element: fire (a burst of flame tongues),
+> water (a splash crown of droplets), electric (a zigzag spark star), ice (shattering crystal shards), plant
+> (a burst of leaves), earth (cracked rock chips and dust), wind (curved gust slashes), metal (a white clang
+> star with sparks), arcane (a pink starburst with sparkles), shade (a jagged dark burst), phantom (a violet
+> wisp puff), beast (a bold comic star with motion lines), brawl (a punch-shaped shock ring), dragonkin (a
+> burst of silver scales and violet energy), glitch (broken magenta and cyan pixel blocks). 16-bit pixel art
+> visual effect sprite sheet for an action game, chunky pixels with a dark 1-pixel outline, limited bright
+> palette with hard-edged shading, no creature or character, plain dark navy background, no text

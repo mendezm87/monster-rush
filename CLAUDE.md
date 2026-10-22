@@ -149,6 +149,10 @@ The owner liked the whole list of ideas (in order): area monsters, door rewards,
 - **Lumawool option B (owner's pick, r26):** Volt Charm instead of the Snack Pouch, Wool Tackle instead of Static Siphon. Its stalled fights are gone (fights against tough monsters went from ~39 s to ~20 s).
 - **`moves.html`** (linked nowhere public; open it directly) plays any move at a practice target, cycles through them, and "Freeze sheet" lays a whole type's moves out frozen mid-attack for review. Use it to check every visual change to attacks.
 
+### Attack art gets sprite-level care (r144, the owner: "a lot of them look like basic squares or circles. We need to treat them as important as sprites")
+
+`docs/attack-art.md` has the audit (all 101 attacks frozen on moves.html: most share five recoloured templates, a coloured block behind dashes, a white-ribbon capsule for 10 beams, a white ground ring for 11 bursts, a hex shield for 9 buffs, plain orbs for 12 shots, and a white blob over the target on most hits), what already works (attacks drawn as a thing: flames, leaves, a funnel, a blanket), the rules (one drawing per attack, real frames: anticipation, travel, impact, fade; a readable silhouette; impacts that show the hit; pictures first, then Claude's frame-by-frame review) and the batches (dashes, impacts, beams, bursts, orbs, buffs). Prompts: `docs/concept-prompts.md` Round 8. fx.js is shared with the Stadium, so new attack art goes there too.
+
 ### Keep Monster Battle Stadium in sync (owner's rule, 2026-10-17)
 
 Improvements made here that make sense for the arena game (`mendezm87/monster-battle-stadium`, cloned to `C:\Users\thecl\code\monster-battle-stadium`) get ported there too, **especially visuals**: sprites and diagonal views, attack art, scaling, the bundled font, music, settings. Roguelike-only things (rooms, floors, relics, recruiting, the bot test runs as written) stay here. After porting, test the arena in the browser and push it like this repo.
