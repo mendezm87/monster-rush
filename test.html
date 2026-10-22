@@ -126,7 +126,7 @@ $('#game').addEventListener('load', async () => {
       if (m.types.some(t => !TYPES[t])) say('unknown type');
       if (!ITEMS[m.item]) say('unknown item ' + m.item);
       if (m.evolve && !BYID[m.evolve.to]) say('bad evolution');
-      for (const a of (m.evolve && m.evolve.alts) || []) if (!BYID[a.to] || !G('RELICS')[a.relic]) say(`bad branch to ${a.to} (relic ${a.relic})`);
+      for (const a of (m.evolve && m.evolve.alts) || []) if (!BYID[a.to] || (a.relic ? !G('RELICS')[a.relic] : !(a.areas || []).length || a.areas.some(k => !G('AREA_MONS')[k]))) say(`bad branch to ${a.to}`);
       for (const [to, recipe] of Object.entries(m.branches || {})) if (!BYID[to] || recipe.length !== 2 || recipe.some(t => !G('RELIC_TAGS').includes(t))) say(`bad altar branch ${to}`);
       if (!found.has(m.id)) say('never appears in the game (no area, starter or evolution)');
       for (const v of VIEWS5) {   // gear spots: on the picture, and in a sensible order

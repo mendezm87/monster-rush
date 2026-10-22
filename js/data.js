@@ -318,6 +318,15 @@ const EVOLVED = [
   // A branch (r116): a Smugshi that Restores while the party carries Grandma's Cooking grows into Daimochi instead.
   { id: 'daimochi', name: 'DAIMOCHI', types: ['beast', 'brawl'], hp: 1620, atk: 1.24, def: 1.28, spd: 96, size: 'L', item: 'snackPouch',
     moves: ['bodySlam', 'shibaRoar', 'closeCombat', 'snack'], from: 'smugshi', needs: 'grandma' },
+  // Slumbear's three bears (r134, the owner's idea): his jumbled bear data sorts itself into one bear when he
+  // Restores, decided by the area he's in (`areas`): the cold ones make a polar bear, the green ones a panda,
+  // anywhere else a grizzly. Sleepy names, like his.
+  { id: 'polarest', name: 'POLAREST', types: ['beast', 'ice'], hp: 2200, atk: 1.3, def: 1.25, spd: 62, size: 'L', item: 'snackPouch',
+    moves: ['megaBeam', 'bodySlam', 'blizzard', 'snack'], from: 'slumbear', areas: ['summit', 'grotto'] },
+  { id: 'bambooze', name: 'BAMBOOZE', types: ['beast', 'plant'], hp: 2350, atk: 1.2, def: 1.32, spd: 52, size: 'L', item: 'snackPouch',
+    moves: ['megaBeam', 'bodySlam', 'seedBomb', 'snack'], from: 'slumbear', areas: ['meadow', 'ruins'] },
+  { id: 'grizzleep', name: 'GRIZZLEEP', types: ['beast', 'earth'], hp: 2300, atk: 1.4, def: 1.28, spd: 54, size: 'L', item: 'snackPouch',
+    moves: ['megaBeam', 'bodySlam', 'quake', 'snack'], from: 'slumbear' },
   { id: 'infernox', name: 'INFERNOX', types: ['fire', 'earth'], hp: 1400, atk: 1.26, def: 1.15, spd: 90, size: 'L', item: 'emberStone',
     moves: ['blazeRush', 'infernoBeam', 'fireBlast', 'magmaQuake'], from: 'cinderox' },
   { id: 'maelstrisk', name: 'MAELSTRISK', types: ['water', 'arcane'], hp: 1560, atk: 1.16, def: 1.22, spd: 88, size: 'L', item: 'mysticDrop',
@@ -336,11 +345,12 @@ const LEGENDS = [
     moves: ['droneSwarm', 'hydroCannon', 'magnetStorm', 'ironDefense'], from: 'garrishell', recipe: ['metal', 'wind'] },
 ];
 for (const l of LEGENDS) { const base = ROSTER.find(m => m.id === l.from); (base.branches = base.branches || {})[l.id] = l.recipe; }
-// It Restores into this form when its bar fills; a form that `needs` a relic is a branch, taken instead
+// It Restores into this form when its bar fills; a form that `needs` a relic, or only happens in some
+// `areas`, is a branch, taken instead
 // when the party carries that relic (evolve.alts; see evolveTarget in dungeon.js).
 for (const e of EVOLVED) {
   const base = ROSTER.find(m => m.id === e.from), ev = base.evolve = base.evolve || {};
-  if (e.needs) (ev.alts = ev.alts || []).push({ to: e.id, relic: e.needs }); else ev.to = e.id;
+  if (e.needs || e.areas) (ev.alts = ev.alts || []).push({ to: e.id, relic: e.needs, areas: e.areas }); else ev.to = e.id;
 }
 const ALL_MONS = () => [...ROSTER, ...EVOLVED, ...LEGENDS];
 const ROSTER_BY_ID = Object.fromEntries(ALL_MONS().map(m => [m.id, m]));

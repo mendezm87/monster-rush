@@ -58,13 +58,14 @@
     const canvases = [];   // [canvas, id, view, flip]
     let stage = 'meadow';
 
-    const relicName = id => ({ grandma: "Grandma's Cooking" })[id] || id;   // the relics that open an evolution branch (the gallery doesn't load dungeon.js)
+    const relicName = id => ({ grandma: "Grandma's Cooking" })[id] || id;
+    const areaName = k => (STAGES[k] && STAGES[k].name) || k;   // floor areas, for branches decided by where a Coreature Restores   // the relics that open an evolution branch (the gallery doesn't load dungeon.js)
     function card(def) {
       const el = document.createElement('div');
       el.className = 'card' + (def.from ? ' evo' : '');
       let note = '';
-      if (def.evolve) note = `Restores into <b>${ROSTER_BY_ID[def.evolve.to].name}</b> when its bar fills` + (def.evolve.alts || []).map(a => `, or into <b>${ROSTER_BY_ID[a.to].name}</b> if you carry ${relicName(a.relic)}`).join('') + '.';
-      if (def.from) note = `Evolved form of <b>${ROSTER_BY_ID[def.from].name}</b>` + (def.needs ? ` (when you carry ${relicName(def.needs)})` : '') + '.';
+      if (def.evolve) note = `Restores into <b>${ROSTER_BY_ID[def.evolve.to].name}</b> when its bar fills` + (def.evolve.alts || []).map(a => `, or into <b>${ROSTER_BY_ID[a.to].name}</b> ` + (a.relic ? `if you carry ${relicName(a.relic)}` : `in ${a.areas.map(areaName).join(' or ')}`)).join('') + '.';
+      if (def.from) note = `Evolved form of <b>${ROSTER_BY_ID[def.from].name}</b>` + (def.needs ? ` (when you carry ${relicName(def.needs)})` : def.areas ? ` (when it Restores in ${def.areas.map(areaName).join(' or ')})` : '') + '.';
       if (def.recipe) note = `Altar form of <b>${ROSTER_BY_ID[def.from].name}</b>: offer one ${def.recipe.map(t => t.toUpperCase()).join(' and one ')} relic.`;
       if (def.branches) note += ` At an altar it can become ${Object.keys(def.branches).map(k => '<b>' + ROSTER_BY_ID[k].name + '</b>').join(', ')}.`;
       if (def.id === 'smugshi') note = 'Toshi, the real dog. ' + note;

@@ -54,10 +54,10 @@ function glitchDef(def) {
 // Every form a Coreature can Restore into: its next form and any branches (evolve.alts).
 const evolveTos = def => (def.evolve ? [def.evolve.to, ...(def.evolve.alts || []).map(a => a.to)] : []);
 // What it Restores into now: a branch whose relic the party carries (Grandma's Cooking turns Smugshi
-// into Daimochi), or else its usual next form.
+// into Daimochi) or whose area it's in (Slumbear's bears), or else its usual next form.
 function evolveTarget(def, run) {
   if (!def.evolve) return null;
-  const alt = (def.evolve.alts || []).find(a => run && run.relics.includes(a.relic));
+  const alt = (def.evolve.alts || []).find(a => run && (a.relic ? run.relics.includes(a.relic) : a.areas && run.floor && a.areas.includes(run.stageKey)));
   return ROSTER_BY_ID[alt ? alt.to : def.evolve.to];
 }
 function formStage(def) {
@@ -301,7 +301,7 @@ function tryFloor(floorN, partyIds, relics, last, offers = 3) {
       // usually one of the area's bosses, now and then anyone
       r.enemies = [wildSpec(Math.random() < 0.8 ? pickRand(AREA_MONS[stage].bosses) : pickRand(ids), floorN, 'boss')];
       // the final boss is an evolved starter you didn't start with
-      const mains = EVOLVED.filter(e => !e.needs), rivals = mains.filter(e => !partyIds.includes(e.from));   // branches (Daimochi) aren't final bosses
+      const mains = EVOLVED.filter(e => !e.needs && STARTERS.includes(e.from)), rivals = mains.filter(e => !partyIds.includes(e.from));   // only the starters' main forms are final bosses
       if (last) r.enemies = [wildSpec(pickRand(rivals.length ? rivals : mains).id, floorN, 'final')];
     }
     if (r.type === 'recruit') {   // two of the area's Coreatures and one from anywhere
