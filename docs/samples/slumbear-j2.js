@@ -38,8 +38,8 @@
       legB.ellipse(16, 40, 4.5, 3, P(WH.s, '#b8b2a6', WH.b), { edge: true });   // far leg: his left, white
       t.ellipse(6, 31, 2.4, 2.2, K, { edge: true });
       const E = [21, 28, 15, 13];
-      block(b, E, 5, 14, 37, 30, G);                                   // his right shoulder and back: grizzly
-      b.ellipse(14, 19, 6.5, 3.6, G, { edge: true });                  // the grizzly's hump
+      b.ellipse(17, 19, 9, 5.5, G);                                    // the grizzly's shoulder hump: a gentle rise behind his neck,
+      block(b, E, 5, 14, 37, 30, G);                                   // drawn first so his back flows into it with no line (r129)
       block(b, E, 5, 30, 21, 43, K, 0, 1);                              // his right hip: black, a pixel low
       block(b, E, 21, 30, 37, 43, CIN, 1, 0);                           // his belly: cinnamon, a pixel forward
       b.poly([[30, 24], [36, 25.5], [35.5, 30.5], [31, 29]], SUN);      // the golden crescent on his chest
