@@ -141,98 +141,120 @@ Object.assign(FIDGETS, {
 
 // ---- Slumbear's three bears (r134, the owner's idea): when he Restores, his jumbled bear data sorts itself
 // into one bear, decided by the area he's in (data.js `areas`): Polarest (cold areas), Bambooze (green areas),
-// Grizzleep (anywhere else). r135 (the owner: "what if they embraced their elements more and were more fierce
-// since they have awakened?"): awake now, with glowing eyes in their element's colour under angry brows, a
-// snarl with fangs and claws, and much more of their element. They share one round body (bearForm, bearDiag)
-// and keep one mismatched ear from the jumble (earB) as a family mark; each adds its element (`extra`, drawn in
-// layers: 'back' before the body, 'body' on it, 'head' after the head and arms). Side on, they show their right side.
+// Grizzleep (anywhere else). r135 (the owner: "embrace their elements more and be more fierce since they have
+// awakened"): glowing eyes in their element's colour under angry brows, a snarl with fangs, claws, much more of
+// their element. r136 (the owner: "what if they shed their weight and are pretty lean now?"): lean hunters,
+// standing tall: broad shoulders, a narrow waist, long limbs, a smaller head. They share one body (bearForm,
+// bearDiag) and keep one mismatched ear from the jumble (earB) as a family mark; each adds its element (`extra`,
+// drawn in layers: 'back' before the body, 'body' on it, 'head' after the head and arms). Side on, they show
+// their right side.
 const BEAR_DARK = '#1a1222', BEAR_FANG = '#fbf8f0';
 function bearForm(g, v, F, extra) {
   const { Q, b, h, t, earA, earB, legA, legB, armA, armB } = rigParts(g, v);
   const P2 = { b, h, t, earA, earB, armA, armB }, X = layer => extra && extra(layer, v, P2);
+  const Fd = pal => P(pal.s, pal.s, pal.b);
+  const claws = (p, pts) => { for (const [x, y] of pts) p.px(x, y, F.CLAW); };
   if (v === 'side') {
     X('back');
-    legB.ellipse(16, 40, 4.5, 3, P(F.LEG.s, F.LEG.s, F.LEG.b), { edge: true });
-    t.ellipse(6.5, 31, 2.4, 2.2, F.FUR, { edge: true });
-    if (F.hump) b.ellipse(17, 19, 9, 5.5, F.FUR);
-    b.ellipse(21, 28, 15, 13, F.FUR, { edge: true });
-    if (F.CHEST) b.ellipse(30, 30, 4, 7, F.CHEST);
+    legB.ellipse(19, 37, 3, 5.5, Fd(F.LEG), { edge: true }); legB.ellipse(20, 41.5, 3.6, 1.8, Fd(F.LEG), { edge: true });   // far leg
+    t.ellipse(14, 32, 2, 2, F.FUR, { edge: true });
+    if (F.hump) b.ellipse(18, 19.5, 5.5, 3.5, F.FUR);                                            // the grizzly's shoulder hump
+    b.poly([[15, 19], [27, 18], [29, 26], [27, 34], [17, 34.5], [14, 27]], F.FUR, { edge: true });   // lean, deep-chested body
+    if (F.CHEST) b.ellipse(26.5, 25, 2.6, 5, F.CHEST);
+    b.px(20, 29, F.FUR.s).px(21, 31, F.FUR.s);
     X('body');
-    legA.ellipse(28, 40, 4.5, 3, F.LEG, { edge: true });
-    armA.ellipse(30, 28, 3.6, 5.5, F.ARM, { edge: true });
-    armA.px(29, 33, F.CLAW).px(31, 34, F.CLAW).px(33, 33, F.CLAW);                                // claws
-    earB.ellipse(20.5, 7, 2.4, 2.4, P(F.EAR_B.s, F.EAR_B.s, F.EAR_B.b));                        // far ear (the mismatched one)
-    h.ellipse(26.5, 14, 9, 7.8, F.HEAD, { edge: true });
-    earA.ellipse(23.5, 6.5, 3, 3, F.EAR_A, { edge: true });
-    if (F.PATCH) h.poly([[26, 10.5], [32.5, 11.5], [32, 15], [27.5, 15.5]], F.PATCH);
-    rigEye(h, Q, 29, 12, () => { h.rect(29, 12, 3, 2, F.EYE); h.px(30, 12, BEAR_DARK).px(30, 13, BEAR_DARK); if (F.BROW) h.px(28, 10, F.BROW).px(29, 10, F.BROW).px(30, 11, F.BROW).px(31, 11, F.BROW).px(32, 11, F.BROW); }, 3);   // a fierce glowing eye
-    h.ellipse(33.5, 17.5, 3.6, 2.8, F.MUZ, { edge: true });
-    h.rect(36, 16, 2, 2, F.NOSE); h.px(36, 16, '#5a5060');
-    rigMouth(h, Q, 31, 20, 4, () => { h.rect(31, 20, 5, 1, BEAR_DARK); h.px(32, 21, BEAR_FANG).px(35, 21, BEAR_FANG); });   // a snarl and fangs
+    legA.ellipse(24, 37, 3.4, 5.5, F.LEG, { edge: true }); legA.ellipse(25.5, 41.5, 4, 2, F.LEG, { edge: true });   // near leg, long
+    claws(legA, [[28, 42], [29, 41]]);
+    armA.ellipse(26, 27, 3, 7.5, F.ARM, { edge: true }); armA.ellipse(27, 34, 3, 2.3, F.ARM, { edge: true });   // a long arm
+    claws(armA, [[25, 36], [27, 37], [29, 36]]);
+    earB.ellipse(22.5, 6.5, 2.2, 2.2, Fd(F.EAR_B));                                              // far ear (the mismatched one)
+    h.ellipse(26, 12, 7.5, 6.5, F.HEAD, { edge: true });                                         // a smaller head
+    earA.ellipse(24, 6, 2.8, 2.8, F.EAR_A, { edge: true });
+    if (F.PATCH) h.poly([[26, 8.5], [31.5, 9.5], [31, 13], [27, 13.5]], F.PATCH);
+    rigEye(h, Q, 28, 10, () => { h.rect(28, 10, 3, 2, F.EYE); h.px(29, 10, BEAR_DARK).px(29, 11, BEAR_DARK); if (F.BROW) h.px(27, 8, F.BROW).px(28, 8, F.BROW).px(29, 9, F.BROW).px(30, 9, F.BROW).px(31, 9, F.BROW); }, 3);
+    h.ellipse(32, 15, 3.8, 2.6, F.MUZ, { edge: true });                                          // longer muzzle
+    h.rect(35, 13, 2, 2, F.NOSE); h.px(35, 13, '#5a5060');
+    rigMouth(h, Q, 30, 17, 4, () => { h.rect(30, 17, 5, 1, BEAR_DARK); h.px(31, 18, BEAR_FANG).px(34, 18, BEAR_FANG); });   // a snarl and fangs
     X('head');
     return;
   }
+  const torso = () => {
+    b.poly([[10, 18], [34, 18], [31, 30], [27, 34.5], [17, 34.5], [13, 30]], F.FUR, { edge: true });   // broad shoulders, narrow waist
+    b.ellipse(11.5, 20, 4.5, 3.8, F.FUR, { edge: true }); b.ellipse(32.5, 20, 4.5, 3.8, F.FUR, { edge: true });   // muscled shoulders
+  };
+  const limbs = () => {
+    armA.ellipse(8.5, 27, 3, 7.5, F.ARM, { edge: true }); armB.ellipse(35.5, 27, 3, 7.5, F.ARM, { edge: true });   // long arms
+    armA.ellipse(8.5, 34, 3.2, 2.4, F.ARM, { edge: true }); armB.ellipse(35.5, 34, 3.2, 2.4, F.ARM, { edge: true });
+  };
   if (v === 'back') {
     X('back');
-    legA.ellipse(14, 40, 5, 3.2, F.LEG, { edge: true }); legB.ellipse(30, 40, 5, 3.2, F.LEG, { edge: true });
-    b.ellipse(22, 28, 16, 13, F.FUR, { edge: true });
-    if (F.hump) b.ellipse(22, 19, 11, 4.5, F.FUR, { edge: true });
+    legA.ellipse(16.5, 37, 3.4, 5.5, F.LEG, { edge: true }); legB.ellipse(27.5, 37, 3.4, 5.5, F.LEG, { edge: true });
+    legA.ellipse(16, 41.5, 4, 2, F.LEG, { edge: true }); legB.ellipse(28, 41.5, 4, 2, F.LEG, { edge: true });
+    torso();
+    if (F.hump) b.ellipse(22, 19, 8, 3.6, F.FUR, { edge: true });
+    for (let y = 22; y <= 32; y += 2) b.px(22, y, F.FUR.s);                                      // the line of its spine
     X('body');
-    armA.ellipse(7, 26, 3.8, 6, F.ARM, { edge: true }); armB.ellipse(37, 26, 3.8, 6, F.ARM, { edge: true });
-    earA.ellipse(12, 6, 3.2, 3, F.EAR_B, { edge: true }); earB.ellipse(32, 6, 3.2, 3, F.EAR_A, { edge: true });   // from behind, the odd ear is on the left
-    h.ellipse(22, 13, 11, 8.5, F.HEAD, { edge: true });
-    t.ellipse(22, 37, 2.6, 2.2, F.FUR, { edge: true });
+    limbs();
+    earA.ellipse(14.5, 6, 2.8, 2.6, F.EAR_B, { edge: true }); earB.ellipse(29.5, 6, 2.8, 2.6, F.EAR_A, { edge: true });   // from behind, the odd ear is on the left
+    h.ellipse(22, 12, 8.5, 7, F.HEAD, { edge: true });
+    t.ellipse(22, 34.5, 2.2, 2, F.FUR, { edge: true });
     X('head');
     return;
   }
   X('back');
-  legA.ellipse(14, 40, 5, 3.2, F.LEG, { edge: true }); legB.ellipse(30, 40, 5, 3.2, F.LEG, { edge: true });
-  legA.px(12, 42, F.CLAW).px(14, 43, F.CLAW).px(16, 42, F.CLAW); legB.px(28, 42, F.CLAW).px(30, 43, F.CLAW).px(32, 42, F.CLAW);   // claws
-  b.ellipse(22, 28, 16, 13, F.FUR, { edge: true });                                              // big round body
-  if (F.CHEST) b.ellipse(22, 30, 8.5, 8.5, F.CHEST);
+  legA.ellipse(16.5, 37, 3.4, 5.5, F.LEG, { edge: true }); legB.ellipse(27.5, 37, 3.4, 5.5, F.LEG, { edge: true });   // long legs
+  legA.ellipse(16, 41.5, 4, 2, F.LEG, { edge: true }); legB.ellipse(28, 41.5, 4, 2, F.LEG, { edge: true });
+  claws(legA, [[13, 42], [15, 43], [17, 43]]); claws(legB, [[27, 43], [29, 43], [31, 42]]);
+  torso();
+  if (F.CHEST) b.ellipse(22, 25, 5.5, 6, F.CHEST);
+  b.px(20, 29, F.FUR.s).px(24, 29, F.FUR.s).px(20, 31, F.FUR.s).px(24, 31, F.FUR.s);              // a lean, muscled stomach
   X('body');
-  armA.ellipse(7, 26, 3.8, 6, F.ARM, { edge: true }); armB.ellipse(37, 26, 3.8, 6, F.ARM, { edge: true });
-  armA.px(5, 32, F.CLAW).px(7, 33, F.CLAW).px(9, 32, F.CLAW); armB.px(35, 32, F.CLAW).px(37, 33, F.CLAW).px(39, 32, F.CLAW);
-  earA.ellipse(12, 6, 3.2, 3, F.EAR_A, { edge: true }); earB.ellipse(32, 6, 3.2, 3, F.EAR_B, { edge: true });   // one ear left over from the jumble
-  h.ellipse(22, 13, 11, 8.5, F.HEAD, { edge: true });                                            // head
-  if (F.PATCH) { h.poly([[12, 10.5], [19, 12], [19, 15], [14, 15.5]], F.PATCH); h.poly([[32, 10.5], [25, 12], [25, 15], [30, 15.5]], F.PATCH); }   // fierce, slanted patches
-  rigEyes(h, Q, 44, 15, 12, 3, () => {                                                           // fierce glowing eyes under angry brows
-    h.rectM(15, 12, 3, 2, F.EYE); h.pxM(16, 12, BEAR_DARK); h.pxM(16, 13, BEAR_DARK);
-    if (F.BROW) { h.pxM(14, 10, F.BROW); h.pxM(15, 10, F.BROW); h.pxM(16, 11, F.BROW); h.pxM(17, 11, F.BROW); h.pxM(18, 11, F.BROW); }
+  limbs();
+  claws(armA, [[6, 36], [8, 37], [10, 36]]); claws(armB, [[34, 36], [36, 37], [38, 36]]);
+  earA.ellipse(14.5, 6, 2.8, 2.6, F.EAR_A, { edge: true }); earB.ellipse(29.5, 6, 2.8, 2.6, F.EAR_B, { edge: true });   // one ear left over from the jumble
+  h.ellipse(22, 12, 8.5, 7, F.HEAD, { edge: true });                                             // a smaller head on a lean body
+  if (F.PATCH) { h.poly([[14.5, 9.5], [20, 11], [20, 13.5], [16, 14]], F.PATCH); h.poly([[29.5, 9.5], [24, 11], [24, 13.5], [28, 14]], F.PATCH); }   // slanted patches
+  rigEyes(h, Q, 44, 17, 11, 3, () => {                                                           // fierce glowing eyes under angry brows
+    h.rectM(17, 11, 3, 2, F.EYE); h.pxM(18, 11, BEAR_DARK); h.pxM(18, 12, BEAR_DARK);
+    if (F.BROW) { h.pxM(16, 9, F.BROW); h.pxM(17, 9, F.BROW); h.pxM(18, 10, F.BROW); h.pxM(19, 10, F.BROW); h.pxM(20, 10, F.BROW); }
   });
-  h.ellipse(22, 17.5, 5, 3.4, F.MUZ, { edge: true });                                            // muzzle
-  h.rect(20, 15, 4, 2, F.NOSE); h.px(20, 15, '#5a5060');
-  rigMouth(h, Q, 19, 19, 6, () => { h.rect(19, 19, 6, 1, BEAR_DARK); h.px(19, 18, F.MUZ.s).px(24, 18, F.MUZ.s); h.px(20, 20, BEAR_FANG).px(23, 20, BEAR_FANG); });   // a snarl, fangs showing
+  h.ellipse(22, 15.5, 4, 2.8, F.MUZ, { edge: true });                                            // muzzle
+  h.rect(20, 14, 4, 1, F.NOSE); h.rect(21, 15, 2, 1, F.NOSE); h.px(20, 14, '#5a5060');
+  rigMouth(h, Q, 19, 17, 6, () => { h.rect(19, 17, 6, 1, BEAR_DARK); h.px(20, 18, BEAR_FANG).px(23, 18, BEAR_FANG); });   // a snarl, fangs showing
   X('head');
 }
-// The three-quarter views: the front or back view turned a little right (parts nudged), shared by all three.
+// The three-quarter views: the front or back view turned a little right, shared by all three.
 function bearDiag(g, v, F, extra) {
   const { Q, b, h, t, earA, earB, legA, legB, armA, armB } = rigParts(g, v);
   const P2 = { b, h, t, earA, earB, armA, armB }, X = layer => extra && extra(layer, v, P2);
+  const claws = (p, pts) => { for (const [x, y] of pts) p.px(x, y, F.CLAW); };
   X('back');
-  legA.ellipse(14, 40, 5, 3.2, F.LEG, { edge: true }); legB.ellipse(29.5, 40, 4.5, 3, F.LEG, { edge: true });
-  b.ellipse(22, 28, 16, 13, F.FUR, { edge: true });
-  if (F.hump && v === 'bside') b.ellipse(23, 19, 10, 4.5, F.FUR, { edge: true });
-  if (F.CHEST && v === 'fside') b.ellipse(24.5, 30, 8, 8.5, F.CHEST);
+  legA.ellipse(16.5, 37, 3.4, 5.5, F.LEG, { edge: true }); legB.ellipse(27.5, 37, 3.1, 5.2, F.LEG, { edge: true });
+  legA.ellipse(16.5, 41.5, 4, 2, F.LEG, { edge: true }); legB.ellipse(28.5, 41.5, 3.6, 1.8, F.LEG, { edge: true });
+  b.poly([[10, 18], [34, 18], [31, 30], [27, 34.5], [17, 34.5], [13, 30]], F.FUR, { edge: true });
+  b.ellipse(11.5, 20, 4.5, 3.8, F.FUR, { edge: true }); b.ellipse(32.5, 20, 4, 3.4, F.FUR, { edge: true });
+  if (F.hump && v === 'bside') b.ellipse(22, 19, 8, 3.6, F.FUR, { edge: true });
+  if (F.CHEST && v === 'fside') b.ellipse(24, 25, 5, 6, F.CHEST);
   X('body');
-  armA.ellipse(7, 26, 3.8, 6, F.ARM, { edge: true }); armB.ellipse(37.5, 26, 3.2, 5.4, F.ARM, { edge: true });
+  armA.ellipse(8.5, 27, 3, 7.5, F.ARM, { edge: true }); armB.ellipse(35.5, 27, 2.7, 7, F.ARM, { edge: true });
+  armA.ellipse(8.5, 34, 3.2, 2.4, F.ARM, { edge: true }); armB.ellipse(35.5, 33.5, 2.8, 2.2, F.ARM, { edge: true });
   if (v === 'bside') {
-    earA.ellipse(14, 6, 2.8, 2.7, F.EAR_B, { edge: true }); earB.ellipse(33, 6, 3.2, 3, F.EAR_A, { edge: true });
-    h.ellipse(24, 13, 11, 8.5, F.HEAD, { edge: true });
-    h.ellipse(35, 17, 1.8, 1.8, F.MUZ);                                                          // a sliver of muzzle peeking out
-    t.ellipse(21, 37, 2.6, 2.2, F.FUR, { edge: true });
+    earA.ellipse(16, 6, 2.5, 2.4, F.EAR_B, { edge: true }); earB.ellipse(30.5, 6, 2.8, 2.6, F.EAR_A, { edge: true });
+    h.ellipse(23.5, 12, 8.5, 7, F.HEAD, { edge: true });
+    h.ellipse(31.5, 15, 1.6, 1.6, F.MUZ);                                                        // a sliver of muzzle peeking out
+    t.ellipse(21, 34.5, 2.2, 2, F.FUR, { edge: true });
     X('head');
     return;
   }
-  armA.px(5, 32, F.CLAW).px(7, 33, F.CLAW).px(9, 32, F.CLAW); armB.px(36, 31, F.CLAW).px(38, 32, F.CLAW);
-  earA.ellipse(13, 6, 3.2, 3, F.EAR_A, { edge: true }); earB.ellipse(33.5, 6.5, 2.8, 2.7, F.EAR_B, { edge: true });
-  h.ellipse(24, 13, 11, 8.5, F.HEAD, { edge: true });
-  if (F.PATCH) { h.poly([[14, 10.5], [21, 12], [21, 15], [16, 15.5]], F.PATCH); h.poly([[32.5, 11], [27, 12], [27, 15], [31, 15.5]], F.PATCH); }
-  rigEye(h, Q, 17, 12, () => { h.rect(17, 12, 3, 2, F.EYE); h.px(18, 12, BEAR_DARK).px(18, 13, BEAR_DARK); if (F.BROW) h.px(16, 10, F.BROW).px(17, 10, F.BROW).px(18, 11, F.BROW).px(19, 11, F.BROW).px(20, 11, F.BROW); }, 3);
-  rigEye(h, Q, 28, 12, () => { h.rect(28, 12, 3, 2, F.EYE); h.px(29, 12, BEAR_DARK).px(29, 13, BEAR_DARK); if (F.BROW) h.px(27, 11, F.BROW).px(28, 11, F.BROW).px(29, 11, F.BROW).px(30, 10, F.BROW); }, 3);
-  h.ellipse(25, 17.5, 5, 3.4, F.MUZ, { edge: true });
-  h.rect(24, 15, 4, 2, F.NOSE); h.px(24, 15, '#5a5060');
-  rigMouth(h, Q, 22, 19, 6, () => { h.rect(22, 19, 6, 1, BEAR_DARK); h.px(23, 20, BEAR_FANG).px(26, 20, BEAR_FANG); });
+  claws(armA, [[6, 36], [8, 37], [10, 36]]); claws(armB, [[34, 35], [36, 36]]);
+  earA.ellipse(15.5, 6, 2.8, 2.6, F.EAR_A, { edge: true }); earB.ellipse(31, 6.5, 2.5, 2.4, F.EAR_B, { edge: true });
+  h.ellipse(23.5, 12, 8.5, 7, F.HEAD, { edge: true });
+  if (F.PATCH) { h.poly([[16, 9.5], [21.5, 11], [21.5, 13.5], [17.5, 14]], F.PATCH); h.poly([[30.5, 10], [26, 11], [26, 13.5], [29.5, 14]], F.PATCH); }
+  rigEye(h, Q, 18.5, 11, () => { h.rect(18, 11, 3, 2, F.EYE); h.px(19, 11, BEAR_DARK).px(19, 12, BEAR_DARK); if (F.BROW) h.px(17, 9, F.BROW).px(18, 9, F.BROW).px(19, 10, F.BROW).px(20, 10, F.BROW).px(21, 10, F.BROW); }, 3);
+  rigEye(h, Q, 27, 11, () => { h.rect(27, 11, 3, 2, F.EYE); h.px(28, 11, BEAR_DARK).px(28, 12, BEAR_DARK); if (F.BROW) h.px(26, 10, F.BROW).px(27, 10, F.BROW).px(28, 10, F.BROW).px(29, 9, F.BROW); }, 3);
+  h.ellipse(24.5, 15.5, 4, 2.8, F.MUZ, { edge: true });
+  h.rect(23, 14, 4, 1, F.NOSE); h.rect(24, 15, 2, 1, F.NOSE); h.px(23, 14, '#5a5060');
+  rigMouth(h, Q, 22, 17, 6, () => { h.rect(22, 17, 6, 1, BEAR_DARK); h.px(23, 18, BEAR_FANG).px(26, 18, BEAR_FANG); });
   X('head');
 }
 // The elements: ice (Polarest), bamboo (Bambooze), stone with glowing cracks (Grizzleep).
@@ -264,58 +286,58 @@ const GRIZZLEEP = { FUR: P('#8a5a3a', '#6a4028', '#a87850'), ARM: P('#7e5234', '
   EYE: '#ffb040', BROW: '#3a2418', CLAW: '#e8dcc0' };
 // Polarest: jagged ice spikes bursting from its shoulders and back, a crown of icicles, frosty breath
 function polarIce(layer, v, p) {
-  const crown = (x) => { crystal(p.h, x - 4, 6.5, 1.1); crystal(p.h, x, 5.5, 1.6); crystal(p.h, x + 4, 6.5, 1.1); };
+  const crown = x => { crystal(p.h, x - 4, 5.5, 1); crystal(p.h, x, 4.5, 1.5); crystal(p.h, x + 4, 5.5, 1); };
   if (v === 'side') {
-    if (layer === 'body') for (const [x, y, k] of [[8, 21, 1.8], [13, 17, 2.3], [19, 15.5, 2.1], [24, 16, 1.4]]) crystal(p.b, x, y, k);
-    if (layer === 'head') { crystal(p.h, 24, 6.5, 1.3); crystal(p.h, 28, 6, 1.1); p.h.px(38, 19, BEAR_ICE.l).px(39, 18, BEAR_ICE.b); }
+    if (layer === 'body') for (const [x, y, k] of [[15, 21, 1.6], [19, 19, 2.1], [23.5, 18.5, 1.5]]) crystal(p.b, x, y, k);
+    if (layer === 'head') { crystal(p.h, 22.5, 5.5, 1.2); crystal(p.h, 26.5, 5, 1); p.h.px(37, 16, BEAR_ICE.l).px(38, 15, BEAR_ICE.b); }
     return;
   }
-  if (v === 'back' || v === 'bside') { if (layer === 'head') { for (const [x, y, k] of [[8, 23, 1.8], [14.5, 21, 2.3], [22, 20, 2.7], [29.5, 21, 2.3], [36, 23, 1.8]]) crystal(p.b, x, y, k); crown(v === 'bside' ? 24 : 22); } return; }
+  if (v === 'back' || v === 'bside') { if (layer === 'head') { for (const [x, y, k] of [[9.5, 20, 1.7], [15, 19, 2.1], [22, 18.5, 2.5], [29, 19, 2.1], [34.5, 20, 1.7]]) crystal(p.b, x, y, k); crown(v === 'bside' ? 23.5 : 22); } return; }
   if (layer === 'head') {
-    for (const [x, k] of [[6.5, 2.4], [11, 1.5], [37.5, 2.4], [33, 1.5]]) crystal(p.b, x, 22, k);    // ice bursting from its shoulders
-    crown(v === 'fside' ? 24 : 22);                                                                 // a crown of icicles
-    const mx = v === 'fside' ? 3 : 0; p.h.px(17 + mx, 21, BEAR_ICE.l).px(26 + mx, 21, BEAR_ICE.l).px(16 + mx, 22, BEAR_ICE.b).px(27 + mx, 22, BEAR_ICE.b);   // frosty breath
+    for (const [x, k] of [[9, 2.3], [13, 1.4], [35, 2.3], [31, 1.4]]) crystal(p.b, x, 19.5, k);   // ice bursting from its shoulders
+    crown(v === 'fside' ? 23.5 : 22);                                                               // a crown of icicles
+    const mx = v === 'fside' ? 3 : 0; p.h.px(18 + mx, 18, BEAR_ICE.l).px(25 + mx, 18, BEAR_ICE.l).px(17 + mx, 19, BEAR_ICE.b).px(26 + mx, 19, BEAR_ICE.b);   // frosty breath
   }
 }
-// Bambooze: tall bamboo shoots cut to spear points on its back, a black band across its shoulders,
+// Bambooze: bamboo shoots cut to spear points on its back, a black band across its shoulders,
 // bamboo bracers on its forearms, a bamboo staff held like a weapon
 function pandaBamboo(layer, v, p) {
   const K = BAMBOOZE.ARM;
   const staff = (q, x0, y0, x1, y1) => { q.poly([[x0, y0], [x0 + 2, y0], [x1 + 2, y1], [x1, y1]], BEAR_BAMBOO, { edge: true }); for (let k = 1; k < 4; k++) q.px(Math.round(x0 + (x1 - x0) * k / 4), Math.round(y0 + (y1 - y0) * k / 4), BEAR_BAMBOO.s); };
   if (v === 'side') {
-    if (layer === 'back') { bamboo(p.b, 9, 24, 3); bamboo(p.b, 13, 22, 6); bamboo(p.b, 6, 26, 10); }
-    if (layer === 'body') p.b.ellipse(25, 19, 7, 4, K, { edge: true });
-    if (layer === 'head') { staff(p.armA, 27, 38, 37, 6); p.armA.rect(28, 25, 5, 2, BEAR_BAMBOO.b); }   // the staff, and a bracer
+    if (layer === 'back') { bamboo(p.b, 15, 22, 2); bamboo(p.b, 18, 20, 6); }
+    if (layer === 'body') p.b.ellipse(22.5, 19.5, 6, 3, K, { edge: true });
+    if (layer === 'head') { staff(p.armA, 23, 40, 34, 4); p.armA.rect(23.5, 28, 5, 2, BEAR_BAMBOO.b); }   // the staff, and a bracer
     return;
   }
   if (v === 'back' || v === 'bside') {
-    if (layer === 'back') { bamboo(p.b, 13, 24, 2); bamboo(p.b, 29, 23, 4); bamboo(p.b, 21, 22, 0); }
-    if (layer === 'body') p.b.ellipse(22, 19, 13, 4.2, K, { edge: true });
-    if (layer === 'head') { p.armA.rect(4, 27, 7, 2, BEAR_BAMBOO.b); p.armB.rect(34, 27, 7, 2, BEAR_BAMBOO.b); }
+    if (layer === 'back') { bamboo(p.b, 13, 22, 1); bamboo(p.b, 29, 22, 3); bamboo(p.b, 21, 20, 0); }
+    if (layer === 'body') p.b.ellipse(22, 19.5, 12.5, 3.4, K, { edge: true });
+    if (layer === 'head') { p.armA.rect(5.5, 28, 6, 2, BEAR_BAMBOO.b); p.armB.rect(32.5, 28, 6, 2, BEAR_BAMBOO.b); }
     return;
   }
-  if (layer === 'back') { bamboo(p.b, 7, 24, 3); bamboo(p.b, 11, 22, 7); bamboo(p.b, 35, 24, 2); }   // spear-cut shoots rising behind it
-  if (layer === 'body') p.b.ellipse(v === 'fside' ? 23 : 22, 19, 13, 4, K, { edge: true });             // the black band across its shoulders
+  if (layer === 'back') { bamboo(p.b, 8, 22, 2); bamboo(p.b, 12, 20, 6); bamboo(p.b, 34, 22, 1); }   // spear-cut shoots rising behind it
+  if (layer === 'body') p.b.ellipse(v === 'fside' ? 23 : 22, 19.5, 12.5, 3.2, K, { edge: true });     // the black band across its shoulders
   if (layer === 'head') {
-    p.armA.rect(4, 27, 7, 2, BEAR_BAMBOO.b); p.armA.rect(4, 27, 7, 1, BEAR_BAMBOO.l); p.armB.rect(34, 27, 7, 2, BEAR_BAMBOO.b); p.armB.rect(34, 27, 7, 1, BEAR_BAMBOO.l);   // bamboo bracers
-    staff(p.armB, 33, 40, 42, 8);                                                                 // a bamboo staff, held like a weapon
+    p.armA.rect(5.5, 28, 6, 2, BEAR_BAMBOO.b); p.armA.rect(5.5, 28, 6, 1, BEAR_BAMBOO.l); p.armB.rect(32.5, 28, 6, 2, BEAR_BAMBOO.b); p.armB.rect(32.5, 28, 6, 1, BEAR_BAMBOO.l);   // bamboo bracers
+    staff(p.armB, 32, 42, 41, 6);                                                                 // a bamboo staff, held like a weapon
   }
 }
 // Grizzleep: heavy stone pauldrons and gauntlets, rock plates down its back, glowing amber cracks in the stone
 function grizzlyStone(layer, v, p) {
-  const gauntlet = (q, x, y) => { q.ellipse(x, y, 4.2, 3, BEAR_STONE, { edge: true }); q.px(Math.round(x) - 1, Math.round(y), BEAR_GLOW).px(Math.round(x), Math.round(y) - 1, BEAR_GLOW); };
+  const gauntlet = (q, x, y) => { q.ellipse(x, y, 3.8, 2.8, BEAR_STONE, { edge: true }); q.px(Math.round(x) - 1, Math.round(y), BEAR_GLOW).px(Math.round(x), Math.round(y) - 1, BEAR_GLOW); };
   if (v === 'side') {
-    if (layer === 'body') { stonePlate(p.b, 15, 17.5, 6.5, 3.4); stonePlate(p.b, 8, 23, 4.5, 2.8); stonePlate(p.b, 22, 17, 4.5, 2.4, false); }
-    if (layer === 'head') { stonePlate(p.armA, 29.5, 23.5, 4.5, 2.6); gauntlet(p.armA, 30.5, 32); }
+    if (layer === 'body') { stonePlate(p.b, 17, 23, 3.6, 2.4); stonePlate(p.b, 17, 29, 3, 2, false); }
+    if (layer === 'head') { stonePlate(p.armA, 25.5, 20, 4.5, 2.8); gauntlet(p.armA, 27, 34); }
     return;
   }
   if (v === 'back' || v === 'bside') {
-    if (layer === 'head') { stonePlate(p.armA, 7, 21, 5.5, 3.2); stonePlate(p.armB, 37, 21, 5.5, 3.2); stonePlate(p.b, 22, 27, 7.5, 3.4); stonePlate(p.b, 22, 33.5, 5.5, 2.6); gauntlet(p.armA, 7, 31); gauntlet(p.armB, 37, 31); }
+    if (layer === 'head') { stonePlate(p.armA, 10, 19, 5, 3); stonePlate(p.armB, 34, 19, 5, 3); stonePlate(p.b, 22, 25, 6, 3); stonePlate(p.b, 22, 30.5, 4.5, 2.4); gauntlet(p.armA, 8.5, 34); gauntlet(p.armB, 35.5, 34); }
     return;
   }
   if (layer === 'head') {
-    stonePlate(p.armA, 7, 20.5, 5.5, 3.2); stonePlate(p.armB, 37, 20.5, 5.5, 3.2);                // heavy stone pauldrons
-    gauntlet(p.armA, 7, 31); gauntlet(p.armB, 37, 31);                                             // stone gauntlets on its fists
+    stonePlate(p.armA, 10, 19, 5, 3); stonePlate(p.armB, 34, 19, 5, 3);                          // heavy stone pauldrons
+    gauntlet(p.armA, 8.5, 34); gauntlet(p.armB, 35.5, 34);                                         // stone gauntlets on its fists
   }
 }
 Object.assign(MONSTER_ART, {
