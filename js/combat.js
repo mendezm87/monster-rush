@@ -282,9 +282,9 @@ mixInto(Battle, class {
         }
         this.emit('dash', m, a, dt);   // e.g. Ember Tracks leaves fire behind
         m.ghostT -= dt;
-        if (m.ghostT <= 0) { m.ghostT = 0.03; m.ghosts.push({ x: m.x, y: m.y, face: m.face, view: m.view, t: 0.22, color: fx[1] }); }
+        if (m.ghostT <= 0) { m.ghostT = DASH_ART[a.mv.id] ? 0.11 : 0.075; m.ghosts.push({ x: m.x, y: m.y, face: m.face, view: m.view, t: 0.22, color: fx[1] }); }   // spaced out, so they read as afterimages, not a smear (r147)
         if (Math.random() < 0.7) this.particles.push({ x: m.x + rand(-6, 6), y: m.cy + rand(-6, 6), vx: -m.vx * 0.2, vy: -m.vy * 0.2, life: 0.3, max: 0.3, size: 2, color: fx[rand() < 0.5 ? 0 : 1], kind: 'sq' });
-        if (Math.random() < 0.6) this.particles.push({ kind: 'streak', x: m.x + rand(-9, 9), y: m.cy + rand(-9, 9), sx: m.vx, sy: m.vy, color: fx[2], life: 0.16, max: 0.16 });
+        if (!DASH_ART[a.mv.id] && Math.random() < 0.6) this.particles.push({ kind: 'streak', x: m.x + rand(-9, 9), y: m.cy + rand(-9, 9), sx: m.vx, sy: m.vy, color: fx[2], life: 0.16, max: 0.16 });
         const foe = !a.hit && this.foes(m).find(f => Math.hypot(m.x - f.x, m.cy - f.cy) < m.r + f.r + 4);
         if (foe) {
           a.hit = true; a.tgt = foe;

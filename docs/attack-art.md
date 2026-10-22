@@ -44,11 +44,11 @@ The same rules as the Coreature art checklist (CLAUDE.md), applied to attacks:
 
 ## 3. The plan, in batches (worst first)
 
-1. **Dashes** (13): replace the coloured block with a drawn motion trail per move (speed lines and afterimages
+1. **Dashes** (13), **done in r147**: replace the coloured block with a drawn motion trail per move (speed lines and afterimages
    of the Coreature itself, sparks for Volt Rush, a water jet for Aqua Jet, a horn-shaped lance of light for
    Megahorn, a dive streak with feathers for Brave Dive, a ghostly trail for Phantom Strike...), and a proper
    impact.
-2. **The impact cloud** (every hit): shaped impacts per type instead of the white blob. Fixes dozens of moves
+2. **The impact cloud** (every hit), **done in r147** (it was the target's hit flash held at full white; now a soft flash, and each type has its own impact): shaped impacts per type instead of the white blob. Fixes dozens of moves
    at once.
 3. **Beams** (10 helix beams): a body of its own per beam (a torrent with foam for Hydro Cannon, a polished
    light lance with glints for Flash Cannon, a sparkling prism for Dazzle Beam, a lazy, smug, drooping beam with

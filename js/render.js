@@ -659,7 +659,7 @@ mixInto(Battle, class {
 
     // dash afterimages
     for (const g of m.ghosts) {
-      ctx.globalAlpha = (g.t / 0.22) * 0.5 * alpha;
+      ctx.globalAlpha = (g.t / 0.22) * 0.3 * alpha;
       ctx.save(); ctx.translate(Math.round(g.x), Math.round(g.y)); if (isSideView(g.view) && g.face < 0) ctx.scale(-1, 1);
       ctx.drawImage(tinted(m.id, g.color, g.view), -S / 2, -S + 3, S, S); ctx.restore();
     }
@@ -694,7 +694,7 @@ mixInto(Battle, class {
     if (m.assembleT !== undefined && m.assembleT < 1) drawAssembling(ctx, pic, dx, dy, pw, ph, m.assembleT, TYPES[m.def.types[0]].color);   // beamed in from the Arcbracer
     else ctx.drawImage(pic, dx, dy, pw, ph);
     let tint = null, ta = 0;
-    if (m.flash > 0) { tint = '#ffffff'; ta = Math.min(1, m.flash * 8); }
+    if (m.flash > 0) { tint = '#ffffff'; ta = Math.min(0.45, m.flash * 3.5); }   // a hit flash you can still see the Coreature through (r147)
     else if (m.fainted) { tint = '#ffffff'; ta = Math.min(0.8, m.fadeT); }
     else if (m.status === 'frz') { tint = '#9fe6ff'; ta = 0.55; }
     else if (m.status === 'par' && Math.sin(this.time * 18) > 0.6) { tint = '#ffe24a'; ta = 0.45; }
