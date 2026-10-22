@@ -275,6 +275,15 @@ function buildSprites() {}
 
 // front (img), side (facing right), back, and the diagonals (fside, bside) for monsters that have them (sp.diag).
 const VIEWS = ['front', 'side', 'back'];
+// Two-sided Coreatures (r137): ones whose left and right sides differ (Slumbear's jumbled colours, the bears'
+// odd ear). Side-on views are drawn facing right and mirrored for facing left, which would put the colours
+// on the wrong sides, so these also get a facing-left picture of each side-on view (`sideL`, `fsideL`,
+// `bsideL`): the art is drawn again with ART_LEFT set, same shape, the two sides' colours swapped (the
+// art function decides what that means), and drawMon still mirrors it. Art files set TWO_SIDED[id].
+const TWO_SIDED = {};
+let ART_LEFT = false;
+// The picture to show for a view: the facing-left one when a two-sided Coreature faces left.
+const viewKey = (views, view, face) => (face < 0 && views[view + 'L'] ? view + 'L' : view);
 // A set of views remembers its wings-down twin (hidden, so it isn't listed as a view).
 const flapped = (views, twin) => Object.defineProperty(views, 'flapped', { value: twin });
 const halfFlapped = (views, twin) => Object.defineProperty(views, 'half', { value: twin });   // wings half-way (r110: a 4-step flap)
@@ -294,11 +303,14 @@ function* spriteSteps(mon) {
     RIG = pose && { ...REST, ...pose }; FLAP = flap;
     const out = {};
     for (const v of diag ? [...VIEWS, 'fside', 'bside'] : VIEWS) {
-      const g = new PixGrid(size, size);
-      (v === 'fside' || v === 'bside' ? MONSTER_ART_DIAG : MONSTER_ART)[mon.id](g, v);
-      softEdges(g, mon.id);
-      g.outline();
-      out[v] = g.toCanvas();
+      for (const left of TWO_SIDED[mon.id] && v !== 'front' && v !== 'back' ? [false, true] : [false]) {
+        const g = new PixGrid(size, size);
+        ART_LEFT = left;
+        try { (v === 'fside' || v === 'bside' ? MONSTER_ART_DIAG : MONSTER_ART)[mon.id](g, v); } finally { ART_LEFT = false; }
+        softEdges(g, mon.id);
+        g.outline();
+        out[left ? v + 'L' : v] = g.toCanvas();
+      }
     }
     RIG = null; FLAP = 0;
     return out;

@@ -22,7 +22,7 @@ function mixInto(target, src) {
 const RESTORE_T = { glow: 0.6, swirl: 1.3, build: 2.0, end: 3.5 };
 // The Coreature's own pixels, as glowing data that swirls away and back (one per sprite pixel).
 function restorePixels(m) {
-  const sp = monSprite(m), img = sp.views[m.view] || sp.views.front, S = sp.size * SPR_SCALE * m.scale, k = S / sp.size;
+  const sp = monSprite(m), img = sp.views[viewKey(sp.views, m.view, m.face)] || sp.views.front, S = sp.size * SPR_SCALE * m.scale, k = S / sp.size;
   const w = img.width, h = img.height, data = img.getContext('2d').getImageData(0, 0, w, h).data, out = [];
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
     const a = (y * w + x) * 4;

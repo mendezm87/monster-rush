@@ -644,7 +644,7 @@ mixInto(Battle, class {
     // wings in four steps (r110): up, half-way, down, half-way
     const beat = fly && sp.flap && !grounded && m.stunT <= 0 && !pose.noFlap ? Math.floor(((this.time * fly.flap * (moving ? 1.3 : 1) + phase) % 1) * 4) : 0;
     const wings = beat === 2 ? pose.views.flapped : beat % 2 ? pose.views.half || pose.views.flapped : null;
-    const img = (wings || pose.views)[m.view];
+    const set = wings || pose.views, img = set[viewKey(set, m.view, m.face)];
     const mine = m.side === 'player';
 
     // ground marker + shadow

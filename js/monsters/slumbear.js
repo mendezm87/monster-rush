@@ -35,23 +35,24 @@ Object.assign(MONSTER_ART, {
   slumbear(g, v = 'front') { // 44x44
     const { G, WH, WHd, K, CIN, SUN, RING, MUZ, NOSE, LID, SHINE } = SLUM;
     const { Q, b, h, t, earA, earB, legA, legB, armA, armB } = rigParts(g, v);
-    if (v === 'side') {   // his right side
-      legB.ellipse(16, 40, 4.5, 3, WHd, { edge: true });                 // far leg: his left, white
+    if (v === 'side') {   // his right side (facing left, ART_LEFT: his left side, white with the cream eye ring)
+      const L = ART_LEFT, Kd = P(K.s, '#18161c', K.b);
+      legB.ellipse(16, 40, 4.5, 3, L ? Kd : WHd, { edge: true });         // far leg
       t.ellipse(6, 31, 2.4, 2.2, K, { edge: true });                     // stubby black tail
       const E = [21, 28, 15, 13];
-      b.ellipse(17, 19, 9, 5.5, G);                                      // the grizzly's shoulder hump, flowing into his back
-      slumBlock(b, E, 5, 14, 37, 30, G);                                 // his right shoulder and back: grizzly
-      slumBlock(b, E, 5, 30, 21, 43, K, 0, 1);                           // his right hip: black, a pixel low
+      b.ellipse(17, 19, 9, 5.5, L ? WH : G);                             // the grizzly's shoulder hump, flowing into his back
+      slumBlock(b, E, 5, 14, 37, 30, L ? WH : G);                        // his shoulder and back: grizzly on his right, polar on his left
+      slumBlock(b, E, 5, 30, 21, 43, L ? G : K, 0, 1);                   // his hip: black on his right, brown on his left, a pixel low
       slumBlock(b, E, 21, 30, 37, 43, CIN, 1, 0);                        // his belly: cinnamon, a pixel forward
       b.poly([[30, 24], [36, 25.5], [35.5, 30.5], [31, 29]], SUN);       // the golden crescent on his chest
-      legA.ellipse(28, 40, 4.5, 3, K, { edge: true });                   // near leg: his right, black
-      armA.ellipse(30, 28, 3.4, 5, K, { edge: true });                   // near arm: his right, black
+      legA.ellipse(28, 40, 4.5, 3, L ? WH : K, { edge: true });          // near leg
+      armA.ellipse(30, 28, 3.4, 5, L ? CIN : K, { edge: true });         // near arm
       slumMane(b, 25, 21, 7, 6);                                         // the shaggy mane round his neck
-      earB.ellipse(20.5, 7, 2.4, 2.4, WHd);                              // far ear: his left, white
-      h.ellipse(26, 14, 9, 7.8, G, { edge: true });                      // his head, from his brown right side
-      earA.ellipse(23.5, 6.5, 3, 3, K, { edge: true });                  // near ear: his right, black
-      h.poly([[27, 11], [32, 11.5], [32, 15], [28, 15.5]], K);           // the panda eye patch
-      rigEye(h, Q, 29, 13, () => { h.rect(29, 13, 2, 1, LID); h.px(30, 13, SHINE); }, 3);   // heavy sleepy eye
+      earB.ellipse(20.5, 7, 2.4, 2.4, L ? Kd : WHd);                     // far ear
+      h.ellipse(26, 14, 9, 7.8, L ? WH : G, { edge: true });             // his head, from this side
+      earA.ellipse(23.5, 6.5, 3, 3, L ? WH : K, { edge: true });         // near ear
+      if (L) { h.ellipse(29.5, 13.5, 2.8, 2.4, RING); rigEye(h, Q, 29, 13, () => { h.rect(29, 13, 2, 1, NOSE); }, 3); }   // the spectacled bear's eye ring
+      else { h.poly([[27, 11], [32, 11.5], [32, 15], [28, 15.5]], K); rigEye(h, Q, 29, 13, () => { h.rect(29, 13, 2, 1, LID); h.px(30, 13, SHINE); }, 3); }   // the panda eye patch
       h.ellipse(33.5, 17.5, 3.4, 2.8, MUZ, { edge: true });              // short bear muzzle
       h.rect(36, 16, 2, 2, NOSE); h.px(36, 16, '#5a5060');
       rigMouth(h, Q, 32, 20, 3, () => { h.rect(32, 20, 3, 1, G.s); });
@@ -98,36 +99,38 @@ Object.assign(MONSTER_ART_DIAG, {
     const { G, WH, WHd, K, CIN, SUN, RING, MUZ, NOSE, LID, SHINE } = SLUM;
     const { Q, b, h, t, earA, earB, legA, legB, armA, armB } = rigParts(g, v);
     const E = [22, 28, 16, 13], HE = [24, 13, 11, 8.5];
+    // Facing left (ART_LEFT), the two sides swap: the near side is his left (white, cinnamon arm, cream eye ring).
+    const L = ART_LEFT, Kd = P(K.s, '#18161c', K.b);
     if (v === 'bside') {
-      legA.ellipse(14, 40, 4.4, 3, WHd, { edge: true }); legB.ellipse(30, 40, 5, 3.2, K, { edge: true });   // his left leg white (far), his right black
-      b.ellipse(26, 19, 8, 5, G);                                        // the shoulder hump on his right
-      slumBlock(b, E, 5, 14, 19, 30, WH, -1, 0); slumBlock(b, E, 19, 14, 40, 30, G, 0, -1);
-      slumBlock(b, E, 5, 30, 15, 43, G, 0, 1); slumBlock(b, E, 15, 30, 27, 43, CIN); slumBlock(b, E, 27, 30, 40, 43, K, 1, 0);
-      armA.ellipse(7.5, 26, 3, 5.4, CIN, { edge: true }); armB.ellipse(37, 26, 3.8, 6, K, { edge: true });   // his left arm (far), his right arm
+      legA.ellipse(14, 40, 4.4, 3, L ? Kd : WHd, { edge: true }); legB.ellipse(30, 40, 5, 3.2, L ? WH : K, { edge: true });   // far leg, near leg
+      b.ellipse(26, 19, 8, 5, L ? WH : G);                               // the shoulder hump on the near side
+      slumBlock(b, E, 5, 14, 19, 30, L ? G : WH, -1, 0); slumBlock(b, E, 19, 14, 40, 30, L ? WH : G, 0, -1);
+      slumBlock(b, E, 5, 30, 15, 43, L ? K : G, 0, 1); slumBlock(b, E, 15, 30, 27, 43, CIN); slumBlock(b, E, 27, 30, 40, 43, L ? G : K, 1, 0);
+      armA.ellipse(7.5, 26, 3, 5.4, L ? K : CIN, { edge: true }); armB.ellipse(37, 26, 3.8, 6, L ? CIN : K, { edge: true });   // far arm, near arm
       slumMane(b, 24, 21, 13, 6);
-      earA.ellipse(14, 6, 2.8, 2.7, WH, { edge: true }); earB.ellipse(33, 6, 3.2, 3, K, { edge: true });
-      slumBlock(h, HE, 12, 4, 24, 23, WH, 0, 1); slumBlock(h, HE, 24, 4, 36, 23, G);   // the back of his head, turned a little right
+      earA.ellipse(14, 6, 2.8, 2.7, L ? K : WH, { edge: true }); earB.ellipse(33, 6, 3.2, 3, L ? WH : K, { edge: true });
+      slumBlock(h, HE, 12, 4, 24, 23, L ? G : WH, 0, 1); slumBlock(h, HE, 24, 4, 36, 23, L ? WH : G);   // the back of his head, turned a little
       h.ellipse(35, 17, 1.8, 1.8, MUZ);                                  // a sliver of muzzle peeking out
       t.ellipse(21, 37, 2.6, 2.2, K, { edge: true });
       return;
     }
-    legA.ellipse(13, 40, 5, 3.2, K, { edge: true }); legB.ellipse(30, 40, 4.4, 3, WH, { edge: true });   // his right leg (near) black, his left white
-    slumBlock(b, E, 5, 14, 24, 30, G);                                   // his right side shows more as he turns
-    slumBlock(b, E, 24, 14, 40, 30, WH, 1, -1);
-    slumBlock(b, E, 5, 30, 19, 43, K, -1, 0);
+    legA.ellipse(13, 40, 5, 3.2, L ? WH : K, { edge: true }); legB.ellipse(30, 40, 4.4, 3, L ? K : WH, { edge: true });   // near leg, far leg
+    slumBlock(b, E, 5, 14, 24, 30, L ? WH : G);                          // the near side shows more as he turns
+    slumBlock(b, E, 24, 14, 40, 30, L ? G : WH, 1, -1);
+    slumBlock(b, E, 5, 30, 19, 43, L ? G : K, -1, 0);
     slumBlock(b, E, 19, 30, 31, 43, CIN, 0, 1);
-    slumBlock(b, E, 31, 30, 40, 43, G, 1, 0);
+    slumBlock(b, E, 31, 30, 40, 43, L ? K : G, 1, 0);
     b.poly([[17, 28], [20.5, 28], [21.8, 30.2], [24, 31], [24, 34.5], [18.5, 32.2]], SUN);   // the golden crescent, turned his way
     b.poly([[24, 32], [26, 31.2], [27, 29], [30, 29], [28.8, 33.2], [24, 35.5]], SUN);
-    armA.ellipse(7, 27, 3.8, 6, K, { edge: true }); armB.ellipse(37.5, 26, 3, 5.2, CIN, { edge: true });   // his right arm (near), his left
+    armA.ellipse(7, 27, 3.8, 6, L ? CIN : K, { edge: true }); armB.ellipse(37.5, 26, 3, 5.2, L ? K : CIN, { edge: true });   // near arm, far arm
     slumMane(b, 24, 22, 14, 6);
-    earA.ellipse(13, 6, 3.2, 3, K, { edge: true }); earB.ellipse(33.5, 6.5, 2.8, 2.7, WH, { edge: true });
-    slumBlock(h, HE, 12, 4, 25, 23, G);                                  // his face turned a little right: the brown half shows more
-    slumBlock(h, HE, 25, 4, 36, 23, WH, 0, 1);
-    h.poly([[15, 10], [21, 10.5], [21, 14.5], [16, 15]], K);             // panda eye patch (near)
-    h.ellipse(29.5, 13.5, 2.8, 2.4, RING);                               // cream eye ring (far)
-    rigEye(h, Q, 17, 12, () => { h.rect(17, 12, 3, 1, LID); h.px(19, 12, SHINE); }, 3);
-    rigEye(h, Q, 28, 13, () => { h.rect(28, 13, 3, 1, NOSE); }, 3);
+    earA.ellipse(13, 6, 3.2, 3, L ? WH : K, { edge: true }); earB.ellipse(33.5, 6.5, 2.8, 2.7, L ? K : WH, { edge: true });
+    slumBlock(h, HE, 12, 4, 25, 23, L ? WH : G);                         // his face turned a little: the near half shows more
+    slumBlock(h, HE, 25, 4, 36, 23, L ? G : WH, 0, 1);
+    if (L) { h.ellipse(17.5, 13.5, 3, 2.6, RING); h.poly([[27, 10.5], [32, 11], [31.5, 14.5], [27.5, 15]], K); }   // cream eye ring (near), panda patch (far)
+    else { h.poly([[15, 10], [21, 10.5], [21, 14.5], [16, 15]], K); h.ellipse(29.5, 13.5, 2.8, 2.4, RING); }        // panda patch (near), cream eye ring (far)
+    rigEye(h, Q, 17, 12, () => { if (L) h.rect(17, 13, 3, 1, NOSE); else { h.rect(17, 12, 3, 1, LID); h.px(19, 12, SHINE); } }, 3);
+    rigEye(h, Q, 28, 13, () => { if (L) { h.rect(28, 12, 3, 1, LID); h.px(28, 12, SHINE); } else h.rect(28, 13, 3, 1, NOSE); }, 3);
     h.ellipse(25, 18, 5, 3.4, MUZ, { edge: true });                      // short bear muzzle, turned his way
     h.rect(24, 16, 4, 2, NOSE); h.px(24, 16, '#5a5060');
     rigMouth(h, Q, 23, 20, 4, () => { h.rect(24, 20, 2, 1, G.s); h.px(23, 19, G.s); h.px(26, 19, G.s); });
@@ -150,6 +153,7 @@ Object.assign(FIDGETS, {
 // their right side.
 const BEAR_DARK = '#1a1222', BEAR_FANG = '#fbf8f0';
 function bearForm(g, v, F, extra) {
+  if (ART_LEFT) F = { ...F, EAR_A: F.EAR_B, EAR_B: F.EAR_A };   // facing left: the odd ear is the near one
   const { Q, b, h, t, earA, earB, legA, legB, armA, armB } = rigParts(g, v);
   const P2 = { b, h, t, earA, earB, armA, armB }, X = layer => extra && extra(layer, v, P2);
   const Fd = pal => P(pal.s, pal.s, pal.b);
@@ -225,6 +229,7 @@ function bearForm(g, v, F, extra) {
 }
 // The three-quarter views: the front or back view turned a little right, shared by all three.
 function bearDiag(g, v, F, extra) {
+  if (ART_LEFT) F = { ...F, EAR_A: F.EAR_B, EAR_B: F.EAR_A };   // facing left: the odd ear swaps sides
   const { Q, b, h, t, earA, earB, legA, legB, armA, armB } = rigParts(g, v);
   const P2 = { b, h, t, earA, earB, armA, armB }, X = layer => extra && extra(layer, v, P2);
   const claws = (p, pts) => { for (const [x, y] of pts) p.px(x, y, F.CLAW); };
@@ -351,6 +356,7 @@ Object.assign(MONSTER_ART_DIAG, {
   grizzleep(g, v) { bearDiag(g, v, GRIZZLEEP, grizzlyStone); },
 });
 Object.assign(RIGGED, { polarest: 'biped', bambooze: 'biped', grizzleep: 'biped' });
+Object.assign(TWO_SIDED, { slumbear: true, polarest: true, bambooze: true, grizzleep: true });   // their sides differ: own facing-left pictures (sprites.js)
 Object.assign(FIDGETS, {
   polarest: { fps: 5, every: 9, frames: [{ head: [0, -1], mouth: 'open' }, { head: [0, -1], mouth: 'roar', arms: [1, 1] }, { mouth: 'open' }, { }] },   // a frosty growl
   bambooze: { fps: 5, every: 8, frames: [{ arms: [2, -2] }, { arms: [-2, 2] }, { arms: [2, -2], mouth: 'open' }, { arms: [-2, 2] }, { }] },   // twirls its staff

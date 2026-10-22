@@ -274,13 +274,14 @@ function gearSprites(id, gear) {
     own.push(layers[k] = g.toCanvas());
     return layers[k];
   };
-  // views in a pose: each one is drawn when first read (the rig is set and put back inside, never left on)
+  // views in a pose: each one is drawn when first read (the rig is set and put back inside, never left on);
+  // a facing-left picture (sideL, r137) wears its facing-right twin's gear, since the shape is the same
   const dress = (views, pose) => {
     const out = {};
     for (const v of Object.keys(views)) Object.defineProperty(out, v, { enumerable: true, configurable: true, get() {
       const keep = RIG, src = views[v];
       const c = document.createElement('canvas'); c.width = src.width + 2 * GEAR_PAD; c.height = src.height + GEAR_PAD;   // room for gear past the art's edges
-      try { RIG = pose ? { ...REST, ...pose } : null; const x = c.getContext('2d'); x.drawImage(src, GEAR_PAD, GEAR_PAD); x.drawImage(layer(v), 0, 0); if (glitch) glitchPaint(c, v + JSON.stringify(pose || 0)); }
+      try { RIG = pose ? { ...REST, ...pose } : null; const x = c.getContext('2d'); x.drawImage(src, GEAR_PAD, GEAR_PAD); x.drawImage(layer(v.replace(/L$/, '')), 0, 0); if (glitch) glitchPaint(c, v + JSON.stringify(pose || 0)); }
       finally { RIG = keep; }
       own.push(c);
       Object.defineProperty(out, v, { value: c, enumerable: true });
