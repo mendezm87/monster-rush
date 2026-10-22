@@ -977,44 +977,62 @@ The shared style, already in every prompt:
 **D2 · Aqua Jet** (Water dash)
 > A torpedo-shaped jet of water rushing forward: a pointed spearhead of white foam, a twisting body of blue
 > water behind it, droplets and spray flying off the sides, then a crashing splash impact with a ring of
-> droplets. (style block)
+> droplets. 16-bit pixel art visual effect sprite sheet for an action game, frames in a row from left to right
+> (wind-up, travel, impact, fade), chunky pixels with a dark 1-pixel outline, limited bright palette with
+> hard-edged shading, no creature or character, plain dark navy background, no text
 
 **D3 · Megahorn** (Plant dash)
 > A long glowing green horn-shaped lance of energy thrusting forward, with leaf-shaped speed streaks and torn
-> leaves swirling behind it, then a piercing impact: a sharp green starburst with leaf shards. (style block)
+> leaves swirling behind it, then a piercing impact: a sharp green starburst with leaf shards. 16-bit pixel art visual effect sprite sheet for an action game, frames in a row from left to right
+> (wind-up, travel, impact, fade), chunky pixels with a dark 1-pixel outline, limited bright palette with
+> hard-edged shading, no creature or character, plain dark navy background, no text
 
 **D4 · Iron Slam** (Metal dash)
 > A heavy steel shockwave charging forward: a wedge of grey metal plates with rivets and bright white glints,
 > heavy speed lines, sparks scraping off the ground, then a clanging impact: a flat white-and-steel star with
-> a ring of metal fragments and sparks. (style block)
+> a ring of metal fragments and sparks. 16-bit pixel art visual effect sprite sheet for an action game, frames in a row from left to right
+> (wind-up, travel, impact, fade), chunky pixels with a dark 1-pixel outline, limited bright palette with
+> hard-edged shading, no creature or character, plain dark navy background, no text
 
 **D5 · Brave Dive** (Wind dash)
 > A diving streak through the air: a bright white-blue arrowhead of wind, swept-back air currents curling
 > behind it like a comet's tail, loose feathers spinning off, then a wind-burst impact that flattens into
-> curved gust lines. (style block)
+> curved gust lines. 16-bit pixel art visual effect sprite sheet for an action game, frames in a row from left to right
+> (wind-up, travel, impact, fade), chunky pixels with a dark 1-pixel outline, limited bright palette with
+> hard-edged shading, no creature or character, plain dark navy background, no text
 
 **D6 · Lance Charge** (Electric dash with a railgun lance)
 > A straight lance of blue-white electric light thrusting forward, a coil of current spiralling round it,
-> blue sparks, then a piercing flash impact with a cross-shaped burst and lingering sparks. (style block)
+> blue sparks, then a piercing flash impact with a cross-shaped burst and lingering sparks. 16-bit pixel art visual effect sprite sheet for an action game, frames in a row from left to right
+> (wind-up, travel, impact, fade), chunky pixels with a dark 1-pixel outline, limited bright palette with
+> hard-edged shading, no creature or character, plain dark navy background, no text
 
 **D7 · Phantom Strike** (Phantom dash)
 > A ghostly lunge: a trail of three or four translucent violet afterimages fading behind, wisps of spectral
 > purple flame streaming off them, then a spooky impact: a violet slash mark with a skull-shaped puff of
-> smoke that fades. (style block)
+> smoke that fades. 16-bit pixel art visual effect sprite sheet for an action game, frames in a row from left to right
+> (wind-up, travel, impact, fade), chunky pixels with a dark 1-pixel outline, limited bright palette with
+> hard-edged shading, no creature or character, plain dark navy background, no text
 
 **D8 · Deadline Dash** (Shade dash; Mondaze, a burnt-out coffee sloth, sprinting before a deadline)
 > A frantic dash trail made of flying sheets of paper, clock-face symbols and dark coffee splashes, with
-> panicked speed lines, then a comic impact: a dark starburst with papers scattering. (style block)
+> panicked speed lines, then a comic impact: a dark starburst with papers scattering. 16-bit pixel art visual effect sprite sheet for an action game, frames in a row from left to right
+> (wind-up, travel, impact, fade), chunky pixels with a dark 1-pixel outline, limited bright palette with
+> hard-edged shading, no creature or character, plain dark navy background, no text
 
 **D9 · Body Slam / Wool Tackle** (Beast dashes)
 > Body Slam: a heavy body-shaped shockwave charging forward with big round dust clouds kicking up behind and
 > a heavy ground-shaking impact with a burst of dust and a crack in the ground. Wool Tackle: a puffy cloud of
 > storm-grey wool charging forward with little sparks crackling inside, then a soft but powerful impact of
-> wool tufts and sparks. (style block)
+> wool tufts and sparks. 16-bit pixel art visual effect sprite sheet for an action game, frames in a row from left to right
+> (wind-up, travel, impact, fade), chunky pixels with a dark 1-pixel outline, limited bright palette with
+> hard-edged shading, no creature or character, plain dark navy background, no text
 
 **D10 · Zoomies** (Beast dash; Smugshi, a Shiba Inu, running in silly circles)
 > A comic zig-zagging speed trail of golden-orange motion lines, little paw-print puffs of dust, and cartoon
-> speed swooshes, then a bonk impact: a bouncy yellow star with tiny spinning stars. (style block)
+> speed swooshes, then a bonk impact: a bouncy yellow star with tiny spinning stars. 16-bit pixel art visual effect sprite sheet for an action game, frames in a row from left to right
+> (wind-up, travel, impact, fade), chunky pixels with a dark 1-pixel outline, limited bright palette with
+> hard-edged shading, no creature or character, plain dark navy background, no text
 
 **I1 · Hit impacts, one per type** (to replace the white blob on every hit)
 > A sheet of 15 small hit-impact effects, each 4 frames, one row per element: fire (a burst of flame tongues),
