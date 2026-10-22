@@ -39,7 +39,7 @@ The same rules as the Coreature art checklist (CLAUDE.md), applied to attacks:
 - **Impacts that show the hit, not hide it:** a shaped burst (a crack, a splash, a starburst in the type's
   style) beside and over the target's edge, never a white blob over the whole target.
 - **Pictures first.** The owner's Gemini images (concept and pixel-art references, prompts in
-  `docs/concept-prompts.md` Round 8) before drawing; Claude reviews every attack frame by frame before the owner
+  `docs/attack-prompts.md`) before drawing; Claude reviews every attack frame by frame before the owner
   sees it (a frame-strip review on moves.html, like review.html does for Coreatures).
 
 ## 3. The plan, in batches (worst first)
@@ -62,5 +62,5 @@ The same rules as the Coreature art checklist (CLAUDE.md), applied to attacks:
    muscles flexing with a burst, a coffee cup steaming, a dragon's dance aura).
 7. Polish the good ones.
 
-Each batch: the owner runs the Round 8 prompts for it in Gemini and sends the images they like, Claude draws
+Each batch: the owner runs the prompts for it (`docs/attack-prompts.md`) in Gemini and sends the images they like, Claude draws
 the batch and reviews it, the owner checks it in the game.
