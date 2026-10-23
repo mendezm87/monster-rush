@@ -4,6 +4,8 @@ Prompts for the attacks' art (the Coreatures' and trainers' prompts are in `docs
 audit and the plan are in `docs/attack-art.md`. Run a batch in Gemini and send back the images you like;
 Claude cuts them into the game's frames (tools/fx-sheets.py) and plays them as the attacks.
 
+**Since r185 attacks are built from pieces: the prompts for that are in `docs/attack-pieces.md`.** The whole-scene prompts below are kept for the record (and E2b, E2c and P1 are still used).
+
 The owner's picks are kept in `docs/refs/` (tracked in git, unlike other pictures), named after their prompt
 (`d1-volt-rush.png`), so later sessions can see what each attack was drawn from.
 

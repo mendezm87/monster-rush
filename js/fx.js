@@ -731,10 +731,10 @@ function drawSheet(c, id, i, x, y, o = {}) {
 // for an attack lasting about a second, so each one used to be held and then jump to the next. Now the next one
 // dissolves in pixel by pixel (an ordered 4x4 checkerboard, 16 steps, so pixels stay crisp) while the current one
 // dissolves out. Each frame's dissolved versions are made once, when first needed, and kept (a few hundred at most).
-let FX_BLEND = false;
-// The pieces test (r182): Eruption built from the owner's P1 pieces, moved by code. Off in the game until the owner
-// decides; moves.html has a switch to compare.
-let FX_PIECES = false;   // off in the game until the owner decides; moves.html has a switch to try it (r181)
+let FX_BLEND = false;   // off in the game until the owner decides; moves.html has a switch to try it (r181)
+// Attacks built from pieces (r182): Eruption from the owner's P1 pieces, moved by code. On since r185 (the owner: "that
+// looks so much better, let's do that with all the attacks"); moves.html's switch turns it off to compare.
+let FX_PIECES = true;
 const BAYER4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
 const _dither = new Map();
 function ditherFrame(id, i, lvl, keepLow) {   // frame i with only the pixels under (keepLow) or at and over the level
