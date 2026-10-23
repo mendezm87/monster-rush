@@ -778,6 +778,9 @@ const PIECE_BEAMS = {
     thick: 2.6, sparkles: ['smug1', [17, 18]] },   // SMUG-1b (r194)
   flamethrower: { body: ['fire2a', [0, 1, 2, 3], 0, 0, 0.4], overlap: 0.96, muzzle: ['fire2a', [8, 9, 10, 11], 0.15, 0.5],
     impact: ['fire2a', [12, 13, 14, 15], 0.3], head: ['fire2a', [8, 9, 10, 11], 0.6, 0.5], charge: ['fire2a', [8, 9, 10], 0, 0, 0.5], thick: 3, muzzleSc: 0.52, headSc: 0.7, chargeSc: 0.7 },   // FIRE-2a (r202)
+  infernoBeam: { body: ['fire2b', [0, 1, 2, 3]], core: ['fire2b', [4, 5, 6, 7]], overlap: 0.95, muzzle: ['fire2b', [8, 9, 10, 11], 0.25],
+    impact: ['fire2b', [12, 13, 14, 15], 0.3], head: ['fire2b', [12, 13, 14, 15], 0.4, 0.3], charge: ['fire2b', [8, 9, 10], 0, 0.75],
+    thick: 2.6, muzzleSc: 0.8, chargeSc: 0.8, headSc: 0.6 },   // FIRE-2b (r204)
   megaBeam: { body: ['beast1', [0, 1, 2, 3]], core: ['beast1', [4, 5, 6, 7]], muzzle: ['beast1', [8, 9, 10, 11], 0.3],
     impact: ['beast1', [12, 13, 14, 15], 0.25], head: ['beast1', [12, 13, 14], 0.25], charge: ['beast1', [8, 9, 10], 0, 0.63], thick: 2.2 },   // BEAST-1 (r199)
   supremeSmug: { body: ['smug1c', [0, 1, 2, 3]], core: ['smug1c', [4, 5, 6, 7]], muzzle: ['smug1c', [8, 9, 10, 11], 0.3],
@@ -1778,7 +1781,8 @@ mixInto(Battle, class {
         const d = k * step - step + sc0;
         if (d > len || d + step < 0) continue;
         drawSheet(c, lid, lf[(k + Math.floor(T * 14)) % lf.length], ox + cs * Math.max(0, d), oy + sn * Math.max(0, d),
-          { dir: a.dir, ax: 0, ay: 0.5, sc, sy, trim: 2, cutL: pcL + (d < 0 ? -d / (step / (B.overlap || 0.8)) * keep : 0), cutR: pcR });
+          { dir: a.dir, ax: 0, ay: 0.5, sc, sy, trim: 2, cutL: pcL + (d < 0 ? -d / (step / (B.overlap || 0.8)) * keep : 0),
+            cutR: pcR + Math.max(0, (d + step / (B.overlap || 0.8) - len) / (step / (B.overlap || 0.8))) * keep });   // the last one cut where the beam ends
       }
     };
     layer(B.body, 140, 0, 1);
