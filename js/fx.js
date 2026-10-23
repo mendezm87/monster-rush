@@ -901,8 +901,8 @@ mixInto(Battle, class {
     // a burst or vortex's user stands in the middle of it: the far side goes behind it, the near side in front
     for (const m of this.mons) {
       if (!m.visible || m.fainted) continue;
-      if (m.action && m.action.kind === 'burst' && !m.action.mv.cone) m.burstAt = this.time;
-      if (this.time - (m.burstAt ?? -9) < 1.15) this.cutOutMon(c, m, true);
+      if (m.action && m.action.kind === 'burst' && !m.action.mv.cone) { m.burstAt = this.time; m.burstLine = m.y - m.action.r * 0.34; }   // the far rim
+      if (this.time - (m.burstAt ?? -9) < 1.15) this.cutOutMon(c, m, m.burstLine);
     }
   }
 
@@ -924,14 +924,14 @@ mixInto(Battle, class {
 
   // Cut a Coreature's own picture out of the effect layer, so what was just drawn sits round it, not over it
   // (dash trails, vortexes).
-  // behind: only what's above its feet line is behind it (r166, the owner: a burst's near rim in front of its user, the
-  // far side behind), so the part of the effect below its feet stays over it
-  cutOutMon(c, m, behind = false) {
+  // line: only what's above that line (the effect's far rim) is behind it, so the near rim and whatever rises from it
+  // stay in front (r167, the owner: the user goes between the far and near halves of a burst, not on top)
+  cutOutMon(c, m, line = null) {
     const sp = SPRITES[m.id], img = sp && sp.views[viewKey(sp.views, m.view, m.face)];
     if (!img) return;
     const S = sp.size * SPR_SCALE * m.scale;
     c.save();
-    if (behind) { c.beginPath(); c.rect(m.x - S, m.y - S * 2, S * 2, S * 2 - 1); c.clip(); }
+    if (line !== null) { c.beginPath(); c.rect(m.x - S, m.y - S * 3, S * 2, line - (m.y - S * 3)); c.clip(); }
     c.globalCompositeOperation = 'destination-out'; c.translate(m.x, m.y - (m.hover || 0));
     if (isSideView(m.view) && m.face < 0) c.scale(-1, 1);
     c.drawImage(img, -S / 2, -S + 3, S, S); c.restore();
@@ -1341,7 +1341,7 @@ mixInto(Battle, class {
       // of the swirl rather than on its back edge (r164; the pull and the damage still come from its feet)
       const hole = VORTEX_HOLES[mv.id][fr];
       drawSheet(c, mv.id, fr, m.x, m.y - m.h * 0.18, { sc: mv.r * 2 / sheetW(mv.id, 4), ax: hole[0], ay: hole[1] });
-      m.burstAt = this.time;   // its user stands in the middle (cut out at the end of drawAttacks)
+      m.burstAt = this.time; m.burstLine = m.y - m.h * 0.18 - mv.r * 0.26;   // its user stands between the far and near rims (end of drawAttacks)
       return;
     }
     const fade = clamp(Math.min(a.t / 0.15, (mv.dur - a.t) / 0.2), 0, 1), R = mv.r * fade;
