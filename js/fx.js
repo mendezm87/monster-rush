@@ -333,7 +333,7 @@ const FX_PARTS = {
     }
   },
   // a sheet's frames played in order (sheetPart)
-  sheet(c, p, k) { drawSheet(c, p.id, p.frames[Math.min(p.frames.length - 1, Math.floor((1 - k) * p.frames.length))], p.x, p.y, p.o); },
+  sheet(c, p, k) { drawSheetAround(c, p.id, p.frames[Math.min(p.frames.length - 1, Math.floor((1 - k) * p.frames.length))], p.x, p.y, p.o, p.o.user); },
   // a hit landing: its look's own impact (IMPACT_ART)
   hit(c, p, k) {
     const age = 1 - k;
@@ -655,13 +655,34 @@ const FXS = {};
 for (const [id, d] of Object.entries(typeof FX_SHEET_DATA !== 'undefined' ? FX_SHEET_DATA : {})) {
   const img = new Image(); img.src = d.src;
   FXS[id] = { img, frames: d.frames };
+  // sheets drawn round their user also come split into what's behind it and what's in front (tools/fx-sheets.py DEPTH)
+  if (d.back) { FXS[id].back = new Image(); FXS[id].back.src = d.back; FXS[id].front = new Image(); FXS[id].front.src = d.front; }
+}
+// Cut a Coreature's own picture out of the effect layer, so what was drawn there sits behind it, not over it.
+function cutOutSprite(c, m) {
+  const sp = SPRITES[m.id], img = sp && sp.views[viewKey(sp.views, m.view, m.face)];
+  if (!img) return;
+  const S = sp.size * SPR_SCALE * m.scale;
+  c.save(); c.globalCompositeOperation = 'destination-out'; c.translate(m.x, m.y - (m.hover || 0));
+  if (isSideView(m.view) && m.face < 0) c.scale(-1, 1);
+  c.drawImage(img, -S / 2, -S + 3, S, S); c.restore();
+}
+// A frame drawn round its user (r169, the owner: it stands between the far and near sides): the back half, then the
+// user cut out of it, then the front half over the user. A sheet without halves, or no user, is drawn whole.
+function drawSheetAround(c, id, i, x, y, o, m) {
+  const S = FXS[id];
+  if (!m || !S || !S.back) { drawSheet(c, id, i, x, y, o); return; }
+  drawSheet(c, id, i, x, y, { ...o, layer: 'back' });
+  if (m.visible && !m.fainted) cutOutSprite(c, m);
+  drawSheet(c, id, i, x, y, { ...o, layer: 'front' });
 }
 // Draw frame i of sheet id at (x, y) in world units on the effect layer. o: sc (size, 1 = one pixel per sprite
 // pixel), ax/ay (the anchor, 0..1 of the frame), dir (turn it to point that way; a sheet drawn going right is
 // mirrored rather than turned upside down when it points left), flip (mirror it), sx/sy (stretch).
 function drawSheet(c, id, i, x, y, o = {}) {
   const S = FXS[id];
-  if (!S || !S.img.complete || !S.img.naturalWidth) return;
+  const img = o.layer ? S && S[o.layer] : S && S.img;   // layer: 'back' or 'front' half (drawSheetAround)
+  if (!img || !img.complete || !img.naturalWidth) return;
   const f = S.frames[clamp(i | 0, 0, S.frames.length - 1)], sc = o.sc || 1;
   const w = f[2] * FX_PX * sc * (o.sx || 1), h = f[3] * FX_PX * sc * (o.sy || 1);
   c.save(); c.translate(x, y);
@@ -671,7 +692,7 @@ function drawSheet(c, id, i, x, y, o = {}) {
   }
   if (o.tilt) c.rotate(o.tilt);   // a sheet drawn pointing some other way than right (its own angle, undone)
   if (o.flip) c.scale(-1, 1);
-  c.drawImage(S.img, f[0], f[1], f[2], f[3], -w * (o.ax ?? 0.5), -h * (o.ay ?? 0.5), w, h);
+  c.drawImage(img, f[0], f[1], f[2], f[3], -w * (o.ax ?? 0.5), -h * (o.ay ?? 0.5), w, h);
   c.restore();
 }
 const sheetFrames = id => (FXS[id] ? FXS[id].frames.length : 0);
@@ -837,8 +858,9 @@ mixInto(Battle, class {
     const fx = fxOf(mv);
     // played from the owner's sheets (r152)
     if (mv.id === 'fireBlast') { sheetPart(this, 'fireBlast', [2, 3, 3, 4], x, y - 4, 0.75, { sc: r * 2.4 / sheetW('fireBlast', 3) }); this.addShake(5); return; }
-    if (mv.id === 'eruption') { const sc = r * 1.25 / sheetW('eruption', 0); sheetPart(this, 'eruption', [1, 2, 2, 3, 4], x, y + sheetH('eruption', 0) * sc / 2, 1.1, { sc, ay: 1 }); this.addShake(8); return; }
-    if (mv.id === 'geyserVent' && FXS.geyserVent) { const sc = r * 1.7 / sheetW('geyserVent', 0); sheetPart(this, 'geyserVent', [2, 3, 4, 5, 6, 7, 8], x, y + 4 + sheetH('geyserVent', 0) * sc / 2, 1.1, { sc, ay: 1 }); this.addShake(6); return; }
+    const user = this.mons.find(o => o.action && o.action.mv === mv && Math.hypot(o.x - x, o.y - y) < 2);   // a burst's user stands in the middle of it
+    if (mv.id === 'eruption') { const sc = r * 1.25 / sheetW('eruption', 0); sheetPart(this, 'eruption', [1, 2, 2, 3, 4], x, y + sheetH('eruption', 0) * sc / 2, 1.1, { sc, ay: 1, user }); this.addShake(8); return; }
+    if (mv.id === 'geyserVent' && FXS.geyserVent) { const sc = r * 1.7 / sheetW('geyserVent', 0); sheetPart(this, 'geyserVent', [2, 3, 4, 5, 6, 7, 8], x, y + 4 + sheetH('geyserVent', 0) * sc / 2, 1.1, { sc, ay: 1, user }); this.addShake(6); return; }
     if (mv.id === 'steamEruption') { const sc = r * 1.4 / sheetW('steamEruption', 0); sheetPart(this, 'steamEruption', [1, 2, 2, 3, 4], x, y + sheetH('steamEruption', 0) * sc / 2, 1.1, { sc, ay: 1 }); return; }
     this.particles.push({ kind: 'wave', x, y: y - 2, r0: 4, r1: r, life: 0.32, max: 0.32, color: fx[2], w: 4 });
     this.particles.push({ kind: 'wave', x, y: y - 2, r0: 2, r1: r * 0.7, life: 0.42, max: 0.42, color: fx[1], w: 3 });
@@ -898,12 +920,6 @@ mixInto(Battle, class {
     for (const p of this.projectiles) this.drawProjectile(c, p);
     this.drawZoneFalls(c);
     this.drawParticles(c);
-    // a burst or vortex's user stands in the middle of it: the far side goes behind it, the near side in front
-    for (const m of this.mons) {
-      if (!m.visible || m.fainted) continue;
-      if (m.action && m.action.kind === 'burst' && !m.action.mv.cone) { m.burstAt = this.time; m.burstLine = m.y - m.action.r * 0.34; }   // the far rim
-      if (this.time - (m.burstAt ?? -9) < 1.15) this.cutOutMon(c, m, m.burstLine);
-    }
   }
 
   // Dashes with a look of their own, drawn round the moving monster.
@@ -922,20 +938,8 @@ mixInto(Battle, class {
     drawSheet(c, id, fr, m.x, m.cy, { sc: size(fr), dir: a.dir, tilt: SM.tilt, ax: SM.ax ?? 0.5, ay: SM.ay ?? 0.5 });
   }
 
-  // Cut a Coreature's own picture out of the effect layer, so what was just drawn sits round it, not over it
-  // (dash trails, vortexes).
-  // line: only what's above that line (the effect's far rim) is behind it, so the near rim and whatever rises from it
-  // stay in front (r167, the owner: the user goes between the far and near halves of a burst, not on top)
-  cutOutMon(c, m, line = null) {
-    const sp = SPRITES[m.id], img = sp && sp.views[viewKey(sp.views, m.view, m.face)];
-    if (!img) return;
-    const S = sp.size * SPR_SCALE * m.scale;
-    c.save();
-    if (line !== null) { c.beginPath(); c.rect(m.x - S, m.y - S * 3, S * 2, line - (m.y - S * 3)); c.clip(); }
-    c.globalCompositeOperation = 'destination-out'; c.translate(m.x, m.y - (m.hover || 0));
-    if (isSideView(m.view) && m.face < 0) c.scale(-1, 1);
-    c.drawImage(img, -S / 2, -S + 3, S, S); c.restore();
-  }
+  // Cut a Coreature's own picture out of the effect layer (a dash trail wraps round the body instead of covering it).
+  cutOutMon(c, m) { cutOutSprite(c, m); }
 
   drawDashFx(c, m, a) {
     const mv = a.mv, fx = fxOf(mv), T = this.time, cx = m.x, cy = m.cy, R = m.r + 7;
@@ -1123,11 +1127,11 @@ mixInto(Battle, class {
     const fx = fxOf(a.mv), k = clamp(a.t / a.mv.delay, 0, 1);
     if (a.mv.id === 'eruption') {   // the ground cracks round it, lava glowing through (sheet frame 0)
       const sc = a.r * 1.25 / sheetW('eruption', 0) * (0.6 + 0.4 * k);
-      drawSheet(c, 'eruption', 0, m.x, m.y, { sc });
+      drawSheetAround(c, 'eruption', 0, m.x, m.y, { sc }, m);
       return;
     }
     if (a.mv.id === 'geyserVent' && FXS.geyserVent) {   // the ground bubbling, then cracking (W5 frames 0-1)
-      drawSheet(c, 'geyserVent', k < 0.5 ? 0 : 1, m.x, m.y + 4, { sc: a.r * 1.7 / sheetW('geyserVent', 0) });
+      drawSheetAround(c, 'geyserVent', k < 0.5 ? 0 : 1, m.x, m.y + 4, { sc: a.r * 1.7 / sheetW('geyserVent', 0) }, m);
       return;
     }
     if (a.mv.id === 'magmaWave') {   // the lava rising in front of it (sheet frame 0)
@@ -1340,8 +1344,7 @@ mixInto(Battle, class {
       // each frame's hole (measured from the sheet) centred a little up the user's body, so it stands in the middle
       // of the swirl rather than on its back edge (r164; the pull and the damage still come from its feet)
       const hole = VORTEX_HOLES[mv.id][fr];
-      drawSheet(c, mv.id, fr, m.x, m.y - m.h * 0.18, { sc: mv.r * 2 / sheetW(mv.id, 4), ax: hole[0], ay: hole[1] });
-      m.burstAt = this.time; m.burstLine = m.y - m.h * 0.18 - mv.r * 0.26;   // its user stands between the far and near rims (end of drawAttacks)
+      drawSheetAround(c, mv.id, fr, m.x, m.y - m.h * 0.18, { sc: mv.r * 2 / sheetW(mv.id, 4), ax: hole[0], ay: hole[1] }, m);   // its user stands in the middle
       return;
     }
     const fade = clamp(Math.min(a.t / 0.15, (mv.dur - a.t) / 0.2), 0, 1), R = mv.r * fade;

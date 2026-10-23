@@ -138,6 +138,52 @@ def shrink(im, m, box, k):
             sp[x, y] = (r, g, b, 255) if a >= 110 else (0, 0, 0, 0)
     return small
 
+# Sheets drawn round their user (a ring on the ground with the user in its empty middle): each frame is split into
+# what's behind the user and what's in front (r169, the owner: the user should stand between the far and near sides).
+# value: in a frame with no hole, is what fills the middle in front of the user (flames engulfing it) or behind (a
+# funnel of water under it)?
+DEPTH = {'eruption': 'front', 'geyserVent': 'front', 'whirlpool': 'back', 'maelstrom': 'back'}
+
+def split_depth(fr, last, fill='front'):
+    """One frame (RGBA) -> (back, front, ground row's distance from the bottom). The ground's middle is the middle
+    of the ring's empty hole (the biggest see-through patch not touching the frame's edge; a frame with no hole uses
+    the last one's). A pixel is in front if it's at or below that row, or if, going straight down its column, it
+    reaches that row without crossing the hole (a flame or geyser rising from the near rim); otherwise it's behind
+    (it stands on the far rim, past the hole)."""
+    W, H = fr.size; a = fr.getchannel('A').load()
+    solid = [[a[x, y] > 0 for x in range(W)] for y in range(H)]
+    seen = [[False] * W for _ in range(H)]; best = []
+    for sy in range(H):
+        for sx in range(W):
+            if solid[sy][sx] or seen[sy][sx]: continue
+            st, comp, edge = [(sx, sy)], [], False; seen[sy][sx] = True
+            while st:
+                x, y = st.pop(); comp.append((x, y))
+                if x in (0, W - 1) or y in (0, H - 1): edge = True
+                for nx, ny in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+                    if 0 <= nx < W and 0 <= ny < H and not solid[ny][nx] and not seen[ny][nx]: seen[ny][nx] = True; st.append((nx, ny))
+            if not edge and len(comp) > len(best): best = comp
+    hole = set(best) if len(best) >= 60 else set()
+    if hole:
+        cy = round(sum(y for _, y in best) / len(best))
+        xs = [x for x, _ in best]; span = (min(xs) / W, max(xs) / W)
+    else:   # no hole (the ring is filled with flame): the last frame's, by its place in the frame
+        from_bottom, span = last if last else (H // 3, (0.35, 0.65))
+        cy = H - from_bottom
+    hx0, hx1 = round(span[0] * W), round(span[1] * W)
+    back, front = fr.copy(), fr.copy(); bp, fp = back.load(), front.load()
+    for x in range(W):
+        for y in range(H):
+            if not solid[y][x]: continue
+            # at or below the ground's middle: the near half. Above it: behind, unless it's over the hole and reaches
+            # down to the ground's middle without crossing the hole (a flame rising from the near rim)
+            infront = y >= cy
+            if not infront and hx0 <= x <= hx1 and (hole or fill == 'front'):
+                infront = not any((x, yy) in hole for yy in range(y + 1, cy + 1))
+            if infront: bp[x, y] = (0, 0, 0, 0)
+            else: fp[x, y] = (0, 0, 0, 0)
+    return back, front, (H - cy, span)
+
 def build(only=None, sheet=False):
     data, review = {}, []
     for sid, (ref, px, counts) in SHEETS.items():
@@ -164,6 +210,15 @@ def build(only=None, sheet=False):
             pq.putalpha(part.getchannel('A')); q.paste(pq, (x0, 0))
         buf = io.BytesIO(); q.save(buf, 'PNG', optimize=True)
         data[sid] = {'src': 'data:image/png;base64,' + base64.b64encode(buf.getvalue()).decode(), 'frames': meta}
+        if sid in DEPTH:   # its back and front halves, same layout (see split_depth)
+            bk, fs, last = Image.new('RGBA', q.size, (0, 0, 0, 0)), Image.new('RGBA', q.size, (0, 0, 0, 0)), None
+            for (fx, fy, fw, fh) in meta:
+                b2, f2, last = split_depth(q.crop((fx, fy, fx + fw, fy + fh)), last, DEPTH[sid])
+                bk.paste(b2, (fx, fy)); fs.paste(f2, (fx, fy))
+            for key, img in (('back', bk), ('front', fs)):
+                b3 = io.BytesIO(); img.save(b3, 'PNG', optimize=True)
+                data[sid][key] = 'data:image/png;base64,' + base64.b64encode(b3.getvalue()).decode()
+            review.append((sid + ' (back)', bk, meta)); review.append((sid + ' (front)', fs, meta))
         review.append((sid, q, meta))
         print(f'{sid}: {len(meta)} frames, scale 1/{k:.1f}, sizes {[(f[2], f[3]) for f in meta]}, {len(buf.getvalue())} bytes')
     js = ('// Attack frames cut from the owner\'s reference sheets (docs/refs) by tools/fx-sheets.py. Do not edit by hand:\n'
