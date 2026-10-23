@@ -333,6 +333,33 @@ const FX_PARTS = {
     }
   },
   // a sheet's frames played in order (sheetPart)
+  // One piece of an attack, moved by code (r182, the pieces test): its place worked out from its age, so the game's
+  // particle mover (which moves anything with vx) leaves it alone. Fields: id, frames, fps (loop at that rate with
+  // phase ph) or played through over its life; x, y where it starts; mx, my drift per second on the ground; vz, g a
+  // throw upward and gravity (it lands, bounces once and settles); rise (floats up per second); rot, vr spin; sc, grow
+  // (seconds to grow in), shrink (seconds to shrink out at the end), swell (grows per second); ay its anchor.
+  piece(c, p, k) {
+    const age = p.max * (1 - k), n = p.frames.length;
+    let fr, fb = null, ft = 0;
+    if (p.fps) fr = p.frames[(Math.floor(age * p.fps) + (p.ph || 0)) % n];
+    else [fr, fb, ft] = framePlace(p.frames, Math.min(n - 1, (1 - k) * n), false);
+    let x = p.x + (p.mx || 0) * age, y = p.y + (p.my || 0) * age, z = 0, rot = (p.rot || 0) + (p.vr || 0) * age;
+    if (p.vz) {   // thrown: up and down, a bounce, then it settles
+      const g = p.g || 600, t1 = 2 * p.vz / g;
+      if (age < t1) z = p.vz * age - g * age * age / 2;
+      else {
+        const a2 = age - t1, v2 = p.vz * 0.3, t2 = 2 * v2 / g, a3 = Math.min(a2, t2);
+        z = Math.max(0, v2 * a3 - g * a3 * a3 / 2);
+        x = p.x + (p.mx || 0) * (t1 + a3 * 0.4); y = p.y + (p.my || 0) * (t1 + a3 * 0.4);
+        rot = (p.rot || 0) + (p.vr || 0) * (t1 + a3 * 0.4);
+      }
+    }
+    const s = (p.sc || 1) * (p.grow ? Math.min(1, age / p.grow) : 1) * (p.shrink ? Math.min(1, (p.max - age) / p.shrink) : 1) * (1 + (p.swell || 0) * age);
+    if (s < 0.05) return;
+    const o = { sc: s, ay: p.ay ?? 0.5, rot, flip: p.flip };
+    const yy = y - z - (p.rise || 0) * age;
+    if (fb !== null) drawSheetMix(c, p.id, fr, fb, ft, x, yy, o); else drawSheet(c, p.id, fr, x, yy, o);
+  },
   sheet(c, p, k) {   // played through over its life, each frame dissolving into the next (r181)
     const n = p.frames.length, [a, b, t] = framePlace(p.frames, Math.min(n - 1, (1 - k) * n), false);
     drawSheetMix(c, p.id, a, b, t, p.x, p.y, p.o);
@@ -693,6 +720,7 @@ function drawSheet(c, id, i, x, y, o = {}) {
     if (cs < 0) { c.scale(-1, 1); c.rotate(Math.atan2(sn, -cs)); } else c.rotate(o.dir);
   }
   if (o.tilt) c.rotate(o.tilt);   // a sheet drawn pointing some other way than right (its own angle, undone)
+  if (o.rot) c.rotate(o.rot);   // a piece tumbling (r182)
   if (o.flip) c.scale(-1, 1);
   const top = o.top || 0, cut = h * top / f[3];
   if (o.src) c.drawImage(o.src, 0, top, f[2], f[3] - top, -w * (o.ax ?? 0.5), -h * (o.ay ?? 0.5) + cut, w, h - cut);   // a dissolved copy (drawSheetMix)
@@ -703,7 +731,10 @@ function drawSheet(c, id, i, x, y, o = {}) {
 // for an attack lasting about a second, so each one used to be held and then jump to the next. Now the next one
 // dissolves in pixel by pixel (an ordered 4x4 checkerboard, 16 steps, so pixels stay crisp) while the current one
 // dissolves out. Each frame's dissolved versions are made once, when first needed, and kept (a few hundred at most).
-let FX_BLEND = false;   // off in the game until the owner decides; moves.html has a switch to try it (r181)
+let FX_BLEND = false;
+// The pieces test (r182): Eruption built from the owner's P1 pieces, moved by code. Off in the game until the owner
+// decides; moves.html has a switch to compare.
+let FX_PIECES = false;   // off in the game until the owner decides; moves.html has a switch to try it (r181)
 const BAYER4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
 const _dither = new Map();
 function ditherFrame(id, i, lvl, keepLow) {   // frame i with only the pixels under (keepLow) or at and over the level
@@ -944,6 +975,7 @@ mixInto(Battle, class {
     // played from the owner's sheets (r152)
     if (mv.id === 'fireBlast') { sheetPart(this, 'fireBlast', [2, 3, 3, 4], x, y - 4, 0.75, { sc: r * 2.4 / sheetW('fireBlast', 3) }); this.addShake(5); return; }
     const user = this.mons.find(o => o.action && o.action.mv === mv && Math.hypot(o.x - x, o.y - y) < 2);   // a burst's user stands in the middle of it
+    if (mv.id === 'eruption' && FX_PIECES && FXS.eruptionParts) { this.fxEruptionPieces(x, y, r, this.mons.find(o => o.action && o.action.mv === mv && Math.hypot(o.x - x, o.y - y) < 2)); return; }
     if (mv.id === 'eruption') { const sc = r * 1.25 / sheetW('eruption', 0); sheetPart(this, 'eruption', [1, 2, 2, 3, 4], x, y + sheetH('eruption', 0) * sc / 2, 1.1, { sc, ay: 1, user }); this.addShake(8); return; }
     if (mv.id === 'geyserVent' && FXS.geyserVent) { const sc = r * 1.7 / sheetW('geyserVent', 0); sheetPart(this, 'geyserVent', [2, 3, 4, 5, 6, 7, 8], x, y + 4 + sheetH('geyserVent', 0) * sc / 2, 1.1, { sc, ay: 1, user }); this.addShake(6); return; }
     if (mv.id === 'discharge' && FXS.discharge) { sheetPart(this, 'discharge', [2, 3, 4, 5, 6, 7], x, y, 0.75, { sc: r * 2.2 / sheetW('discharge', 5), user }); this.addShake(5); return; }   // E3 (r171)
@@ -1023,7 +1055,7 @@ mixInto(Battle, class {
     for (const m of this.mons) {
       if (!m.visible || m.fainted) continue;
       if (m.action && m.action.kind === 'burst' && !m.action.mv.cone) m.burstAt = this.time;
-      if (this.time - (m.burstAt ?? -9) < 0.8) cutOutSprite(c, m);
+      if (this.time - (m.burstAt ?? -9) < 0.8 && !(this.time < (m.piecesUntil ?? -9))) cutOutSprite(c, m);   // (an attack built from pieces layers itself round its user)
     }
   }
 
@@ -1227,9 +1259,64 @@ mixInto(Battle, class {
     for (const ex of eyes) { FXD.circle(c, ex, ey, er, '#ffffff'); FXD.dot(c, ex + Math.cos(a.dir) * 0.6, ey + 0.4, 0.8, INK); }
   }
 
+  // Eruption from pieces (r182): parts of the owner's P1 sheet (frames: 0-3 flame tongue, 4-6 rocks, 7-9 embers,
+  // 10-13 smoke, 14 crack ring, 15 lava pool, 16 flash), thrown, grown and drifted by code.
+  fxEruptionPieces(x, y, r, user) {
+    // each piece on the near side of the user (lower on the screen) is drawn in front of it, the rest behind (r183)
+    const id = 'eruptionParts', P = o => this.particles.push({ kind: 'piece', id, ...o, life: o.life + (o.delay || 0), max: o.life,
+      user, front: !!user && !o.ground && (o.near ?? o.y + (o.my || 0) * 0.25 >= user.y) });
+    if (user) user.piecesUntil = this.time + 2;
+    const ry = 0.55;   // the ground seen from above: circles squashed
+    P({ frames: [15], x, y, life: 0.9, sc: r * 1.5 / sheetW(id, 15), grow: 0.08, shrink: 0.35, ground: true });   // the lava pool (on the ground, under its user)
+    P({ frames: [14], x, y, life: 0.95, sc: r * 2.1 / sheetW(id, 14), shrink: 0.3, ground: true });   // the cracks
+    const flames = [];
+    for (let wave = 0; wave < 2; wave++) {   // two waves of flame tongues bursting up round it, each flickering on its own
+      const n = wave ? 8 : 11;
+      for (let i = 0; i < n; i++) {
+        const ang = (i + wave * 0.5) / n * TAU + rand(-0.12, 0.12), rr = r * rand(0.66, 0.9);
+        flames.push({ x: x + Math.cos(ang) * rr, y: y + Math.sin(ang) * rr * ry, wave });
+      }
+      if (!wave) for (let i = 0; i < 3; i++) { const ang = rand(0, TAU), rr = r * rand(0.2, 0.45); flames.push({ x: x + Math.cos(ang) * rr, y: y + Math.sin(ang) * rr * ry, wave }); }
+    }
+    flames.sort((p, q) => p.y - q.y);   // farther ones first, so nearer flames overlap them
+    for (const f of flames) P({ frames: [0, 1, 2, 3], fps: rand(11, 16), ph: (Math.random() * 4) | 0, x: f.x, y: f.y + 2, ay: 1,
+      // the near ones (in front of its user) lower, so it stays in view standing inside the ring of fire
+      sc: (f.wave ? rand(0.7, 1.0) : rand(0.9, 1.3)) * (user && f.y >= user.y ? 0.6 : 1), grow: 0.08, shrink: 0.25, life: rand(0.5, 0.75), delay: f.wave ? rand(0.28, 0.4) : rand(0, 0.08),
+      flip: Math.random() < 0.5, rise: rand(0, 14) });
+    for (let i = 0; i < 7; i++) {   // rocks flung out in arcs, tumbling, bouncing once
+      const ang = rand(0, TAU), sp = r * rand(1.3, 2.2);
+      P({ frames: [4 + (i % 3)], x: x + Math.cos(ang) * r * 0.3, y: y + Math.sin(ang) * r * 0.3 * ry, mx: Math.cos(ang) * sp, my: Math.sin(ang) * sp * ry,
+        vz: rand(170, 250), g: 650, rot: rand(0, TAU), vr: rand(-9, 9), sc: rand(0.38, 0.52), life: 1.1, shrink: 0.15, delay: rand(0, 0.05) });
+    }
+    for (let i = 0; i < 4; i++) {   // a little smoke rising off the top as it dies down, drifting away
+      const ang = rand(0, TAU), rr = r * rand(0.3, 0.7);
+      P({ frames: [10, 11, 12, 13], x: x + Math.cos(ang) * rr, y: y + Math.sin(ang) * rr * ry - 40, mx: Math.cos(ang) * 18, rise: rand(40, 60),
+        sc: rand(0.45, 0.6), swell: 0.5, ay: 0.7, life: rand(0.9, 1.2), delay: rand(0.45, 0.65), flip: Math.random() < 0.5 });
+    }
+    for (let i = 0; i < 18; i++) {   // embers floating up
+      const ang = rand(0, TAU), rr = r * rand(0.1, 0.95);
+      P({ frames: [7, 8, 9], fps: 9, ph: i % 3, x: x + Math.cos(ang) * rr, y: y + Math.sin(ang) * rr * ry - 6, mx: rand(-18, 18), rise: rand(50, 100),
+        sc: rand(0.6, 0.9), life: rand(0.6, 1.3), shrink: 0.2, delay: rand(0, 0.5) });
+    }
+    P({ frames: [16], x, y: y - 14, life: 0.16, sc: 1.7, grow: 0.05, shrink: 0.1, near: true });   // the flash
+    this.addShake(8);
+  }
+
   // a blast winding up: energy gathering at the user's feet
   drawCharge(c, m, a) {
     const fx = fxOf(a.mv), k = clamp(a.t / a.mv.delay, 0, 1);
+    if (a.mv.id === 'eruption' && FX_PIECES && FXS.eruptionParts) {   // the ground cracking open round it, then flames licking up from the cracks
+      const id = 'eruptionParts';
+      m.piecesUntil = this.time + 0.1;
+      drawSheet(c, id, 14, m.x, m.y, { sc: a.r * 2.1 / sheetW(id, 14) * (0.55 + 0.45 * k) });
+      const lick = near => { if (k > 0.45) for (let i = 0; i < 6; i++) {
+        const ang = i / 6 * TAU + 0.4, rr = a.r * (0.55 + 0.45 * k) * 0.8, s = (k - 0.45) / 0.55 * 0.45;
+        if ((Math.sin(ang) >= 0) !== near) continue;
+        drawSheet(c, id, (Math.floor(this.time * 13) + i) % 4, m.x + Math.cos(ang) * rr, m.y + Math.sin(ang) * rr * 0.55 + 2, { sc: s, ay: 1 });
+      } };
+      lick(false); if (m.visible && !m.fainted) cutOutSprite(c, m); lick(true);   // the far flames behind it, the near ones in front
+      return;
+    }
     if (a.mv.id === 'eruption') {   // the ground cracks round it, lava glowing through (sheet frame 0)
       const sc = a.r * 1.25 / sheetW('eruption', 0) * (0.6 + 0.4 * k);
       drawSheetAround(c, 'eruption', 0, m.x, m.y, { sc }, m);
@@ -1553,10 +1640,25 @@ mixInto(Battle, class {
   }
 
   drawParticles(c) {
+    // Pieces have depth (r183, the owner: "since the assets are in pieces you can now properly layer them"): the ones
+    // on the far side of their user are drawn first, the user is cut out of them (so it stands in front of them), then
+    // the ones on its near side go over it.
+    const front = [];
     for (const p of this.particles) {
-      if (p.life > p.max) continue;   // still waiting to start (a delayed wave)
+      if (p.front) { if (p.life <= p.max) front.push(p); continue; }
+      this.drawParticle(c, p);
+    }
+    if (!front.length) return;
+    const users = new Set(front.map(p => p.user).filter(m => m && m.visible && !m.fainted));
+    for (const m of users) cutOutSprite(c, m);
+    for (const p of front) this.drawParticle(c, p);
+  }
+
+  drawParticle(c, p) {
+    {
+      if (p.life > p.max) return;   // still waiting to start (a delayed wave)
       const k = clamp(p.life / p.max, 0, 1), X = p.x, Y = p.y;
-      if (FX_PARTS[p.kind]) { FX_PARTS[p.kind](c, p, k); continue; }
+      if (FX_PARTS[p.kind]) { FX_PARTS[p.kind](c, p, k); return; }
       switch (p.kind) {
         case 'sq': {
           const s = Math.max(1.5, Math.round(p.size * (0.5 + k * 0.5)));
