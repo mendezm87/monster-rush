@@ -1022,6 +1022,7 @@ mixInto(Battle, class {
 
   // Buffs and heals: a shield for defence, chevrons for attack and speed, + signs for healing.
   fxBuff(m, mv) {
+    if (FX_PIECES && FXS.common2) { this.fxBuffPieces(m, mv); return; }
     const fx = fxOf(mv), b = mv.buff || {};
     if (b.def) this.particles.push({ kind: 'shield', x: m.x, y: m.cy, r: m.r + 12, color: fx[2], life: 0.9, max: 0.9 });
     if (b.atk || b.spd) for (let i = 0; i < 6; i++) {
@@ -1034,6 +1035,7 @@ mixInto(Battle, class {
     const show = { snack: ['snack', 0.95], photosynth: ['sunbeam', 1.1], blanketNap: ['blanket', 1.7], wish: ['wishStar', 1.25] }[mv.id];
     if (show) this.particles.push({ kind: show[0], mon: m, x: m.x, y: m.y, life: show[1], max: show[1], face: m.face });
     if (mv.id === 'wish') m.look(0, -1);   // look up at the star
+    if (FX_PIECES && FXS.common2) { this.fxHealPieces(m, show ? show[1] * 0.5 : 0); return; }
     for (let i = 0; i < (show ? 4 : 7); i++) {
       this.particles.push({ kind: 'plus', x: m.x + rand(-16, 16), y: m.cy + rand(-4, 14), vx: rand(-6, 6), vy: -rand(30, 55), size: rand(2.5, 4),
         color: i % 3 ? '#8be04e' : '#eaffc8', life: rand(0.55, 0.9) + (show ? show[1] * 0.5 : 0), max: 0.9 });
@@ -1272,6 +1274,44 @@ mixInto(Battle, class {
     this.particles.push({ kind: 'piece', id, ...o, life: o.life + (o.delay || 0), max: o.life,
       user, front: !!user && !o.ground && (o.near ?? o.y + (o.my || 0) * 0.25 >= user.y) });
   }
+  // ---- COMMON-2 pieces (r187): frames 0-2 arrows (attack red, defence blue, speed green), 3 big plus, 4 small plus,
+  // 5 gold sparkle, 6 white sparkle, 7 gold ring, 8-10 flame flares, 11 shield glint, 12 power burst, 13 speed swoosh.
+  // A boost: arrows of each stat it raises rise round the Coreature (far ones behind it, near ones in front), with
+  // its stat's mark (a shield glint, a burst of power, a swoosh of speed) and sparkles.
+  fxBuffPieces(m, mv) {
+    const id = 'common2', b = mv.buff || {}, stats = [b.atk && 0, b.def && 1, b.spd && 2].filter(v => v !== undefined && v !== false);
+    m.piecesUntil = this.time + 1.4;
+    const P = o => this.addPiece(id, m, o);
+    stats.forEach((st, si) => {
+      for (let i = 0; i < 4; i++) {   // arrows rising up round it, one wave after another
+        const ang = (i + si * 0.33) / 4 * TAU + rand(-0.3, 0.3), rr = m.r * rand(0.7, 1.0);
+        P({ frames: [st], x: m.x + Math.cos(ang) * rr, y: m.y + Math.sin(ang) * rr * 0.5, rise: rand(50, 70), sc: rand(0.38, 0.5), grow: 0.08, shrink: 0.25, ay: 1, life: 0.75, delay: si * 0.12 + i * 0.07 });
+      }
+      const mark = [12, 11, 13][st], ang = rand(0, TAU);
+      P({ frames: [mark], x: m.x + Math.cos(ang) * m.r * 0.5, y: m.y + 1, near: true, rise: 30 + 20 * si, sc: 0.6, grow: 0.1, shrink: 0.2, ay: 1.4 + si * 0.3, life: 0.6, delay: 0.1 + si * 0.12 });
+    });
+    for (let i = 0; i < 5; i++) {   // sparkles twinkling up round it
+      const ang = rand(0, TAU), rr = m.r * rand(0.4, 1.1);
+      P({ frames: [i % 2 ? 6 : 5], x: m.x + Math.cos(ang) * rr, y: m.y + Math.sin(ang) * rr * 0.5, rise: rand(20, 45), sc: rand(0.6, 0.9), grow: 0.1, shrink: 0.2, ay: 2 + rand(0, 2), life: rand(0.5, 0.8), delay: rand(0, 0.4) });
+    }
+  }
+  // A heal: a golden ring rises up its body, green pluses float up (the big one over its head), sparkles twinkle.
+  // after: start that many seconds later (a signature heal plays first: the cookie, the blanket...)
+  fxHealPieces(m, after = 0) {
+    const id = 'common2', P = o => this.addPiece(id, m, { ...o, delay: (o.delay || 0) + after });
+    m.piecesUntil = this.time + after + 1.4;
+    P({ frames: [7], x: m.x, y: m.y, ground: true, rise: m.h * 1.1, sc: m.r * 2.4 / sheetW(id, 7), grow: 0.1, shrink: 0.25, life: 0.75 });
+    P({ frames: [3], x: m.x, y: m.y - m.h - 6, near: true, rise: 18, sc: 0.45, grow: 0.12, shrink: 0.25, life: 0.9, delay: 0.15 });
+    for (let i = 0; i < 6; i++) {
+      const ang = rand(0, TAU), rr = m.r * rand(0.5, 1.05);
+      P({ frames: [4], x: m.x + Math.cos(ang) * rr, y: m.y + Math.sin(ang) * rr * 0.5, rise: rand(35, 60), sc: rand(0.7, 1), grow: 0.08, shrink: 0.2, ay: 1.5 + rand(0, 2), life: rand(0.6, 0.9), delay: rand(0, 0.35) });
+    }
+    for (let i = 0; i < 4; i++) {
+      const ang = rand(0, TAU), rr = m.r * rand(0.4, 1.1);
+      P({ frames: [i % 2 ? 6 : 5], x: m.x + Math.cos(ang) * rr, y: m.y + Math.sin(ang) * rr * 0.5, rise: rand(20, 40), sc: rand(0.6, 0.9), grow: 0.1, shrink: 0.2, ay: 2 + rand(0, 2), life: rand(0.5, 0.8), delay: rand(0.1, 0.5) });
+    }
+  }
+
   // a stamp on the ground: the ground cracks, shockwave rings spread, pebbles fly and dust rolls out (Heavy Stomp,
   // Quake until EARTH-1, Slumbear's Belly Flop landing)
   fxGroundSlam(x, y, r, user, o = {}) {
