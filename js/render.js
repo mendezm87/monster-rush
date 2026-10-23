@@ -747,7 +747,10 @@ mixInto(Battle, class {
       ctx.beginPath(); ctx.ellipse(m.x, m.y, m.r + 6, m.r * 0.5 + 3, 0, 0, TAU); ctx.stroke();
       ctx.setLineDash([]);
     }
+    // warnings are for dodging: only the wild side's attacks get one (r165, the owner: your own attacks' art shows
+    // where they hit, and their outlines were just clutter); lingering pools still show for both
     for (const z of this.zones) {
+      if (!z.done && z.owner.side === 'player') continue;
       if (z.done) {
         if (!z.mv.linger || z.mv.fx === 'tornado') continue;   // a tornado draws its own base (fx.js)
         // lingering pool: fades in and out, with bubbles popping across it
@@ -778,7 +781,7 @@ mixInto(Battle, class {
     }
     for (const m of this.mons) {
       const a = m.action;
-      if (!a || !m.visible) continue;
+      if (!a || !m.visible || m.side === 'player') continue;
       const X = m.x, Y = m.y, dir = a.dir;
       if (a.kind === 'burst' && !a.done && a.mv.cone) {   // a cone: a wedge in front
         const k = clamp(a.t / a.mv.delay, 0, 1), c0 = dir - a.mv.cone, c1 = dir + a.mv.cone;
