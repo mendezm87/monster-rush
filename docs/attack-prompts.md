@@ -382,3 +382,25 @@ to land". The game keeps E2b's cloud on top and the same height, so this is the 
 > all frames the same size and evenly spaced. 16-bit pixel art visual effect sprite sheet for an action game, chunky
 > pixels with a dark 1-pixel outline, limited bright palette with hard-edged shading, no creature or character, plain
 > dark navy background, no text
+
+## Pieces (r182): Gemini draws an attack's parts, code moves them
+
+The owner wanted attacks as smooth as the old code-drawn ones. A whole-scene sheet has 5-8 pictures for an attack
+lasting about a second, so it steps; parts moved by code move 60 times a second and never look quite the same twice.
+Big one-off shapes (Thunder's dome of light, Magma Wave's crashing wave, the whirlpool) stay whole sheets. **Test
+first: P1 rebuilds Eruption from parts, compared side by side with today's Eruption (F5).** Run it on its own.
+
+**P1 · Eruption pieces** (code will: crack the ground round the user, glowing brighter; burst a ring of flame
+tongues up round it, each flickering; throw rocks out in arcs, tumbling and bouncing; send embers rising; billow
+smoke up and away; flash once)
+> A sprite sheet of separate fire effect pieces for an action game, laid out in 4 rows with lots of empty space
+> between every piece, nothing touching or overlapping. Row 1: one tall narrow flame tongue in 4 frames, each a
+> small step from the last as it flickers and licks upward, white-hot at its base, then yellow, orange and deep red
+> at its curling tip. Row 2: three chunks of dark basalt rock of different shapes with glowing orange cracks, then
+> three small glowing embers of different sizes. Row 3: a puff of smoke in 4 stages, dense dark grey with a warm
+> orange underside, then billowing bigger, then thinning, then a few last wisps. Row 4: a ring of cracked ground
+> seen from slightly above (a flat oval of jagged cracks glowing orange, empty in the middle), a flat oval pool of
+> molten lava glowing yellow-orange, and a small white-yellow four-pointed flash star. Every piece complete and
+> fully inside its own space with empty background all round it, nothing touching the edges or cut off. 16-bit
+> pixel art visual effect sprites, chunky pixels with a dark 1-pixel outline, limited bright palette with
+> hard-edged shading, no creature or character, plain dark navy background, no text, no labels
