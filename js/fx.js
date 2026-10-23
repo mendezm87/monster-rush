@@ -898,6 +898,12 @@ mixInto(Battle, class {
     for (const p of this.projectiles) this.drawProjectile(c, p);
     this.drawZoneFalls(c);
     this.drawParticles(c);
+    // a burst or vortex's user stands in the middle of it: the far side goes behind it, the near side in front
+    for (const m of this.mons) {
+      if (!m.visible || m.fainted) continue;
+      if (m.action && m.action.kind === 'burst' && !m.action.mv.cone) m.burstAt = this.time;
+      if (this.time - (m.burstAt ?? -9) < 1.15) this.cutOutMon(c, m, true);
+    }
   }
 
   // Dashes with a look of their own, drawn round the moving monster.
@@ -918,11 +924,15 @@ mixInto(Battle, class {
 
   // Cut a Coreature's own picture out of the effect layer, so what was just drawn sits round it, not over it
   // (dash trails, vortexes).
-  cutOutMon(c, m) {
+  // behind: only what's above its feet line is behind it (r166, the owner: a burst's near rim in front of its user, the
+  // far side behind), so the part of the effect below its feet stays over it
+  cutOutMon(c, m, behind = false) {
     const sp = SPRITES[m.id], img = sp && sp.views[viewKey(sp.views, m.view, m.face)];
     if (!img) return;
     const S = sp.size * SPR_SCALE * m.scale;
-    c.save(); c.globalCompositeOperation = 'destination-out'; c.translate(m.x, m.y - (m.hover || 0));
+    c.save();
+    if (behind) { c.beginPath(); c.rect(m.x - S, m.y - S * 2, S * 2, S * 2 - 1); c.clip(); }
+    c.globalCompositeOperation = 'destination-out'; c.translate(m.x, m.y - (m.hover || 0));
     if (isSideView(m.view) && m.face < 0) c.scale(-1, 1);
     c.drawImage(img, -S / 2, -S + 3, S, S); c.restore();
   }
@@ -1331,7 +1341,7 @@ mixInto(Battle, class {
       // of the swirl rather than on its back edge (r164; the pull and the damage still come from its feet)
       const hole = VORTEX_HOLES[mv.id][fr];
       drawSheet(c, mv.id, fr, m.x, m.y - m.h * 0.18, { sc: mv.r * 2 / sheetW(mv.id, 4), ax: hole[0], ay: hole[1] });
-      this.cutOutMon(c, m);   // the water swirls round its user, never over it
+      m.burstAt = this.time;   // its user stands in the middle (cut out at the end of drawAttacks)
       return;
     }
     const fade = clamp(Math.min(a.t / 0.15, (mv.dur - a.t) / 0.2), 0, 1), R = mv.r * fade;
