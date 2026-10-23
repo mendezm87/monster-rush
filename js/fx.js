@@ -723,6 +723,7 @@ const SHEET_MOVES = {
   cuffCannon: { sheet: 'waterShot', hit: [5, 6, 7] },
   twinCannon: { sheet: 'waterShot', hit: [5, 6, 7] },
   bubbleBeam: { sheet: 'bubbleSpray', hit: [5, 6, 7] },
+  thunderbolt: { hit: [5, 6, 7] },   // E1: the spark star, bolts splitting, fading sparks
 };
 // Where Magma Wave's waves stand: along the arc of its cone at distance d (squashed like the floor, as its
 // warning wedge is), enough of them side by side to fill it, the far ones first so the near ones overlap them.
@@ -741,6 +742,7 @@ const SHEET_BEAMS = {
   infernoBeam:  { charge: 0, start: 1, full: [1, 2], end: 3 },
   hydroCannon:  { charge: 0, start: 1, full: [2, 3, 4], end: 6, tail: 7 },   // W1 (r161)
   tidalCannon:  { charge: 0, start: 1, full: [2, 3, 4, 5], end: 7, tail: 8 },   // W2
+  voltCannon:   { charge: [0, 1], start: 2, full: [3, 4, 3, 5], end: 6, tail: 7, stretch: 1.5 },   // E4 (r171): the far end bursts now and then; stretch: its start and fading frames are shown shorter, not stretched (they smear)
 };
 // Shots played from a sheet (W3, W4): frames looped while it flies, the size of its looped frames in world units
 // where the hole is in each Whirlpool and Maelstrom frame (0..1 across and down), measured from the sheets
@@ -753,6 +755,7 @@ const SHEET_SHOTS = {
   cuffCannon: { sheet: 'waterShot', fly: [1, 2, 3, 4], len: 38 },
   twinCannon: { sheet: 'waterShot', fly: [1, 2, 3, 4], len: 32 },
   bubbleBeam: { sheet: 'bubbleSpray', fly: [1, 2, 3, 4], len: 17, spin: true },
+  thunderbolt: { sheet: 'thunderbolt', fly: [2, 3, 4], len: 36, ax: 0.78 },   // E1 (r171): the orb leads, its forked tail behind
 };
 // a frame sequence played as a particle (an explosion, a geyser)
 function sheetPart(b, id, frames, x, y, life, o = {}) {
@@ -858,6 +861,8 @@ mixInto(Battle, class {
     const user = this.mons.find(o => o.action && o.action.mv === mv && Math.hypot(o.x - x, o.y - y) < 2);   // a burst's user stands in the middle of it
     if (mv.id === 'eruption') { const sc = r * 1.25 / sheetW('eruption', 0); sheetPart(this, 'eruption', [1, 2, 2, 3, 4], x, y + sheetH('eruption', 0) * sc / 2, 1.1, { sc, ay: 1, user }); this.addShake(8); return; }
     if (mv.id === 'geyserVent' && FXS.geyserVent) { const sc = r * 1.7 / sheetW('geyserVent', 0); sheetPart(this, 'geyserVent', [2, 3, 4, 5, 6, 7, 8], x, y + 4 + sheetH('geyserVent', 0) * sc / 2, 1.1, { sc, ay: 1, user }); this.addShake(6); return; }
+    if (mv.id === 'discharge' && FXS.discharge) { sheetPart(this, 'discharge', [2, 3, 4, 5, 6, 7], x, y, 0.75, { sc: r * 2.2 / sheetW('discharge', 5), user }); this.addShake(5); return; }   // E3 (r171)
+    if (mv.fx === 'bolt' && FXS.thunder) { sheetPart(this, 'thunder', [3, 4, 4, 5, 6, 7], x, y + 6, 0.7, { ay: 1, sc: 1.3 }); this.addShake(6); return; }   // E2 (r171): the strike, the burst, the scorch ring
     if (mv.id === 'steamEruption') { const sc = r * 1.4 / sheetW('steamEruption', 0); sheetPart(this, 'steamEruption', [1, 2, 2, 3, 4], x, y + sheetH('steamEruption', 0) * sc / 2, 1.1, { sc, ay: 1 }); return; }
     this.particles.push({ kind: 'wave', x, y: y - 2, r0: 4, r1: r, life: 0.32, max: 0.32, color: fx[2], w: 4 });
     this.particles.push({ kind: 'wave', x, y: y - 2, r0: 2, r1: r * 0.7, life: 0.42, max: 0.42, color: fx[1], w: 3 });
@@ -1137,6 +1142,10 @@ mixInto(Battle, class {
       drawSheetAround(c, 'geyserVent', k < 0.5 ? 0 : 1, m.x, m.y + 4, { sc: a.r * 1.7 / sheetW('geyserVent', 0) }, m);
       return;
     }
+    if (a.mv.id === 'discharge' && FXS.discharge) {   // sparks crackling in a ring round it, charging brighter (E3 frames 0-1)
+      drawSheetAround(c, 'discharge', k < 0.55 ? 0 : 1, m.x, m.y, { sc: a.r * 2.2 / sheetW('discharge', 5) * (0.7 + 0.3 * k) }, m);
+      return;
+    }
     if (a.mv.id === 'magmaWave') {   // the lava rising in front of it (sheet frame 0)
       drawSheet(c, 'magmaWave', 0, m.x + Math.cos(a.dir) * 18, m.y + Math.sin(a.dir) * 12 + 2, { sc: 0.5 + k * 0.5, ay: 1, flip: Math.cos(a.dir) < 0 });
       return;
@@ -1162,7 +1171,7 @@ mixInto(Battle, class {
     const SS = SHEET_SHOTS[p.mv.id];
     if (SS && FXS[SS.sheet]) {   // played from the owner's sheet, pointing the way it flies
       const age = 2.6 - p.life, fr = SS.fly[Math.floor(age / 0.07 + (SS.spin ? p.spin : 0)) % SS.fly.length];
-      drawSheet(c, SS.sheet, fr, p.x, p.y, { dir: SS.spin ? undefined : Math.atan2(p.vy, p.vx), ax: SS.spin ? 0.5 : 0.65, sc: SS.len / sheetW(SS.sheet, SS.fly[0]) });
+      drawSheet(c, SS.sheet, fr, p.x, p.y, { dir: SS.spin ? undefined : Math.atan2(p.vy, p.vx), ax: SS.spin ? 0.5 : SS.ax ?? 0.65, sc: SS.len / sheetW(SS.sheet, SS.fly[0]) });
       return;
     }
     const t = styleOf(p.mv), fx = fxOf(p.mv), R = p.r * 2.2, a = Math.atan2(p.vy, p.vx), T = this.time, x = p.x, y = p.y;
@@ -1279,9 +1288,12 @@ mixInto(Battle, class {
   // the beam's length (flickering between its two full frames), then the fading frame.
   drawSheetBeam(c, m, a, ox, oy) {
     const mv = a.mv, id = mv.id, T = this.time, B = SHEET_BEAMS[id];
-    if (a.phase === 'charge') { drawSheet(c, id, B.charge, ox, oy, { sc: 0.4 + a.t / mv.charge * 0.6 }); return; }
+    if (a.phase === 'charge') {   // one charging frame, or several played through as it charges
+      const k = a.t / mv.charge, ch = [].concat(B.charge);
+      drawSheet(c, id, ch[Math.min(ch.length - 1, Math.floor(k * ch.length))], ox, oy, { sc: 0.4 + k * 0.6 }); return;
+    }
     const left = mv.dur - a.t, fr = a.t < 0.08 ? B.start : left < 0.08 && B.tail !== undefined ? B.tail : left < 0.18 ? B.end : B.full[Math.floor(T / 0.07) % B.full.length];
-    const sx = mv.len / sheetW(id, fr);
+    const sx = B.stretch && !B.full.includes(fr) ? Math.min(B.stretch, mv.len / sheetW(id, fr)) : mv.len / sheetW(id, fr);
     drawSheet(c, id, fr, ox, oy, { dir: a.dir, ax: 0, ay: 0.5, sx, sy: Math.min(sx, 1.25) });
   }
 
@@ -1386,6 +1398,8 @@ mixInto(Battle, class {
         FXD.rock(c, zx, zy - 150 * (1 - k * k) - 6, z.id, 8, FX_STYLES.rock, z.id);
       } else if (z.mv.id === 'steamEruption') {   // the ground bubbling and cracking before the geyser (sheet frame 0)
         drawSheet(c, 'steamEruption', 0, zx, zy, { sc: z.r * 1.4 / sheetW('steamEruption', 0) * (0.5 + 0.5 * (1 - left / z.delay)) });
+      } else if (z.mv.fx === 'bolt' && FXS.thunder) {   // E2 (r171): the cloud gathering over the spot, then a crackle reaching down
+        if (left < 0.6) drawSheet(c, 'thunder', left > 0.3 ? 0 : left > 0.12 ? 1 : 2, zx, zy + 6, { ay: 1, sc: 1.3 });
       } else if (z.mv.fx === 'bolt' && left < 0.25) {   // a crackle in the clouds before it strikes
         FXD.bolt(c, zx + 10, zy - 200, zx - 6, zy - 150, ((this.time * 25) | 0) + z.id, 2, fx[1], 6, false);
       }
@@ -1410,7 +1424,8 @@ mixInto(Battle, class {
         case 'line':
           FXD.line(c, [[X, Y], [p.x2, p.y2]], 3 * k + 3, INK); FXD.line(c, [[X, Y], [p.x2, p.y2]], 3 * k + 1, p.color);
           break;
-        case 'bolt':   // Thunder: a big bolt from the sky
+        case 'bolt':   // Thunder: a big bolt from the sky (the code-drawn one, when its sheet isn't there)
+          if (FXS.thunder) break;
           FXD.bolt(c, X + (mulberry((p.seed * 1e6) | 0)() - 0.5) * 30, Y - 220, X, Y, (p.seed * 1e6 + ((1 - k) * 3 | 0)) | 0, 5 * k + 2, p.color, 12);
           break;
       }

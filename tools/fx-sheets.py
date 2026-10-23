@@ -29,6 +29,11 @@ SHEETS = {
     'geyserVent':    ('w5-geyser-vent.png', 70, [5, 4]),
     'whirlpool':     ('w6-whirlpool.webp', 90, [4, 4]),
     'maelstrom':     ('w7-maelstrom.webp', 100, [4, 4]),
+    # batch 4, electric (E1-E4)
+    'thunderbolt':   ('e1-thunderbolt.png', 30, [8]),
+    'thunder':       ('e2-thunder.png', 110, [8]),
+    'discharge':     ('e3-discharge.png', 60, [4, 4]),
+    'voltCannon':    ('e4-volt-cannon.webp', 40, [2, 2, 2, 2]),
     # batch 1 (dashes D1-D10, hit impacts I1)
     'voltRush':      ('d1-volt-rush.png', 46, [5]),
     'voltRushB':     ('d1b-volt-rush.png', 46, [5]),
@@ -44,7 +49,7 @@ SHEETS = {
     'impacts':       ('i1-impacts.webp', 24, [5] * 15),   # one row per look: fire, water, electric, ice, plant, earth, wind, metal, arcane, shade, phantom, beast, brawl, dragonkin, glitch
 }
 
-def bg_mask(im):
+def bg_mask(im, keep=400):
     """True where a pixel is the plain background (close to the colour in the corners)."""
     w, h = im.size
     cs = [im.getpixel(p) for p in [(2, 2), (w - 3, 2), (2, h - 3), (w - 3, h - 3)]]
@@ -69,7 +74,7 @@ def bg_mask(im):
                 if x in (0, w - 1) or y in (0, h - 1): edge = True
                 for nx, ny in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
                     if 0 <= nx < w and 0 <= ny < h and m[ny][nx] and not seen[ny][nx]: seen[ny][nx] = True; stack.append((nx, ny))
-            if not edge and len(comp) < 400:
+            if not edge and len(comp) < keep:
                 for x, y in comp: m[y][x] = False
     return m
 
@@ -122,7 +127,12 @@ def frames_of(im, m, counts):
             out.append((cx[0], ys[0], cx[-1], ys[-1], (y0, y1)))
     return out
 
-def shrink(im, m, box, k):
+# Sheets shrunk keeping their bright lines: a pixel that a bright line runs through takes the line's colour, instead
+# of averaging it with the dark outline round it (thin lightning forks turned dark grey). The older sheets were made
+# before this and the owner approved them as they are, so it's per sheet.
+CLEAN_SHRINK = {'thunderbolt', 'thunder', 'discharge', 'voltCannon'}
+
+def shrink(im, m, box, k, clean=False):
     x0, y0, x1, y1 = box[:4]
     crop = im.crop((x0, y0, x1 + 1, y1 + 1)).convert('RGBA')
     px = crop.load()
@@ -131,6 +141,16 @@ def shrink(im, m, box, k):
             if m[y0 + y][x0 + x]: px[x, y] = (0, 0, 0, 0)
     W, H = max(1, round(crop.size[0] / k)), max(1, round(crop.size[1] / k))
     small = crop.resize((W, H), Image.BOX)
+    if clean:
+        sp, cp = small.load(), crop.load(); cw, ch = crop.size
+        for y in range(H):
+            for x in range(W):
+                xa, xb = int(x * cw / W), max(int(x * cw / W) + 1, int((x + 1) * cw / W))
+                ya, yb = int(y * ch / H), max(int(y * ch / H) + 1, int((y + 1) * ch / H))
+                cells = [cp[i, j] for j in range(ya, yb) for i in range(xa, xb)]
+                lit = [c for c in cells if c[3] and c[0] * 0.3 + c[1] * 0.59 + c[2] * 0.11 > 150]
+                if len(lit) >= len(cells) * 0.15:
+                    n = len(lit); sp[x, y] = (sum(c[0] for c in lit) // n, sum(c[1] for c in lit) // n, sum(c[2] for c in lit) // n, 255)
     sp = small.load()
     for y in range(H):
         for x in range(W):
@@ -184,16 +204,45 @@ def split_depth(fr, last, fill='front'):
             else: fp[x, y] = (0, 0, 0, 0)
     return back, front, (H - cy, span)
 
+# Sheets whose frames sit on panels (E2): the panels' navy and their edges are background, and so is the faint blue
+# glow behind the brightest bolt, below the clouds (the clouds' undersides are the same colour, so only below them)
+PANELS = {'thunder': lambda r, g, b, x, y: max(r, g, b) < 72 and b - r >= 22 and (r < 26 or y > 130)}
+
+# Sheets whose frames keep their row's full height (E2: every frame's ground is its bottom row, so the strike lines up
+# with the spot it hits, cloud-only frames included)
+FULL_ROWS = {'thunder'}
+
+def drop_specks(im, m, most=12):
+    """Tiny islands of colour left from panel corners (E2) become background."""
+    w, h = im.size; seen = set()
+    for sy in range(h):
+        for sx in range(w):
+            if m[sy][sx] or (sx, sy) in seen: continue
+            st, comp = [(sx, sy)], []; seen.add((sx, sy))
+            while st:
+                x, y = st.pop(); comp.append((x, y))
+                for nx, ny in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1), (x + 1, y + 1), (x - 1, y - 1), (x + 1, y - 1), (x - 1, y + 1)):
+                    if 0 <= nx < w and 0 <= ny < h and not m[ny][nx] and (nx, ny) not in seen: seen.add((nx, ny)); st.append((nx, ny))
+            if len(comp) <= most:
+                for x, y in comp: m[y][x] = True
+
 def build(only=None, sheet=False):
     data, review = {}, []
     for sid, (ref, px, counts) in SHEETS.items():
         if only and sid != only: continue
         im = Image.open(os.path.join(REFS, ref)).convert('RGB')
-        m = bg_mask(im)
+        if sid in PANELS:   # paint the panels the page's colour, so they read as background
+            isbg, bgc, px_ = PANELS[sid], im.getpixel((2, 2)), im.load()
+            for yy in range(im.size[1]):
+                for xx in range(im.size[0]):
+                    if isbg(*px_[xx, yy], xx, yy): px_[xx, yy] = bgc
+        m = bg_mask(im, 40 if sid in CLEAN_SHRINK and sid != 'thunder' else 400)   # electric arcs close round gaps of background: only tiny ones are part of it (Thunder's cloud undersides are near the background colour, so not there)
+        if sid in PANELS: drop_specks(im, m)
         boxes = frames_of(im, m, counts)
+        if sid in FULL_ROWS: boxes = [(b[0], b[4][0], b[2], b[4][1], b[4]) for b in boxes]
         tallest = max(b[3] - b[1] + 1 for b in boxes)
         k = tallest / px
-        frames = [shrink(im, m, b, k) for b in boxes]
+        frames = [shrink(im, m, b, k, sid in CLEAN_SHRINK) for b in boxes]
         # a tidy palette for the whole sheet, so its frames match
         strip_w, strip_h = sum(f.size[0] + 1 for f in frames), max(f.size[1] for f in frames)
         strip = Image.new('RGBA', (strip_w, strip_h), (0, 0, 0, 0))
