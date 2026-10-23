@@ -747,10 +747,10 @@ function drawSheet(c, id, i, x, y, o = {}) {
   if (o.tilt) c.rotate(o.tilt);   // a sheet drawn pointing some other way than right (its own angle, undone)
   if (o.rot) c.rotate(o.rot);   // a piece tumbling (r182)
   if (o.flip) c.scale(-1, 1);
-  if (o.trim) {   // leave off o.trim sheet pixels at both ends (a beam section's end caps, so sections join cleanly), and cutL more from its left (0..1 of what's left)
-    const t = o.trim, iw = f[2] - 2 * t, cl = Math.floor(iw * (o.cutL || 0)), w2 = w * (iw - cl) / f[2];
-    if (iw - cl < 1) { c.restore(); return; }
-    c.drawImage(img, f[0] + t + cl, f[1], iw - cl, f[3], -w2 * (o.ax ?? 0.5), -h * (o.ay ?? 0.5), w2, h);
+  if (o.trim !== undefined) {   // leave off o.trim sheet pixels at both ends (a beam section's end caps, so sections join cleanly), cutL more from its left and cutR from its right (0..1 of what's left)
+    const t = o.trim, iw = f[2] - 2 * t, cl = Math.floor(iw * (o.cutL || 0)), cr = Math.floor(iw * (o.cutR || 0)), w2 = w * (iw - cl - cr) / f[2];
+    if (iw - cl - cr < 1) { c.restore(); return; }
+    c.drawImage(img, f[0] + t + cl, f[1], iw - cl - cr, f[3], -w2 * (o.ax ?? 0.5), -h * (o.ay ?? 0.5), w2, h);
     c.restore(); return;
   }
   const top = o.top || 0, cut = h * top / f[3];
@@ -777,7 +777,7 @@ const PIECE_BEAMS = {
     impact: ['smug1b', [12, 13, 14, 15], 0.7], head: ['smug1b', [12, 13, 14, 15], 0.7], charge: ['smug1', [7, 8, 9]],
     thick: 2.6, sparkles: ['smug1', [17, 18]] },   // SMUG-1b (r194)
   megaBeam: { body: ['beast1', [0, 1, 2, 3]], core: ['beast1', [4, 5, 6, 7]], muzzle: ['beast1', [8, 9, 10, 11], 0.3],
-    impact: ['beast1', [12, 13, 14, 15], 0.25], head: ['beast1', [12, 13, 14], 0.25], charge: ['beast1', [8, 9, 10]], thick: 2.2 },   // BEAST-1 (r199)
+    impact: ['beast1', [12, 13, 14, 15], 0.25], head: ['beast1', [12, 13, 14], 0.25], charge: ['beast1', [8, 9, 10], 0, 0.63], thick: 2.2 },   // BEAST-1 (r199)
   supremeSmug: { body: ['smug1c', [0, 1, 2, 3]], core: ['smug1c', [4, 5, 6, 7]], muzzle: ['smug1c', [8, 9, 10, 11], 0.3],
     impact: ['smug1c', [12, 13, 14, 15], 0.7], head: ['smug1c', [12, 13, 14], 0.7], charge: ['smug1', [7, 8, 9]],
     thick: 2.4, petals: ['smug1', [14, 15, 16]], sparkles: ['smug1', [17, 18]] },   // SMUG-1c (r196)
@@ -1703,8 +1703,10 @@ mixInto(Battle, class {
   drawPieceBeam(c, m, a, ox, oy, B) {
     const mv = a.mv, T = this.time, cs = Math.cos(a.dir), sn = Math.sin(a.dir), loop = (fs, rate, k = 0) => fs[(Math.floor(T * rate) + k) % fs.length];
     if (a.phase === 'charge') {
-      const k = clamp(a.t / mv.charge, 0, 1), [cid, cf] = B.charge;
-      drawSheet(c, cid, cf[Math.min(cf.length - 1, Math.floor(k * cf.length))], ox, oy, { sc: 0.6 + k * 0.7 });
+      const k = clamp(a.t / mv.charge, 0, 1), [cid, cf, , cutR] = B.charge;   // cutR: a muzzle picture with a beam stub, cut at its orb's middle (what's left of it is mirrored)
+      const fr = cf[Math.min(cf.length - 1, Math.floor(k * cf.length))], sc = 0.6 + k * 0.7;
+      if (cutR) for (const flip of [false, true]) drawSheet(c, cid, fr, ox, oy, { sc, trim: 0, cutR, ax: 1, flip });   // its left half and that half mirrored: a round orb
+      else drawSheet(c, cid, fr, ox, oy, { sc });
       return;
     }
     const out = clamp(a.t / 0.14, 0, 1), fade = clamp((mv.dur - a.t) / 0.15, 0, 1), len = mv.len * out;
