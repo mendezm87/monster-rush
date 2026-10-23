@@ -142,7 +142,7 @@ def shrink(im, m, box, k):
 # what's behind the user and what's in front (r169, the owner: the user should stand between the far and near sides).
 # value: in a frame with no hole, is what fills the middle in front of the user (flames engulfing it) or behind (a
 # funnel of water under it)?
-DEPTH = {'eruption': 'front', 'geyserVent': 'front', 'whirlpool': 'back', 'maelstrom': 'back'}
+DEPTH = {}   # (r170: unused for now; the owner preferred the user simply on top. Keys: eruption 'front', geyserVent 'front', whirlpool 'back', maelstrom 'back')
 
 def split_depth(fr, last, fill='front'):
     """One frame (RGBA) -> (back, front, ground row's distance from the bottom). The ground's middle is the middle

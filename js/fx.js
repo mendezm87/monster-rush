@@ -667,14 +667,11 @@ function cutOutSprite(c, m) {
   if (isSideView(m.view) && m.face < 0) c.scale(-1, 1);
   c.drawImage(img, -S / 2, -S + 3, S, S); c.restore();
 }
-// A frame drawn round its user (r169, the owner: it stands between the far and near sides): the back half, then the
-// user cut out of it, then the front half over the user. A sheet without halves, or no user, is drawn whole.
+// A frame drawn round its user, with the user on top of it, fully visible (r170, the owner: after trying the user
+// between the far and near sides, r166-r169, "it looked better when the Coreature was just on top")
 function drawSheetAround(c, id, i, x, y, o, m) {
-  const S = FXS[id];
-  if (!m || !S || !S.back) { drawSheet(c, id, i, x, y, o); return; }
-  drawSheet(c, id, i, x, y, { ...o, layer: 'back' });
-  if (m.visible && !m.fainted) cutOutSprite(c, m);
-  drawSheet(c, id, i, x, y, { ...o, layer: 'front' });
+  drawSheet(c, id, i, x, y, o);
+  if (m && m.visible && !m.fainted) cutOutSprite(c, m);
 }
 // Draw frame i of sheet id at (x, y) in world units on the effect layer. o: sc (size, 1 = one pixel per sprite
 // pixel), ax/ay (the anchor, 0..1 of the frame), dir (turn it to point that way; a sheet drawn going right is
@@ -920,6 +917,12 @@ mixInto(Battle, class {
     for (const p of this.projectiles) this.drawProjectile(c, p);
     this.drawZoneFalls(c);
     this.drawParticles(c);
+    // a code-drawn burst's user stays on top of it, fully visible (the owner, r170)
+    for (const m of this.mons) {
+      if (!m.visible || m.fainted) continue;
+      if (m.action && m.action.kind === 'burst' && !m.action.mv.cone) m.burstAt = this.time;
+      if (this.time - (m.burstAt ?? -9) < 0.8) cutOutSprite(c, m);
+    }
   }
 
   // Dashes with a look of their own, drawn round the moving monster.
