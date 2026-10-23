@@ -58,6 +58,8 @@ SHEETS = {
     # BEAST-2: stars x6 (two spinning loops of 3), speed lines x2 + zigzag, sound waves x3 + shout lines x2, shout bubble x3
     # SMUG-1c: supreme body x4, core strand x4, muzzle x4, impact x4
     'smug1c':        ('pk-smug-1c.png', 26, [4, 4, 4, 4]),
+    # BEAST-3: cookie x4 (bites), crumbs x5 + milk, blanket x3 (falling, settling, tucked), Z x3, moon, star
+    'beast3':        ('pk-beast-3.png', 30, [4, 6, 3, 5]),
     'beast2':        ('pk-beast-2.png', 48, [6, 2, 5, 3]),   # (cut from MANUAL boxes: Gemini laid its rows out unevenly)
     'stormCloud':    ('e2b-storm-cloud.png', 36, [8]),   # Thunder's cloud (E2's own is sliced flat at the sides; its bolt is kept)
     'staticSiphon':  ('e6-static-siphon.png', 28, [8]),
@@ -297,7 +299,7 @@ def build(only=None, sheet=False):
             for yy in range(im.size[1]):
                 for xx in range(im.size[0]):
                     if isbg(*px_[xx, yy], xx, yy): px_[xx, yy] = bgc
-        m = bg_mask(im, 40 if (sid in CLEAN_SHRINK and sid != 'thunder') or sid in ('eruptionParts', 'common1', 'common2', 'hits1', 'hits2', 'hits3', 'hits4', 'smug1', 'smug1b', 'smug1c', 'beast2') else 400)   # electric arcs close round gaps of background: only tiny ones are part of it (Thunder's cloud undersides are near the background colour, so not there)
+        m = bg_mask(im, 40 if (sid in CLEAN_SHRINK and sid != 'thunder') or sid in ('eruptionParts', 'common1', 'common2', 'hits1', 'hits2', 'hits3', 'hits4', 'smug1', 'smug1b', 'smug1c', 'beast2', 'beast3') else 400)   # electric arcs close round gaps of background: only tiny ones are part of it (Thunder's cloud undersides are near the background colour, so not there)
         if sid in PANELS: drop_specks(im, m)
         if sid in MANUAL:
             boxes = []

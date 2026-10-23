@@ -270,6 +270,16 @@ const FX_PARTS = {
   snack(c, p, k) {
     const m = p.mon, age = (1 - k) * p.max, f = m.face || 1, x = m.x + f * 13, y = m.y - m.h * 0.5;
     const bites = age < 0.25 ? 0 : age < 0.45 ? 1 : age < 0.65 ? 2 : 3;
+    if (FX_PIECES && FXS.beast3) {   // BEAST-3 (r197): the owner's cookie in bites, crumbs tumbling down, a glass of milk to finish
+      if (age < 0.82) drawSheet(c, 'beast3', bites, x, y, { sc: 0.42 * Math.min(1, age / 0.08 + 0.3), flip: f < 0 });
+      for (let i = 0; i < 6; i++) {   // crumbs falling from each bite
+        const t = (age * 1.6 + i * 0.17) % 1;
+        if (age > 0.25 && age < 0.9) drawSheet(c, 'beast3', 4 + (i % 5), x - f * 4 + (i - 3) * 2.5, y + 4 + t * 20, { sc: 0.5, rot: t * 4 + i });
+      }
+      if (age > 0.7) drawSheet(c, 'beast3', 9, x + f * 4, y + 2 - Math.min(1, (age - 0.7) / 0.1) * 4, { sc: 0.42, rot: age > 0.8 ? -f * 0.5 : 0 });
+      if (bites > 0 && age < 0.82 && (age % 0.2) < 0.13) FX_PARTS.glyph(c, { str: 'nom', x: m.x - f * 4, y: m.y - m.h - 6 - (age % 0.2) * 20, size: 8, color: '#fff3d6' });
+      return;
+    }
     if (bites < 3) {
       FXD.circle(c, x, y, 6.5, '#d89a58');
       FXD.dot(c, x - 2.5, y - 1.5, 1.1, '#5a3a22'); FXD.dot(c, x + 2, y + 2, 1.1, '#5a3a22'); FXD.dot(c, x + 2.5, y - 2.5, 1, '#5a3a22');
@@ -302,6 +312,21 @@ const FX_PARTS = {
   // Blanket Nap: a cosy patchwork blanket settles over the user, and the Z's float up
   blanket(c, p, k) {
     const m = p.mon, age = (1 - k) * p.max, drop = Math.min(1, age / 0.22), lift = k < 0.12 ? (0.12 - k) / 0.12 : 0;
+    if (FX_PIECES && FXS.beast3) {   // BEAST-3 (r197): the owner's patchwork blanket floats down, settles and tucks in over its lower body
+      const fr = age < 0.22 ? 10 : age < 0.42 ? 11 : 12, W = m.r * 2.9, Hh = m.h * 0.62, f0 = sheetSize('beast3', fr);
+      const sx = W / (f0[2] * FX_PX), sy = Hh / (f0[3] * FX_PX);
+      drawSheet(c, 'beast3', fr, m.x, m.y + 3 - (1 - drop) * 30 - lift * 30, { ay: 1, sc: 1, sx, sy: sy * (0.8 + 0.2 * drop) });
+      if (age > 0.3) {
+        const hx = m.x, hy = m.y - m.h - 10, tw = Math.sin(age * 6) > 0;
+        drawSheet(c, 'beast3', 16, hx - 12, hy - 6, { sc: 0.55 });   // a little moon
+        if (tw) drawSheet(c, 'beast3', 17, hx + 14, hy - 12, { sc: 0.5 });   // and a twinkling star
+        for (let i = 0; i < 3; i++) {   // Z's drifting up, growing
+          const t = (age * 0.9 + i / 3) % 1;
+          drawSheet(c, 'beast3', 13 + Math.min(2, Math.floor(t * 3)), m.x + 6 + t * 14 + Math.sin(t * 6) * 3, m.y - m.h + 2 - t * 26, { sc: 0.5 + t * 0.25 });
+        }
+      }
+      return;
+    }
     const w = m.r * 1.35, top = m.y - m.h * 0.42 - (1 - drop) * 30 - lift * 30, bot = m.y + 1 - lift * 30;
     if (drop > 0) {
       const path = () => { c.moveTo(m.x - w, top + 3); c.quadraticCurveTo(m.x, top - 5, m.x + w, top + 3); for (let i = 0; i <= 6; i++) c.lineTo(m.x + w - i * (w * 2 / 6), bot + (i % 2) * 2.5); c.closePath(); };
