@@ -737,6 +737,8 @@ let FX_BLEND = false;   // off in the game until the owner decides; moves.html h
 let FX_PIECES = true;
 // dashes built from pieces so far: COMMON-1's dust, speed lines and thud (r186)
 const PIECE_DASH = { bodySlam: 'slam' };
+// each look's hit pieces (r188): [sheet, row]; a row is a burst in 3 frames then 3 bits (docs/attack-pieces.md HITS-1..4)
+const HIT_KITS = { fire: ['hits1', 0], water: ['hits1', 1], electric: ['hits1', 2], ice: ['hits1', 3] };
 const BAYER4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
 const _dither = new Map();
 function ditherFrame(id, i, lvl, keepLow) {   // frame i with only the pixels under (keepLow) or at and over the level
@@ -930,11 +932,13 @@ mixInto(Battle, class {
     // its look's own impact, on the side the hit came from, so the target stays visible (IMPACT_ART, r147)
     const from = src ? Math.atan2(src.cy - tgt.cy, src.x - tgt.x) : rand(0, TAU), off = tgt.r * 0.55;
     const hx = tgt.x + Math.cos(from) * off + rand(-3, 3), hy = tgt.cy + Math.sin(from) * off * 0.7 + rand(-3, 3), row = IMPACT_ROWS.indexOf(impactArtOf(mv));
-    if (FXS.impacts && row >= 0) {   // the owner's impact sheet (I1, r156): its look's row of five frames
+    const kit = HIT_KITS[impactArtOf(mv)];
+    if (FX_PIECES && kit && FXS[kit[0]]) this.fxHitPieces(tgt, kit, hx, hy, from, big, size, eff);   // pieces (HITS-1..4, r188)
+    else if (FXS.impacts && row >= 0) {   // the owner's impact sheet (I1, r156): its look's row of five frames
       sheetPart(this, 'impacts', [0, 1, 2, 3, 4].map(i => row * 5 + i), hx, hy, big ? 0.36 : 0.22, { sc: size / 30 });
     } else this.particles.push({ kind: 'hit', art: impactArtOf(mv), x: hx, y: hy, size, rot: rand(0, TAU),
       fx, seed: (Math.random() * 1e6) | 0, big, life: big ? 0.38 : 0.22, max: big ? 0.38 : 0.22 });
-    if (!(FXS.impacts && row >= 0)) this.fxDebris(tgt.x, tgt.cy, mv, big ? Math.min(5, 2 + dmg / 90) : 0, big ? 120 : 70, 3);   // (the impact sheet has its own debris)
+    if (!(FXS.impacts && row >= 0) && !(FX_PIECES && kit && FXS[kit[0]])) this.fxDebris(tgt.x, tgt.cy, mv, big ? Math.min(5, 2 + dmg / 90) : 0, big ? 120 : 70, 3);   // (the impact sheet has its own debris)
     // signature hits
     const toward = src ? Math.atan2(tgt.cy - src.cy, tgt.x - src.x) : 0;
     const SM = SHEET_MOVES[mv.id];
@@ -1274,6 +1278,19 @@ mixInto(Battle, class {
     this.particles.push({ kind: 'piece', id, ...o, life: o.life + (o.delay || 0), max: o.life,
       user, front: !!user && !o.ground && (o.near ?? o.y + (o.my || 0) * 0.25 >= user.y) });
   }
+  // A hit from pieces (r188): the look's burst on the side the hit came from (in front of the target if that side is
+  // nearer), its bits flying off away from the attacker; bigger for big and super-effective hits.
+  fxHitPieces(tgt, [id, row], hx, hy, from, big, size, eff) {
+    const f0 = row * 6, sc = size / 26, away = from + Math.PI;
+    this.addPiece(id, null, { frames: [f0, f0 + 1, f0 + 2], x: hx, y: hy, sc, flip: Math.random() < 0.5, life: big ? 0.3 : 0.2 });
+    if (!big) return;
+    for (let i = 0; i < 4 + (eff >= 2 ? 3 : 0); i++) {
+      const ang = away + rand(-1.1, 1.1), sp = rand(60, 130) * (0.7 + sc * 0.4);
+      this.addPiece(id, null, { frames: [f0 + 3 + (i % 3)], x: hx, y: hy, mx: Math.cos(ang) * sp, my: Math.sin(ang) * sp * 0.7, vz: rand(30, 90), g: 400,
+        rot: rand(-0.5, 0.5), vr: rand(-6, 6), sc: rand(0.8, 1.1), shrink: 0.12, life: rand(0.35, 0.55) });
+    }
+  }
+
   // ---- COMMON-2 pieces (r187): frames 0-2 arrows (attack red, defence blue, speed green), 3 big plus, 4 small plus,
   // 5 gold sparkle, 6 white sparkle, 7 gold ring, 8-10 flame flares, 11 shield glint, 12 power burst, 13 speed swoosh.
   // A boost: arrows of each stat it raises rise round the Coreature (far ones behind it, near ones in front), with
