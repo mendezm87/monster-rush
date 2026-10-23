@@ -160,7 +160,7 @@ mixInto(Battle, class {
     tgt.kx += Math.cos(kb) * force; tgt.ky += Math.sin(kb) * force;
     if (mult >= 1) tgt.stagger = force > 150;   // a big knockback: it staggers, then steadies itself (monAnim)
 
-    this.fxImpact(tgt, mv, dmg, eff, mult, src);
+    this.fxImpact(tgt, mv, dmg, eff, mult, src, crit);
     if (mult >= 1 || fresh) this.sparks(tgt.x, tgt.cy, mult < 1 ? 2 : 6);
     if (fresh) {
       if (eff >= 2) this.text(tgt.x, tgt.y - tgt.h - 12, 'SUPER EFFECTIVE!', '#ffe066', tgt.y);

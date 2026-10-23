@@ -740,7 +740,8 @@ const PIECE_DASH = { bodySlam: 'slam' };
 // each look's hit pieces (r188): [sheet, row]; a row is a burst in 3 frames then 3 bits (docs/attack-pieces.md HITS-1..4)
 const HIT_KITS = { fire: ['hits1', 0], water: ['hits1', 1], electric: ['hits1', 2], ice: ['hits1', 3],
   grass: ['hits2', 0], rock: ['hits2', 1], flying: ['hits2', 2], steel: ['hits2', 3],
-  psychic: ['hits3', 0], dark: ['hits3', 1], ghost: ['hits3', 2], dragon: ['hits3', 3] };
+  psychic: ['hits3', 0], dark: ['hits3', 1], ghost: ['hits3', 2], dragon: ['hits3', 3],
+  normal: ['hits4', 0], fighting: ['hits4', 1], glitch: ['hits4', 2] };   // (hits4 row 3: a critical hit, on top of any look)
 const BAYER4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
 const _dither = new Map();
 function ditherFrame(id, i, lvl, keepLow) {   // frame i with only the pixels under (keepLow) or at and over the level
@@ -927,7 +928,7 @@ mixInto(Battle, class {
   }
 
   // Where a hit lands: a "pow" star, debris of the move's type, and white sparks.
-  fxImpact(tgt, mv, dmg, eff, mult, src) {
+  fxImpact(tgt, mv, dmg, eff, mult, src, crit) {
     const fx = fxOf(mv), big = mult >= 1;
     if (!big && Math.random() > 0.35) return;   // beam and vortex ticks: only now and then
     const size = big ? clamp(16 + dmg / 14, 18, 38) * (eff >= 2 ? 1.25 : 1) : 10;
@@ -936,6 +937,7 @@ mixInto(Battle, class {
     const hx = tgt.x + Math.cos(from) * off + rand(-3, 3), hy = tgt.cy + Math.sin(from) * off * 0.7 + rand(-3, 3), row = IMPACT_ROWS.indexOf(impactArtOf(mv));
     const kit = HIT_KITS[impactArtOf(mv)];
     if (FX_PIECES && kit && FXS[kit[0]]) this.fxHitPieces(tgt, kit, hx, hy, from, big, size, eff);   // pieces (HITS-1..4, r188)
+    if (crit && FX_PIECES && FXS.hits4) this.fxHitPieces(tgt, ['hits4', 3], hx, hy - 4, from, true, size * 1.35, 2);   // a critical: a big white starburst (r191)
     else if (FXS.impacts && row >= 0) {   // the owner's impact sheet (I1, r156): its look's row of five frames
       sheetPart(this, 'impacts', [0, 1, 2, 3, 4].map(i => row * 5 + i), hx, hy, big ? 0.36 : 0.22, { sc: size / 30 });
     } else this.particles.push({ kind: 'hit', art: impactArtOf(mv), x: hx, y: hy, size, rot: rand(0, TAU),
