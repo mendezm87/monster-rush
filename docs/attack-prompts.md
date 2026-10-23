@@ -287,3 +287,71 @@ look like **one body of water**: deep blue edges, bright cyan, white foam and hi
 > same size and evenly spaced. 16-bit pixel art visual effect sprite sheet for an action game, chunky pixels with a
 > dark 1-pixel outline, limited bright palette with hard-edged shading, no creature drawn, plain dark navy
 > background, no text
+
+## Batch 4: electric (r166)
+
+Every electric attack except the two dashes (Volt Rush and Lance Charge already have D1 and D6). **Run each prompt on
+its own, one attack per image.** 8 frames each, small steps, nothing cut off. Electricity should look like **jagged
+bolts and crackling arcs**: white-hot cores, bright yellow, pale blue glow at the edges, sparks.
+
+**E1 · Thunderbolt** (a crackling bolt of lightning shot forward)
+> A crackling ball of lightning shot to the right, 8 frames in a row, each a small step from the one before: sparks
+> gathering into a small bright orb, the orb crackling with arcs, launching with a jagged lightning tail behind it,
+> flying with forked bolts flicking off it, the tail flickering longer, hitting and bursting into a zigzag spark
+> star, bolts splitting outward, fading sparks. White-hot core, bright yellow bolts, pale blue glow at the edges.
+> Every frame complete and fully inside its own space with empty background all round it, nothing touching the
+> edges or cut off, all frames the same size and evenly spaced. 16-bit pixel art visual effect sprite sheet for an
+> action game, chunky pixels with a dark 1-pixel outline, limited bright palette with hard-edged shading, no
+> creature or character, plain dark navy background, no text
+
+**E2 · Thunder** (a lightning strike from the sky onto a spot)
+> A lightning strike from the sky onto a spot on the ground, tall frames, 8 frames in a row, each a small step from
+> the one before: a dark cloud gathering at the top with flickers inside, a thin crackle reaching down, a huge jagged
+> bolt striking all the way to the ground, the ground exploding in a burst of white light and sparks, the bolt at its
+> brightest with forks branching, the bolt flickering and thinning, a scorch ring on the ground with sparks, the last
+> sparks fading. White-hot core, bright yellow bolt, pale blue glow, dark grey cloud. Every frame complete and fully
+> inside its own space with empty background all round it, nothing touching the edges or cut off, all frames the
+> same size and evenly spaced. 16-bit pixel art visual effect sprite sheet for an action game, chunky pixels with a
+> dark 1-pixel outline, limited bright palette with hard-edged shading, no creature or character, plain dark navy
+> background, no text
+
+**E3 · Discharge** (electricity bursting out all around the user)
+> An electric shockwave bursting out all around an empty creature-sized space in the middle, seen from slightly
+> above, 8 frames in a row, each a small step from the one before: sparks crackling in a ring, the ring charging
+> brighter, a blinding flash, jagged bolts shooting outward in every direction, a ring of crackling arcs spreading
+> wide across the ground, the arcs at their widest, flickering and breaking apart, a few last sparks on the ground.
+> White-hot core, bright yellow bolts, pale blue glow. Every frame complete and fully inside its own space with
+> empty background all round it, nothing touching the edges or cut off, all frames the same size and evenly
+> spaced. 16-bit pixel art visual effect sprite sheet for an action game, chunky pixels with a dark 1-pixel outline,
+> limited bright palette with hard-edged shading, no creature drawn, plain dark navy background, no text
+
+**E4 · Volt Cannon** (a beam of crackling electricity)
+> A thick beam of crackling electricity firing to the right from a small point, 8 frames in two rows of 4, each a
+> small step from the one before: sparks gathering into a glowing orb, the orb crackling with arcs, a jagged beam
+> shooting out, the beam at full length with twisting bolts wrapped around a white-hot core, forked arcs jumping off
+> its edges, the far end exploding into a burst of sparks, the beam flickering and thinning, a last crackle of
+> sparks. White-hot core, bright yellow bolts, pale blue glow. Every frame complete and fully inside its own space
+> with empty background all round it, nothing touching the edges or cut off, all frames the same size and evenly
+> spaced. 16-bit pixel art visual effect sprite sheet for an action game, chunky pixels with a dark 1-pixel outline,
+> limited bright palette with hard-edged shading, no creature or character, plain dark navy background, no text
+
+**E5 · Rail Shot** (a railgun shot: a very thin, very fast, very straight beam)
+> A railgun shot firing to the right, 8 frames in two rows of 4, each a small step from the one before: rings of blue
+> light charging in a line, the rings spinning faster, a blinding flash at the muzzle, a perfectly straight thin
+> beam of white-blue light shooting across the frame with rings of energy around it, the beam at full length with a
+> shockwave ring at the muzzle, the far end bursting in a cross-shaped flash, the beam fading leaving a glowing
+> trail, the trail dissolving into sparks. White core, electric blue and cyan, a little yellow. Every frame complete
+> and fully inside its own space with empty background all round it, nothing touching the edges or cut off, all
+> frames the same size and evenly spaced. 16-bit pixel art visual effect sprite sheet for an action game, chunky
+> pixels with a dark 1-pixel outline, limited bright palette with hard-edged shading, no creature or character,
+> plain dark navy background, no text
+
+**E6 · Static Siphon** (a ball of static that drains energy back)
+> A fuzzy ball of static electricity flying to the right, 8 frames in a row, each a small step from the one before:
+> static crackling into a fuzzy orb, the orb buzzing with tiny arcs, flying with a wobbly trail of static, wobbling
+> and crackling, hitting and clinging to its target in a fizzing burst, small green-yellow sparks flowing back the
+> way it came, the sparks streaming away, a last fizz. Pale yellow and white static, a hint of green in the
+> draining sparks. Every frame complete and fully inside its own space with empty background all round it, nothing
+> touching the edges or cut off, all frames the same size and evenly spaced. 16-bit pixel art visual effect sprite
+> sheet for an action game, chunky pixels with a dark 1-pixel outline, limited bright palette with hard-edged
+> shading, no creature or character, plain dark navy background, no text
