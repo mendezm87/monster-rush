@@ -51,6 +51,8 @@ SHEETS = {
     'hits3':         ('pk-hits-3.png', 28, [6, 6, 6, 6]),
     # HITS-4: beast, brawl, glitch, critical (a burst in 3 frames, then 3 bits each)
     'hits4':         ('pk-hits-4.png', 28, [6, 6, 6, 6]),
+    # SMUG-1: smug beam sections x4, smirk tip x3, charge glow x3, supreme beam sections x4, petals x3, sparkles x2
+    'smug1':         ('pk-smug-1.png', 24, [4, 6, 4, 5]),
     'stormCloud':    ('e2b-storm-cloud.png', 36, [8]),   # Thunder's cloud (E2's own is sliced flat at the sides; its bolt is kept)
     'staticSiphon':  ('e6-static-siphon.png', 28, [8]),
     # batch 1 (dashes D1-D10, hit impacts I1)
@@ -282,7 +284,7 @@ def build(only=None, sheet=False):
             for yy in range(im.size[1]):
                 for xx in range(im.size[0]):
                     if isbg(*px_[xx, yy], xx, yy): px_[xx, yy] = bgc
-        m = bg_mask(im, 40 if (sid in CLEAN_SHRINK and sid != 'thunder') or sid in ('eruptionParts', 'common1', 'common2', 'hits1', 'hits2', 'hits3', 'hits4') else 400)   # electric arcs close round gaps of background: only tiny ones are part of it (Thunder's cloud undersides are near the background colour, so not there)
+        m = bg_mask(im, 40 if (sid in CLEAN_SHRINK and sid != 'thunder') or sid in ('eruptionParts', 'common1', 'common2', 'hits1', 'hits2', 'hits3', 'hits4', 'smug1') else 400)   # electric arcs close round gaps of background: only tiny ones are part of it (Thunder's cloud undersides are near the background colour, so not there)
         if sid in PANELS: drop_specks(im, m)
         boxes = frames_of(im, m, counts)
         if sid in FULL_ROWS: boxes = [(b[0], b[4][0], b[2], b[4][1], b[4]) for b in boxes]

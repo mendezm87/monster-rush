@@ -722,6 +722,11 @@ function drawSheet(c, id, i, x, y, o = {}) {
   if (o.tilt) c.rotate(o.tilt);   // a sheet drawn pointing some other way than right (its own angle, undone)
   if (o.rot) c.rotate(o.rot);   // a piece tumbling (r182)
   if (o.flip) c.scale(-1, 1);
+  if (o.trim) {   // leave off o.trim sheet pixels at both ends (a beam section's end caps, so sections join cleanly)
+    const t = o.trim, w2 = w * (f[2] - 2 * t) / f[2];
+    c.drawImage(img, f[0] + t, f[1], f[2] - 2 * t, f[3], -w2 * (o.ax ?? 0.5), -h * (o.ay ?? 0.5), w2, h);
+    c.restore(); return;
+  }
   const top = o.top || 0, cut = h * top / f[3];
   if (o.src) c.drawImage(o.src, 0, top, f[2], f[3] - top, -w * (o.ax ?? 0.5), -h * (o.ay ?? 0.5) + cut, w, h - cut);   // a dissolved copy (drawSheetMix)
   else c.drawImage(img, f[0], f[1] + top, f[2], f[3] - top, -w * (o.ax ?? 0.5), -h * (o.ay ?? 0.5) + cut, w, h - cut);
@@ -735,6 +740,14 @@ let FX_BLEND = false;   // off in the game until the owner decides; moves.html h
 // Attacks built from pieces (r182): Eruption from the owner's P1 pieces, moved by code. On since r185 (the owner: "that
 // looks so much better, let's do that with all the attacks"); moves.html's switch turns it off to compare.
 let FX_PIECES = true;
+// Beams built from pieces (r192): sections laid end to end (trimmed of their end caps, scrolling forward, each
+// flickering through the loop), a head at the far end, an orb while it charges. sections/head/charge: frames;
+// thick: its thickness as a share of the move's width; wave: sections bob out of step (a lazy, drooping beam);
+// petals/sparkles: bits drifting off it.
+const PIECE_BEAMS = {
+  smugBeam:    { id: 'smug1', sections: [0, 1, 2, 3], head: [4, 5, 6], charge: [7, 8, 9], thick: 1.5, wave: 2.5, sparkles: [17, 18] },
+  supremeSmug: { id: 'smug1', sections: [10, 11, 12, 13], head: [4, 5, 6], charge: [7, 8, 9], thick: 1.5, petals: [14, 15, 16], sparkles: [17, 18] },
+};
 // dashes built from pieces so far: COMMON-1's dust, speed lines and thud (r186)
 const PIECE_DASH = { bodySlam: 'slam' };
 // each look's hit pieces (r188): [sheet, row]; a row is a burst in 3 frames then 3 bits (docs/attack-pieces.md HITS-1..4)
@@ -1605,6 +1618,40 @@ mixInto(Battle, class {
     }
   }
 
+  drawPieceBeam(c, m, a, ox, oy, B) {
+    const mv = a.mv, id = B.id, T = this.time, cs = Math.cos(a.dir), sn = Math.sin(a.dir);
+    if (a.phase === 'charge') {
+      const k = clamp(a.t / mv.charge, 0, 1), fr = B.charge[Math.min(B.charge.length - 1, Math.floor(k * B.charge.length))];
+      drawSheet(c, id, fr, ox, oy, { sc: 0.6 + k * 0.7 });
+      return;
+    }
+    const grow = Math.min(1, a.t / 0.1), fade = clamp((mv.dur - a.t) / 0.15, 0, 1), len = mv.len * grow;
+    const f0 = B.sections[0], sc = mv.width * B.thick / sheetH(id, f0) * (0.35 + 0.65 * fade);
+    const step = (sheetW(id, f0) - 2 * FX_PX * 2) * sc * 0.72;   // overlapping, so the joins of a curving beam stay hidden
+    // the line it follows: straight, or (wave) sagging lazily toward its far end and swaying, like it can't be bothered
+    const L = Math.max(1, len), sway = Math.sin(T * 3) * 0.6 + 0.4;
+    const off = d => B.wave ? B.wave * 6 * (d / L) * (d / L) * sway + Math.sin(T * 6 - d / 30) * B.wave * 0.5 * Math.min(1, d / 60) : 0;
+    const at = d => { const o = off(d); return [ox + cs * d - sn * o, oy + sn * d + cs * o]; };
+    const tilt = d => Math.atan2(off(d + 4) - off(d - 4), 8);
+    const n = Math.ceil(len / step) + 1;
+    for (let i = n - 1; i >= 0; i--) {   // far sections first
+      const d = i * step;   // from its mouth (the sections flicker through their frames, so it still moves)
+      if (d > len) continue;
+      const fr = B.sections[(i + Math.floor(T * 14)) % B.sections.length], [px, py] = at(d);
+      drawSheet(c, id, fr, px, py, { dir: a.dir + tilt(d + step / 2) * (cs < 0 ? -1 : 1), ax: 0, ay: 0.5, sc, trim: 2 });
+    }
+    const [hx, hy] = at(len);
+    drawSheet(c, id, B.head[Math.floor(T * 12) % B.head.length], hx, hy, { dir: a.dir + tilt(len - 4) * (cs < 0 ? -1 : 1), ax: 0.35, sc: sc * 1.05 });
+    a.bitT = (a.bitT || 0) - 1 / 60;
+    if (a.bitT <= 0 && fade > 0.5) {   // bits drifting off along it
+      a.bitT = 0.03;
+      const d = rand(0, len), side = rand(-1, 1) * mv.width * 0.8, px = ox + cs * d - sn * side, py = oy + sn * d + cs * side;
+      if (B.petals) this.addPiece(id, null, { frames: [B.petals[(Math.random() * 3) | 0]], x: px, y: py, mx: cs * rand(40, 90) + rand(-15, 15), my: sn * rand(40, 90) + rand(5, 25),
+        rot: rand(0, TAU), vr: rand(-6, 6), sc: rand(0.6, 0.9), life: rand(0.5, 0.8), shrink: 0.2 });
+      if (B.sparkles && Math.random() < 0.5) this.addPiece(id, null, { frames: [B.sparkles[(Math.random() * 2) | 0]], x: px, y: py, rise: rand(10, 25), sc: rand(0.5, 0.8), life: 0.4, grow: 0.1, shrink: 0.2 });
+    }
+  }
+
   // Flamethrower and Inferno Beam from their sheets: a spark or orb while it charges, then the stream stretched to
   // the beam's length (flickering between its two full frames), then the fading frame.
   drawSheetBeam(c, m, a, ox, oy) {
@@ -1634,6 +1681,7 @@ mixInto(Battle, class {
     if (a.mv.fx === 'stare') { this.drawStare(c, m, a); return; }
     const mv = a.mv, fx = fxOf(mv), T = this.time;
     const ox = m.x + Math.cos(a.dir) * 6, oy = m.cy + Math.sin(a.dir) * 6;
+    if (FX_PIECES && PIECE_BEAMS[mv.id] && FXS[PIECE_BEAMS[mv.id].id]) { this.drawPieceBeam(c, m, a, ox, oy, PIECE_BEAMS[mv.id]); return; }   // pieces (r192)
     if (SHEET_BEAMS[mv.id] && FXS[mv.id]) { this.drawSheetBeam(c, m, a, ox, oy); return; }   // from the owner's sheets
     if (a.phase === 'charge') {   // a ball of energy growing at the muzzle
       const k = a.t / mv.charge, r = 2.5 + k * mv.width * 0.55;
