@@ -911,6 +911,17 @@ mixInto(Battle, class {
     drawSheet(c, id, fr, m.x, m.cy, { sc: size(fr), dir: a.dir, tilt: SM.tilt, ax: SM.ax ?? 0.5, ay: SM.ay ?? 0.5 });
   }
 
+  // Cut a Coreature's own picture out of the effect layer, so what was just drawn sits round it, not over it
+  // (dash trails, vortexes).
+  cutOutMon(c, m) {
+    const sp = SPRITES[m.id], img = sp && sp.views[viewKey(sp.views, m.view, m.face)];
+    if (!img) return;
+    const S = sp.size * SPR_SCALE * m.scale;
+    c.save(); c.globalCompositeOperation = 'destination-out'; c.translate(m.x, m.y - (m.hover || 0));
+    if (isSideView(m.view) && m.face < 0) c.scale(-1, 1);
+    c.drawImage(img, -S / 2, -S + 3, S, S); c.restore();
+  }
+
   drawDashFx(c, m, a) {
     const mv = a.mv, fx = fxOf(mv), T = this.time, cx = m.x, cy = m.cy, R = m.r + 7;
     if (SHEET_MOVES[mv.id] && SHEET_MOVES[mv.id].dash && a.phase !== 'combo') { this.drawSheetDash(c, m, a, SHEET_MOVES[mv.id]); return; }
@@ -920,14 +931,7 @@ mixInto(Battle, class {
       const pre = 0.1 + (mv.windup || 0);   // a dash with a wind-up (Blaze Rush catches fire first) draws it too
       const draw = back => { c.save(); c.translate(cx, cy); c.rotate(a.dir); art(c, m.r + 1, T, fx, back, a, pre); c.restore(); };
       draw(true);
-      // cut the Coreature's own picture out of the trail, so it wraps round the body instead of covering it
-      const sp = SPRITES[m.id], img = sp && sp.views[viewKey(sp.views, m.view, m.face)];
-      if (img) {
-        const S = sp.size * SPR_SCALE * m.scale;
-        c.save(); c.globalCompositeOperation = 'destination-out'; c.translate(m.x, m.y - (m.hover || 0));
-        if (isSideView(m.view) && m.face < 0) c.scale(-1, 1);
-        c.drawImage(img, -S / 2, -S + 3, S, S); c.restore();
-      }
+      this.cutOutMon(c, m);   // the trail wraps round the body instead of covering it
       draw(false);
       return;
     }
@@ -1317,8 +1321,9 @@ mixInto(Battle, class {
   drawVortex(c, m, a) {
     const mv = a.mv, fx = fxOf(mv), T = this.time;
     if (FXS[mv.id] && (mv.id === 'whirlpool' || mv.id === 'maelstrom')) {   // the owner's sheets (W6, W7): forming, spinning (looped), breaking up
-      const left = mv.dur - a.t, fr = a.t < 0.24 ? Math.floor(a.t / 0.08) : left < 0.24 ? 6 + (left < 0.12 ? 1 : 0) : (mv.id === 'whirlpool' ? [3, 5] : [3, 4, 5])[Math.floor(T / 0.08) % (mv.id === 'whirlpool' ? 2 : 3)];   // (Whirlpool's frame 4 has a dark funnel that would hide its user)
+      const left = mv.dur - a.t, fr = a.t < 0.24 ? Math.floor(a.t / 0.08) : left < 0.24 ? 6 + (left < 0.12 ? 1 : 0) : 3 + Math.floor(T / 0.08) % 3;
       drawSheet(c, mv.id, fr, m.x, m.y + 2, { sc: mv.r * 2 / sheetW(mv.id, 4) });
+      this.cutOutMon(c, m);   // the water swirls round its user, never over it
       return;
     }
     const fade = clamp(Math.min(a.t / 0.15, (mv.dur - a.t) / 0.2), 0, 1), R = mv.r * fade;
