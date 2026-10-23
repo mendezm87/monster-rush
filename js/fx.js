@@ -748,7 +748,7 @@ const SHEET_BEAMS = {
   voltCannon:   { charge: [0, 1], start: 2, full: [3, 4, 3, 5], end: 6, tail: 7, stretch: 1.5 },
   // E5 (r179): rings charging and spinning at the muzzle (aimed), the flash, the beam with its rings, the far end
   // bursting, the trail. The owner sent two takes: each shot plays one (alt). times: start, end, tail windows (a fast beam)
-  railShot:     { charge: [0, 1], aimCharge: true, start: 2, full: [3, 4], end: 5, tail: 6, alt: 'railShotB', times: [0.06, 0.13, 0.06], startStretch: 1.3 },   // startStretch: its muzzle flash isn't stretched out to the beam's length   // E4 (r171): the far end bursts now and then; stretch: its start and fading frames are shown shorter, not stretched (they smear)
+  railShot:     { charge: [0, 1], aimCharge: true, start: 2, full: [3, 4], end: 5, tail: 6, alt: 'railShotB', times: [0.06, 0.13, 0.06], startStretch: 1.3, after: 7 },   // startStretch: its muzzle flash isn't stretched out to the beam's length; after: the frame left fading where the beam was (r180)   // E4 (r171): the far end bursts now and then; stretch: its start and fading frames are shown shorter, not stretched (they smear)
 };
 // Shots played from a sheet (W3, W4): frames looped while it flies, the size of its looped frames in world units
 // where the hole is in each Whirlpool and Maelstrom frame (0..1 across and down), measured from the sheets
@@ -1347,6 +1347,11 @@ mixInto(Battle, class {
     const cap = fr === B.start && B.startStretch ? B.startStretch : B.stretch && !B.full.includes(fr) ? B.stretch : Infinity;
     const sx = Math.min(cap, mv.len / sheetW(id, fr));
     drawSheet(c, id, fr, ox, oy, { dir: a.dir, ax: 0, ay: 0.5, sx, sy: Math.min(sx, 1.25) });
+    if (B.after !== undefined && left < 0.05 && !a.afterDone) {   // its last frame stays behind, fading, once the beam is gone
+      a.afterDone = true;
+      const s2 = mv.len / sheetW(id, B.after);
+      sheetPart(this, id, [B.after], ox, oy, 0.35, { dir: a.dir, ax: 0, ay: 0.5, sx: s2, sy: Math.min(s2, 1.25) });
+    }
   }
 
   drawBeam(c, m, a) {
