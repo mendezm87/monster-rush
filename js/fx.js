@@ -726,6 +726,7 @@ const SHEET_MOVES = {
   twinCannon: { sheet: 'waterShot', hit: [5, 6, 7] },
   bubbleBeam: { sheet: 'bubbleSpray', hit: [5, 6, 7] },
   thunderbolt: { hit: [5, 6, 7] },   // E1: the spark star, bolts splitting, fading sparks
+  staticSiphon: { hit: [4, 5, 6, 7], face: true },   // E6: clinging and fizzing, then green sparks flowing back (face: mirrored so they flow toward the user)
 };
 // Where Magma Wave's waves stand: along the arc of its cone at distance d (squashed like the floor, as its
 // warning wedge is), enough of them side by side to fill it, the far ones first so the near ones overlap them.
@@ -758,6 +759,7 @@ const SHEET_SHOTS = {
   twinCannon: { sheet: 'waterShot', fly: [1, 2, 3, 4], len: 32 },
   bubbleBeam: { sheet: 'bubbleSpray', fly: [1, 2, 3, 4], len: 17, spin: true },
   thunderbolt: { sheet: 'thunderbolt', fly: [2, 3, 4], len: 36, ax: 0.78 },   // E1 (r171): the orb leads, its forked tail behind
+  staticSiphon: { sheet: 'staticSiphon', fly: [2, 3], len: 34, ax: 0.7 },   // E6 (r174): a fuzzy ball of static with a wobbly trail
 };
 // Thunder's gathering clouds (r172-r173): puffs [x, y, r] in units of r, an outline round the whole cloud, a flat
 // shaded underside and light on the tops. dk 0 = white, 1 = storm-dark. (A big storm cloud drawn this way looked
@@ -775,7 +777,9 @@ const SMALL_CLOUD = {
   under: [[-0.75, 0.42, 0.42], [0, 0.48, 0.45], [0.75, 0.42, 0.4]],
   tops: [[-1.05, -0.08, 0.3], [-0.1, -0.62, 0.42], [0.95, -0.05, 0.26]],
 };
-const STORM_Y = 189;   // how far above the strike spot E2's storm cloud sits (frame 0 drawn 1.3x from the ground)
+// Thunder (r174): E2's bolt with its own cloud left off (its top THUNDER_TOP rows; it was sliced flat at the sides),
+// under E2b's storm cloud, whose bottom sits CLOUD_BASE above the strike spot. STORM_Y: where the gathering clouds meet.
+const THUNDER_TOP = 20, CLOUD_BASE = 166, STORM_Y = 191;
 
 // a frame sequence played as a particle (an explosion, a geyser)
 function sheetPart(b, id, frames, x, y, life, o = {}) {
@@ -839,7 +843,7 @@ mixInto(Battle, class {
     // signature hits
     const toward = src ? Math.atan2(tgt.cy - src.cy, tgt.x - src.x) : 0;
     const SM = SHEET_MOVES[mv.id];
-    if (big && SM && SM.hit) { const hs = SM.hitSheet || SM.sheet || mv.id; sheetPart(this, hs, SM.hit, tgt.x, tgt.cy, 0.5, { sc: tgt.r * 3 / sheetW(hs, SM.hit[0]) }); }   // its sheet's impact
+    if (big && SM && SM.hit) { const hs = SM.hitSheet || SM.sheet || mv.id; sheetPart(this, hs, SM.hit, tgt.x, tgt.cy, 0.5, { sc: tgt.r * 3 / sheetW(hs, SM.hit[0]), flip: SM.face && src && src.x > tgt.x }); }   // its sheet's impact
     if (mv.fx === 'claw') this.particles.push({ kind: 'claw', x: tgt.x, y: tgt.cy, size: 34, rot: toward + Math.PI / 2 + rand(-0.3, 0.3), color: fx[1], life: 0.3, max: 0.3 });
     if (mv.fx === 'slash') this.particles.push({ kind: 'slash', x: tgt.x, y: tgt.cy, size: 22, rot: toward + rand(-0.4, 0.4), color: fx[1], life: 0.28, max: 0.28 });
     if (mv.fx === 'flurry') {   // fists everywhere at once
@@ -882,6 +886,11 @@ mixInto(Battle, class {
     if (mv.id === 'eruption') { const sc = r * 1.25 / sheetW('eruption', 0); sheetPart(this, 'eruption', [1, 2, 2, 3, 4], x, y + sheetH('eruption', 0) * sc / 2, 1.1, { sc, ay: 1, user }); this.addShake(8); return; }
     if (mv.id === 'geyserVent' && FXS.geyserVent) { const sc = r * 1.7 / sheetW('geyserVent', 0); sheetPart(this, 'geyserVent', [2, 3, 4, 5, 6, 7, 8], x, y + 4 + sheetH('geyserVent', 0) * sc / 2, 1.1, { sc, ay: 1, user }); this.addShake(6); return; }
     if (mv.id === 'discharge' && FXS.discharge) { sheetPart(this, 'discharge', [2, 3, 4, 5, 6, 7], x, y, 0.75, { sc: r * 2.2 / sheetW('discharge', 5), user }); this.addShake(5); return; }   // E3 (r171)
+    if (mv.fx === 'bolt' && FXS.thunder && FXS.stormCloud) {   // the strike under the cloud lit from below, which then breaks up
+      sheetPart(this, 'thunder', [3, 4, 4, 5, 6, 7], x, y + 6, 0.7, { ay: 1, sc: 1.3, top: THUNDER_TOP });
+      sheetPart(this, 'stormCloud', [3, 4, 4, 5, 6, 7], x, y - CLOUD_BASE, 1, { ay: 1 });
+      this.addShake(6); return;
+    }
     if (mv.fx === 'bolt' && FXS.thunder) { sheetPart(this, 'thunder', [3, 4, 4, 5, 6, 7], x, y + 6, 0.7, { ay: 1, sc: 1.3 }); this.addShake(6); return; }   // E2 (r171): the strike, the burst, the scorch ring
     if (mv.id === 'steamEruption') { const sc = r * 1.4 / sheetW('steamEruption', 0); sheetPart(this, 'steamEruption', [1, 2, 2, 3, 4], x, y + sheetH('steamEruption', 0) * sc / 2, 1.1, { sc, ay: 1 }); return; }
     this.particles.push({ kind: 'wave', x, y: y - 2, r0: 4, r1: r, life: 0.32, max: 0.32, color: fx[2], w: 4 });
@@ -1446,7 +1455,10 @@ mixInto(Battle, class {
         drawSheet(c, 'steamEruption', 0, zx, zy, { sc: z.r * 1.4 / sheetW('steamEruption', 0) * (0.5 + 0.5 * (1 - left / z.delay)) });
       } else if (z.mv.fx === 'bolt' && FXS.thunder) {   // E2 (r171): the cloud gathering over the spot, then a crackle reaching down
         if (left > 0.3) this.drawStormGather(c, z, left);   // small white clouds drifting in from the edges, darkening (r172)
-        if (left < 0.34) drawSheet(c, 'thunder', left > 0.2 ? 0 : left > 0.08 ? 1 : 2, zx, zy + 6, { ay: 1, sc: 1.3 });
+        if (left < 0.34 && FXS.stormCloud) {   // E2b's cloud swelling and flickering, E2's crackle reaching down from under it
+          if (left < 0.2) drawSheet(c, 'thunder', left > 0.08 ? 1 : 2, zx, zy + 6, { ay: 1, sc: 1.3, top: THUNDER_TOP });
+          drawSheet(c, 'stormCloud', left > 0.18 ? 1 : 2, zx, zy - CLOUD_BASE, { ay: 1 });
+        } else if (left < 0.34) drawSheet(c, 'thunder', left > 0.2 ? 0 : left > 0.08 ? 1 : 2, zx, zy + 6, { ay: 1, sc: 1.3 });
       } else if (z.mv.fx === 'bolt' && left < 0.25) {   // a crackle in the clouds before it strikes
         FXD.bolt(c, zx + 10, zy - 200, zx - 6, zy - 150, ((this.time * 25) | 0) + z.id, 2, fx[1], 6, false);
       }

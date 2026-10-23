@@ -34,6 +34,8 @@ SHEETS = {
     'thunder':       ('e2-thunder.png', 110, [8]),
     'discharge':     ('e3-discharge.png', 60, [4, 4]),
     'voltCannon':    ('e4-volt-cannon.webp', 40, [2, 2, 2, 2]),
+    'stormCloud':    ('e2b-storm-cloud.png', 36, [8]),   # Thunder's cloud (E2's own is sliced flat at the sides; its bolt is kept)
+    'staticSiphon':  ('e6-static-siphon.png', 28, [8]),
     # batch 1 (dashes D1-D10, hit impacts I1)
     'voltRush':      ('d1-volt-rush.png', 46, [5]),
     'voltRushB':     ('d1b-volt-rush.png', 46, [5]),
@@ -130,9 +132,12 @@ def frames_of(im, m, counts):
 # Sheets shrunk keeping their bright lines: a pixel that a bright line runs through takes the line's colour, instead
 # of averaging it with the dark outline round it (thin lightning forks turned dark grey). The older sheets were made
 # before this and the owner approved them as they are, so it's per sheet.
-CLEAN_SHRINK = {'thunderbolt', 'thunder', 'discharge', 'voltCannon'}
+CLEAN_SHRINK = {'thunderbolt', 'thunder', 'discharge', 'voltCannon', 'staticSiphon'}
 
-def shrink(im, m, box, k, clean=False):
+# Small accents that must survive the shrink (E6's green draining sparks): a pixel any of them runs through takes their colour
+ACCENT = {'staticSiphon': lambda r, g, b: g > r + 15 and g > b + 40}
+
+def shrink(im, m, box, k, clean=False, accent=None):
     x0, y0, x1, y1 = box[:4]
     crop = im.crop((x0, y0, x1 + 1, y1 + 1)).convert('RGBA')
     px = crop.load()
@@ -151,6 +156,9 @@ def shrink(im, m, box, k, clean=False):
                 lit = [c for c in cells if c[3] and c[0] * 0.3 + c[1] * 0.59 + c[2] * 0.11 > 150]
                 if len(lit) >= len(cells) * 0.15:
                     n = len(lit); sp[x, y] = (sum(c[0] for c in lit) // n, sum(c[1] for c in lit) // n, sum(c[2] for c in lit) // n, 255)
+                acc = [c for c in cells if c[3] and accent and accent(*c[:3])]
+                if len(acc) >= 2:
+                    n = len(acc); sp[x, y] = (sum(c[0] for c in acc) // n, sum(c[1] for c in acc) // n, sum(c[2] for c in acc) // n, 255)
     sp = small.load()
     for y in range(H):
         for x in range(W):
@@ -226,6 +234,9 @@ def drop_specks(im, m, most=12):
             if len(comp) <= most:
                 for x, y in comp: m[y][x] = True
 
+# Sheets that need more than 20 colours (E6: its few green draining sparks were lost among the yellows)
+COLOURS = {'staticSiphon': 40}
+
 def build(only=None, sheet=False):
     data, review = {}, []
     for sid, (ref, px, counts) in SHEETS.items():
@@ -242,7 +253,7 @@ def build(only=None, sheet=False):
         if sid in FULL_ROWS: boxes = [(b[0], b[4][0], b[2], b[4][1], b[4]) for b in boxes]
         tallest = max(b[3] - b[1] + 1 for b in boxes)
         k = tallest / px
-        frames = [shrink(im, m, b, k, sid in CLEAN_SHRINK) for b in boxes]
+        frames = [shrink(im, m, b, k, sid in CLEAN_SHRINK, ACCENT.get(sid)) for b in boxes]
         # a tidy palette for the whole sheet, so its frames match
         strip_w, strip_h = sum(f.size[0] + 1 for f in frames), max(f.size[1] for f in frames)
         strip = Image.new('RGBA', (strip_w, strip_h), (0, 0, 0, 0))
@@ -255,8 +266,15 @@ def build(only=None, sheet=False):
         for n in counts:
             x0 = meta[i][0]; x1 = meta[i + n - 1][0] + meta[i + n - 1][2]; i += n
             part = strip.crop((x0, 0, x1, strip_h))
-            pq = part.convert('RGB').quantize(colors=20, method=Image.Quantize.MEDIANCUT).convert('RGB').convert('RGBA')
-            pq.putalpha(part.getchannel('A')); q.paste(pq, (x0, 0))
+            pq = part.convert('RGB').quantize(colors=COLOURS.get(sid, 20), method=Image.Quantize.MEDIANCUT).convert('RGB').convert('RGBA')
+            pq.putalpha(part.getchannel('A'))
+            if sid in ACCENT:   # rare accent colours get merged away by the palette: put them back
+                pp, op = pq.load(), part.load()
+                for yy in range(part.size[1]):
+                    for xx in range(part.size[0]):
+                        o = op[xx, yy]
+                        if o[3] and ACCENT[sid](*o[:3]): pp[xx, yy] = o
+            q.paste(pq, (x0, 0))
         buf = io.BytesIO(); q.save(buf, 'PNG', optimize=True)
         data[sid] = {'src': 'data:image/png;base64,' + base64.b64encode(buf.getvalue()).decode(), 'frames': meta}
         if sid in DEPTH:   # its back and front halves, same layout (see split_depth)
