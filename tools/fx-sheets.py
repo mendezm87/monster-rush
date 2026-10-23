@@ -220,6 +220,21 @@ PANELS = {'thunder': lambda r, g, b, x, y: max(r, g, b) < 72 and b - r >= 22 and
           # the dome of light in the fourth frame has a glow of nearly the same blue, which is part of it)
           'thunderBolt': lambda r, g, b, x, y: b - r >= 20 and (max(r, g, b) < 60 or (536 <= x <= 703 and y < 285 and max(r, g, b) < 100))}
 
+# Repairs to a frame after it's cut: (sheet, frame) -> function(frame) -> frame. E2c's fourth frame (r178, the owner:
+# "it is still cut off"): Gemini drew its ground ring partly hidden behind the third frame's lighter panel, so the
+# ring's left end stops short (about 50 pixels from the dome's middle here, against 63 on the right). Its left end is
+# rebuilt by mirroring the right side, on a frame widened to fit (so the dome is now in the middle of it).
+def ring_mirror(fr, cx, ytop):
+    W, H = fr.size; R = W - cx; pad = max(0, R - cx)
+    out = Image.new('RGBA', (W + pad, H), (0, 0, 0, 0)); out.paste(fr, (pad, 0))
+    op, c2 = out.load(), cx + pad
+    for y in range(ytop, H):
+        for x in range(0, c2 - cx + 6):
+            mx = 2 * c2 - x
+            if mx < out.size[0] and op[x, y][3] == 0 and op[mx, y][3]: op[x, y] = op[mx, y]
+    return out
+FRAME_REPAIRS = {('thunderBolt', 3): lambda fr: ring_mirror(fr, 50, 82)}
+
 # Sheets whose frames keep their row's full height (E2: every frame's ground is its bottom row, so the strike lines up
 # with the spot it hits, cloud-only frames included)
 FULL_ROWS = {'thunder', 'thunderBolt'}
@@ -258,6 +273,7 @@ def build(only=None, sheet=False):
         tallest = max(b[3] - b[1] + 1 for b in boxes)
         k = tallest / px
         frames = [shrink(im, m, b, k, sid in CLEAN_SHRINK, ACCENT.get(sid)) for b in boxes]
+        frames = [FRAME_REPAIRS[(sid, i)](f) if (sid, i) in FRAME_REPAIRS else f for i, f in enumerate(frames)]
         # a tidy palette for the whole sheet, so its frames match
         strip_w, strip_h = sum(f.size[0] + 1 for f in frames), max(f.size[1] for f in frames)
         strip = Image.new('RGBA', (strip_w, strip_h), (0, 0, 0, 0))
