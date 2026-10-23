@@ -776,8 +776,8 @@ const PIECE_BEAMS = {
   smugBeam: { body: ['smug1b', [0, 1, 2, 3]], core: ['smug1b', [4, 5, 6, 7]], muzzle: ['smug1b', [8, 9, 10], 0.22],
     impact: ['smug1b', [12, 13, 14, 15], 0.7], head: ['smug1b', [12, 13, 14, 15], 0.7], charge: ['smug1', [7, 8, 9]],
     thick: 2.6, sparkles: ['smug1', [17, 18]] },   // SMUG-1b (r194)
-  flamethrower: { body: ['fire2a', [0, 1, 2, 3], 0, 0, 0.4], core: ['fire2a', [4, 5, 6, 7], 0, 0, 0.08], muzzle: ['fire2a', [8, 9, 10, 11], 0.15, 0.5],
-    impact: ['fire2a', [12, 13, 14, 15], 0.15], head: ['fire2a', [8, 9, 10, 11], 0.6, 0.5], charge: ['fire2a', [8, 9, 10], 0, 0, 0.5], thick: 3, muzzleSc: 0.6, headSc: 0.7, chargeSc: 0.7 },   // FIRE-2a (r202)
+  flamethrower: { body: ['fire2a', [0, 1, 2, 3], 0, 0, 0.4], overlap: 0.96, muzzle: ['fire2a', [8, 9, 10, 11], 0.15, 0.5],
+    impact: ['fire2a', [12, 13, 14, 15], 0.3], head: ['fire2a', [8, 9, 10, 11], 0.6, 0.5], charge: ['fire2a', [8, 9, 10], 0, 0, 0.5], thick: 3, muzzleSc: 0.52, headSc: 0.7, chargeSc: 0.7 },   // FIRE-2a (r202)
   megaBeam: { body: ['beast1', [0, 1, 2, 3]], core: ['beast1', [4, 5, 6, 7]], muzzle: ['beast1', [8, 9, 10, 11], 0.3],
     impact: ['beast1', [12, 13, 14, 15], 0.25], head: ['beast1', [12, 13, 14], 0.25], charge: ['beast1', [8, 9, 10], 0, 0.63], thick: 2.2 },   // BEAST-1 (r199)
   supremeSmug: { body: ['smug1c', [0, 1, 2, 3]], core: ['smug1c', [4, 5, 6, 7]], muzzle: ['smug1c', [8, 9, 10, 11], 0.3],
@@ -1764,26 +1764,30 @@ mixInto(Battle, class {
       else drawSheet(c, cid, fr, ox, oy, { sc });
       return;
     }
-    const out = clamp(a.t / 0.14, 0, 1), fade = clamp((mv.dur - a.t) / 0.15, 0, 1), len = mv.len * out;
+    const out = clamp(a.t / 0.14, 0, 1), fade = clamp((mv.dur - a.t) / 0.15, 0, 1);
+    // it ends at the farthest Coreature it's hitting (it goes through everything in its line), else at its full range
+    // (r203, the owner: it looked like it went on past a nearby target)
+    const hits = [];
+    for (const foe of this.foes(m)) if (foe.visible && !foe.fainted && this.beamHits(m, a, foe)) hits.push([foe, clamp((foe.x - ox) * cs + (foe.cy - oy) * sn - foe.r * 0.5, 0, mv.len)]);
+    const reach = hits.length ? Math.max(...hits.map(h => h[1])) + 6 : mv.len, len = Math.min(mv.len * out, reach);
     const [bid, bf] = B.body, breathe = 1 + Math.sin(T * 22) * 0.08, sc = mv.width * B.thick / sheetH(bid, bf[0]) * (0.3 + 0.7 * fade) * breathe;
     // a part can be [sheet, frames, anchor, cutL, cutR]: only the middle of its pictures used (FIRE-2a's sections end in a fireball)
     const layer = ([lid, lf, , pcL = 0, pcR = 0], speed, shift, sy) => {   // sections laid from the mouth (the one there cut at the mouth), sliding forward
-      const keep = 1 - pcL - pcR, step = (sheetW(lid, lf[0]) * keep - 2 * FX_PX * 2) * sc * 0.8, sc0 = (T * speed + shift * step) % step;
+      const keep = 1 - pcL - pcR, step = (sheetW(lid, lf[0]) * keep - 2 * FX_PX * 2) * sc * (B.overlap || 0.8), sc0 = (T * speed + shift * step) % step;
       for (let k = Math.ceil(len / step) + 1; k >= 0; k--) {
         const d = k * step - step + sc0;
         if (d > len || d + step < 0) continue;
         drawSheet(c, lid, lf[(k + Math.floor(T * 14)) % lf.length], ox + cs * Math.max(0, d), oy + sn * Math.max(0, d),
-          { dir: a.dir, ax: 0, ay: 0.5, sc, sy, trim: 2, cutL: pcL + (d < 0 ? -d / (step / 0.8) * keep : 0), cutR: pcR });
+          { dir: a.dir, ax: 0, ay: 0.5, sc, sy, trim: 2, cutL: pcL + (d < 0 ? -d / (step / (B.overlap || 0.8)) * keep : 0), cutR: pcR });
       }
     };
     layer(B.body, 140, 0, 1);
     if (B.core) layer(B.core, 260, 0.5, B.coreH || 1);
     const [mid, mf, max, mcL] = B.muzzle;
     drawSheet(c, mid, loop(mf, 14), ox, oy, { dir: a.dir, ax: max, sc: sc * (B.muzzleSc || 1) * (0.95 + Math.sin(T * 30) * 0.08) * (B.coreH ? 1.15 : 1), ...(mcL ? { trim: 0, cutL: mcL } : {}) });
-    if (out < 1) { const [hid, hf, hax, hcL] = B.head; drawSheet(c, hid, loop(hf, 14), ox + cs * len, oy + sn * len, { dir: a.dir, ax: hax, sc: sc * (B.headSc || 1), ...(hcL ? { trim: 0, cutL: hcL } : {}) }); }
-    else for (const foe of this.foes(m)) {   // an impact on everything it's hitting, on the side facing the beam
-      if (!foe.visible || foe.fainted || !this.beamHits(m, a, foe)) continue;
-      const t = clamp((foe.x - ox) * cs + (foe.cy - oy) * sn - foe.r * 0.5, 0, len), [iid, ifr, iax] = B.impact;
+    if (mv.len * out < reach) { const [hid, hf, hax, hcL] = B.head; drawSheet(c, hid, loop(hf, 14), ox + cs * len, oy + sn * len, { dir: a.dir, ax: hax, sc: sc * (B.headSc || 1), ...(hcL ? { trim: 0, cutL: hcL } : {}) }); }
+    else for (const [, t] of hits) {   // an impact on everything it's hitting, on the side facing the beam
+      const [iid, ifr, iax] = B.impact;
       drawSheet(c, iid, loop(ifr, 16), ox + cs * t, oy + sn * t, { dir: a.dir, ax: iax, sc: sc * 1.15 });
     }
     a.bitT = (a.bitT || 0) - 1 / 60;
