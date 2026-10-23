@@ -739,7 +739,8 @@ let FX_PIECES = true;
 const PIECE_DASH = { bodySlam: 'slam' };
 // each look's hit pieces (r188): [sheet, row]; a row is a burst in 3 frames then 3 bits (docs/attack-pieces.md HITS-1..4)
 const HIT_KITS = { fire: ['hits1', 0], water: ['hits1', 1], electric: ['hits1', 2], ice: ['hits1', 3],
-  grass: ['hits2', 0], rock: ['hits2', 1], flying: ['hits2', 2], steel: ['hits2', 3] };
+  grass: ['hits2', 0], rock: ['hits2', 1], flying: ['hits2', 2], steel: ['hits2', 3],
+  psychic: ['hits3', 0], dark: ['hits3', 1], ghost: ['hits3', 2], dragon: ['hits3', 3] };
 const BAYER4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
 const _dither = new Map();
 function ditherFrame(id, i, lvl, keepLow) {   // frame i with only the pixels under (keepLow) or at and over the level
