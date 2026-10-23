@@ -211,3 +211,79 @@ Coreature vanishes inside it; the other dashes work because their frames wrap a 
 > nothing touching the edges or cut off, all frames the same size and evenly spaced. 16-bit pixel art visual effect
 > sprite sheet for an action game, chunky pixels with a dark 1-pixel outline, limited bright palette with
 > hard-edged shading, no creature or character, plain dark navy background, no text
+
+## Batch 3: water (r159; the owner: "give me the prompts and I will start")
+
+Every water attack except Aqua Jet (it already has D2). 8 frames each, small steps, nothing cut off. Water should
+look like **one body of water**: deep blue edges, bright cyan, white foam and highlights, splashes and droplets.
+
+**W1 · Hydro Cannon** (a beam of water from the mouth)
+> A powerful blast of water firing to the right from a small point, 8 frames in a row, each a small step from the one
+> before: water gathering into a swirling ball, a burst of spray at the nozzle, a thick jet of water shooting out,
+> the jet at full length with white foam churning along it and twisting currents inside, spray flying off the edges,
+> the far end exploding into a big splash, the jet thinning, a last splash of droplets. Deep blue edges, bright
+> cyan body, white foam and highlights. Every frame complete and fully inside its own space with empty background
+> all round it, nothing touching the edges or cut off, all frames the same size and evenly spaced. 16-bit pixel art
+> visual effect sprite sheet for an action game, chunky pixels with a dark 1-pixel outline, limited bright palette
+> with hard-edged shading, no creature or character, plain dark navy background, no text
+
+**W2 · Tidal Cannon** (the evolved, bigger Hydro Cannon)
+> A massive beam of seawater firing to the right, 8 frames in a row, each a small step from the one before: a
+> glowing orb of water swelling, a ring of spray bursting out, a huge torrent shooting out with a wave crest rolling
+> along the top of it and whirlpools spinning inside, foam and droplets streaming off, the far end crashing into a
+> tall splash like a wave breaking, the torrent at full power, then thinning, then mist and droplets. Deep blue
+> edges, bright cyan body, white foam crests. Every frame complete and fully inside its own space with empty
+> background all round it, nothing touching the edges or cut off, all frames the same size and evenly spaced.
+> 16-bit pixel art visual effect sprite sheet for an action game, chunky pixels with a dark 1-pixel outline, limited
+> bright palette with hard-edged shading, no creature or character, plain dark navy background, no text
+
+**W3 · Bubble Spray** (a spray of bubbles that slows)
+> A spray of shiny bubbles flying to the right, 8 frames in a row, each a small step from the one before: small
+> bubbles forming, a cluster of bubbles of different sizes floating forward, wobbling, each with a white shine and a
+> see-through blue rim, bubbles drifting apart, one big bubble popping into a ring of tiny droplets, the rest popping
+> one by one, a last fizz of sparkles. Every frame complete and fully inside its own space with empty background all
+> round it, nothing touching the edges or cut off, all frames the same size and evenly spaced. 16-bit pixel art
+> visual effect sprite sheet for an action game, chunky pixels with a dark 1-pixel outline, limited bright palette
+> with hard-edged shading, no creature or character, plain dark navy background, no text
+
+**W4 · Water cannon shot** (for Spout Shot, Cuff Cannon and Twin Cannon: a fired slug of water)
+> A slug of water fired to the right like a cannon shell, 8 frames in a row, each a small step from the one before: a
+> puff of spray at the muzzle, a round blob of water launching, stretching into a bullet shape with a foamy front and
+> a tail of droplets, flying with a spiral of water round it, hitting and bursting into a splash crown, droplets
+> flying out, a small puddle ring, a few last drops. Deep blue edges, bright cyan body, white foam. Every frame
+> complete and fully inside its own space with empty background all round it, nothing touching the edges or cut
+> off, all frames the same size and evenly spaced. 16-bit pixel art visual effect sprite sheet for an action game,
+> chunky pixels with a dark 1-pixel outline, limited bright palette with hard-edged shading, no creature or
+> character, plain dark navy background, no text
+
+**W5 · Geyser Vent** (scalding water erupting all round the user)
+> A ring of scalding geysers erupting from the ground around an empty creature-sized space in the middle, seen from
+> slightly above, 8 frames in a row, each a small step from the one before: the ground bubbling in a ring with steam
+> wisps, cracks spurting small jets, tall columns of hot water and steam blasting up all round the ring, the geysers
+> at their tallest with white steam at their tops, water raining down, the columns falling, steam drifting, a damp
+> ring with the last wisps of steam. Blue and cyan water, white steam, a hint of orange heat in the cracks. Every
+> frame complete and fully inside its own space with empty background all round it, nothing touching the edges or
+> cut off, all frames the same size and evenly spaced. 16-bit pixel art visual effect sprite sheet for an action
+> game, chunky pixels with a dark 1-pixel outline, limited bright palette with hard-edged shading, no creature
+> drawn, plain dark navy background, no text
+
+**W6 · Whirlpool** (a spinning pool of water that drags foes in)
+> A whirlpool spinning on the ground around an empty creature-sized space in the middle, seen from slightly above, 8
+> frames in a row, each a small step from the one before: ripples spreading in a ring, the water starting to swirl,
+> spiral arms of water and white foam turning faster, the whirlpool at full spin with a deep blue funnel at its
+> heart and spray flying off its rim, still spinning, starting to slow, the spiral breaking up, calm ripples. Deep
+> blue, bright cyan, white foam. Every frame complete and fully inside its own space with empty background all round
+> it, nothing touching the edges or cut off, all frames the same size and evenly spaced. 16-bit pixel art visual
+> effect sprite sheet for an action game, chunky pixels with a dark 1-pixel outline, limited bright palette with
+> hard-edged shading, no creature drawn, plain dark navy background, no text
+
+**W7 · Maelstrom** (the evolved, huge Whirlpool)
+> A huge raging maelstrom around an empty creature-sized space in the middle, seen from slightly above, 8 frames in a
+> row, each a small step from the one before: dark water rising in a wide ring, waves curling inward, a vast spinning
+> vortex with tall walls of water and crashing white crests, lightning-blue glints in the spray, the maelstrom at its
+> most violent with waves rearing up around the ring, still raging, the walls collapsing inward, a last crash of
+> spray, churning foam settling. Deep navy and blue water, bright cyan, white foam. Every frame complete and fully
+> inside its own space with empty background all round it, nothing touching the edges or cut off, all frames the
+> same size and evenly spaced. 16-bit pixel art visual effect sprite sheet for an action game, chunky pixels with a
+> dark 1-pixel outline, limited bright palette with hard-edged shading, no creature drawn, plain dark navy
+> background, no text
