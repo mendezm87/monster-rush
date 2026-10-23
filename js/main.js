@@ -2,7 +2,7 @@
 
 // Shown on the title screen so players can tell whether their browser has the latest
 // build (GitHub Pages lets browsers cache files for up to 10 minutes). Bump on every release.
-const VERSION = '2026.10.22-r159';
+const VERSION = '2026.10.22-r160';
 
 const App = {
   endless: false,   // the mode picked on the title screen
@@ -349,8 +349,8 @@ function openOffer(ped) {
     yes.textContent = 'RECRUIT'; yes.disabled = full;
   } else {
     const it = itemDef(ped.id), relic = !!RELICS[ped.id];
-    $('#recruit-title').textContent = ped.kind === 'shop' ? 'Shop' : 'Treasure!';
-    UI.fillItem($('#recruit-detail'), ped.id, relic ? 'Relic: lasts the whole run' : 'Used straight away');
+    $('#recruit-title').textContent = ped.kind === 'shop' ? 'Shop' : ped.choice ? 'Pick one relic' : 'Treasure!';
+    UI.fillItem($('#recruit-detail'), ped.id, ped.choice ? 'Relic: lasts the whole run. Take it and the other two vanish' : relic ? 'Relic: lasts the whole run' : 'Used straight away');
     if (ped.kind === 'shop') {
       const price = ped.item.price, useful = relic || run.useGood(ped.id, true);
       yes.textContent = run.coins < price ? `NEED ${price} COINS` : !useful ? 'NOT NEEDED NOW' : `BUY FOR ${price}`;

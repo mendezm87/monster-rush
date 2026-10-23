@@ -194,8 +194,14 @@ class Battle {
       room.stock.forEach((it, i) => { if (!it.sold) this.pedestals.push({ kind: 'shop', item: it, id: it.id, x: cx + (i - 1.5) * 100, y: cy - 6, cool: 0 }); });
     if (room.type === 'altar' && !room.used)
       this.pedestals = [{ kind: 'altar', id: 'altar', x: cx, y: cy - 6, cool: 0 }];
-    if (room.type === 'treasure' && !room.taken)
+    if (room.type === 'treasure' && !room.taken && room.relic && !room.relicChoice)   // a picnic (every relic owned), or a run saved before r159
       this.pedestals = [{ kind: 'relic', id: room.relic, x: cx, y: cy - 6, cool: 0 }];
+    // a choice of relics (the treasure room, or a chest that was opened here): take one and the others vanish
+    const ch = room.relicChoice;
+    if (ch && !ch.taken) {
+      const n = ch.ids.length, x0 = clamp(ch.x ?? cx, F.x0 + 40 + (n - 1) * 40, F.x1 - 40 - (n - 1) * 40), y0 = clamp(ch.y ?? cy - 6, F.y0 + 40, F.y1 - 30);
+      ch.ids.forEach((id, i) => this.pedestals.push({ kind: 'relic', id, choice: true, x: x0 + (i - (n - 1) / 2) * 80, y: y0, cool: 0.6 }));
+    }
   }
 
   placeStairs() {
@@ -558,7 +564,13 @@ class Battle {
       Sfx.play('select');
     } else if (k.kind === 'chest') {   // a relic (or a picnic once you have them all)
       const free = Object.keys(RELICS).filter(id => !this.run.relics.includes(id));
-      if (free.length) { const id = pickRand(free); this.run.addRelic(id); this.ui.banner(`GOT ${RELICS[id].name}!`); }
+      const open = this.room.relicChoice && !this.room.relicChoice.taken;
+      if (free.length > 1 && !open) {   // a choice of relics, laid out where the chest was (r159)
+        const F = this.F, up = k.y - 50 > F.y0 + 40;   // a little way from where you're standing, so you choose by walking up to one
+        this.room.relicChoice = { ids: shuffle(free).slice(0, 3), x: k.x, y: up ? k.y - 50 : k.y + 50 };
+        this.makePedestals();
+        this.ui.banner('A CHEST OF RELICS!', 'Walk up to one and take it: the others vanish');
+      } else if (free.length) { const id = pickRand(free); this.run.addRelic(id); this.ui.banner(`GOT ${RELICS[id].name}!`); }
       else { this.run.useGood('picnic'); this.ui.banner('PICNIC!'); }
       this.sparks(k.x, k.y - 4, 10, '#ffe066');
       Sfx.play('levelUp');
@@ -689,7 +701,12 @@ class Battle {
       return;
     }
     if (ped.kind === 'shop') ped.item.sold = true;
-    if (ped.kind === 'relic') this.room.taken = true;
+    if (ped.kind === 'relic' && ped.choice) {   // the other relics on offer vanish
+      this.room.relicChoice.taken = true;
+      if (this.room.type === 'treasure') this.room.taken = true;
+      for (const o of this.pedestals) if (o.choice && o !== ped) this.burst(o.x, o.y - 16, ['#ffffff', '#cfd6e6'], 16, 70);
+      this.pedestals = this.pedestals.filter(o => !o.choice);
+    } else if (ped.kind === 'relic') this.room.taken = true;
     if (ped.kind === 'altar') this.room.used = true;
     this.burst(ped.x, ped.y - 16, ['#ffe066', '#ffffff', '#ffd23f'], 20, 80);
     this.pedestals = this.pedestals.filter(o => o !== ped);

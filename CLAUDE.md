@@ -241,6 +241,10 @@ Research behind it: `docs/boss-research.md` (loved MMO raid bosses, what players
 - Tidalisk check (r156, 20 runs): 14/20 wins; its early losses are alone on floor 1 against rooms of three with Electric or Plant Coreatures (Sparkit, Lumawool, Bugilist), the known meadow matchup. Balance (r143, hard bots, full runs, 3 per starter + 1 endless): Smugshi 2/3, Cinderox 2/3, Tidalisk 2/3 wins; 2 of 12 runs ended at the floor 3 boss, a real but passable spike. In isolated boss fights type matchups swing it a lot (Cinderox's Earth moves crush the ice form; Smugshi's Beast moves hit Slumbear for half). Tuning levers: act boss HP (`wildSpec` 'act'), `BOSS_MOVE_MUL`, the `BOSS_MV` powers.
 - Not done yet: more act bosses (act 2 is the final boss, still an evolved starter without a script), gatekeepers with a pattern or two, music per phase, an optional hard-mode seal in the boss room.
 
+### Relic choices (r159)
+
+Treasure rooms offer **1 of 3 relics** on three pedestals, and a **chest** opens into the same pick of three, laid out a little way from where it was opened (`room.relicChoice = { ids, x, y, taken }`, built in `makePedestals`; taking one sets `taken` and the others vanish, `offerDone`). The offer screen says "Pick one relic". With every relic owned, treasure is still a picnic and a chest still gives one relic when only one is left. The shop's relics are the next two in the shuffle, so the shop never repeats the treasure's. Runs saved before r159 keep their single treasure relic (`room.relic`).
+
 ### Not decided yet (ask the owner when it matters)
 
 Which other monsters evolve and into what (to design together); more relics and unlock types (a reward for beating the final boss?); whether 6 floors is the right length and whether the final boss should be a monster of its own; whether the evolved starters' designs are what the owner wants; a title-screen song.

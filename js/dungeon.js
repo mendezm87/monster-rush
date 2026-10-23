@@ -331,14 +331,16 @@ function tryFloor(floorN, partyIds, relics, last, offers = 3) {
       r.offer = [...local, ...shuffle(ids.filter(id => !partyIds.includes(id) && !local.includes(id)))].slice(0, offers);
     }
   }
-  // a relic in the treasure room, two more (and two goods) in the shop
+  // the treasure room: pick 1 of 3 relics (r159, the owner liked relics as 1-of-3 picks); two more relics (and
+  // two goods) in the shop
   const free = shuffle(Object.keys(RELICS).filter(id => !relics.includes(id)));
-  treasure.relic = free[0] || 'picnic';   // once every relic is owned, treasure is a free picnic
+  if (free.length) treasure.relicChoice = { ids: free.slice(0, 3) };
+  else treasure.relic = 'picnic';   // once every relic is owned, treasure is a free picnic
   const goods = shuffle(['picnic', 'revive']);
   shop.stock = [
     { id: 'bigBerry', price: GOODS.bigBerry.price },
     ...goods.slice(0, 1).map(id => ({ id, price: GOODS[id].price })),
-    ...free.slice(1, 3).map(id => ({ id, price: relicPrice(floorN), relic: true })),
+    ...free.slice(3, 5).map(id => ({ id, price: relicPrice(floorN), relic: true })),
   ];
   while (shop.stock.length < 4 && goods.length > 1) { const id = goods.pop(); shop.stock.push({ id, price: GOODS[id].price }); }
   return { n: floorN, last, rooms, start, boss, stage };
