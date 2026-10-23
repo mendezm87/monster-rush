@@ -776,6 +776,8 @@ const PIECE_BEAMS = {
   smugBeam: { body: ['smug1b', [0, 1, 2, 3]], core: ['smug1b', [4, 5, 6, 7]], muzzle: ['smug1b', [8, 9, 10], 0.22],
     impact: ['smug1b', [12, 13, 14, 15], 0.7], head: ['smug1b', [12, 13, 14, 15], 0.7], charge: ['smug1', [7, 8, 9]],
     thick: 2.6, sparkles: ['smug1', [17, 18]] },   // SMUG-1b (r194)
+  megaBeam: { body: ['beast1', [0, 1, 2, 3]], core: ['beast1', [4, 5, 6, 7]], muzzle: ['beast1', [8, 9, 10, 11], 0.3],
+    impact: ['beast1', [12, 13, 14, 15], 0.25], head: ['beast1', [12, 13, 14], 0.25], charge: ['beast1', [8, 9, 10]], thick: 2.2 },   // BEAST-1 (r199)
   supremeSmug: { body: ['smug1c', [0, 1, 2, 3]], core: ['smug1c', [4, 5, 6, 7]], muzzle: ['smug1c', [8, 9, 10, 11], 0.3],
     impact: ['smug1c', [12, 13, 14, 15], 0.7], head: ['smug1c', [12, 13, 14], 0.7], charge: ['smug1', [7, 8, 9]],
     thick: 2.4, petals: ['smug1', [14, 15, 16]], sparkles: ['smug1', [17, 18]] },   // SMUG-1c (r196)
