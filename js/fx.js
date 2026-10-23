@@ -675,7 +675,8 @@ function drawSheetAround(c, id, i, x, y, o, m) {
 }
 // Draw frame i of sheet id at (x, y) in world units on the effect layer. o: sc (size, 1 = one pixel per sprite
 // pixel), ax/ay (the anchor, 0..1 of the frame), dir (turn it to point that way; a sheet drawn going right is
-// mirrored rather than turned upside down when it points left), flip (mirror it), sx/sy (stretch).
+// mirrored rather than turned upside down when it points left), flip (mirror it), sx/sy (stretch), top (leave off that
+// many of the frame's top rows, in sheet pixels; the rest stays where it was).
 function drawSheet(c, id, i, x, y, o = {}) {
   const S = FXS[id];
   const img = o.layer ? S && S[o.layer] : S && S.img;   // layer: 'back' or 'front' half (drawSheetAround)
@@ -689,7 +690,8 @@ function drawSheet(c, id, i, x, y, o = {}) {
   }
   if (o.tilt) c.rotate(o.tilt);   // a sheet drawn pointing some other way than right (its own angle, undone)
   if (o.flip) c.scale(-1, 1);
-  c.drawImage(img, f[0], f[1], f[2], f[3], -w * (o.ax ?? 0.5), -h * (o.ay ?? 0.5), w, h);
+  const top = o.top || 0, cut = h * top / f[3];
+  c.drawImage(img, f[0], f[1] + top, f[2], f[3] - top, -w * (o.ax ?? 0.5), -h * (o.ay ?? 0.5) + cut, w, h - cut);
   c.restore();
 }
 const sheetFrames = id => (FXS[id] ? FXS[id].frames.length : 0);
@@ -757,6 +759,24 @@ const SHEET_SHOTS = {
   bubbleBeam: { sheet: 'bubbleSpray', fly: [1, 2, 3, 4], len: 17, spin: true },
   thunderbolt: { sheet: 'thunderbolt', fly: [2, 3, 4], len: 36, ax: 0.78 },   // E1 (r171): the orb leads, its forked tail behind
 };
+// Thunder's gathering clouds (r172-r173): puffs [x, y, r] in units of r, an outline round the whole cloud, a flat
+// shaded underside and light on the tops. dk 0 = white, 1 = storm-dark. (A big storm cloud drawn this way looked
+// stiff, a mushroom cap with beads under it: big shapes come from the owner's sheets.)
+function stormMix(a, b, t) { return '#' + [1, 3, 5].map(i => Math.round(parseInt(a.substr(i, 2), 16) * (1 - t) + parseInt(b.substr(i, 2), 16) * t).toString(16).padStart(2, '0')).join(''); }
+function drawCloud(c, x, y, r, dk, puffs, under, tops, flash = 0) {
+  for (const [px, py, pr] of puffs) FXD.dot(c, x + px * r, y + py * r, pr * r + 1.5, INK);
+  for (const [px, py, pr] of puffs) FXD.dot(c, x + px * r, y + py * r, pr * r, stormMix('#f4f7fc', '#4c5262', dk));
+  const sh = stormMix(stormMix('#c4ccdc', '#2f3340', dk), '#fff2a8', flash);
+  for (const [px, py, pr] of under) FXD.dot(c, x + px * r, y + py * r, pr * r, sh);
+  for (const [px, py, pr] of tops) FXD.dot(c, x + px * r, y + py * r, pr * r, stormMix('#ffffff', '#6c7384', dk));
+}
+const SMALL_CLOUD = {
+  puffs: [[-1, 0.15, 0.7], [0, -0.3, 0.95], [1.05, 0.15, 0.65], [0.45, -0.05, 0.75], [-0.5, 0.25, 0.6]],
+  under: [[-0.75, 0.42, 0.42], [0, 0.48, 0.45], [0.75, 0.42, 0.4]],
+  tops: [[-1.05, -0.08, 0.3], [-0.1, -0.62, 0.42], [0.95, -0.05, 0.26]],
+};
+const STORM_Y = 189;   // how far above the strike spot E2's storm cloud sits (frame 0 drawn 1.3x from the ground)
+
 // a frame sequence played as a particle (an explosion, a geyser)
 function sheetPart(b, id, frames, x, y, life, o = {}) {
   b.particles.push({ kind: 'sheet', id, frames, x, y, life, max: life, o });
@@ -1387,10 +1407,10 @@ mixInto(Battle, class {
   }
 
   // Thunder's storm gathering (r172, the owner's idea): small white clouds come in from the edges of the screen,
-  // turning dark and swelling as they converge over the spot, where they become the sheet's storm cloud.
+  // turning dark and swelling as they converge over the spot, where they become the storm cloud. r173: they swirl in.
   drawStormGather(c, z, left) {
     const arrive = Math.max(0.2, z.delay - 0.3), k = clamp(z.t / arrive, 0, 1);
-    const tx = z.x, ty = z.y - 189;   // where the sheet's cloud sits (frame 0 drawn 1.3x from the ground)
+    const tx = z.x, ty = z.y - STORM_Y;   // where the storm cloud forms
     if (!z.clouds) {   // where each one starts: just off the screen's edge, all round (kept in world units)
       const rnd = mulberry(z.id * 7919 + 13), cam = this.cam || { x: 0, y: 0 }, n = 9;
       z.clouds = [];
@@ -1399,18 +1419,15 @@ mixInto(Battle, class {
         // the distance along this direction to the view's edge, plus a margin so it starts off screen
         const ex = dx > 0 ? (cam.x + W - tx) / dx : dx < 0 ? (cam.x - tx) / dx : 1e9, ey = dy > 0 ? (cam.y + H - ty) / dy : dy < 0 ? (cam.y - ty) / dy : 1e9;
         const d = Math.max(60, Math.min(ex, ey)) + 22;
-        z.clouds.push({ sx: tx + dx * d, sy: ty + dy * d, ex: tx + (rnd() - 0.5) * 32, ey: ty + (rnd() - 0.5) * 12, s: 0.8 + rnd() * 0.5, lag: rnd() * 0.15 });
+        z.clouds.push({ sx: tx + dx * d, sy: ty + dy * d, a, d, ex: (rnd() - 0.5) * 48, ey: (rnd() - 0.5) * 12, s: 0.8 + rnd() * 0.5, lag: rnd() * 0.15 });
       }
     }
-    const mix = (a, b, t) => '#' + [0, 2, 4].map(i => Math.round(parseInt(a.substr(i + 1, 2), 16) * (1 - t) + parseInt(b.substr(i + 1, 2), 16) * t).toString(16).padStart(2, '0')).join('');
     for (let i = 0; i < z.clouds.length; i++) {
       const cl = z.clouds[i], q = clamp((k - cl.lag) / (1 - cl.lag), 0, 1), p = q * q * (3 - 2 * q);
-      const x = cl.sx + (cl.ex - cl.sx) * p, y = cl.sy + (cl.ey - cl.sy) * p, dk = clamp((q - 0.3) / 0.6, 0, 1), r = 8 * cl.s * (0.85 + 0.55 * Math.sin(Math.PI * q * 0.9));   // white at first, darkening on the way; swelling, then packing tight as they merge
-      const puffs = [[-1, 0.15, 0.7], [0, -0.3, 0.95], [1.05, 0.15, 0.65], [0.45, -0.05, 0.75], [-0.5, 0.25, 0.6]];
-      for (const [px, py, pr] of puffs) FXD.dot(c, x + px * r, y + py * r, pr * r + 1.5, INK);   // the outline round the whole cloud
-      for (const [px, py, pr] of puffs) FXD.dot(c, x + px * r, y + py * r, pr * r, mix('#f4f7fc', '#4c5262', dk));
-      for (const [px, py, pr] of [[-0.75, 0.42, 0.42], [0, 0.48, 0.45], [0.75, 0.42, 0.4]]) FXD.dot(c, x + px * r, y + py * r, pr * r, mix('#c4ccdc', '#2f3340', dk));   // a flat shaded underside
-      for (const [px, py, pr] of [[-1.05, -0.08, 0.3], [-0.1, -0.62, 0.42], [0.95, -0.05, 0.26]]) FXD.dot(c, x + px * r, y + py * r, pr * r, mix('#ffffff', '#6c7384', dk));   // light on the tops of the puffs
+      // swirling in (r173, the owner): round the spot, three quarters of a turn, closing in as it goes
+      const ang = cl.a - p * Math.PI * 1.5, rad = cl.d * Math.pow(1 - p, 1.25);
+      const x = tx + Math.cos(ang) * rad + cl.ex * p, y = ty + Math.sin(ang) * rad + cl.ey * p, dk = clamp((q - 0.3) / 0.6, 0, 1), r = 8 * cl.s * (0.85 + 0.55 * Math.sin(Math.PI * q * 0.9));   // white at first, darkening on the way; swelling, then packing tight as they merge
+      drawCloud(c, x, y, r, dk, SMALL_CLOUD.puffs, SMALL_CLOUD.under, SMALL_CLOUD.tops);
       if (dk > 0.6 && ((this.time * 14 + i * 3) | 0) % 6 === 0) FXD.dot(c, x + (i % 3 - 1) * r * 0.4, y + r * 0.1, 1.2, '#fff27a');   // a flicker inside
     }
   }

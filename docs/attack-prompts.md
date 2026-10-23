@@ -355,3 +355,16 @@ bolts and crackling arcs**: white-hot cores, bright yellow, pale blue glow at th
 > touching the edges or cut off, all frames the same size and evenly spaced. 16-bit pixel art visual effect sprite
 > sheet for an action game, chunky pixels with a dark 1-pixel outline, limited bright palette with hard-edged
 > shading, no creature or character, plain dark navy background, no text
+
+**E2b · Thunder's storm cloud** (r173; the cloud in E2 fills its panels and is sliced flat at the sides. The game keeps
+E2's lightning and swaps in this cloud. Run it on its own.)
+> A dark thundercloud seen from the side, 8 frames in a row, each a small step from the one before: a small dark storm
+> cloud forming, swelling bigger and billowing, rumbling with faint flickers of light inside, suddenly lit bright
+> yellow-white from underneath by a lightning flash, at its biggest and darkest with the glow underneath fading, the
+> first puffs beginning to drift apart, breaking up into separate small dark puffs, the last wisps fading. A billowing
+> rounded top and a flatter underside, deep slate grey and charcoal with lighter grey highlights on the tops of the
+> puffs, no lightning bolt drawn below it. Each cloud is complete and fully inside its own space with a wide margin of
+> empty background on the left and right and above and below it, nothing touching the edges or cut off, all frames
+> the same size and evenly spaced. 16-bit pixel art visual effect sprite sheet for an action game, chunky pixels with
+> a dark 1-pixel outline, limited palette with hard-edged shading, no creature or character, plain dark navy
+> background, no text
