@@ -784,7 +784,8 @@ const PIECE_BEAMS = {
 };
 // dashes built from pieces so far: COMMON-1's dust, speed lines and thud (r186)
 const PIECE_DASH = { bodySlam: { thud: true },
-  zoomies: { stars: 0.09, starPop: true }, zoomiesMax: { stars: 0.05, starPop: true, zigzag: true } };   // BEAST-2 (r195): Smugshi's line
+  zoomies: { stars: 0.09, starPop: true }, zoomiesMax: { stars: 0.05, starPop: true, zigzag: true },
+  woolTackle: { wool: 0.05, woolPop: true } };   // BEAST-4 (r201): storm-cloud wool streaming off Lumawool   // BEAST-2 (r195): Smugshi's line
 // each look's hit pieces (r188): [sheet, row]; a row is a burst in 3 frames then 3 bits (docs/attack-pieces.md HITS-1..4)
 const HIT_KITS = { fire: ['hits1', 0], water: ['hits1', 1], electric: ['hits1', 2], ice: ['hits1', 3],
   grass: ['hits2', 0], rock: ['hits2', 1], flying: ['hits2', 2], steel: ['hits2', 3],
@@ -997,6 +998,7 @@ mixInto(Battle, class {
     const PD = FX_PIECES && PIECE_DASH[mv.id] && FXS.common1 && PIECE_DASH[mv.id];
     if (big && PD && PD.thud) this.fxThud(tgt, src);   // a dash built from pieces lands with a thud
     if (big && PD && PD.starPop && FXS.beast2) this.fxStarPop(tgt);   // or pops a star
+    if (big && PD && PD.woolPop && FXS.beast4) this.fxWoolPop(tgt, src);   // or bursts into a poof of wool
     else if (big && SM && SM.hit) { const hs = SM.hitSheet || SM.sheet || mv.id; sheetPart(this, hs, SM.hit, tgt.x, tgt.cy, 0.5, { sc: tgt.r * 3 / sheetW(hs, SM.hit[0]), flip: SM.face && src && src.x > tgt.x }); }   // its sheet's impact
     if (mv.fx === 'claw') this.particles.push({ kind: 'claw', x: tgt.x, y: tgt.cy, size: 34, rot: toward + Math.PI / 2 + rand(-0.3, 0.3), color: fx[1], life: 0.3, max: 0.3 });
     if (mv.fx === 'slash') this.particles.push({ kind: 'slash', x: tgt.x, y: tgt.cy, size: 22, rot: toward + rand(-0.4, 0.4), color: fx[1], life: 0.28, max: 0.28 });
@@ -1038,6 +1040,7 @@ mixInto(Battle, class {
     if (mv.id === 'fireBlast') { sheetPart(this, 'fireBlast', [2, 3, 3, 4], x, y - 4, 0.75, { sc: r * 2.4 / sheetW('fireBlast', 3) }); this.addShake(5); return; }
     const user = this.mons.find(o => o.action && o.action.mv === mv && Math.hypot(o.x - x, o.y - y) < 2);   // a burst's user stands in the middle of it
     if (mv.id === 'eruption' && FX_PIECES && FXS.eruptionParts) { this.fxEruptionPieces(x, y, r, this.mons.find(o => o.action && o.action.mv === mv && Math.hypot(o.x - x, o.y - y) < 2)); return; }
+    if (FX_PIECES && FXS.beast4 && mv.id === 'heavySigh') { this.fxSigh(x, y, r, user); return; }   // BEAST-4 (r201)
     if (FX_PIECES && FXS.beast2 && (mv.id === 'shibaScream' || mv.id === 'shibaRoar')) { this.fxShout(x, y, r, user, mv.id === 'shibaRoar'); return; }   // BEAST-2 (r195)
     if (FX_PIECES && FXS.common1 && (mv.id === 'heavyStomp' || mv.id === 'quake')) { this.fxGroundSlam(x, y, r, user, { big: mv.id === 'quake' }); return; }   // COMMON-1 (r186; Quake gets rock spikes with EARTH-1)
     if (mv.id === 'eruption') { const sc = r * 1.25 / sheetW('eruption', 0); sheetPart(this, 'eruption', [1, 2, 2, 3, 4], x, y + sheetH('eruption', 0) * sc / 2, 1.1, { sc, ay: 1, user }); this.addShake(8); return; }
@@ -1081,6 +1084,7 @@ mixInto(Battle, class {
 
   // Buffs and heals: a shield for defence, chevrons for attack and speed, + signs for healing.
   fxBuff(m, mv) {
+    if (FX_PIECES && FXS.beast4 && mv.id === 'coffeeBreak') this.fxCoffee(m);   // its own show first (BEAST-4, r201)
     if (FX_PIECES && FXS.common2) { this.fxBuffPieces(m, mv); return; }
     const fx = fxOf(mv), b = mv.buff || {};
     if (b.def) this.particles.push({ kind: 'shield', x: m.x, y: m.cy, r: m.r + 12, color: fx[2], life: 0.9, max: 0.9 });
@@ -1432,6 +1436,16 @@ mixInto(Battle, class {
           vz: rand(20, 60), g: 260, sc: rand(0.35, 0.55), life: rand(0.35, 0.55), shrink: 0.15 });
       }
     }
+    if (PD.wool && FXS.beast4) {   // puffs of storm-cloud wool streaming off it, sparks crackling in them
+      a.woolT = (a.woolT || 0) - dt;
+      while (a.woolT <= 0) {
+        a.woolT += PD.wool;
+        const ang = back + rand(-0.6, 0.6), sp = rand(30, 70);
+        this.addPiece('beast4', m, { frames: [9 + ((Math.random() * 3) | 0)], x: m.x - cx * m.r * 0.5 + rand(-4, 4), y: m.y - m.h * rand(0.2, 0.6), mx: Math.cos(ang) * sp, my: Math.sin(ang) * sp * 0.5,
+          rise: rand(5, 15), sc: rand(0.3, 0.45), shrink: 0.2, life: rand(0.35, 0.5), flip: Math.random() < 0.5 });
+        if (Math.random() < 0.4) this.addPiece('beast4', null, { frames: [12 + ((Math.random() * 2) | 0)], x: m.x - cx * m.r * 0.3 + rand(-6, 6), y: m.y - m.h * rand(0.3, 0.7), sc: 0.6, life: 0.12 });
+      }
+    }
     if (PD.zigzag && FXS.beast2 && !a.zig) {   // Zoomies Max: a gold zigzag marking its path
       a.zig = true;
       this.addPiece('beast2', null, { frames: [7], x: m.x + cx * 30, y: m.y - m.h * 0.3, rot: a.dir, sc: 0.8, grow: 0.08, shrink: 0.25, life: 0.5 });
@@ -1444,6 +1458,44 @@ mixInto(Battle, class {
         mx: -cx * 50, my: -cy * 50, rot: a.dir, ax: 0.2, sc: rand(0.5, 0.8), life: 0.16, shrink: 0.1 });
     }
   }
+  // BEAST-4 (r201): frames 0-3 sigh cloud (a sad little face), 4-5 mug (upright, sipping), 6-8 steam, 9-11 wool,
+  // 12-13 sparks, 14-15 beans, 16 jitter line, 17 droopy wind, 18 sweat drop.
+  // Wool Tackle's hit: a poof of storm-cloud wool and sparks
+  fxWoolPop(tgt, src) {
+    const from = src ? Math.atan2(src.y - tgt.y, src.x - tgt.x) : 0;
+    for (let i = 0; i < 6; i++) {
+      const ang = from + Math.PI + rand(-1.4, 1.4), sp = rand(40, 90);
+      this.addPiece('beast4', tgt, { frames: [9 + (i % 3)], x: tgt.x + Math.cos(from) * tgt.r * 0.4, y: tgt.cy, mx: Math.cos(ang) * sp, my: Math.sin(ang) * sp * 0.6,
+        rise: 10, sc: rand(0.4, 0.6), grow: 0.05, shrink: 0.25, life: 0.55, flip: Math.random() < 0.5 });
+    }
+    for (let i = 0; i < 4; i++) this.addPiece('beast4', null, { frames: [12 + (i % 2)], x: tgt.x + rand(-12, 12), y: tgt.cy + rand(-10, 8), sc: 0.8, life: 0.15, delay: i * 0.05 });
+  }
+  // Heavy Sigh (BEAST-4): Mondaze lets out an enormous sigh; sad sigh clouds roll out across the ground all round it
+  // (far ones behind it, near ones in front), droopy curls of breath drifting, a sweat drop by its head
+  fxSigh(x, y, r, user) {
+    const id = 'beast4', P = o => this.addPiece(id, user, o), m = user, h = m ? m.h : 30;
+    if (m) m.piecesUntil = this.time + 1.6;
+    const n = 9;
+    for (let i = 0; i < n; i++) {
+      const ang = i / n * TAU + rand(-0.2, 0.2), cs = Math.cos(ang), sn = Math.sin(ang), sp = r * rand(1.1, 1.5);
+      P({ frames: [0, 1, 2, 3], x: x + cs * 8, y: y - 4 + sn * 5, mx: cs * sp, my: sn * sp * 0.55, sc: rand(0.45, 0.6), swell: 0.4, ay: 0.8,
+        life: rand(0.9, 1.15), delay: rand(0, 0.12), flip: cs < 0 });
+    }
+    for (let i = 0; i < 3; i++) P({ frames: [17], x: x + (m ? m.face : 1) * (10 + i * 6), y: y - h * 0.6 + i * 5, mx: (m ? m.face : 1) * 25, my: 6, sc: 0.55, grow: 0.1, shrink: 0.3, life: 0.8, delay: i * 0.1, near: true, flip: m && m.face < 0 });
+    P({ frames: [18], x: x - (m ? m.face : 1) * 8, y: y - h * 0.95, near: true, mx: 0, my: 14, sc: 0.7, grow: 0.08, shrink: 0.2, life: 0.7, delay: 0.1 });
+  }
+  // Coffee Break (BEAST-4): a steaming mug in its hands, a sip, steam curling up, beans popping out, jitters
+  fxCoffee(m) {
+    const id = 'beast4', P = o => this.addPiece(id, m, o), f = m.face || 1, hx = m.x + f * m.r * 0.7, hy = m.y - m.h * 0.45;
+    P({ frames: [4, 4, 5, 5, 5, 4], x: hx, y: hy, near: true, sc: 0.42, grow: 0.08, shrink: 0.12, life: 1.1, flip: f < 0 });
+    for (let i = 0; i < 3; i++) P({ frames: [6, 7, 8], fps: 8, ph: i, x: hx + (i - 1) * 3, y: hy - 8, rise: 22, sc: 0.4, grow: 0.15, shrink: 0.3, life: 0.9, delay: 0.1 + i * 0.2, near: true });
+    for (let i = 0; i < 4; i++) {
+      const ang = -Math.PI / 2 + rand(-1.2, 1.2);
+      P({ frames: [14 + (i % 2)], x: hx, y: hy - 4, mx: Math.cos(ang) * 50, my: Math.sin(ang) * 30, vz: rand(50, 90), g: 300, rot: rand(0, TAU), vr: rand(-8, 8), sc: 0.45, shrink: 0.15, life: 0.6, delay: 0.8 + i * 0.04, near: true });
+    }
+    for (let i = 0; i < 2; i++) P({ frames: [16], x: m.x + (i ? 1 : -1) * m.r * 1.1, y: m.y - m.h * 0.6, sc: 0.45, life: 0.5, delay: 1.0 + i * 0.1, grow: 0.05, shrink: 0.15, near: true, flip: !!i });
+  }
+
   // a star popping out of a hit (Zoomies)
   fxStarPop(tgt) {
     for (let i = 0; i < 3; i++) {
