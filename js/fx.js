@@ -746,8 +746,14 @@ let FX_PIECES = true;
 // thick: its thickness as a share of the move's width; impact: [sheet, row] of the hit pieces it bursts with;
 // petals/sparkles: bits drifting off it.
 const PIECE_BEAMS = {
-  smugBeam:    { id: 'smug1', sections: [0, 1, 2, 3], head: [4, 5, 6], charge: [7, 8, 9], thick: 1.5, sparkles: [17, 18] },
-  supremeSmug: { id: 'smug1', sections: [10, 11, 12, 13], head: [4, 5, 6], charge: [7, 8, 9], thick: 1.5, petals: [14, 15, 16], sparkles: [17, 18] },
+  // each part: [sheet, frames, anchor across (0 = its left edge at the point)]; core: a thinner bright layer over the
+  // body (its own frames, or the body's squashed to coreH of its height)
+  smugBeam: { body: ['smug1b', [0, 1, 2, 3]], core: ['smug1b', [4, 5, 6, 7]], muzzle: ['smug1b', [8, 9, 10], 0.22],
+    impact: ['smug1b', [12, 13, 14, 15], 0.7], head: ['smug1b', [12, 13, 14, 15], 0.7], charge: ['smug1', [7, 8, 9]],
+    thick: 2.6, sparkles: ['smug1', [17, 18]] },   // SMUG-1b (r194)
+  supremeSmug: { body: ['smug1', [10, 11, 12, 13]], core: ['smug1', [10, 11, 12, 13]], coreH: 0.45, muzzle: ['smug1', [9], 0.5],
+    impact: ['hits3', [0, 1, 2], 0.5], head: ['smug1', [4, 5, 6], 0.35], charge: ['smug1', [7, 8, 9]],
+    thick: 1.5, petals: ['smug1', [14, 15, 16]], sparkles: ['smug1', [17, 18]] },   // SMUG-1 (SMUG-1c to come)
 };
 // dashes built from pieces so far: COMMON-1's dust, speed lines and thud (r186)
 const PIECE_DASH = { bodySlam: 'slam' };
@@ -1624,42 +1630,40 @@ mixInto(Battle, class {
   // thin bright core, both scrolling forward and breathing), and an impact where it hits. The game's beams go through
   // everything in their line, so it bursts on every Coreature it touches; the head only leads while it shoots out.
   drawPieceBeam(c, m, a, ox, oy, B) {
-    const mv = a.mv, id = B.id, T = this.time, cs = Math.cos(a.dir), sn = Math.sin(a.dir);
+    const mv = a.mv, T = this.time, cs = Math.cos(a.dir), sn = Math.sin(a.dir), loop = (fs, rate, k = 0) => fs[(Math.floor(T * rate) + k) % fs.length];
     if (a.phase === 'charge') {
-      const k = clamp(a.t / mv.charge, 0, 1), fr = B.charge[Math.min(B.charge.length - 1, Math.floor(k * B.charge.length))];
-      drawSheet(c, id, fr, ox, oy, { sc: 0.6 + k * 0.7 });
+      const k = clamp(a.t / mv.charge, 0, 1), [cid, cf] = B.charge;
+      drawSheet(c, cid, cf[Math.min(cf.length - 1, Math.floor(k * cf.length))], ox, oy, { sc: 0.6 + k * 0.7 });
       return;
     }
     const out = clamp(a.t / 0.14, 0, 1), fade = clamp((mv.dur - a.t) / 0.15, 0, 1), len = mv.len * out;
-    const f0 = B.sections[0], breathe = 1 + Math.sin(T * 22) * 0.08, sc = mv.width * B.thick / sheetH(id, f0) * (0.3 + 0.7 * fade) * breathe;
-    const step = (sheetW(id, f0) - 2 * FX_PX * 2) * sc * 0.8;
-    const layer = (speed, sy, shift) => {   // sections laid from the mouth, sliding forward
-      const sc0 = (T * speed + shift) % step;
+    const [bid, bf] = B.body, breathe = 1 + Math.sin(T * 22) * 0.08, sc = mv.width * B.thick / sheetH(bid, bf[0]) * (0.3 + 0.7 * fade) * breathe;
+    const layer = ([lid, lf], speed, shift, sy) => {   // sections laid from the mouth (the one there cut at the mouth), sliding forward
+      const step = (sheetW(lid, lf[0]) - 2 * FX_PX * 2) * sc * 0.8, sc0 = (T * speed + shift * step) % step;
       for (let k = Math.ceil(len / step) + 1; k >= 0; k--) {
         const d = k * step - step + sc0;
         if (d > len || d + step < 0) continue;
-        const fr = B.sections[(k + Math.floor(T * 14)) % B.sections.length], cut = d < 0 ? -d / (step / 0.8) : 0;   // the one at the mouth is cut there, never behind it
-        drawSheet(c, id, fr, ox + cs * Math.max(0, d), oy + sn * Math.max(0, d), { dir: a.dir, ax: 0, ay: 0.5, sc, sy: sy, trim: 2, cutL: cut });
+        drawSheet(c, lid, lf[(k + Math.floor(T * 14)) % lf.length], ox + cs * Math.max(0, d), oy + sn * Math.max(0, d),
+          { dir: a.dir, ax: 0, ay: 0.5, sc, sy, trim: 2, cutL: d < 0 ? -d / (step / 0.8) : 0 });
       }
     };
-    layer(140, 1, 0);
-    layer(260, 0.45, step / 2);   // the bright core, faster
-    // the muzzle: the charge glow at its brightest, pulsing (it also covers where the sections start)
-    drawSheet(c, id, B.charge[B.charge.length - 1], ox, oy, { sc: (0.85 + Math.sin(T * 30) * 0.12) * (0.5 + 0.5 * fade) * Math.min(1.2, mv.width / 11) });
-    if (out < 1) drawSheet(c, id, B.head[Math.floor(T * 12) % B.head.length], ox + cs * len, oy + sn * len, { dir: a.dir, ax: 0.35, sc: sc * 1.05 });
+    layer(B.body, 140, 0, 1);
+    if (B.core) layer(B.core, 260, 0.5, B.coreH || 1);
+    const [mid, mf, max] = B.muzzle;
+    drawSheet(c, mid, loop(mf, 14), ox, oy, { dir: a.dir, ax: max, sc: sc * (0.95 + Math.sin(T * 30) * 0.08) * (B.coreH ? 1.15 : 1) });
+    if (out < 1) { const [hid, hf, hax] = B.head; drawSheet(c, hid, loop(hf, 14), ox + cs * len, oy + sn * len, { dir: a.dir, ax: hax, sc }); }
     else for (const foe of this.foes(m)) {   // an impact on everything it's hitting, on the side facing the beam
       if (!foe.visible || foe.fainted || !this.beamHits(m, a, foe)) continue;
-      const t = clamp((foe.x - ox) * cs + (foe.cy - oy) * sn - foe.r * 0.6, 0, len);
-      const kit = B.impact || ['hits3', 0];
-      if (FXS[kit[0]]) drawSheet(c, kit[0], kit[1] * 6 + Math.floor(T * 16) % 3, ox + cs * t, oy + sn * t, { sc: mv.width / 9 * (0.9 + Math.sin(T * 25) * 0.1), flip: (Math.floor(T * 8) % 2) === 0 });
+      const t = clamp((foe.x - ox) * cs + (foe.cy - oy) * sn - foe.r * 0.5, 0, len), [iid, ifr, iax] = B.impact;
+      drawSheet(c, iid, loop(ifr, 16), ox + cs * t, oy + sn * t, { dir: a.dir, ax: iax, sc: sc * 1.15 });
     }
     a.bitT = (a.bitT || 0) - 1 / 60;
     if (a.bitT <= 0 && fade > 0.5) {   // bits drifting off along it
       a.bitT = 0.03;
       const d = rand(0, len), side = rand(-1, 1) * mv.width * 0.8, px = ox + cs * d - sn * side, py = oy + sn * d + cs * side;
-      if (B.petals) this.addPiece(id, null, { frames: [B.petals[(Math.random() * 3) | 0]], x: px, y: py, mx: cs * rand(40, 90) + rand(-15, 15), my: sn * rand(40, 90) + rand(5, 25),
+      if (B.petals) this.addPiece(B.petals[0], null, { frames: [B.petals[1][(Math.random() * 3) | 0]], x: px, y: py, mx: cs * rand(40, 90) + rand(-15, 15), my: sn * rand(40, 90) + rand(5, 25),
         rot: rand(0, TAU), vr: rand(-6, 6), sc: rand(0.6, 0.9), life: rand(0.5, 0.8), shrink: 0.2 });
-      if (B.sparkles && Math.random() < 0.6) this.addPiece(id, null, { frames: [B.sparkles[(Math.random() * 2) | 0]], x: px, y: py, mx: cs * 30, my: sn * 30, rise: rand(10, 25), sc: rand(0.5, 0.8), life: 0.4, grow: 0.1, shrink: 0.2 });
+      if (B.sparkles && Math.random() < 0.6) this.addPiece(B.sparkles[0], null, { frames: [B.sparkles[1][(Math.random() * 2) | 0]], x: px, y: py, mx: cs * 30, my: sn * 30, rise: rand(10, 25), sc: rand(0.5, 0.8), life: 0.4, grow: 0.1, shrink: 0.2 });
     }
   }
 
@@ -1692,7 +1696,7 @@ mixInto(Battle, class {
     if (a.mv.fx === 'stare') { this.drawStare(c, m, a); return; }
     const mv = a.mv, fx = fxOf(mv), T = this.time;
     const ox = m.x + Math.cos(a.dir) * 6, oy = m.cy + Math.sin(a.dir) * 6;
-    if (FX_PIECES && PIECE_BEAMS[mv.id] && FXS[PIECE_BEAMS[mv.id].id]) { this.drawPieceBeam(c, m, a, ox, oy, PIECE_BEAMS[mv.id]); return; }   // pieces (r192)
+    if (FX_PIECES && PIECE_BEAMS[mv.id] && FXS[PIECE_BEAMS[mv.id].body[0]]) { this.drawPieceBeam(c, m, a, ox, oy, PIECE_BEAMS[mv.id]); return; }   // pieces (r192)
     if (SHEET_BEAMS[mv.id] && FXS[mv.id]) { this.drawSheetBeam(c, m, a, ox, oy); return; }   // from the owner's sheets
     if (a.phase === 'charge') {   // a ball of energy growing at the muzzle
       const k = a.t / mv.charge, r = 2.5 + k * mv.width * 0.55;
