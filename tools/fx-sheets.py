@@ -35,6 +35,8 @@ SHEETS = {
     'discharge':     ('e3-discharge.png', 60, [4, 4]),
     'voltCannon':    ('e4-volt-cannon.webp', 40, [2, 2, 2, 2]),
     'thunderBolt':   ('e2c-thunder-bolt.png', 115, [4, 4]),   # Thunder's bolt (r176), under E2b's cloud
+    'railShot':      ('e5-rail-shot.png', 34, [2, 2, 2, 2]),    # E5, the owner sent two takes: a shot plays one of them
+    'railShotB':     ('e5b-rail-shot.png', 34, [2, 2, 2, 2]),
     'stormCloud':    ('e2b-storm-cloud.png', 36, [8]),   # Thunder's cloud (E2's own is sliced flat at the sides; its bolt is kept)
     'staticSiphon':  ('e6-static-siphon.png', 28, [8]),
     # batch 1 (dashes D1-D10, hit impacts I1)
@@ -133,7 +135,7 @@ def frames_of(im, m, counts):
 # Sheets shrunk keeping their bright lines: a pixel that a bright line runs through takes the line's colour, instead
 # of averaging it with the dark outline round it (thin lightning forks turned dark grey). The older sheets were made
 # before this and the owner approved them as they are, so it's per sheet.
-CLEAN_SHRINK = {'thunderbolt', 'thunder', 'thunderBolt', 'discharge', 'voltCannon', 'staticSiphon'}
+CLEAN_SHRINK = {'thunderbolt', 'thunder', 'thunderBolt', 'railShot', 'railShotB', 'discharge', 'voltCannon', 'staticSiphon'}
 
 # Small accents that must survive the shrink (E6's green draining sparks): a pixel any of them runs through takes their colour
 ACCENT = {'staticSiphon': lambda r, g, b: g > r + 15 and g > b + 40}

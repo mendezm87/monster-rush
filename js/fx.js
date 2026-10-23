@@ -745,7 +745,10 @@ const SHEET_BEAMS = {
   infernoBeam:  { charge: 0, start: 1, full: [1, 2], end: 3 },
   hydroCannon:  { charge: 0, start: 1, full: [2, 3, 4], end: 6, tail: 7 },   // W1 (r161)
   tidalCannon:  { charge: 0, start: 1, full: [2, 3, 4, 5], end: 7, tail: 8 },   // W2
-  voltCannon:   { charge: [0, 1], start: 2, full: [3, 4, 3, 5], end: 6, tail: 7, stretch: 1.5 },   // E4 (r171): the far end bursts now and then; stretch: its start and fading frames are shown shorter, not stretched (they smear)
+  voltCannon:   { charge: [0, 1], start: 2, full: [3, 4, 3, 5], end: 6, tail: 7, stretch: 1.5 },
+  // E5 (r179): rings charging and spinning at the muzzle (aimed), the flash, the beam with its rings, the far end
+  // bursting, the trail. The owner sent two takes: each shot plays one (alt). times: start, end, tail windows (a fast beam)
+  railShot:     { charge: [0, 1], aimCharge: true, start: 2, full: [3, 4], end: 5, tail: 6, alt: 'railShotB', times: [0.06, 0.13, 0.06], startStretch: 1.3 },   // startStretch: its muzzle flash isn't stretched out to the beam's length   // E4 (r171): the far end bursts now and then; stretch: its start and fading frames are shown shorter, not stretched (they smear)
 };
 // Shots played from a sheet (W3, W4): frames looped while it flies, the size of its looped frames in world units
 // where the hole is in each Whirlpool and Maelstrom frame (0..1 across and down), measured from the sheets
@@ -1334,13 +1337,15 @@ mixInto(Battle, class {
   // Flamethrower and Inferno Beam from their sheets: a spark or orb while it charges, then the stream stretched to
   // the beam's length (flickering between its two full frames), then the fading frame.
   drawSheetBeam(c, m, a, ox, oy) {
-    const mv = a.mv, id = mv.id, T = this.time, B = SHEET_BEAMS[id];
+    const mv = a.mv, T = this.time, B = SHEET_BEAMS[mv.id];
+    const id = B.alt && FXS[B.alt] ? (a.sheet ??= Math.random() < 0.5 ? mv.id : B.alt) : mv.id, [t0, t1, t2] = B.times || [0.08, 0.18, 0.08];
     if (a.phase === 'charge') {   // one charging frame, or several played through as it charges
       const k = a.t / mv.charge, ch = [].concat(B.charge);
-      drawSheet(c, id, ch[Math.min(ch.length - 1, Math.floor(k * ch.length))], ox, oy, { sc: 0.4 + k * 0.6 }); return;
+      drawSheet(c, id, ch[Math.min(ch.length - 1, Math.floor(k * ch.length))], ox, oy, B.aimCharge ? { sc: 0.5 + k * 0.5, dir: a.dir, ax: 0.25 } : { sc: 0.4 + k * 0.6 }); return;
     }
-    const left = mv.dur - a.t, fr = a.t < 0.08 ? B.start : left < 0.08 && B.tail !== undefined ? B.tail : left < 0.18 ? B.end : B.full[Math.floor(T / 0.07) % B.full.length];
-    const sx = B.stretch && !B.full.includes(fr) ? Math.min(B.stretch, mv.len / sheetW(id, fr)) : mv.len / sheetW(id, fr);
+    const left = mv.dur - a.t, fr = a.t < t0 ? B.start : left < t2 && B.tail !== undefined ? B.tail : left < t1 ? B.end : B.full[Math.floor(T / 0.07) % B.full.length];
+    const cap = fr === B.start && B.startStretch ? B.startStretch : B.stretch && !B.full.includes(fr) ? B.stretch : Infinity;
+    const sx = Math.min(cap, mv.len / sheetW(id, fr));
     drawSheet(c, id, fr, ox, oy, { dir: a.dir, ax: 0, ay: 0.5, sx, sy: Math.min(sx, 1.25) });
   }
 
