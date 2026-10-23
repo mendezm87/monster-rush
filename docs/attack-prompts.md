@@ -214,11 +214,11 @@ Coreature vanishes inside it; the other dashes work because their frames wrap a 
 
 ## Batch 3: water (r159; the owner: "give me the prompts and I will start")
 
-Every water attack except Aqua Jet (it already has D2). 8 frames each, small steps, nothing cut off. Water should
+Every water attack except Aqua Jet (it already has D2). **Run each prompt on its own, one attack per image** (r161: all seven in one picture came out far too small, about 65 pixels a frame). 8 frames each, small steps, nothing cut off. Water should
 look like **one body of water**: deep blue edges, bright cyan, white foam and highlights, splashes and droplets.
 
 **W1 · Hydro Cannon** (a beam of water from the mouth)
-> A powerful blast of water firing to the right from a small point, 8 frames in a row, each a small step from the one
+> A powerful blast of water firing to the right from a small point, 8 frames in two rows of 4 (long beams need the room), each a small step from the one
 > before: water gathering into a swirling ball, a burst of spray at the nozzle, a thick jet of water shooting out,
 > the jet at full length with white foam churning along it and twisting currents inside, spray flying off the edges,
 > the far end exploding into a big splash, the jet thinning, a last splash of droplets. Deep blue edges, bright
@@ -228,7 +228,7 @@ look like **one body of water**: deep blue edges, bright cyan, white foam and hi
 > with hard-edged shading, no creature or character, plain dark navy background, no text
 
 **W2 · Tidal Cannon** (the evolved, bigger Hydro Cannon)
-> A massive beam of seawater firing to the right, 8 frames in a row, each a small step from the one before: a
+> A massive beam of seawater firing to the right, 8 frames in two rows of 4 (long beams need the room), each a small step from the one before: a
 > glowing orb of water swelling, a ring of spray bursting out, a huge torrent shooting out with a wave crest rolling
 > along the top of it and whirlpools spinning inside, foam and droplets streaming off, the far end crashing into a
 > tall splash like a wave breaking, the torrent at full power, then thinning, then mist and droplets. Deep blue
