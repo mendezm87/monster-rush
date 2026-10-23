@@ -756,7 +756,8 @@ const PIECE_BEAMS = {
     thick: 1.5, petals: ['smug1', [14, 15, 16]], sparkles: ['smug1', [17, 18]] },   // SMUG-1 (SMUG-1c to come)
 };
 // dashes built from pieces so far: COMMON-1's dust, speed lines and thud (r186)
-const PIECE_DASH = { bodySlam: 'slam' };
+const PIECE_DASH = { bodySlam: { thud: true },
+  zoomies: { stars: 0.09, starPop: true }, zoomiesMax: { stars: 0.05, starPop: true, zigzag: true } };   // BEAST-2 (r195): Smugshi's line
 // each look's hit pieces (r188): [sheet, row]; a row is a burst in 3 frames then 3 bits (docs/attack-pieces.md HITS-1..4)
 const HIT_KITS = { fire: ['hits1', 0], water: ['hits1', 1], electric: ['hits1', 2], ice: ['hits1', 3],
   grass: ['hits2', 0], rock: ['hits2', 1], flying: ['hits2', 2], steel: ['hits2', 3],
@@ -966,7 +967,9 @@ mixInto(Battle, class {
     // signature hits
     const toward = src ? Math.atan2(tgt.cy - src.cy, tgt.x - src.x) : 0;
     const SM = SHEET_MOVES[mv.id];
-    if (big && FX_PIECES && PIECE_DASH[mv.id] && FXS.common1) this.fxThud(tgt, src);   // a dash built from pieces lands with a thud
+    const PD = FX_PIECES && PIECE_DASH[mv.id] && FXS.common1 && PIECE_DASH[mv.id];
+    if (big && PD && PD.thud) this.fxThud(tgt, src);   // a dash built from pieces lands with a thud
+    if (big && PD && PD.starPop && FXS.beast2) this.fxStarPop(tgt);   // or pops a star
     else if (big && SM && SM.hit) { const hs = SM.hitSheet || SM.sheet || mv.id; sheetPart(this, hs, SM.hit, tgt.x, tgt.cy, 0.5, { sc: tgt.r * 3 / sheetW(hs, SM.hit[0]), flip: SM.face && src && src.x > tgt.x }); }   // its sheet's impact
     if (mv.fx === 'claw') this.particles.push({ kind: 'claw', x: tgt.x, y: tgt.cy, size: 34, rot: toward + Math.PI / 2 + rand(-0.3, 0.3), color: fx[1], life: 0.3, max: 0.3 });
     if (mv.fx === 'slash') this.particles.push({ kind: 'slash', x: tgt.x, y: tgt.cy, size: 22, rot: toward + rand(-0.4, 0.4), color: fx[1], life: 0.28, max: 0.28 });
@@ -1008,6 +1011,7 @@ mixInto(Battle, class {
     if (mv.id === 'fireBlast') { sheetPart(this, 'fireBlast', [2, 3, 3, 4], x, y - 4, 0.75, { sc: r * 2.4 / sheetW('fireBlast', 3) }); this.addShake(5); return; }
     const user = this.mons.find(o => o.action && o.action.mv === mv && Math.hypot(o.x - x, o.y - y) < 2);   // a burst's user stands in the middle of it
     if (mv.id === 'eruption' && FX_PIECES && FXS.eruptionParts) { this.fxEruptionPieces(x, y, r, this.mons.find(o => o.action && o.action.mv === mv && Math.hypot(o.x - x, o.y - y) < 2)); return; }
+    if (FX_PIECES && FXS.beast2 && (mv.id === 'shibaScream' || mv.id === 'shibaRoar')) { this.fxShout(x, y, r, user, mv.id === 'shibaRoar'); return; }   // BEAST-2 (r195)
     if (FX_PIECES && FXS.common1 && (mv.id === 'heavyStomp' || mv.id === 'quake')) { this.fxGroundSlam(x, y, r, user, { big: mv.id === 'quake' }); return; }   // COMMON-1 (r186; Quake gets rock spikes with EARTH-1)
     if (mv.id === 'eruption') { const sc = r * 1.25 / sheetW('eruption', 0); sheetPart(this, 'eruption', [1, 2, 2, 3, 4], x, y + sheetH('eruption', 0) * sc / 2, 1.1, { sc, ay: 1, user }); this.addShake(8); return; }
     if (mv.id === 'geyserVent' && FXS.geyserVent) { const sc = r * 1.7 / sheetW('geyserVent', 0); sheetPart(this, 'geyserVent', [2, 3, 4, 5, 6, 7, 8], x, y + 4 + sheetH('geyserVent', 0) * sc / 2, 1.1, { sc, ay: 1, user }); this.addShake(6); return; }
@@ -1391,6 +1395,20 @@ mixInto(Battle, class {
       this.addPiece(id, m, { frames: [0, 1, 2, 3], x: m.x - cx * m.r * 0.5 + rand(-3, 3), y: m.y + rand(-2, 2), mx: -cx * rand(10, 30), rise: rand(8, 16),
         sc: rand(0.22, 0.34), swell: 0.4, ay: 0.85, life: rand(0.3, 0.42), flip: cx > 0 });
     }
+    const PD = PIECE_DASH[a.mv.id];
+    if (PD.stars && FXS.beast2) {   // little gold stars spinning off it (BEAST-2)
+      a.starT = (a.starT || 0) - dt;
+      while (a.starT <= 0) {
+        a.starT += PD.stars;
+        const ang = back + rand(-1, 1), sp = rand(40, 90), big = Math.random() < 0.3;
+        this.addPiece('beast2', m, { frames: big ? [3, 4, 5] : [0, 1, 2], fps: 14, x: m.x, y: m.y - m.h * rand(0.2, 0.7), mx: Math.cos(ang) * sp, my: Math.sin(ang) * sp * 0.6,
+          vz: rand(20, 60), g: 260, sc: rand(0.35, 0.55), life: rand(0.35, 0.55), shrink: 0.15 });
+      }
+    }
+    if (PD.zigzag && FXS.beast2 && !a.zig) {   // Zoomies Max: a gold zigzag marking its path
+      a.zig = true;
+      this.addPiece('beast2', null, { frames: [7], x: m.x + cx * 30, y: m.y - m.h * 0.3, rot: a.dir, sc: 0.8, grow: 0.08, shrink: 0.25, life: 0.5 });
+    }
     a.lineT = (a.lineT || 0) - dt;
     while (a.lineT <= 0) {   // speed lines streaming back off it
       a.lineT += 0.035;
@@ -1399,6 +1417,32 @@ mixInto(Battle, class {
         mx: -cx * 50, my: -cy * 50, rot: a.dir, ax: 0.2, sc: rand(0.5, 0.8), life: 0.16, shrink: 0.1 });
     }
   }
+  // a star popping out of a hit (Zoomies)
+  fxStarPop(tgt) {
+    for (let i = 0; i < 3; i++) {
+      const ang = -Math.PI / 2 + rand(-1.2, 1.2), sp = rand(40, 80);
+      this.addPiece('beast2', null, { frames: [3, 4, 5], fps: 16, x: tgt.x, y: tgt.cy, mx: Math.cos(ang) * sp, my: Math.sin(ang) * sp * 0.7, vz: rand(40, 90), g: 300,
+        sc: rand(0.45, 0.7), grow: 0.05, shrink: 0.2, life: 0.6 });
+    }
+  }
+  // the Shiba Scream (BEAST-2, r195): the comic shout bubble pops above its head, shout lines burst round its head, and
+  // arcs of sound roll outward all round it in rings (the far ones behind it, the near ones in front); the Roar is
+  // louder: more and bigger rings, and the ground shakes (COMMON-1)
+  fxShout(x, y, r, user, roar) {
+    const id = 'beast2', P = o => this.addPiece(id, user, o), m = user, h = m ? m.h : 30, hx = x + (m ? m.face * 4 : 0), hy = y - h * 0.75;
+    if (m) m.piecesUntil = this.time + 1.4;
+    P({ frames: [13, 14, 14, 14, 15], x: hx + (m ? m.face * 14 : 0), y: hy - 30, near: true, sc: roar ? 1.25 : 1, life: 0.6, grow: 0.06 });
+    P({ frames: [roar ? 12 : 11], x: hx, y: hy, near: true, sc: roar ? 1.2 : 1, grow: 0.06, swell: 1.5, shrink: 0.12, life: 0.35 });
+    const rings = roar ? 3 : 2, n = 8, cy0 = y - h * 0.4;
+    for (let k = 0; k < rings; k++) for (let i = 0; i < n; i++) {   // arcs of sound rolling outward from its body
+      const ang = (i + k * 0.5) / n * TAU, sp = r * (roar ? 3.4 : 3), cs = Math.cos(ang), sn = Math.sin(ang);
+      P({ frames: [8, 9, 10], x: x + cs * h * 0.5, y: cy0 + sn * h * 0.35, mx: cs * sp, my: sn * sp * 0.7, rot: ang + Math.PI,
+        sc: roar ? 0.85 : 0.7, swell: 0.6, grow: 0.05, shrink: 0.15, life: 0.42, delay: k * 0.13, near: sn > 0 });
+    }
+    if (roar && FXS.common1) this.fxGroundSlam(x, y, r * 0.7, user);
+    this.addShake(roar ? 8 : 5);
+  }
+
   // a heavy hit: the comic impact star where it lands, a shock ring on the ground, pebbles and dust
   fxThud(tgt, src) {
     const id = 'common1', P = q => this.addPiece(id, tgt, q), from = src ? Math.atan2(src.y - tgt.y, src.x - tgt.x) : 0;

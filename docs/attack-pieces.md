@@ -16,7 +16,7 @@ and the game moves them **60 times a second**:
 - **Depth:** pieces on the far side of the Coreature are drawn behind it and the ones on the near side in front,
   so it stands *inside* its attack (the owner's idea, r183).
 
-**Received so far:** COMMON-1 (r186: Body Slam, Heavy Stomp, Quake's stomp for now, Belly Flop's landing)), COMMON-2 (r187: every boost and heal; its aura flames have a hole, so they aren't used), HITS-1 (r188: fire, water, electric and ice hits), HITS-2 (r189: plant, earth, wind and metal hits), HITS-3 (r190: arcane, shade, phantom and dragonkin hits), HITS-4 (r191: beast, brawl, glitch and critical hits). **Batch 1 is complete.** SMUG-1 (r192: Smug Beam, Supreme Smug Beam; the first beam built from sections). SMUG-1b (r194: the Smug Beam's patterned body, core, muzzle and impact; its smug face is too small to read in the game). SMUG-1c (Supreme) still to run. **Eruption is done** (prompt P1 in `docs/attack-prompts.md`, picture `docs/refs/p1-eruption-pieces.png`), and it's on in
+**Received so far:** COMMON-1 (r186: Body Slam, Heavy Stomp, Quake's stomp for now, Belly Flop's landing)), COMMON-2 (r187: every boost and heal; its aura flames have a hole, so they aren't used), HITS-1 (r188: fire, water, electric and ice hits), HITS-2 (r189: plant, earth, wind and metal hits), HITS-3 (r190: arcane, shade, phantom and dragonkin hits), HITS-4 (r191: beast, brawl, glitch and critical hits). **Batch 1 is complete.** SMUG-1 (r192: Smug Beam, Supreme Smug Beam; the first beam built from sections). SMUG-1b (r194: the Smug Beam's patterned body, core, muzzle and impact; its smug face is too small to read in the game). SMUG-1c (Supreme) still to run. BEAST-2 (r195: Zoomies, Zoomies Max, Shiba Scream, Shiba Roar). **Eruption is done** (prompt P1 in `docs/attack-prompts.md`, picture `docs/refs/p1-eruption-pieces.png`), and it's on in
 the game since r185. **Thunder** is already built this way (code-drawn gathering clouds, then the E2b storm cloud and
 the E2c bolt) and stays as it is. Everything else is below.
 
@@ -335,9 +335,27 @@ The petals and sparkles from SMUG-1 stay. Run it on its own.
 > sprites for an action game, chunky pixels with a dark 1-pixel outline, light from the top left, limited bright
 > palette with hard-edged shading, no creature or character, plain dark navy background, no text, no labels
 
-For the Supreme Smug Beam, the same prompt with "a thicker white-hot energy beam with bright gold edges, a thin crimson
-outline and gold ribbons spiralling along inside it with cherry blossom petals caught in the light" in row 1, and
-"gold and crimson" in place of "pink and gold" in rows 3 and 4 (call that one **SMUG-1c**).
+### SMUG-1c · Supreme Smug Beam, take 2 (Smugshogun)
+
+The samurai upgrade of SMUG-1b: thicker, straighter and prouder, white-hot with gold and crimson, cherry blossom
+petals caught in the light. The petals and sparkles from SMUG-1 stay. Run it on its own.
+
+> A sprite sheet of separate beam effect pieces for an action game, laid out in exactly 4 rows with lots of empty
+> space between every piece. Row 1: a straight horizontal section of a thick white-hot energy beam with bright gold
+> edges and a thin crimson outline, with gold ribbons spiralling along inside it and small pale pink cherry blossom
+> petals caught in the light, the same thickness all along, cut off straight at both ends so copies placed end to end
+> join into one long beam, in 4 frames of a loop as the ribbons twist forward, each a small step from the last. Row 2:
+> a thin straight horizontal strand of blazing white light with a pale gold shimmering edge, the same thickness all
+> along, cut off straight at both ends, in 4 frames of a loop (the beam's bright core). Row 3: a burst of gold and
+> crimson light at the mouth of a beam pointing right (a round flare with sharp golden rays like a rising sun and a
+> crimson ring) in 4 frames of a loop as it pulses. Row 4: a gold and crimson impact burst where a beam hits
+> something, pointing left toward where the beam comes from (a splash of white and gold light with sharp rays, sparks
+> and a few cherry blossom petals flying), in 4 frames of a loop. Every piece complete and fully inside its own space
+> with a wide margin of empty background all round it, nothing touching another piece or the edges of the picture,
+> nothing cut off. No boxes, panels, frames or borders behind the pieces, one plain background everywhere. 16-bit
+> pixel art visual effect sprites for an action game, chunky pixels with a dark 1-pixel outline, light from the top
+> left, limited bright palette with hard-edged shading, no creature or character, plain dark navy background, no
+> text, no labels
 
 ### SMUG-1 · Smug Beam and Supreme Smug Beam (Smugshi, Smugshogun) (first take, in the game since r192)
 
