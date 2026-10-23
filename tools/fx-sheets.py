@@ -27,6 +27,8 @@ SHEETS = {
     'bubbleSpray':   ('w3-bubble-spray.png', 26, [8]),
     'waterShot':     ('w4-water-shot.png', 24, [8]),     # Spout Shot, Cuff Cannon, Twin Cannon
     'geyserVent':    ('w5-geyser-vent.png', 70, [5, 4]),
+    'whirlpool':     ('w6-whirlpool.webp', 90, [4, 4]),
+    'maelstrom':     ('w7-maelstrom.webp', 100, [4, 4]),
     # batch 1 (dashes D1-D10, hit impacts I1)
     'voltRush':      ('d1-volt-rush.png', 46, [5]),
     'voltRushB':     ('d1b-volt-rush.png', 46, [5]),

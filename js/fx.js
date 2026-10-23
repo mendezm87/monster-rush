@@ -1316,6 +1316,11 @@ mixInto(Battle, class {
   // A vortex: a tornado for flying, a whirlpool for water, a spiral of the type's colour otherwise.
   drawVortex(c, m, a) {
     const mv = a.mv, fx = fxOf(mv), T = this.time;
+    if (FXS[mv.id] && (mv.id === 'whirlpool' || mv.id === 'maelstrom')) {   // the owner's sheets (W6, W7): forming, spinning (looped), breaking up
+      const left = mv.dur - a.t, fr = a.t < 0.24 ? Math.floor(a.t / 0.08) : left < 0.24 ? 6 + (left < 0.12 ? 1 : 0) : (mv.id === 'whirlpool' ? [3, 5] : [3, 4, 5])[Math.floor(T / 0.08) % (mv.id === 'whirlpool' ? 2 : 3)];   // (Whirlpool's frame 4 has a dark funnel that would hide its user)
+      drawSheet(c, mv.id, fr, m.x, m.y + 2, { sc: mv.r * 2 / sheetW(mv.id, 4) });
+      return;
+    }
     const fade = clamp(Math.min(a.t / 0.15, (mv.dur - a.t) / 0.2), 0, 1), R = mv.r * fade;
     if (R < 2) return;
     if (styleOf(mv) === 'flying') {   // a funnel of wind with a dark cloud on top
