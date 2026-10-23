@@ -244,8 +244,8 @@ const RELIC_AURA = {
 };
 
 // Auras some Coreatures always have, drawn the same way as relic auras (RELIC_AURA below).
-// Nyxdrake (id drakorn): Arcane light rising off the nebula on its chest.
-const SPECIES_AURA = { drakorn: 'nebula', railwarden: 'coils' };
+// Nyxdrake (id nyxdrake): Arcane light rising off the nebula on its chest.
+const SPECIES_AURA = { nyxdrake: 'nebula', railwarden: 'coils' };
 // Railwarden: lightning crackling between the tips of its three coil spires, jumping every few frames.
 RELIC_AURA.coils = (ctx, b, m, X, Y) => {
   const step = Math.floor(b.time / 0.08), seed = (step * 9301 + (m.uid || (m.uid = _uid++)) * 49297) % 233280;

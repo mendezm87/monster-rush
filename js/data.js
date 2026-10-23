@@ -254,12 +254,12 @@ const ROSTER = [
     moves: ['megaBeam', 'bodySlam', 'heavyStomp', 'snack'] },
   { id: 'frostling', name: 'FROSTLING', types: ['ice'],      hp: 960,  atk: 1.1,  def: 0.92, spd: 96,  size: 'M', item: 'quickCharm',
     moves: ['iceShard', 'frostRay', 'blizzard', 'frostArmor'] },
-  // The night-sky dragons (r98, the owner's design): smug little Cosmite grows into Drakorn. Dragonkin/Arcane (r99).
+  // The night-sky dragons (r98, the owner's design): smug little Cosmite grows into Nyxdrake. Dragonkin/Arcane (r99).
   { id: 'cosmite',   name: 'COSMITE',   types: ['dragonkin', 'arcane'], hp: 980, atk: 1.05, def: 1.0, spd: 84, size: 'M', item: 'powerBand',
-    moves: ['moonblast', 'dragonClaw', 'starfall', 'dragonDance'], evolve: { to: 'drakorn' } },
-  { id: 'drakorn',   name: 'NYXDRAKE',   types: ['dragonkin', 'arcane'], hp: 1350, atk: 1.25, def: 1.05, spd: 90, size: 'L', item: 'powerBand',
+    moves: ['moonblast', 'dragonClaw', 'starfall', 'dragonDance'], evolve: { to: 'nyxdrake' } },
+  { id: 'nyxdrake',   name: 'NYXDRAKE',   types: ['dragonkin', 'arcane'], hp: 1350, atk: 1.25, def: 1.05, spd: 90, size: 'L', item: 'powerBand',
     moves: ['dragonPulse', 'dragonClaw', 'starfall', 'dragonDance'] },
-  { id: 'boulderon', name: 'BOULDERON', types: ['earth'], hp: 1420, atk: 1.15, def: 1.38, spd: 55, size: 'L', item: 'ironPlate',
+  { id: 'slabominable', name: 'SLABOMINABLE', types: ['earth'], hp: 1420, atk: 1.15, def: 1.38, spd: 55, size: 'L', item: 'ironPlate',
     moves: ['rockSlide', 'quicksand', 'rollout', 'quake'] },
   // The mind line (r97): a mind trapped in an old brass astrolabe, freed as an oracle jelly, then its stone face restored.
   { id: 'gyroculus', name: 'GYROCULUS', types: ['arcane', 'metal'], hp: 820, atk: 1.0, def: 1.05, spd: 90, size: 'M', item: 'quickCharm',
@@ -278,7 +278,7 @@ const ROSTER = [
     moves: ['airSlash', 'gust', 'razorGale', 'tornado'] },
   { id: 'venomire',  name: 'VENOMIRE',  types: ['glitch'],   hp: 1020, atk: 1.02, def: 1.08, spd: 78,  size: 'M', item: 'toxicVial',
     moves: ['sludgeBomb', 'toxicPool', 'acidSpray', 'venomJet'] },
-  { id: 'scarablade',name: 'BUGILIST',  types: ['plant', 'brawl'], hp: 950, atk: 1.1, def: 1.05, spd: 82, size: 'M', item: 'powerBand',
+  { id: 'bugilist',name: 'BUGILIST',  types: ['plant', 'brawl'], hp: 950, atk: 1.1, def: 1.05, spd: 82, size: 'M', item: 'powerBand',
     moves: ['megahorn', 'pinMissile', 'beetleBarrage', 'bulkUp'] },
   { id: 'wispurr',   name: 'WISPURR',   types: ['phantom'],    hp: 950,  atk: 1.25, def: 0.88, spd: 104, size: 'M', item: 'quickCharm',
     moves: ['shadowBall', 'phantomStrike', 'spiritFlames', 'spectralRay'] },
@@ -321,11 +321,11 @@ const EVOLVED = [
   // Slumbear's three bears (r134, the owner's idea): his jumbled bear data sorts itself into one bear when he
   // Restores, decided by the area he's in (`areas`): the cold ones make a polar bear, the green ones a panda,
   // anywhere else a grizzly. Sleepy names, like his.
-  { id: 'polarest', name: 'POLAROAR', types: ['beast', 'ice'], hp: 2200, atk: 1.3, def: 1.25, spd: 62, size: 'L', item: 'snackPouch',
+  { id: 'polaroar', name: 'POLAROAR', types: ['beast', 'ice'], hp: 2200, atk: 1.3, def: 1.25, spd: 62, size: 'L', item: 'snackPouch',
     moves: ['megaBeam', 'bodySlam', 'blizzard', 'snack'], from: 'slumbear', areas: ['summit', 'grotto'] },
-  { id: 'bambooze', name: 'PANDAWN', types: ['beast', 'plant'], hp: 2350, atk: 1.2, def: 1.32, spd: 52, size: 'L', item: 'snackPouch',
+  { id: 'pandawn', name: 'PANDAWN', types: ['beast', 'plant'], hp: 2350, atk: 1.2, def: 1.32, spd: 52, size: 'L', item: 'snackPouch',
     moves: ['megaBeam', 'bodySlam', 'seedBomb', 'snack'], from: 'slumbear', areas: ['meadow', 'ruins'] },
-  { id: 'grizzleep', name: 'GRIZZQUAKE', types: ['beast', 'earth'], hp: 2300, atk: 1.4, def: 1.28, spd: 54, size: 'L', item: 'snackPouch',
+  { id: 'grizzquake', name: 'GRIZZQUAKE', types: ['beast', 'earth'], hp: 2300, atk: 1.4, def: 1.28, spd: 54, size: 'L', item: 'snackPouch',
     moves: ['megaBeam', 'bodySlam', 'quake', 'snack'], from: 'slumbear' },
   { id: 'infernox', name: 'INFERNOX', types: ['fire', 'earth'], hp: 1400, atk: 1.26, def: 1.15, spd: 90, size: 'L', item: 'emberStone',
     moves: ['blazeRush', 'infernoBeam', 'fireBlast', 'magmaQuake'], from: 'cinderox' },

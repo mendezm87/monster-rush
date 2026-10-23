@@ -1,4 +1,4 @@
-// Slumbear: slumbear, and the three bears his data can sort into when he Restores (polarest, bambooze, grizzleep). Drawn with the helpers in js/sprites.js (PixGrid shapes, rigParts, rigEye...).
+// Slumbear: slumbear, and the three bears his data can sort into when he Restores (polaroar, pandawn, grizzquake). Drawn with the helpers in js/sprites.js (PixGrid shapes, rigParts, rigEye...).
 // Each monster: MONSTER_ART (front, side, back), MONSTER_ART_DIAG (fside, bside) and its body type in RIGGED.
 //
 // Redesigned in r130 with the owner over several rounds (docs/concept-prompts.md round 6, mock-ups in
@@ -142,10 +142,10 @@ Object.assign(FIDGETS, {
   slumbear: { fps: 5, every: 9, frames: [{ eyes: 'blink', head: [0, 1] }, { eyes: 'sleep', head: [0, 2], body: 1 }, { eyes: 'sleep', head: [0, 2], body: 1 }, { eyes: 'hurt', head: [0, -1] }, { }] },   // dozes off and jolts awake
 });
 
-// ---- Slumbear's three bears: POLAROAR (id polarest), PANDAWN (bambooze), GRIZZQUAKE (grizzleep).
+// ---- Slumbear's three bears: POLAROAR, PANDAWN, GRIZZQUAKE.
 // r134 (the owner's idea): when he Restores, his jumbled bear data sorts itself into one bear, decided by the
 // area he's in (data.js `areas`). r135: awakened and fierce, embracing their elements. r136: lean. r137 the
-// names (the owner's picks; the sleepy ones, Polarest / Bambooze / Grizzleep, are kept as ids). r138 (the owner:
+// names (the owner's picks; their first, sleepy names were Polarest, Bambooze and Grizzleep, kept in case they're wanted). r138 (the owner:
 // "the sprites look pretty bad, put some effort into those"): redrawn as powerful bears in a fighting crouch:
 // a deep barrel chest tapering to the hips, thick thighs, wide clawed paws, arms held out from the body, the
 // head low and forward with a fur ruff under the chin, a heavy brow, a long snarling muzzle with four fangs,
@@ -300,15 +300,15 @@ const stonePlate = (p, x, y, w, h2, glow = true) => {
   p.px(Math.round(x - 0.4 * w), Math.round(y - h2 + 1), BEAR_MOSS).px(Math.round(x - 0.4 * w) + 1, Math.round(y - h2 + 1), BEAR_MOSS);
   if (glow) { const cx = Math.round(x), cy = Math.round(y); p.px(cx - 1, cy, BEAR_GLOW).px(cx, cy + 1, BEAR_GLOW).px(cx + 1, cy, BEAR_GLOW); }   // a glowing crack
 };
-const POLAREST = { FUR: P('#e8eef6', '#a8b8d0', '#ffffff'), ARM: P('#e2eaf4', '#a2b4cc', '#ffffff'), LEG: P('#dae2ee', '#9caec8', '#f6faff'),
+const POLAROAR = { FUR: P('#e8eef6', '#a8b8d0', '#ffffff'), ARM: P('#e2eaf4', '#a2b4cc', '#ffffff'), LEG: P('#dae2ee', '#9caec8', '#f6faff'),
   HEAD: P('#f2f6fa', '#c4d2e2', '#ffffff'), MUZ: P('#fbfaf6', '#d8dce4', '#ffffff'), EAR_A: P('#eef3f8', '#bccbdd', '#ffffff'),
   EAR_B: P('#3a3640', '#25222a', '#56525e'), NOSE: '#1e1a22', CHEST: P('#d4e2f0', '#aec0d4', '#eef4fa'),
   EYE: '#6ae8ff', BROW: '#3a4a5a', CLAW: '#9ad8f0' };
-const BAMBOOZE = { FUR: P('#f4f0e6', '#d4ccbc', '#ffffff'), ARM: P('#3a3640', '#25222a', '#56525e'), LEG: P('#3a3640', '#25222a', '#56525e'),
+const PANDAWN = { FUR: P('#f4f0e6', '#d4ccbc', '#ffffff'), ARM: P('#3a3640', '#25222a', '#56525e'), LEG: P('#3a3640', '#25222a', '#56525e'),
   HEAD: P('#f6f2e8', '#d8d0c0', '#ffffff'), MUZ: P('#fbf8f0', '#ddd6c8', '#ffffff'), EAR_A: P('#3a3640', '#25222a', '#56525e'),
   EAR_B: P('#8a5a3a', '#6a4028', '#a87850'), NOSE: '#1e1a22', PATCH: P('#3a3640', '#25222a', '#56525e'),
   EYE: '#9aff5a', BROW: null, CLAW: '#e8e2d2' };
-const GRIZZLEEP = { FUR: P('#8a5a3a', '#663e26', '#a87850'), ARM: P('#7e5234', '#5a3a22', '#9a6e4c'), LEG: P('#6e4a30', '#4c321c', '#8a6444'),
+const GRIZZQUAKE = { FUR: P('#8a5a3a', '#663e26', '#a87850'), ARM: P('#7e5234', '#5a3a22', '#9a6e4c'), LEG: P('#6e4a30', '#4c321c', '#8a6444'),
   HEAD: P('#8e5e3e', '#6a422a', '#ac7c56'), MUZ: P('#d8b88a', '#b09068', '#f0d4a8'), EAR_A: P('#8a5a3a', '#663e26', '#a87850'),
   EAR_B: P('#f1eee8', '#d2ccc0', '#ffffff'), NOSE: '#1e1a22', CHEST: P('#a87a52', '#86603e', '#c09468'), hump: true,
   EYE: '#ffb040', BROW: '#3a2418', CLAW: '#e8dcc0' };
@@ -340,7 +340,7 @@ function polarIce(layer, v, p) {
 // Pandawn: the black band across its shoulders, a quiver of spear-cut bamboo on its back, leaf-wrapped
 // forearms, a leaf headband with its tails flying, a bamboo staff held like a spear
 function pandaBamboo(layer, v, p) {
-  const K = BAMBOOZE.ARM;
+  const K = PANDAWN.ARM;
   const staff = (q, x0, y0, x1, y1) => { q.poly([[x0, y0], [x0 + 2, y0], [x1 + 2, y1], [x1, y1]], BEAR_BAMBOO, { edge: true }); for (let k = 1; k < 5; k++) q.px(Math.round(x0 + (x1 - x0) * k / 5), Math.round(y0 + (y1 - y0) * k / 5), BEAR_BAMBOO.s); q.poly([[x1, y1], [x1 + 2, y1], [x1 + 2, y1 - 4]], BEAR_BAMBOO, { edge: true }); };
   const wrap = (q, x, y) => { q.rect(x, y, 6, 2, BEAR_LEAF.b); q.rect(x, y, 6, 1, BEAR_LEAF.l); q.px(x + 2, y + 2, BEAR_LEAF.s); };
   if (v === 'side') {
@@ -397,19 +397,19 @@ function grizzlyStone(layer, v, p) {
   }
 }
 Object.assign(MONSTER_ART, {
-  polarest(g, v = 'front') { bearForm(g, v, POLAREST, polarIce); },
-  bambooze(g, v = 'front') { bearForm(g, v, BAMBOOZE, pandaBamboo); },
-  grizzleep(g, v = 'front') { bearForm(g, v, GRIZZLEEP, grizzlyStone); },
+  polaroar(g, v = 'front') { bearForm(g, v, POLAROAR, polarIce); },
+  pandawn(g, v = 'front') { bearForm(g, v, PANDAWN, pandaBamboo); },
+  grizzquake(g, v = 'front') { bearForm(g, v, GRIZZQUAKE, grizzlyStone); },
 });
 Object.assign(MONSTER_ART_DIAG, {
-  polarest(g, v) { bearDiag(g, v, POLAREST, polarIce); },
-  bambooze(g, v) { bearDiag(g, v, BAMBOOZE, pandaBamboo); },
-  grizzleep(g, v) { bearDiag(g, v, GRIZZLEEP, grizzlyStone); },
+  polaroar(g, v) { bearDiag(g, v, POLAROAR, polarIce); },
+  pandawn(g, v) { bearDiag(g, v, PANDAWN, pandaBamboo); },
+  grizzquake(g, v) { bearDiag(g, v, GRIZZQUAKE, grizzlyStone); },
 });
-Object.assign(RIGGED, { polarest: 'biped', bambooze: 'biped', grizzleep: 'biped' });
-Object.assign(TWO_SIDED, { slumbear: true, polarest: true, bambooze: true, grizzleep: true });   // their sides differ: own facing-left pictures (sprites.js)
+Object.assign(RIGGED, { polaroar: 'biped', pandawn: 'biped', grizzquake: 'biped' });
+Object.assign(TWO_SIDED, { slumbear: true, polaroar: true, pandawn: true, grizzquake: true });   // their sides differ: own facing-left pictures (sprites.js)
 Object.assign(FIDGETS, {
-  polarest: { fps: 5, every: 9, frames: [{ head: [0, -1], mouth: 'open' }, { head: [0, -1], mouth: 'roar', arms: [1, 1] }, { mouth: 'open' }, { }] },   // a frosty growl
-  bambooze: { fps: 5, every: 8, frames: [{ arms: [2, -2] }, { arms: [-2, 2] }, { arms: [2, -2], mouth: 'open' }, { arms: [-2, 2] }, { }] },   // twirls its staff
-  grizzleep: { fps: 5, every: 10, frames: [{ arms: [2, 2] }, { arms: [-1, -1], body: 1 }, { arms: [2, 2], mouth: 'roar' }, { body: 1 }, { }] },   // pounds its stone fists together
+  polaroar: { fps: 5, every: 9, frames: [{ head: [0, -1], mouth: 'open' }, { head: [0, -1], mouth: 'roar', arms: [1, 1] }, { mouth: 'open' }, { }] },   // a frosty growl
+  pandawn: { fps: 5, every: 8, frames: [{ arms: [2, -2] }, { arms: [-2, 2] }, { arms: [2, -2], mouth: 'open' }, { arms: [-2, 2] }, { }] },   // twirls its staff
+  grizzquake: { fps: 5, every: 10, frames: [{ arms: [2, 2] }, { arms: [-1, -1], body: 1 }, { arms: [2, 2], mouth: 'roar' }, { body: 1 }, { }] },   // pounds its stone fists together
 });

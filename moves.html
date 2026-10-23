@@ -79,7 +79,7 @@ $('#game').addEventListener('load', () => {
   $('#next').onclick = () => pick((cur + 1) % order.length);
   $('#auto').onclick = () => { auto = !auto; $('#auto').textContent = 'Auto: ' + (auto ? 'on' : 'off'); };
   for (const m of G('ALL_MONS()')) $('#who').insertAdjacentHTML('beforeend', `<option value="${m.id}">${m.name}</option>`);
-  $('#who').value = 'drakorn';
+  $('#who').value = 'nyxdrake';
   $('#who').onchange = () => { setup(); };
   $('#dist').onchange = () => place();
   setup();
@@ -97,7 +97,7 @@ function setup() {
   const run = App.run, def = G('ROSTER_BY_ID')[$('#who').value];
   run.party[0].setDef(def); run.party[0].hp = run.party[0].maxHp;
   const room = run.floor.rooms.find(r => r.type === 'fight');
-  room.enemies = [{ id: 'boulderon', hpMul: 400, atkMul: 0, ai: 'wild' }]; room.cleared = false;
+  room.enemies = [{ id: 'slabominable', hpMul: 400, atkMul: 0, ai: 'wild' }]; room.cleared = false;
   w.enterRoom(room, null);
   G('UI').hideScreens();
   const b = App.battle;

@@ -1,7 +1,7 @@
-// Bugilist (id scarablade; renamed in r132, the owner: the old design is fine, just change the name). Drawn with the helpers in js/sprites.js (PixGrid shapes, rigParts, rigEye...).
+// Bugilist (Scarablade until r132; the owner: the old design is fine, just change the name). Drawn with the helpers in js/sprites.js (PixGrid shapes, rigParts, rigEye...).
 // Each monster: MONSTER_ART (front, side, back), MONSTER_ART_DIAG (fside, bside) and its body type in RIGGED.
 Object.assign(MONSTER_ART, {
-  scarablade(g, v = 'front') {
+  bugilist(g, v = 'front') {
     const Sh = P('#7ea81e', '#4e6e10', '#c4e04a'), Bd = P('#3a3a2a', '#22221a', '#5a5a44'), Hn = P('#e8dcb0', '#a89c78', '#fffbe6');
     const { Q, b, h, legA, legB, armA, armB } = rigParts(g, v), side = v === 'side';
     const tails = part(g, (side ? Q.head[0] : 0) + Q.tail[0], Q.head[1] + Q.tail[1]);   // the headband's tails trail behind the head
@@ -46,7 +46,7 @@ Object.assign(MONSTER_ART, {
   },
 });
 Object.assign(MONSTER_ART_DIAG, {
-  scarablade(g, v) {
+  bugilist(g, v) {
     const Sh = P('#7ea81e', '#4e6e10', '#c4e04a'), Bd = P('#3a3a2a', '#22221a', '#5a5a44'), Hn = P('#e8dcb0', '#a89c78', '#fffbe6');
     const { Q, b, h, legA, legB, armA, armB } = rigParts(g, v);
     const tails = part(g, Q.head[0] + Q.tail[0], Q.head[1] + Q.tail[1]);
@@ -77,8 +77,8 @@ Object.assign(MONSTER_ART_DIAG, {
     rigMouth(h, Q, 18, 14, 2);
   },
 });
-Object.assign(RIGGED, { scarablade: 'biped' });
+Object.assign(RIGGED, { bugilist: 'biped' });
 // Fidgets (r111): a little routine each plays every so often while it stands around.
 Object.assign(FIDGETS, {
-  scarablade: { fps: 5, every: 10, frames: [{ arms: [2, 2] }, { arms: [1, 3] }, { arms: [3, 1] }, { arms: [1, 3] }, { }] },   // sharpens its blades
+  bugilist: { fps: 5, every: 10, frames: [{ arms: [2, 2] }, { arms: [1, 3] }, { arms: [3, 1] }, { arms: [1, 3] }, { }] },   // sharpens its blades
 });

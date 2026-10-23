@@ -54,18 +54,18 @@ for (const mv of Object.values(BOSS_MV)) mv.boss = true;
 // hard enough before he wakes or his Hibernation Crash hits the whole room.
 const BOSSES = {
   slumbear: {
-    act: 1, title: 'THE JUMBLED KING', forms: ['slumbear', 'polarest', 'bambooze', 'grizzleep'],
+    act: 1, title: 'THE JUMBLED KING', forms: ['slumbear', 'polaroar', 'pandawn', 'grizzquake'],
     phases: [
       { at: 1, form: 'slumbear', patterns: ['bellyFlop', 'yawn', 'snack'] },
-      { at: 0.65, form: 'polarest', banner: ['HIS DATA IS SORTING...', 'Slumbear is becoming POLAROAR'], patterns: ['icicleRain', 'glacierSlam', 'bellyFlop'], frost: true },
-      { at: 0.3, form: 'grizzleep', banner: ['ERROR: FORM UNSTABLE', 'His data won\'t settle: watch which bear he becomes'], frost: true,
-        patterns: B => ({ polarest: ['icicleRain', 'glacierSlam'], bambooze: ['bambooVolley', 'bellyFlop'], grizzleep: ['faultLine', 'rockfall'] })[B.m.id] || ['bellyFlop'],
+      { at: 0.65, form: 'polaroar', banner: ['HIS DATA IS SORTING...', 'Slumbear is becoming POLAROAR'], patterns: ['icicleRain', 'glacierSlam', 'bellyFlop'], frost: true },
+      { at: 0.3, form: 'grizzquake', banner: ['ERROR: FORM UNSTABLE', 'His data won\'t settle: watch which bear he becomes'], frost: true,
+        patterns: B => ({ polaroar: ['icicleRain', 'glacierSlam'], pandawn: ['bambooVolley', 'bellyFlop'], grizzquake: ['faultLine', 'rockfall'] })[B.m.id] || ['bellyFlop'],
         update(B, b, dt) {
           const m = B.m;
           if (!B.slept && m.hp / m.maxHp <= 0.15 && !B.shifting) { B.slept = true; BOSS_PATTERNS.bigSleep.run(B, b, m); return; }
           if ((B.cycleT -= dt) > 0 || B.busy > 0 || B.special) return;
           B.cycleT = 8;
-          const next = pickRand(['polarest', 'bambooze', 'grizzleep'].filter(f => f !== m.id));
+          const next = pickRand(['polaroar', 'pandawn', 'grizzquake'].filter(f => f !== m.id));
           B.shiftTo(b, next);
         } },
     ],
@@ -298,7 +298,7 @@ class BossBrain {
   hurt(b, dmg) { if (this.special) this.special.got += dmg; }
   // his icy hits give Frostbite
   landed(b, tgt, mv, mult) {
-    if (mult < 1 || !this.ph.frost || this.m.id !== 'polarest' && mv.type !== 'ice') return;
+    if (mult < 1 || !this.ph.frost || this.m.id !== 'polaroar' && mv.type !== 'ice') return;
     this.frost(b, tgt, mv.frost || 1);
   }
   frost(b, P, n) {

@@ -11,6 +11,10 @@ A real-time, top-down pixel-art **roguelike** in the style of *The Binding of Is
 - **The crystals:** **Arc-cores** (Archive Cores); the HUD's party row is the Arcbracer's slots (`.slots`). **XP pickups:** **Arc-core Shards** (`SHARD_IMG`, pickup `shard`). **The bracelet:** the **Arcbracer** (the phone is its screen). **Deploying** replaced throwing balls (`this.deploys`; the click sound for swaps and move changes is `blip`, `ball` stays for the Stadium).
 - **Trainer looks:** `TRAINER_LOOK_NAMES` (every look's display name), `TRAINER_DEFAULT_LOOK`, `Battle.look`.
 
+## Code names match player names (r158)
+
+The owner: "make sure the code is cleaned up, I don't want it confusing with old names in there". Every Coreature's code id is now its player name: **slabominable** (Boulderon until r158, the stone cairn, renamed for looking like the Towers of Hanoi), **nyxdrake** (was drakorn), **bugilist** (was scarablade), **polaroar**, **pandawn**, **grizzquake** (were polarest, bambooze, grizzleep). Their art files are js/monsters/slabominable.js, nyxdrake.js, bugilist.js. Saves made before r158 still hold the old ids, so `renameIds` (movesets.js, shared, with `ID_RENAMES`) runs on everything loaded from storage: the unlocks save (written back once renamed), the run in progress and the Stadium's move sets. When a Coreature is renamed again, rename its id everywhere too and add the old id to `ID_RENAMES`. Older notes below may mention the old ids; they mean these.
+
 ## Where things live
 
 - **`ROADMAP.md`** is the plan to grow the game to the scale of the big roguelikes (release blockers, run variety, bosses, long-term goals, polish, release), with today's numbers. Keep it current: tick items as they land and update the numbers.

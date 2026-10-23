@@ -1,8 +1,8 @@
-// The drakorn family: cosmite, drakorn. Drawn with the helpers in js/sprites.js (PixGrid shapes, rigParts, rigEye...).
+// The nyxdrake family: cosmite, nyxdrake. Drawn with the helpers in js/sprites.js (PixGrid shapes, rigParts, rigEye...).
 // Each monster: MONSTER_ART (front, side, back), MONSTER_ART_DIAG (fside, bside) and its body type in RIGGED.
 // Redesigned in r98 with the owner (several rounds of their generated art): night-sky dragons with
 // midnight skin full of stars, a glowing nebula belly, silver horns, gold eyes and a silver star on
-// the tip of the tail. Smug little Cosmite grows into Drakorn. Dragonkin/Shade.
+// the tip of the tail. Smug little Cosmite grows into Nyxdrake. Dragonkin/Shade.
 
 const NIGHT = {
   Sk: P('#34366e', '#1e2048', '#5458a8'), SkD: P('#26285a', '#181a3c', '#383c7a'), Muz: P('#c4c0dc', '#9894bc', '#e8e6f8'),
@@ -150,12 +150,12 @@ Object.assign(MONSTER_ART, {
     rigMouth(h, Q, 14, 13, 3, () => h.px(14, 13, OUTLINE).px(15, 13, OUTLINE).px(16, 13, OUTLINE).px(17, 12, OUTLINE));   // a lopsided smirk
     speckle(b, [[10, 20], [21, 26], [12, 27]]); speckle(h, [[12, 5], [20, 9]]);
   },
-  // Drakorn (r99 redraw, the owner: "this looks pretty bad, do better"): Cosmite grown into a lean
+  // Nyxdrake (r99 redraw, the owner: "this looks pretty bad, do better"): Cosmite grown into a lean
   // night-sky dragon, drawn from the owner's art. An S-curved neck and a small head with a long
   // tapered snout and swept-back silver horns, a crest of silver spines, lean legs that bend like a
   // big cat's, boned dusk-violet wings with a silver claw at each wrist and constellations, a glowing
   // nebula stripe from throat to belly, and a long curling tail ending in a silver star.
-  drakorn(g, v = 'front') {
+  nyxdrake(g, v = 'front') {
     const { Sk, SkD, Horn, Wing, WingD, GOLD } = NIGHT;
     const { Q, b, h, t, earA, earB, legA, legB, armA, armB } = rigParts(g, v);
     if (v === 'side') {
@@ -271,7 +271,7 @@ Object.assign(MONSTER_ART_DIAG, {
     rigMouth(h, Q, 17, 13, 3, () => h.px(17, 13, OUTLINE).px(18, 13, OUTLINE).px(19, 13, OUTLINE).px(20, 12, OUTLINE));
     speckle(b, [[11, 20], [21, 26], [5, 11]]); speckle(h, [[13, 5], [21, 9]]);
   },
-  drakorn(g, v) {
+  nyxdrake(g, v) {
     const { Sk, SkD, Horn, Wing, WingD, GOLD } = NIGHT;
     const { Q, b, h, t, earA, earB, legA, legB, armA, armB } = rigParts(g, v);
     if (v === 'bside') {
@@ -317,9 +317,9 @@ Object.assign(MONSTER_ART_DIAG, {
     speckle(b, [[20, 22], [26, 27], [21, 30]]); speckle(h, [[27, 4]]);
   },
 });
-Object.assign(RIGGED, { cosmite: 'biped', drakorn: 'flier' });
+Object.assign(RIGGED, { cosmite: 'biped', nyxdrake: 'flier' });
 // Nyxdrake's fidget (r110): it stretches its wings up high and roars at the sky, every 10 seconds or so.
-Object.assign(FIDGETS, { drakorn: { fps: 5, every: 10, frames: [
+Object.assign(FIDGETS, { nyxdrake: { fps: 5, every: 10, frames: [
   { head: [0, -1], flap: -0.25 },
   { head: [1, -2], mouth: 'roar', tail: [1, 0], flap: -0.55 },
   { head: [1, -2], mouth: 'roar', tail: [-1, 0], flap: -0.7 },

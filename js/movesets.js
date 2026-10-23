@@ -42,12 +42,17 @@ function validSet(id, moves) {
   return moves.slice();
 }
 
+// Coreatures whose code names changed (r158, the owner: no old names left in the code to confuse anyone): saves
+// made before then still say the old ones, so everything loaded from storage goes through renameIds first.
+const ID_RENAMES = { boulderon: 'slabominable', drakorn: 'nyxdrake', scarablade: 'bugilist', polarest: 'polaroar', bambooze: 'pandawn', grizzleep: 'grizzquake' };
+const renameIds = json => (typeof json === 'string' ? json.replace(new RegExp(`"(${Object.keys(ID_RENAMES).join('|')})"`, 'g'), (m, id) => `"${ID_RENAMES[id]}"`) : json);
+
 const MoveSets = {
   KEY: 'mbs.movesets.v1',
   sets: [{}, {}],   // per player (player 2 only in local 2-player): monster id -> 4 move ids
   load() {
     try {
-      const d = JSON.parse(localStorage.getItem(this.KEY));
+      const d = JSON.parse(renameIds(localStorage.getItem(this.KEY)));
       if (d && Array.isArray(d.sets)) this.sets = d.sets.map(s => Object.fromEntries(Object.entries(s || {}).filter(([id, mv]) => ROSTER_BY_ID[id] && validSet(id, mv))));
       while (this.sets.length < 2) this.sets.push({});
     } catch (e) { /* storage blocked or broken: defaults */ }

@@ -186,12 +186,12 @@ function shuffle(a) {
 // here (AREA_ODDS), the rest from anywhere, so every area feels different but can surprise. `bosses` are the
 // gatekeepers (and endless fallbacks); Slumbear isn't one, he's the act 1 boss (bosses.js).
 const AREA_MONS = {
-  meadow: { natives: ['sparkit', 'thornback', 'slumbear', 'pixibelle', 'galewing', 'scarablade', 'lumawool', 'smugshi', 'bellpaca', 'shellmet'], bosses: ['thornback', 'galewing', 'bellpaca'] },
-  crater: { natives: ['cinderox', 'boulderon', 'cosmite', 'brawlix', 'venomire', 'thornback', 'gearhulk', 'coilizard', 'smouldox'], bosses: ['boulderon', 'drakorn', 'cinderox'] },
-  summit: { natives: ['frostling', 'galewing', 'boulderon', 'brawlix', 'slumbear', 'cosmite', 'lumawool', 'coilizard', 'bellpaca', 'shellmet', 'bulwarden', 'gyroculus'], bosses: ['frostling', 'boulderon', 'bulwarden'] },
+  meadow: { natives: ['sparkit', 'thornback', 'slumbear', 'pixibelle', 'galewing', 'bugilist', 'lumawool', 'smugshi', 'bellpaca', 'shellmet'], bosses: ['thornback', 'galewing', 'bellpaca'] },
+  crater: { natives: ['cinderox', 'slabominable', 'cosmite', 'brawlix', 'venomire', 'thornback', 'gearhulk', 'coilizard', 'smouldox'], bosses: ['slabominable', 'nyxdrake', 'cinderox'] },
+  summit: { natives: ['frostling', 'galewing', 'slabominable', 'brawlix', 'slumbear', 'cosmite', 'lumawool', 'coilizard', 'bellpaca', 'shellmet', 'bulwarden', 'gyroculus'], bosses: ['frostling', 'slabominable', 'bulwarden'] },
   grotto: { natives: ['mindra', 'wispurr', 'shadefang', 'pixibelle', 'lumawool', 'venomire', 'gearhulk', 'voltergeist', 'garrishell', 'bulwarden', 'gyroculus'], bosses: ['gearhulk', 'mindra', 'wispurr'] },
-  ruins:  { natives: ['tidalisk', 'venomire', 'scarablade', 'wispurr', 'shadefang', 'mondaze', 'gearhulk', 'mindra', 'smouldox', 'garrishell', 'stonicface'], bosses: ['tidalisk', 'shadefang', 'mondaze', 'garrishell', 'stonicface'] },
-  spire:  { natives: ['drakorn', 'mindra', 'shadefang', 'pixibelle', 'galewing', 'gearhulk', 'wispurr', 'brawlix', 'voltergeist', 'stonicface'], bosses: ['drakorn', 'gearhulk', 'stonicface'] },
+  ruins:  { natives: ['tidalisk', 'venomire', 'bugilist', 'wispurr', 'shadefang', 'mondaze', 'gearhulk', 'mindra', 'smouldox', 'garrishell', 'stonicface'], bosses: ['tidalisk', 'shadefang', 'mondaze', 'garrishell', 'stonicface'] },
+  spire:  { natives: ['nyxdrake', 'mindra', 'shadefang', 'pixibelle', 'galewing', 'gearhulk', 'wispurr', 'brawlix', 'voltergeist', 'stonicface'], bosses: ['nyxdrake', 'gearhulk', 'stonicface'] },
 };
 const AREA_ODDS = 0.75;
 // n different wild Coreature ids for an area
@@ -379,8 +379,11 @@ const Save = {
   data: { version: SAVE_VERSION, starters: [...STARTERS], runs: 0, wins: 0, bestFloor: 0, bestEndless: 0, recruited: [], found: [], trainers: ['scarf'], settings: { ...DEFAULT_SETTINGS } },
   load() {
     moveOldSaves();
-    let d = null;
-    try { d = JSON.parse(localStorage.getItem(SAVE_KEY)); } catch (e) { /* storage blocked or broken: play without it */ }
+    let d = null, renamed = false;
+    try {
+      const raw = localStorage.getItem(SAVE_KEY), fixed = renameIds(raw);   // old code names (movesets.js ID_RENAMES)
+      renamed = raw !== fixed; d = JSON.parse(fixed);
+    } catch (e) { /* storage blocked or broken: play without it */ }
     if (d && typeof d === 'object') {
       const from = d.version || 1;
       if (from < SAVE_VERSION) {
@@ -391,7 +394,7 @@ const Save = {
       // a save from a newer build (e.g. a stale cached page): use what we understand, keep its version
       Object.assign(this.data, d);
       this.data.settings = { ...DEFAULT_SETTINGS, ...(d.settings || {}) };
-      if (from < SAVE_VERSION) this.write();
+      if (from < SAVE_VERSION || renamed) this.write();
     }
     for (const id of STARTERS) if (!this.data.starters.includes(id)) this.data.starters.push(id);
     this.data.starters = this.data.starters.filter(id => ROSTER.some(m => m.id === id));
@@ -415,7 +418,7 @@ const Save = {
   // The run in progress, so a refresh (or closing the app) can carry on where you were. Kept under
   // its own key; RunState.toSave / fromSave turn a run into plain data and back.
   saveRun(d) { try { localStorage.setItem(RUN_KEY, JSON.stringify(d)); } catch (e) { /* storage full or blocked: no continue */ } },
-  loadRun() { try { const d = JSON.parse(localStorage.getItem(RUN_KEY)); return d && d.v === RUN_SAVE_VERSION ? d : null; } catch (e) { return null; } },
+  loadRun() { try { const d = JSON.parse(renameIds(localStorage.getItem(RUN_KEY))); return d && d.v === RUN_SAVE_VERSION ? d : null; } catch (e) { return null; } },
   clearRun() { try { localStorage.removeItem(RUN_KEY); } catch (e) { /* ignore */ } },
   noteRecruit(id) { if (!this.data.recruited.includes(id)) { this.data.recruited.push(id); this.write(); } },
   // returns true if it's a new endless record

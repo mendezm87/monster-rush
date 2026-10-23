@@ -1,4 +1,4 @@
-// Boulderon: boulderon. Drawn with the helpers in js/sprites.js (PixGrid shapes, rigParts, rigEye...).
+// Slabominable: slabominable. Drawn with the helpers in js/sprites.js (PixGrid shapes, rigParts, rigEye...).
 // Each monster: MONSTER_ART (front, side, back), MONSTER_ART_DIAG (fside, bside) and its body type in RIGGED.
 //
 // Redesigned in r131 (it read as Geodude / Graveler): a living cairn from the ruins. Flat standing stones
@@ -9,7 +9,7 @@ const CAIRN = { S1: P('#9a948a', '#6e6a62', '#bab4a8'), S2: P('#8a8478', '#5e5a5
   MOSS: '#6a8a3a', MOSSL: '#8aaa4a', GLOW: '#7ae0c8', GLOWD: '#3aa898', CRACK: '#4a4640' };
 
 Object.assign(MONSTER_ART, {
-  boulderon(g, v = 'front') { // 44x44
+  slabominable(g, v = 'front') { // 44x44
     const { S1, S2, S3, MOSS, MOSSL, GLOW, GLOWD, CRACK } = CAIRN;
     const { Q, b, h, earA, earB, legA, legB, armA, armB } = rigParts(g, v), side = v === 'side';
     const moss = (p, x0, x1, y) => { for (let x = x0; x <= x1; x++) p.px(x, y, (x * 7) % 3 ? MOSS : MOSSL); p.px(x0 + 2, y + 1, MOSS).px(x1 - 3, y + 1, MOSS); };
@@ -56,7 +56,7 @@ Object.assign(MONSTER_ART, {
   },
 });
 Object.assign(MONSTER_ART_DIAG, {
-  boulderon(g, v) {   // turned a little right
+  slabominable(g, v) {   // turned a little right
     const { S1, S2, S3, MOSS, MOSSL, GLOW, GLOWD, CRACK } = CAIRN;
     const { Q, b, h, earA, legA, legB, armA, armB } = rigParts(g, v);
     const moss = (p, x0, x1, y) => { for (let x = x0; x <= x1; x++) p.px(x, y, (x * 7) % 3 ? MOSS : MOSSL); p.px(x0 + 2, y + 1, MOSS).px(x1 - 3, y + 1, MOSS); };
@@ -84,8 +84,8 @@ Object.assign(MONSTER_ART_DIAG, {
     earA.ellipse(25, 8.5, 4, 1.6, S3, { edge: true });
   },
 });
-Object.assign(RIGGED, { boulderon: 'biped' });
+Object.assign(RIGGED, { slabominable: 'biped' });
 // Fidgets (r111): a little routine each plays every so often while it stands around.
 Object.assign(FIDGETS, {
-  boulderon: { fps: 5, every: 11, frames: [{ arms: [-2, -2] }, { arms: [-3, -3], body: -1, ears: [1, 0] }, { arms: [-3, -3], body: -1, eyes: 'blink', ears: [-1, 0] }, { arms: [-1, -1], ears: [1, 0] }, { }] },   // has a big stretch, its pebble wobbling
+  slabominable: { fps: 5, every: 11, frames: [{ arms: [-2, -2] }, { arms: [-3, -3], body: -1, ears: [1, 0] }, { arms: [-3, -3], body: -1, eyes: 'blink', ears: [-1, 0] }, { arms: [-1, -1], ears: [1, 0] }, { }] },   // has a big stretch, its pebble wobbling
 });
