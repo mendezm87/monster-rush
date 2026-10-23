@@ -21,6 +21,12 @@ SHEETS = {
     'infernoBeam':   ('f6-inferno-beam.png', 34, [2, 2]),
     'steamEruption': ('f7-steam-eruption.png', 80, [5]),
     'magmaWave':     ('f8b-magma-wave.png', 52, [4, 4]),   # the owner's second sheet: 8 frames, nothing cut off
+    # batch 3, water (W1-W5)
+    'hydroCannon':   ('w1-hydro-cannon.webp', 40, [2, 2, 2, 2]),
+    'tidalCannon':   ('w2-tidal-cannon.webp', 48, [3, 2, 2, 2]),
+    'bubbleSpray':   ('w3-bubble-spray.png', 26, [8]),
+    'waterShot':     ('w4-water-shot.png', 24, [8]),     # Spout Shot, Cuff Cannon, Twin Cannon
+    'geyserVent':    ('w5-geyser-vent.png', 70, [5, 4]),
     # batch 1 (dashes D1-D10, hit impacts I1)
     'voltRush':      ('d1-volt-rush.png', 46, [5]),
     'voltRushB':     ('d1b-volt-rush.png', 46, [5]),

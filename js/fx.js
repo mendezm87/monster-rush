@@ -700,6 +700,11 @@ const SHEET_MOVES = {
   bodySlam:      { dash: true, sheet: 'slamWool', pre: [0], go: [1, 2], hit: [3, 4], fit: 1.5 },
   woolTackle:    { dash: true, sheet: 'slamWool', pre: [5], go: [6, 7], hit: [8, 9], fit: 1.5 },
   zoomies:       { dash: true, pre: [0], go: [1, 2], hit: [3, 4], fit: 1.5, tilt: 48 * Math.PI / 180 },
+  // water shots: their sheet's splash where they land (W3, W4)
+  spoutShot:  { sheet: 'waterShot', hit: [5, 6, 7] },
+  cuffCannon: { sheet: 'waterShot', hit: [5, 6, 7] },
+  twinCannon: { sheet: 'waterShot', hit: [5, 6, 7] },
+  bubbleBeam: { sheet: 'bubbleSpray', hit: [5, 6, 7] },
 };
 // Where Magma Wave's waves stand: along the arc of its cone at distance d (squashed like the floor, as its
 // warning wedge is), enough of them side by side to fill it, the far ones first so the near ones overlap them.
@@ -711,6 +716,21 @@ function magmaFront(a, mv, d, sc) {
   }
   return out.sort((p, q) => p.y - q.y);
 }
+// Beams played from a sheet: the frame while it charges, the one as it starts, the ones looped at full power, and the
+// one it fades out on. The stream is stretched to the beam's length.
+const SHEET_BEAMS = {
+  flamethrower: { charge: 0, start: 1, full: [2, 3], end: 4 },
+  infernoBeam:  { charge: 0, start: 1, full: [1, 2], end: 3 },
+  hydroCannon:  { charge: 0, start: 1, full: [2, 3, 4], end: 6, tail: 7 },   // W1 (r161)
+  tidalCannon:  { charge: 0, start: 1, full: [2, 3, 4, 5], end: 7, tail: 8 },   // W2
+};
+// Shots played from a sheet (W3, W4): frames looped while it flies, the size of its looped frames in world units
+const SHEET_SHOTS = {
+  spoutShot:  { sheet: 'waterShot', fly: [1, 2, 3, 4], len: 32 },
+  cuffCannon: { sheet: 'waterShot', fly: [1, 2, 3, 4], len: 38 },
+  twinCannon: { sheet: 'waterShot', fly: [1, 2, 3, 4], len: 32 },
+  bubbleBeam: { sheet: 'bubbleSpray', fly: [1, 2, 3, 4], len: 17, spin: true },
+};
 // a frame sequence played as a particle (an explosion, a geyser)
 function sheetPart(b, id, frames, x, y, life, o = {}) {
   b.particles.push({ kind: 'sheet', id, frames, x, y, life, max: life, o });
@@ -813,6 +833,7 @@ mixInto(Battle, class {
     // played from the owner's sheets (r152)
     if (mv.id === 'fireBlast') { sheetPart(this, 'fireBlast', [2, 3, 3, 4], x, y - 4, 0.75, { sc: r * 2.4 / sheetW('fireBlast', 3) }); this.addShake(5); return; }
     if (mv.id === 'eruption') { const sc = r * 1.25 / sheetW('eruption', 0); sheetPart(this, 'eruption', [1, 2, 2, 3, 4], x, y + sheetH('eruption', 0) * sc / 2, 1.1, { sc, ay: 1 }); this.addShake(8); return; }
+    if (mv.id === 'geyserVent' && FXS.geyserVent) { const sc = r * 1.7 / sheetW('geyserVent', 0); sheetPart(this, 'geyserVent', [2, 3, 4, 5, 6, 7, 8], x, y + 4 + sheetH('geyserVent', 0) * sc / 2, 1.1, { sc, ay: 1 }); this.addShake(6); return; }
     if (mv.id === 'steamEruption') { const sc = r * 1.4 / sheetW('steamEruption', 0); sheetPart(this, 'steamEruption', [1, 2, 2, 3, 4], x, y + sheetH('steamEruption', 0) * sc / 2, 1.1, { sc, ay: 1 }); return; }
     this.particles.push({ kind: 'wave', x, y: y - 2, r0: 4, r1: r, life: 0.32, max: 0.32, color: fx[2], w: 4 });
     this.particles.push({ kind: 'wave', x, y: y - 2, r0: 2, r1: r * 0.7, life: 0.42, max: 0.42, color: fx[1], w: 3 });
@@ -1086,6 +1107,10 @@ mixInto(Battle, class {
       drawSheet(c, 'eruption', 0, m.x, m.y, { sc });
       return;
     }
+    if (a.mv.id === 'geyserVent' && FXS.geyserVent) {   // the ground bubbling, then cracking (W5 frames 0-1)
+      drawSheet(c, 'geyserVent', k < 0.5 ? 0 : 1, m.x, m.y + 4, { sc: a.r * 1.7 / sheetW('geyserVent', 0) });
+      return;
+    }
     if (a.mv.id === 'magmaWave') {   // the lava rising in front of it (sheet frame 0)
       drawSheet(c, 'magmaWave', 0, m.x + Math.cos(a.dir) * 18, m.y + Math.sin(a.dir) * 12 + 2, { sc: 0.5 + k * 0.5, ay: 1, flip: Math.cos(a.dir) < 0 });
       return;
@@ -1108,6 +1133,12 @@ mixInto(Battle, class {
   }
 
   drawProjectile(c, p) {
+    const SS = SHEET_SHOTS[p.mv.id];
+    if (SS && FXS[SS.sheet]) {   // played from the owner's sheet, pointing the way it flies
+      const age = 2.6 - p.life, fr = SS.fly[Math.floor(age / 0.07 + (SS.spin ? p.spin : 0)) % SS.fly.length];
+      drawSheet(c, SS.sheet, fr, p.x, p.y, { dir: SS.spin ? undefined : Math.atan2(p.vy, p.vx), ax: SS.spin ? 0.5 : 0.65, sc: SS.len / sheetW(SS.sheet, SS.fly[0]) });
+      return;
+    }
     const t = styleOf(p.mv), fx = fxOf(p.mv), R = p.r * 2.2, a = Math.atan2(p.vy, p.vx), T = this.time, x = p.x, y = p.y;
     if (p.mv.fx === 'bubble') {   // a wobbly see-through bubble with a shine
       const r = R * (0.85 + 0.08 * Math.sin(T * 14 + p.spin));
@@ -1221,9 +1252,9 @@ mixInto(Battle, class {
   // Flamethrower and Inferno Beam from their sheets: a spark or orb while it charges, then the stream stretched to
   // the beam's length (flickering between its two full frames), then the fading frame.
   drawSheetBeam(c, m, a, ox, oy) {
-    const mv = a.mv, id = mv.id, T = this.time, n = sheetFrames(id);
-    if (a.phase === 'charge') { drawSheet(c, id, 0, ox, oy, { sc: 0.4 + a.t / mv.charge * 0.6 }); return; }
-    const full = n === 5 ? [2, 3] : [1, 2], fr = a.t < 0.08 ? 1 : mv.dur - a.t < 0.15 ? n - 1 : full[Math.floor(T / 0.08) % 2];
+    const mv = a.mv, id = mv.id, T = this.time, B = SHEET_BEAMS[id];
+    if (a.phase === 'charge') { drawSheet(c, id, B.charge, ox, oy, { sc: 0.4 + a.t / mv.charge * 0.6 }); return; }
+    const left = mv.dur - a.t, fr = a.t < 0.08 ? B.start : left < 0.08 && B.tail !== undefined ? B.tail : left < 0.18 ? B.end : B.full[Math.floor(T / 0.07) % B.full.length];
     const sx = mv.len / sheetW(id, fr);
     drawSheet(c, id, fr, ox, oy, { dir: a.dir, ax: 0, ay: 0.5, sx, sy: Math.min(sx, 1.25) });
   }
@@ -1232,7 +1263,7 @@ mixInto(Battle, class {
     if (a.mv.fx === 'stare') { this.drawStare(c, m, a); return; }
     const mv = a.mv, fx = fxOf(mv), T = this.time;
     const ox = m.x + Math.cos(a.dir) * 6, oy = m.cy + Math.sin(a.dir) * 6;
-    if (mv.id === 'flamethrower' || mv.id === 'infernoBeam') { this.drawSheetBeam(c, m, a, ox, oy); return; }   // from the owner's sheets
+    if (SHEET_BEAMS[mv.id] && FXS[mv.id]) { this.drawSheetBeam(c, m, a, ox, oy); return; }   // from the owner's sheets
     if (a.phase === 'charge') {   // a ball of energy growing at the muzzle
       const k = a.t / mv.charge, r = 2.5 + k * mv.width * 0.55;
       FXD.circle(c, ox, oy, r, fx[0]); FXD.dot(c, ox, oy, r * 0.65, fx[1]); FXD.dot(c, ox, oy, r * 0.3, '#ffffff');
