@@ -1386,6 +1386,35 @@ mixInto(Battle, class {
     FXD.ring(c, m.x, m.y, R, fx[1], 2.2);
   }
 
+  // Thunder's storm gathering (r172, the owner's idea): small white clouds come in from the edges of the screen,
+  // turning dark and swelling as they converge over the spot, where they become the sheet's storm cloud.
+  drawStormGather(c, z, left) {
+    const arrive = Math.max(0.2, z.delay - 0.3), k = clamp(z.t / arrive, 0, 1);
+    const tx = z.x, ty = z.y - 189;   // where the sheet's cloud sits (frame 0 drawn 1.3x from the ground)
+    if (!z.clouds) {   // where each one starts: just off the screen's edge, all round (kept in world units)
+      const rnd = mulberry(z.id * 7919 + 13), cam = this.cam || { x: 0, y: 0 }, n = 9;
+      z.clouds = [];
+      for (let i = 0; i < n; i++) {
+        const a = (i + rnd() * 0.6) / n * TAU, dx = Math.cos(a), dy = Math.sin(a);
+        // the distance along this direction to the view's edge, plus a margin so it starts off screen
+        const ex = dx > 0 ? (cam.x + W - tx) / dx : dx < 0 ? (cam.x - tx) / dx : 1e9, ey = dy > 0 ? (cam.y + H - ty) / dy : dy < 0 ? (cam.y - ty) / dy : 1e9;
+        const d = Math.max(60, Math.min(ex, ey)) + 22;
+        z.clouds.push({ sx: tx + dx * d, sy: ty + dy * d, ex: tx + (rnd() - 0.5) * 32, ey: ty + (rnd() - 0.5) * 12, s: 0.8 + rnd() * 0.5, lag: rnd() * 0.15 });
+      }
+    }
+    const mix = (a, b, t) => '#' + [0, 2, 4].map(i => Math.round(parseInt(a.substr(i + 1, 2), 16) * (1 - t) + parseInt(b.substr(i + 1, 2), 16) * t).toString(16).padStart(2, '0')).join('');
+    for (let i = 0; i < z.clouds.length; i++) {
+      const cl = z.clouds[i], q = clamp((k - cl.lag) / (1 - cl.lag), 0, 1), p = q * q * (3 - 2 * q);
+      const x = cl.sx + (cl.ex - cl.sx) * p, y = cl.sy + (cl.ey - cl.sy) * p, dk = clamp((q - 0.3) / 0.6, 0, 1), r = 8 * cl.s * (0.85 + 0.55 * Math.sin(Math.PI * q * 0.9));   // white at first, darkening on the way; swelling, then packing tight as they merge
+      const puffs = [[-1, 0.15, 0.7], [0, -0.3, 0.95], [1.05, 0.15, 0.65], [0.45, -0.05, 0.75], [-0.5, 0.25, 0.6]];
+      for (const [px, py, pr] of puffs) FXD.dot(c, x + px * r, y + py * r, pr * r + 1.5, INK);   // the outline round the whole cloud
+      for (const [px, py, pr] of puffs) FXD.dot(c, x + px * r, y + py * r, pr * r, mix('#f4f7fc', '#4c5262', dk));
+      for (const [px, py, pr] of [[-0.75, 0.42, 0.42], [0, 0.48, 0.45], [0.75, 0.42, 0.4]]) FXD.dot(c, x + px * r, y + py * r, pr * r, mix('#c4ccdc', '#2f3340', dk));   // a flat shaded underside
+      for (const [px, py, pr] of [[-1.05, -0.08, 0.3], [-0.1, -0.62, 0.42], [0.95, -0.05, 0.26]]) FXD.dot(c, x + px * r, y + py * r, pr * r, mix('#ffffff', '#6c7384', dk));   // light on the tops of the puffs
+      if (dk > 0.6 && ((this.time * 14 + i * 3) | 0) % 6 === 0) FXD.dot(c, x + (i % 3 - 1) * r * 0.4, y + r * 0.1, 1.2, '#fff27a');   // a flicker inside
+    }
+  }
+
   drawZoneFalls(c) {
     for (const z of this.zones) {
       if (z.done) continue;
@@ -1399,7 +1428,8 @@ mixInto(Battle, class {
       } else if (z.mv.id === 'steamEruption') {   // the ground bubbling and cracking before the geyser (sheet frame 0)
         drawSheet(c, 'steamEruption', 0, zx, zy, { sc: z.r * 1.4 / sheetW('steamEruption', 0) * (0.5 + 0.5 * (1 - left / z.delay)) });
       } else if (z.mv.fx === 'bolt' && FXS.thunder) {   // E2 (r171): the cloud gathering over the spot, then a crackle reaching down
-        if (left < 0.6) drawSheet(c, 'thunder', left > 0.3 ? 0 : left > 0.12 ? 1 : 2, zx, zy + 6, { ay: 1, sc: 1.3 });
+        if (left > 0.3) this.drawStormGather(c, z, left);   // small white clouds drifting in from the edges, darkening (r172)
+        if (left < 0.34) drawSheet(c, 'thunder', left > 0.2 ? 0 : left > 0.08 ? 1 : 2, zx, zy + 6, { ay: 1, sc: 1.3 });
       } else if (z.mv.fx === 'bolt' && left < 0.25) {   // a crackle in the clouds before it strikes
         FXD.bolt(c, zx + 10, zy - 200, zx - 6, zy - 150, ((this.time * 25) | 0) + z.id, 2, fx[1], 6, false);
       }
