@@ -43,6 +43,12 @@ the E2c bolt) and stays as it is. Everything else is below.
 - **Beam sections** are asked for as "a straight horizontal section, the same thickness all along, cut off straight at
   both ends so copies placed end to end join into one long beam". If Gemini's ends don't line up, the game overlaps
   them and alternates mirrored copies to hide the joins.
+- **Beams are three parts plus layers (r193, after the owner found SMUG-1's beams "a lot more plain than the
+  originals" and a look at how games do it):** a **muzzle** flash at the mouth, a **body** with a *pattern inside it*
+  (swirls, ripples, sparks, twisting strands, never flat stripes, which look plain once repeated), a thinner bright
+  **core** strand laid over it, and an **impact** burst where it hits (the game's beams go through everything in their
+  line, so it plays on every Coreature hit). A **head** only leads while the beam shoots out. Ask for all of these
+  in every beam prompt.
 - **Colours are given in words for every piece**, using each type's colours in the game, so pieces of one attack match.
 - **No text**, except where a symbol *is* the piece (the sleepy Z's, a "?" or "..." for Blank Stare), which the
   prompt asks for explicitly.
@@ -306,7 +312,34 @@ impact frames. Four types per picture, one row each.
 
 ## Beast and Smugshi's line
 
-### SMUG-1 · Smug Beam and Supreme Smug Beam (Smugshi, Smugshogun)
+### SMUG-1b · Smug Beam and Supreme Smug Beam, take 2 (r193)
+
+The owner's review of SMUG-1 in the game: the first was droopy, both had the tip in the wrong place, and both looked
+plainer than the originals. The droop is gone and the tip now only leads while the beam shoots out, with an impact on
+the target; this take gives the beams a body with something going on inside, a proper muzzle and a proper impact.
+The petals and sparkles from SMUG-1 stay. Run it on its own.
+
+> A sprite sheet of separate beam effect pieces for an action game, laid out in exactly 4 rows with lots of empty
+> space between every piece. Row 1: a straight horizontal section of a soft pink and gold energy beam with a creamy
+> white core and twisting ribbons of brighter pink light spiralling along inside it with small gold sparkles, the same
+> thickness all along, cut off straight at both ends so copies placed end to end join into one long beam, in 4 frames
+> of a loop as the ribbons twist forward, each a small step from the last. Row 2: a thin straight horizontal strand of
+> bright white-pink light with a jagged shimmering edge, the same thickness all along, cut off straight at both ends,
+> in 4 frames of a loop (the beam's bright core). Row 3: a burst of pink and gold light at the mouth of a beam pointing
+> right (a round flare with short rays and a ring) in 3 frames of a loop as it pulses, then a smug little face symbol
+> made of glowing pink light (two half-closed eyes and a lopsided smirk) in 1 frame. Row 4: a pink and gold impact
+> burst where a beam hits something, pointing left toward where the beam comes from (a splash of light with sparkles
+> and short rays), in 4 frames of a loop. Every piece complete and fully inside its own space with a wide margin of
+> empty background all round it, nothing touching another piece or the edges of the picture, nothing cut off. No
+> boxes, panels, frames or borders behind the pieces, one plain background everywhere. 16-bit pixel art visual effect
+> sprites for an action game, chunky pixels with a dark 1-pixel outline, light from the top left, limited bright
+> palette with hard-edged shading, no creature or character, plain dark navy background, no text, no labels
+
+For the Supreme Smug Beam, the same prompt with "a thicker white-hot energy beam with bright gold edges, a thin crimson
+outline and gold ribbons spiralling along inside it with cherry blossom petals caught in the light" in row 1, and
+"gold and crimson" in place of "pink and gold" in rows 3 and 4 (call that one **SMUG-1c**).
+
+### SMUG-1 · Smug Beam and Supreme Smug Beam (Smugshi, Smugshogun) (first take, in the game since r192)
 
 Smugshi's signature should look like nothing else: a **lazy, smug beam** that droops and wobbles like it can't be
 bothered, with a smirking glow at its tip. Smugshogun's Supreme version is the samurai upgrade: gold-edged, straighter
