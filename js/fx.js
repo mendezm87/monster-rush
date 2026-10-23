@@ -725,6 +725,11 @@ const SHEET_BEAMS = {
   tidalCannon:  { charge: 0, start: 1, full: [2, 3, 4, 5], end: 7, tail: 8 },   // W2
 };
 // Shots played from a sheet (W3, W4): frames looped while it flies, the size of its looped frames in world units
+// where the hole is in each Whirlpool and Maelstrom frame (0..1 across and down), measured from the sheets
+const VORTEX_HOLES = {
+  whirlpool: [[0.49, 0.5], [0.48, 0.5], [0.5, 0.52], [0.49, 0.51], [0.49, 0.51], [0.48, 0.51], [0.48, 0.47], [0.5, 0.46]],
+  maelstrom: [[0.45, 0.49], [0.5, 0.54], [0.51, 0.54], [0.47, 0.56], [0.5, 0.54], [0.52, 0.53], [0.49, 0.56], [0.5, 0.44]],
+};
 const SHEET_SHOTS = {
   spoutShot:  { sheet: 'waterShot', fly: [1, 2, 3, 4], len: 32 },
   cuffCannon: { sheet: 'waterShot', fly: [1, 2, 3, 4], len: 38 },
@@ -1322,7 +1327,10 @@ mixInto(Battle, class {
     const mv = a.mv, fx = fxOf(mv), T = this.time;
     if (FXS[mv.id] && (mv.id === 'whirlpool' || mv.id === 'maelstrom')) {   // the owner's sheets (W6, W7): forming, spinning (looped), breaking up
       const left = mv.dur - a.t, fr = a.t < 0.24 ? Math.floor(a.t / 0.08) : left < 0.24 ? 6 + (left < 0.12 ? 1 : 0) : 3 + Math.floor(T / 0.08) % 3;
-      drawSheet(c, mv.id, fr, m.x, m.y + 2, { sc: mv.r * 2 / sheetW(mv.id, 4) });
+      // each frame's hole (measured from the sheet) centred a little up the user's body, so it stands in the middle
+      // of the swirl rather than on its back edge (r164; the pull and the damage still come from its feet)
+      const hole = VORTEX_HOLES[mv.id][fr];
+      drawSheet(c, mv.id, fr, m.x, m.y - m.h * 0.18, { sc: mv.r * 2 / sheetW(mv.id, 4), ax: hole[0], ay: hole[1] });
       this.cutOutMon(c, m);   // the water swirls round its user, never over it
       return;
     }
