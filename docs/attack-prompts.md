@@ -368,3 +368,17 @@ E2's lightning and swaps in this cloud. Run it on its own.)
 > the same size and evenly spaced. 16-bit pixel art visual effect sprite sheet for an action game, chunky pixels with
 > a dark 1-pixel outline, limited palette with hard-edged shading, no creature or character, plain dark navy
 > background, no text
+
+**E2c · Thunder's bolt** (r175; the owner doesn't like E2's bolt and wants "a really flashy attack because it is difficult
+to land". The game keeps E2b's cloud on top and the same height, so this is the bolt alone, no cloud. Run it on its own.)
+> A huge lightning strike from the sky hitting the ground, tall frames, no cloud, 8 frames in a row, each a small
+> step from the one before: a thin jagged crackle reaching down from the top, a massive thick jagged bolt slamming
+> into the ground with a white-hot core and bright yellow edges, the bolt at its brightest and widest with many forks
+> branching off it and a pale blue electric glow around it, the ground exploding in a dome of white light with sparks
+> and chunks of rock blasting up and a shockwave ring spreading across the ground, a second flickering strike down the
+> same path with arcs crawling along the ground, the bolt thinning into crackling arcs, a glowing scorched crater with
+> sparks dancing over it, the last sparks fading. White-hot core, bright yellow, electric blue glow. Every frame
+> complete and fully inside its own space with empty background all round it, nothing touching the edges or cut off,
+> all frames the same size and evenly spaced. 16-bit pixel art visual effect sprite sheet for an action game, chunky
+> pixels with a dark 1-pixel outline, limited bright palette with hard-edged shading, no creature or character, plain
+> dark navy background, no text

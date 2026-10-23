@@ -420,6 +420,7 @@ mixInto(Battle, class {
     // attacks and effects: chunky pixel art in their own layer (see fx.js)
     this.drawAttacks(FXLayer.begin(Math.round(this.cam.x) - shx, Math.round(this.cam.y) - shy));
     FXLayer.end(ctx);
+    drawScreenFlash(ctx, this);
     if (this.restoring) this.drawRestore(ctx);
     // the Arcbracer's deploy beam: it shoots to the ground, then fades while the Coreature assembles
     for (const b of this.deploys) {

@@ -779,7 +779,16 @@ const SMALL_CLOUD = {
 };
 // Thunder (r174): E2's bolt with its own cloud left off (its top THUNDER_TOP rows; it was sliced flat at the sides),
 // under E2b's storm cloud, whose bottom sits CLOUD_BASE above the strike spot. STORM_Y: where the gathering clouds meet.
-const THUNDER_TOP = 20, CLOUD_BASE = 166, STORM_Y = 191;
+const THUNDER_TOP = 20, CLOUD_BASE = 166, CLOUD_SC = 1.6, STORM_Y = 166 + 36 * FX_PX * 1.6 / 2;   // r175: a bigger cloud (the owner)
+// A flash across the whole screen (r175, Thunder: "a really flashy attack because it is difficult to land"): warm white,
+// flickering once, gone in a fifth of a second; kept well short of full white. Both games call it after the effect layer.
+function drawScreenFlash(ctx, b) {
+  const age = b.time - (b.flashAt ?? -9);
+  if (age < 0 || age > 0.22) return;
+  const a = 0.5 * (1 - age / 0.22) * (age > 0.05 && age < 0.09 ? 0.35 : 1);
+  ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = `rgba(255, 250, 220, ${a.toFixed(3)})`;
+  ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height); ctx.restore();
+}
 
 // a frame sequence played as a particle (an explosion, a geyser)
 function sheetPart(b, id, frames, x, y, life, o = {}) {
@@ -888,8 +897,13 @@ mixInto(Battle, class {
     if (mv.id === 'discharge' && FXS.discharge) { sheetPart(this, 'discharge', [2, 3, 4, 5, 6, 7], x, y, 0.75, { sc: r * 2.2 / sheetW('discharge', 5), user }); this.addShake(5); return; }   // E3 (r171)
     if (mv.fx === 'bolt' && FXS.thunder && FXS.stormCloud) {   // the strike under the cloud lit from below, which then breaks up
       sheetPart(this, 'thunder', [3, 4, 4, 5, 6, 7], x, y + 6, 0.7, { ay: 1, sc: 1.3, top: THUNDER_TOP });
-      sheetPart(this, 'stormCloud', [3, 4, 4, 5, 6, 7], x, y - CLOUD_BASE, 1, { ay: 1 });
-      this.addShake(6); return;
+      sheetPart(this, 'stormCloud', [3, 4, 4, 5, 6, 7], x, y - CLOUD_BASE, 1, { ay: 1, sc: CLOUD_SC });
+      // flashy (r175): the screen flashes, the ground shakes hard, a shockwave and sparks burst out across the ground
+      this.flashAt = this.time; this.addShake(11);
+      const fx = fxOf(mv);
+      for (let i = 0; i < 3; i++) this.particles.push({ kind: 'wave', x, y: y - 2, r0: 4, r1: r * (2.6 - i * 0.55), life: 0.3 + i * 0.12, max: 0.3 + i * 0.12, color: i === 1 ? '#ffffff' : fx[i ? 1 : 0], w: 4 - i });
+      this.fxDebris(x, y - 4, mv, 16, r * 9, 4, 6);
+      return;
     }
     if (mv.fx === 'bolt' && FXS.thunder) { sheetPart(this, 'thunder', [3, 4, 4, 5, 6, 7], x, y + 6, 0.7, { ay: 1, sc: 1.3 }); this.addShake(6); return; }   // E2 (r171): the strike, the burst, the scorch ring
     if (mv.id === 'steamEruption') { const sc = r * 1.4 / sheetW('steamEruption', 0); sheetPart(this, 'steamEruption', [1, 2, 2, 3, 4], x, y + sheetH('steamEruption', 0) * sc / 2, 1.1, { sc, ay: 1 }); return; }
@@ -1421,14 +1435,14 @@ mixInto(Battle, class {
     const arrive = Math.max(0.2, z.delay - 0.3), k = clamp(z.t / arrive, 0, 1);
     const tx = z.x, ty = z.y - STORM_Y;   // where the storm cloud forms
     if (!z.clouds) {   // where each one starts: just off the screen's edge, all round (kept in world units)
-      const rnd = mulberry(z.id * 7919 + 13), cam = this.cam || { x: 0, y: 0 }, n = 9;
+      const rnd = mulberry(z.id * 7919 + 13), cam = this.cam || { x: 0, y: 0 }, n = 16;   // r175: more of them (the owner)
       z.clouds = [];
       for (let i = 0; i < n; i++) {
         const a = (i + rnd() * 0.6) / n * TAU, dx = Math.cos(a), dy = Math.sin(a);
         // the distance along this direction to the view's edge, plus a margin so it starts off screen
         const ex = dx > 0 ? (cam.x + W - tx) / dx : dx < 0 ? (cam.x - tx) / dx : 1e9, ey = dy > 0 ? (cam.y + H - ty) / dy : dy < 0 ? (cam.y - ty) / dy : 1e9;
         const d = Math.max(60, Math.min(ex, ey)) + 22;
-        z.clouds.push({ sx: tx + dx * d, sy: ty + dy * d, a, d, ex: (rnd() - 0.5) * 48, ey: (rnd() - 0.5) * 12, s: 0.8 + rnd() * 0.5, lag: rnd() * 0.15 });
+        z.clouds.push({ sx: tx + dx * d, sy: ty + dy * d, a, d, ex: (rnd() - 0.5) * 90, ey: (rnd() - 0.5) * 22, s: 0.85 + rnd() * 0.6, lag: rnd() * 0.2 });
       }
     }
     for (let i = 0; i < z.clouds.length; i++) {
@@ -1457,7 +1471,7 @@ mixInto(Battle, class {
         if (left > 0.3) this.drawStormGather(c, z, left);   // small white clouds drifting in from the edges, darkening (r172)
         if (left < 0.34 && FXS.stormCloud) {   // E2b's cloud swelling and flickering, E2's crackle reaching down from under it
           if (left < 0.2) drawSheet(c, 'thunder', left > 0.08 ? 1 : 2, zx, zy + 6, { ay: 1, sc: 1.3, top: THUNDER_TOP });
-          drawSheet(c, 'stormCloud', left > 0.18 ? 1 : 2, zx, zy - CLOUD_BASE, { ay: 1 });
+          drawSheet(c, 'stormCloud', left > 0.18 ? 1 : 2, zx, zy - CLOUD_BASE, { ay: 1, sc: CLOUD_SC });
         } else if (left < 0.34) drawSheet(c, 'thunder', left > 0.2 ? 0 : left > 0.08 ? 1 : 2, zx, zy + 6, { ay: 1, sc: 1.3 });
       } else if (z.mv.fx === 'bolt' && left < 0.25) {   // a crackle in the clouds before it strikes
         FXD.bolt(c, zx + 10, zy - 200, zx - 6, zy - 150, ((this.time * 25) | 0) + z.id, 2, fx[1], 6, false);
