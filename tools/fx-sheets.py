@@ -56,6 +56,8 @@ SHEETS = {
     # SMUG-1b: patterned body x4, core strand x4, muzzle x3 + smug face, impact x4
     'smug1b':        ('pk-smug-1b.png', 26, [4, 4, 4, 4]),
     # BEAST-2: stars x6 (two spinning loops of 3), speed lines x2 + zigzag, sound waves x3 + shout lines x2, shout bubble x3
+    # SMUG-1c: supreme body x4, core strand x4, muzzle x4, impact x4
+    'smug1c':        ('pk-smug-1c.png', 26, [4, 4, 4, 4]),
     'beast2':        ('pk-beast-2.png', 48, [6, 2, 5, 3]),   # (cut from MANUAL boxes: Gemini laid its rows out unevenly)
     'stormCloud':    ('e2b-storm-cloud.png', 36, [8]),   # Thunder's cloud (E2's own is sliced flat at the sides; its bolt is kept)
     'staticSiphon':  ('e6-static-siphon.png', 28, [8]),
@@ -155,7 +157,7 @@ def frames_of(im, m, counts):
 # Sheets shrunk keeping their bright lines: a pixel that a bright line runs through takes the line's colour, instead
 # of averaging it with the dark outline round it (thin lightning forks turned dark grey). The older sheets were made
 # before this and the owner approved them as they are, so it's per sheet.
-CLEAN_SHRINK = {'thunderbolt', 'thunder', 'thunderBolt', 'hits1', 'hits2', 'hits3', 'hits4', 'smug1b', 'railShot', 'railShotB', 'discharge', 'voltCannon', 'staticSiphon'}
+CLEAN_SHRINK = {'thunderbolt', 'thunder', 'thunderBolt', 'hits1', 'hits2', 'hits3', 'hits4', 'smug1b', 'smug1c', 'railShot', 'railShotB', 'discharge', 'voltCannon', 'staticSiphon'}
 
 # Small accents that must survive the shrink (E6's green draining sparks): a pixel any of them runs through takes their colour
 ACCENT = {'staticSiphon': lambda r, g, b: g > r + 15 and g > b + 40}
@@ -295,7 +297,7 @@ def build(only=None, sheet=False):
             for yy in range(im.size[1]):
                 for xx in range(im.size[0]):
                     if isbg(*px_[xx, yy], xx, yy): px_[xx, yy] = bgc
-        m = bg_mask(im, 40 if (sid in CLEAN_SHRINK and sid != 'thunder') or sid in ('eruptionParts', 'common1', 'common2', 'hits1', 'hits2', 'hits3', 'hits4', 'smug1', 'smug1b', 'beast2') else 400)   # electric arcs close round gaps of background: only tiny ones are part of it (Thunder's cloud undersides are near the background colour, so not there)
+        m = bg_mask(im, 40 if (sid in CLEAN_SHRINK and sid != 'thunder') or sid in ('eruptionParts', 'common1', 'common2', 'hits1', 'hits2', 'hits3', 'hits4', 'smug1', 'smug1b', 'smug1c', 'beast2') else 400)   # electric arcs close round gaps of background: only tiny ones are part of it (Thunder's cloud undersides are near the background colour, so not there)
         if sid in PANELS: drop_specks(im, m)
         if sid in MANUAL:
             boxes = []

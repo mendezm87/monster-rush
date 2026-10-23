@@ -751,9 +751,9 @@ const PIECE_BEAMS = {
   smugBeam: { body: ['smug1b', [0, 1, 2, 3]], core: ['smug1b', [4, 5, 6, 7]], muzzle: ['smug1b', [8, 9, 10], 0.22],
     impact: ['smug1b', [12, 13, 14, 15], 0.7], head: ['smug1b', [12, 13, 14, 15], 0.7], charge: ['smug1', [7, 8, 9]],
     thick: 2.6, sparkles: ['smug1', [17, 18]] },   // SMUG-1b (r194)
-  supremeSmug: { body: ['smug1', [10, 11, 12, 13]], core: ['smug1', [10, 11, 12, 13]], coreH: 0.45, muzzle: ['smug1', [9], 0.5],
-    impact: ['hits3', [0, 1, 2], 0.5], head: ['smug1', [4, 5, 6], 0.35], charge: ['smug1', [7, 8, 9]],
-    thick: 1.5, petals: ['smug1', [14, 15, 16]], sparkles: ['smug1', [17, 18]] },   // SMUG-1 (SMUG-1c to come)
+  supremeSmug: { body: ['smug1c', [0, 1, 2, 3]], core: ['smug1c', [4, 5, 6, 7]], muzzle: ['smug1c', [8, 9, 10, 11], 0.3],
+    impact: ['smug1c', [12, 13, 14, 15], 0.7], head: ['smug1c', [12, 13, 14], 0.7], charge: ['smug1', [7, 8, 9]],
+    thick: 2.4, petals: ['smug1', [14, 15, 16]], sparkles: ['smug1', [17, 18]] },   // SMUG-1c (r196)
 };
 // dashes built from pieces so far: COMMON-1's dust, speed lines and thud (r186)
 const PIECE_DASH = { bodySlam: { thud: true },
