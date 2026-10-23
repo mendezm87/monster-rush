@@ -216,8 +216,9 @@ def split_depth(fr, last, fill='front'):
 # Sheets whose frames sit on panels (E2): the panels' navy and their edges are background, and so is the faint blue
 # glow behind the brightest bolt, below the clouds (the clouds' undersides are the same colour, so only below them)
 PANELS = {'thunder': lambda r, g, b, x, y: max(r, g, b) < 72 and b - r >= 22 and (r < 26 or y > 130),
-          # E2c: navy panels, and one panel lit a darker blue behind its brightest bolt
-          'thunderBolt': lambda r, g, b, x, y: max(r, g, b) < 100 and b - r >= 20}
+          # E2c: navy panels everywhere, and the third panel's darker blue lit up behind its brightest bolt (only there:
+          # the dome of light in the fourth frame has a glow of nearly the same blue, which is part of it)
+          'thunderBolt': lambda r, g, b, x, y: b - r >= 20 and (max(r, g, b) < 60 or (536 <= x <= 703 and y < 285 and max(r, g, b) < 100))}
 
 # Sheets whose frames keep their row's full height (E2: every frame's ground is its bottom row, so the strike lines up
 # with the spot it hits, cloud-only frames included)
