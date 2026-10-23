@@ -333,7 +333,11 @@ const FX_PARTS = {
     }
   },
   // a sheet's frames played in order (sheetPart)
-  sheet(c, p, k) { drawSheetAround(c, p.id, p.frames[Math.min(p.frames.length - 1, Math.floor((1 - k) * p.frames.length))], p.x, p.y, p.o, p.o.user); },
+  sheet(c, p, k) {   // played through over its life, each frame dissolving into the next (r181)
+    const n = p.frames.length, [a, b, t] = framePlace(p.frames, Math.min(n - 1, (1 - k) * n), false);
+    drawSheetMix(c, p.id, a, b, t, p.x, p.y, p.o);
+    if (p.o.user && p.o.user.visible && !p.o.user.fainted) cutOutSprite(c, p.o.user);
+  },
   // a hit landing: its look's own impact (IMPACT_ART)
   hit(c, p, k) {
     const age = 1 - k;
@@ -691,8 +695,51 @@ function drawSheet(c, id, i, x, y, o = {}) {
   if (o.tilt) c.rotate(o.tilt);   // a sheet drawn pointing some other way than right (its own angle, undone)
   if (o.flip) c.scale(-1, 1);
   const top = o.top || 0, cut = h * top / f[3];
-  c.drawImage(img, f[0], f[1] + top, f[2], f[3] - top, -w * (o.ax ?? 0.5), -h * (o.ay ?? 0.5) + cut, w, h - cut);
+  if (o.src) c.drawImage(o.src, 0, top, f[2], f[3] - top, -w * (o.ax ?? 0.5), -h * (o.ay ?? 0.5) + cut, w, h - cut);   // a dissolved copy (drawSheetMix)
+  else c.drawImage(img, f[0], f[1] + top, f[2], f[3] - top, -w * (o.ax ?? 0.5), -h * (o.ay ?? 0.5) + cut, w, h - cut);
   c.restore();
+}
+// Smoother sheets (r181, the owner: "the ones that were drawn before were a lot smoother"): a sheet has 5-8 pictures
+// for an attack lasting about a second, so each one used to be held and then jump to the next. Now the next one
+// dissolves in pixel by pixel (an ordered 4x4 checkerboard, 16 steps, so pixels stay crisp) while the current one
+// dissolves out. Each frame's dissolved versions are made once, when first needed, and kept (a few hundred at most).
+let FX_BLEND = false;   // off in the game until the owner decides; moves.html has a switch to try it (r181)
+const BAYER4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+const _dither = new Map();
+function ditherFrame(id, i, lvl, keepLow) {   // frame i with only the pixels under (keepLow) or at and over the level
+  const key = id + '|' + i + '|' + lvl + '|' + (keepLow ? 1 : 0);
+  let cv = _dither.get(key);
+  if (cv) return cv;
+  const S = FXS[id], f = S.frames[i];
+  cv = document.createElement('canvas'); cv.width = f[2]; cv.height = f[3];
+  const g = cv.getContext('2d', { willReadFrequently: true });
+  g.drawImage(S.img, f[0], f[1], f[2], f[3], 0, 0, f[2], f[3]);
+  const d = g.getImageData(0, 0, f[2], f[3]), px = d.data;
+  for (let y = 0; y < f[3]; y++) for (let x = 0; x < f[2]; x++) if ((BAYER4[(y & 3) * 4 + (x & 3)] < lvl) !== keepLow) px[(y * f[2] + x) * 4 + 3] = 0;
+  g.putImageData(d, 0, 0);
+  if (_dither.size > 500) { const [k0, c0] = _dither.entries().next().value; _dither.delete(k0); c0.width = c0.height = 0; }
+  _dither.set(key, cv);
+  return cv;
+}
+// frame a dissolving into frame b, k of the way (0..1)
+function drawSheetMix(c, id, a, b, k, x, y, o = {}) {
+  const S = FXS[id];
+  if (!FX_BLEND || a === b || k < 0.04 || !S || !S.img.complete || !S.img.naturalWidth) { drawSheet(c, id, k < 0.96 || !FX_BLEND ? a : b, x, y, o); return; }
+  if (k > 0.96) { drawSheet(c, id, b, x, y, o); return; }
+  const lvl = clamp(Math.round(k * 16), 1, 15);
+  drawSheet(c, id, a, x, y, { ...o, src: ditherFrame(id, a, lvl, false) });
+  drawSheet(c, id, b, x, y, { ...o, src: ditherFrame(id, b, lvl, true) });
+}
+// a place f (fractional) along a list of frames: the two frames it falls between and how far along (loop: wraps round)
+// Each frame is held clean for the first BLEND_HOLD of its time and only dissolves into the next after that (a dissolve
+// across the whole hold looked grainy, like static, when the two pictures differ a lot).
+const BLEND_HOLD = 0.55;
+function framePlace(list, f, loop) {
+  const n = list.length, i = Math.floor(f), t = clamp((f - i - BLEND_HOLD) / (1 - BLEND_HOLD), 0, 1);
+  if (loop) return [list[((i % n) + n) % n], list[(((i + 1) % n) + n) % n], t];
+  if (f >= n - 1) return [list[n - 1], list[n - 1], 0];
+  if (f < 0) return [list[0], list[0], 0];
+  return [list[i], list[Math.min(n - 1, i + 1)], t];
 }
 const sheetFrames = id => (FXS[id] ? FXS[id].frames.length : 0);
 const sheetSize = (id, i) => (FXS[id] ? FXS[id].frames[i] : [0, 0, 1, 1]);
@@ -992,8 +1039,8 @@ mixInto(Battle, class {
       else drawSheet(c, id, fr, m.x, m.cy, { sc: size(fr), dir: a.dir, tilt: SM.tilt });
       return;
     }
-    const fr = SM.go[Math.floor(T / 0.07) % SM.go.length];
-    drawSheet(c, id, fr, m.x, m.cy, { sc: size(fr), dir: a.dir, tilt: SM.tilt, ax: SM.ax ?? 0.5, ay: SM.ay ?? 0.5 });
+    const [fa, fb, ft] = framePlace(SM.go, T / 0.07, true);
+    drawSheetMix(c, id, fa, fb, ft, m.x, m.cy, { sc: size(fa), dir: a.dir, tilt: SM.tilt, ax: SM.ax ?? 0.5, ay: SM.ay ?? 0.5 });
   }
 
   // Cut a Coreature's own picture out of the effect layer (a dash trail wraps round the body instead of covering it).
@@ -1220,8 +1267,8 @@ mixInto(Battle, class {
   drawProjectile(c, p) {
     const SS = SHEET_SHOTS[p.mv.id];
     if (SS && FXS[SS.sheet]) {   // played from the owner's sheet, pointing the way it flies
-      const age = 2.6 - p.life, fr = SS.fly[Math.floor(age / 0.07 + (SS.spin ? p.spin : 0)) % SS.fly.length];
-      drawSheet(c, SS.sheet, fr, p.x, p.y, { dir: SS.spin ? undefined : Math.atan2(p.vy, p.vx), ax: SS.spin ? 0.5 : SS.ax ?? 0.65, sc: SS.len / sheetW(SS.sheet, SS.fly[0]) });
+      const age = 2.6 - p.life, [fa, fb, ft] = framePlace(SS.fly, age / 0.07 + (SS.spin ? p.spin : 0), true);
+      drawSheetMix(c, SS.sheet, fa, fb, ft, p.x, p.y, { dir: SS.spin ? undefined : Math.atan2(p.vy, p.vx), ax: SS.spin ? 0.5 : SS.ax ?? 0.65, sc: SS.len / sheetW(SS.sheet, SS.fly[0]) });
       return;
     }
     const t = styleOf(p.mv), fx = fxOf(p.mv), R = p.r * 2.2, a = Math.atan2(p.vy, p.vx), T = this.time, x = p.x, y = p.y;
@@ -1343,7 +1390,12 @@ mixInto(Battle, class {
       const k = a.t / mv.charge, ch = [].concat(B.charge);
       drawSheet(c, id, ch[Math.min(ch.length - 1, Math.floor(k * ch.length))], ox, oy, B.aimCharge ? { sc: 0.5 + k * 0.5, dir: a.dir, ax: 0.25 } : { sc: 0.4 + k * 0.6 }); return;
     }
-    const left = mv.dur - a.t, fr = a.t < t0 ? B.start : left < t2 && B.tail !== undefined ? B.tail : left < t1 ? B.end : B.full[Math.floor(T / 0.07) % B.full.length];
+    const left = mv.dur - a.t, fr = a.t < t0 ? B.start : left < t2 && B.tail !== undefined ? B.tail : left < t1 ? B.end : null;
+    if (fr === null) {   // at full power: its looping frames dissolving into each other (r181)
+      const [fa, fb, ft] = framePlace(B.full, T / 0.07, true), sxa = mv.len / sheetW(id, fa);
+      drawSheetMix(c, id, fa, fb, ft, ox, oy, { dir: a.dir, ax: 0, ay: 0.5, sx: sxa, sy: Math.min(sxa, 1.25) });
+      return;
+    }
     const cap = fr === B.start && B.startStretch ? B.startStretch : B.stretch && !B.full.includes(fr) ? B.stretch : Infinity;
     const sx = Math.min(cap, mv.len / sheetW(id, fr));
     drawSheet(c, id, fr, ox, oy, { dir: a.dir, ax: 0, ay: 0.5, sx, sy: Math.min(sx, 1.25) });
@@ -1413,6 +1465,12 @@ mixInto(Battle, class {
     const mv = a.mv, fx = fxOf(mv), T = this.time;
     if (FXS[mv.id] && (mv.id === 'whirlpool' || mv.id === 'maelstrom')) {   // the owner's sheets (W6, W7): forming, spinning (looped), breaking up
       const left = mv.dur - a.t, fr = a.t < 0.24 ? Math.floor(a.t / 0.08) : left < 0.24 ? 6 + (left < 0.12 ? 1 : 0) : 3 + Math.floor(T / 0.08) % 3;
+      if (a.t >= 0.24 && left >= 0.24) {   // spinning: its three looping frames dissolving into each other (r181)
+        const [fa, fb, ft] = framePlace([3, 4, 5], T / 0.08, true), hole = VORTEX_HOLES[mv.id][fa];
+        drawSheetMix(c, mv.id, fa, fb, ft, m.x, m.y - m.h * 0.18, { sc: mv.r * 2 / sheetW(mv.id, 4), ax: hole[0], ay: hole[1] });
+        if (m.visible && !m.fainted) cutOutSprite(c, m);
+        return;
+      }
       // each frame's hole (measured from the sheet) centred a little up the user's body, so it stands in the middle
       // of the swirl rather than on its back edge (r164; the pull and the damage still come from its feet)
       const hole = VORTEX_HOLES[mv.id][fr];

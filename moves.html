@@ -41,6 +41,7 @@
     <button id="freeze">Freeze sheet of this type</button>
     <select id="speed"><option value="1">Speed: normal</option><option value="0.5">Speed: half</option><option value="0.25">Speed: quarter</option><option value="0.1">Speed: slowest</option></select>
     <button id="sound">Sound: off</button>
+    <button id="smooth" title="Each picture of an attack's sheet dissolves into the next instead of jumping (r181, being tried out)">Smoothing: on</button>
   </div>
   <canvas id="sheet" style="display:none;width:100%;max-width:1100px;border:2px solid #3a3358;border-radius:10px;cursor:pointer" title="Click to close"></canvas>
   <div class="wrap">
@@ -154,12 +155,16 @@ $('#sheet').onclick = () => { $('#sheet').style.display = 'none'; };
 // listen to the attacks (off to start with; the click also lets the browser start audio)
 // slow motion, to see what each attack's animation does
 $('#speed').onchange = () => { G('App').timeScale = +$('#speed').value; };
+// smoothing (r181): the sheet frames dissolve into each other; on here to try it, still off in the game itself
+let smooth = true;
+$('#smooth').onclick = () => { smooth = !smooth; $('#smooth').textContent = 'Smoothing: ' + (smooth ? 'on' : 'off'); };
 $('#sound').onclick = () => { w.toggleMute(); $('#sound').textContent = 'Sound: ' + (G('Sfx').muted ? 'off' : 'on'); };
 window.sheet = sheet;
 
 let fireT = 0;
 function tick() {
   const App = G && G('App'), b = App && App.battle; if (!b) return;
+  try { w.eval('FX_BLEND = ' + smooth); } catch (e) {}
   if (b.state !== 'fight') { setup(); return; }
   const P = b.P, T = b.e[0];
   T.hp = T.maxHp; P.hp = P.maxHp; P.status = null; T.status = null; P.buffs = []; P.stunT = 0;
