@@ -356,7 +356,7 @@ const FX_PARTS = {
     }
     const s = (p.sc || 1) * (p.grow ? Math.min(1, age / p.grow) : 1) * (p.shrink ? Math.min(1, (p.max - age) / p.shrink) : 1) * (1 + (p.swell || 0) * age);
     if (s < 0.05) return;
-    const o = { sc: s, ay: p.ay ?? 0.5, rot, flip: p.flip };
+    const o = { sc: s, ax: p.ax ?? 0.5, ay: p.ay ?? 0.5, rot, flip: p.flip };
     const yy = y - z - (p.rise || 0) * age;
     if (fb !== null) drawSheetMix(c, p.id, fr, fb, ft, x, yy, o); else drawSheet(c, p.id, fr, x, yy, o);
   },
@@ -735,6 +735,8 @@ let FX_BLEND = false;   // off in the game until the owner decides; moves.html h
 // Attacks built from pieces (r182): Eruption from the owner's P1 pieces, moved by code. On since r185 (the owner: "that
 // looks so much better, let's do that with all the attacks"); moves.html's switch turns it off to compare.
 let FX_PIECES = true;
+// dashes built from pieces so far: COMMON-1's dust, speed lines and thud (r186)
+const PIECE_DASH = { bodySlam: 'slam' };
 const BAYER4 = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
 const _dither = new Map();
 function ditherFrame(id, i, lvl, keepLow) {   // frame i with only the pixels under (keepLow) or at and over the level
@@ -892,6 +894,7 @@ mixInto(Battle, class {
 
   // A dash under way (r148): a burst as it launches, then bits of its look flying off behind (DASH_TRAIL).
   fxDashTrail(m, a, dt) {
+    if (FX_PIECES && PIECE_DASH[a.mv.id] && FXS.common1) { this.fxDashPieces(m, a, dt); return; }
     const tr = DASH_TRAIL[a.mv.id];
     if (!tr) return;
     const fx = tr.fx || fxOf(a.mv), back = a.dir + Math.PI;
@@ -935,7 +938,8 @@ mixInto(Battle, class {
     // signature hits
     const toward = src ? Math.atan2(tgt.cy - src.cy, tgt.x - src.x) : 0;
     const SM = SHEET_MOVES[mv.id];
-    if (big && SM && SM.hit) { const hs = SM.hitSheet || SM.sheet || mv.id; sheetPart(this, hs, SM.hit, tgt.x, tgt.cy, 0.5, { sc: tgt.r * 3 / sheetW(hs, SM.hit[0]), flip: SM.face && src && src.x > tgt.x }); }   // its sheet's impact
+    if (big && FX_PIECES && PIECE_DASH[mv.id] && FXS.common1) this.fxThud(tgt, src);   // a dash built from pieces lands with a thud
+    else if (big && SM && SM.hit) { const hs = SM.hitSheet || SM.sheet || mv.id; sheetPart(this, hs, SM.hit, tgt.x, tgt.cy, 0.5, { sc: tgt.r * 3 / sheetW(hs, SM.hit[0]), flip: SM.face && src && src.x > tgt.x }); }   // its sheet's impact
     if (mv.fx === 'claw') this.particles.push({ kind: 'claw', x: tgt.x, y: tgt.cy, size: 34, rot: toward + Math.PI / 2 + rand(-0.3, 0.3), color: fx[1], life: 0.3, max: 0.3 });
     if (mv.fx === 'slash') this.particles.push({ kind: 'slash', x: tgt.x, y: tgt.cy, size: 22, rot: toward + rand(-0.4, 0.4), color: fx[1], life: 0.28, max: 0.28 });
     if (mv.fx === 'flurry') {   // fists everywhere at once
@@ -976,6 +980,7 @@ mixInto(Battle, class {
     if (mv.id === 'fireBlast') { sheetPart(this, 'fireBlast', [2, 3, 3, 4], x, y - 4, 0.75, { sc: r * 2.4 / sheetW('fireBlast', 3) }); this.addShake(5); return; }
     const user = this.mons.find(o => o.action && o.action.mv === mv && Math.hypot(o.x - x, o.y - y) < 2);   // a burst's user stands in the middle of it
     if (mv.id === 'eruption' && FX_PIECES && FXS.eruptionParts) { this.fxEruptionPieces(x, y, r, this.mons.find(o => o.action && o.action.mv === mv && Math.hypot(o.x - x, o.y - y) < 2)); return; }
+    if (FX_PIECES && FXS.common1 && (mv.id === 'heavyStomp' || mv.id === 'quake')) { this.fxGroundSlam(x, y, r, user, { big: mv.id === 'quake' }); return; }   // COMMON-1 (r186; Quake gets rock spikes with EARTH-1)
     if (mv.id === 'eruption') { const sc = r * 1.25 / sheetW('eruption', 0); sheetPart(this, 'eruption', [1, 2, 2, 3, 4], x, y + sheetH('eruption', 0) * sc / 2, 1.1, { sc, ay: 1, user }); this.addShake(8); return; }
     if (mv.id === 'geyserVent' && FXS.geyserVent) { const sc = r * 1.7 / sheetW('geyserVent', 0); sheetPart(this, 'geyserVent', [2, 3, 4, 5, 6, 7, 8], x, y + 4 + sheetH('geyserVent', 0) * sc / 2, 1.1, { sc, ay: 1, user }); this.addShake(6); return; }
     if (mv.id === 'discharge' && FXS.discharge) { sheetPart(this, 'discharge', [2, 3, 4, 5, 6, 7], x, y, 0.75, { sc: r * 2.2 / sheetW('discharge', 5), user }); this.addShake(5); return; }   // E3 (r171)
@@ -1080,6 +1085,7 @@ mixInto(Battle, class {
 
   drawDashFx(c, m, a) {
     const mv = a.mv, fx = fxOf(mv), T = this.time, cx = m.x, cy = m.cy, R = m.r + 7;
+    if (FX_PIECES && PIECE_DASH[mv.id] && FXS.common1) return;   // built from pieces (fxDashPieces): nothing to draw on the dasher itself
     if (SHEET_MOVES[mv.id] && SHEET_MOVES[mv.id].dash && a.phase !== 'combo') { this.drawSheetDash(c, m, a, SHEET_MOVES[mv.id]); return; }
     // its own art (DASH_ART), drawn in its frame; the ones with an older look of their own (fx) keep it
     const art = DASH_ART[mv.id] || (!mv.fx || mv.fx === 'claw' || mv.fx === 'slash' ? DASH_ART._default : null);
@@ -1257,6 +1263,76 @@ mixInto(Battle, class {
     // the huge blank eyes, opening up as it charges
     const er = 2.5 + k * 3;
     for (const ex of eyes) { FXD.circle(c, ex, ey, er, '#ffffff'); FXD.dot(c, ex + Math.cos(a.dir) * 0.6, ey + 0.4, 0.8, INK); }
+  }
+
+  // ---- COMMON-1 pieces (r186; docs/attack-pieces.md): frames 0-3 dust, 4-6 pebbles, 7 shock ring, 8 crack star,
+  // 9-11 impact star, 12-13 speed lines, 14-15 sparkles, 16 wind curl.
+  // One piece of an attack: its depth worked out against its user (in front if it's on the near side), see `piece`.
+  addPiece(id, user, o) {
+    this.particles.push({ kind: 'piece', id, ...o, life: o.life + (o.delay || 0), max: o.life,
+      user, front: !!user && !o.ground && (o.near ?? o.y + (o.my || 0) * 0.25 >= user.y) });
+  }
+  // a stamp on the ground: the ground cracks, shockwave rings spread, pebbles fly and dust rolls out (Heavy Stomp,
+  // Quake until EARTH-1, Slumbear's Belly Flop landing)
+  fxGroundSlam(x, y, r, user, o = {}) {
+    const id = 'common1', P = q => this.addPiece(id, user, q), ry = 0.55, big = o.big;
+    if (user) user.piecesUntil = this.time + 1.5;
+    P({ frames: [8], x, y, ground: true, sc: r * (big ? 1.6 : 1.3) / sheetW(id, 8), grow: 0.05, shrink: 0.35, life: big ? 1.3 : 1 });
+    for (let i = 0; i < (big ? 3 : 2); i++) {   // shockwave rings spreading (the picture's ring up to 1.7x; bigger ones drawn as thin rings so their pixels stay fine)
+      const sc = r * (2.4 + i * 0.4) / sheetW(id, 7);
+      if (sc <= 1.7) P({ frames: [7], x, y, ground: true, sc, grow: 0.28 + i * 0.08, shrink: 0.08, life: 0.38 + i * 0.08, delay: i * 0.08 });
+      else this.particles.push({ kind: 'wave', x, y: y - 1, r0: 6, r1: r * (1.2 + i * 0.2), life: 0.38 + i * 0.08 + i * 0.08, max: 0.38 + i * 0.08, color: i % 2 ? '#d8c8a8' : '#f4ecdc', w: 3 });
+    }
+    for (let i = 0; i < (big ? 11 : 7); i++) {   // pebbles thrown out, tumbling, bouncing once
+      const ang = rand(0, TAU), sp = r * rand(1.2, 2.2);
+      P({ frames: [4 + (i % 3)], x: x + Math.cos(ang) * r * 0.2, y: y + Math.sin(ang) * r * 0.2 * ry, mx: Math.cos(ang) * sp, my: Math.sin(ang) * sp * ry,
+        vz: rand(110, 200), g: 650, rot: rand(0, TAU), vr: rand(-10, 10), sc: rand(0.55, 0.85), life: 0.9, shrink: 0.15 });
+    }
+    const nd = big ? 9 : 6;
+    for (let i = 0; i < nd; i++) {   // dust rolling outward round it, a moment after the rings so they read first
+      const ang = i / nd * TAU + rand(-0.2, 0.2), rr = r * rand(0.6, 0.9);
+      P({ frames: [0, 1, 2, 3], x: x + Math.cos(ang) * rr, y: y + Math.sin(ang) * rr * ry, mx: Math.cos(ang) * rand(25, 45), my: Math.sin(ang) * rand(25, 45) * ry,
+        rise: rand(8, 18), sc: rand(0.32, 0.48) * (big ? 1.2 : 1), swell: 0.35, ay: 0.85, life: rand(0.6, 0.85), delay: rand(0.1, 0.2), flip: Math.random() < 0.5 });
+    }
+    this.addShake(big ? 9 : 6);
+  }
+  // a dash built from pieces: a puff of dust as it launches, dust kicked up as it runs, speed lines streaming back
+  fxDashPieces(m, a, dt) {
+    const id = 'common1', back = a.dir + Math.PI, cx = Math.cos(a.dir), cy = Math.sin(a.dir);
+    if (!a.launched) {
+      a.launched = true; this.addShake(2);
+      for (let i = 0; i < 3; i++) this.addPiece(id, m, { frames: [0, 1, 2, 3], x: m.x - cx * m.r * 0.6 + rand(-4, 4), y: m.y - cy * 4 + rand(-3, 3),
+        mx: Math.cos(back + rand(-0.6, 0.6)) * rand(25, 50), my: Math.sin(back) * 15, rise: 8, sc: rand(0.45, 0.6), swell: 0.3, ay: 0.85, life: 0.5, flip: cx > 0 });
+    }
+    a.dustT = (a.dustT || 0) - dt;
+    while (a.dustT <= 0) {   // dust kicked up at its feet
+      a.dustT += 0.085;
+      this.addPiece(id, m, { frames: [0, 1, 2, 3], x: m.x - cx * m.r * 0.5 + rand(-3, 3), y: m.y + rand(-2, 2), mx: -cx * rand(10, 30), rise: rand(8, 16),
+        sc: rand(0.22, 0.34), swell: 0.4, ay: 0.85, life: rand(0.3, 0.42), flip: cx > 0 });
+    }
+    a.lineT = (a.lineT || 0) - dt;
+    while (a.lineT <= 0) {   // speed lines streaming back off it
+      a.lineT += 0.035;
+      const side = rand(-1, 1) * m.h * 0.45, nx = -cy, ny = cx;
+      this.addPiece(id, null, { frames: [12 + ((Math.random() * 2) | 0)], x: m.x - cx * m.r * 1.1 + nx * side, y: m.y - m.h * 0.45 + ny * side * 0.6,
+        mx: -cx * 50, my: -cy * 50, rot: a.dir, ax: 0.2, sc: rand(0.5, 0.8), life: 0.16, shrink: 0.1 });
+    }
+  }
+  // a heavy hit: the comic impact star where it lands, a shock ring on the ground, pebbles and dust
+  fxThud(tgt, src) {
+    const id = 'common1', P = q => this.addPiece(id, tgt, q), from = src ? Math.atan2(src.y - tgt.y, src.x - tgt.x) : 0;
+    tgt.piecesUntil = Math.max(tgt.piecesUntil || 0, this.time + 1);
+    P({ frames: [9, 10, 11], x: tgt.x + Math.cos(from) * tgt.r * 0.5, y: tgt.cy, near: true, sc: 0.9 + tgt.r / 40, life: 0.3, grow: 0.03 });
+    P({ frames: [7], x: tgt.x, y: tgt.y, ground: true, sc: tgt.r * 3 / sheetW(id, 7), grow: 0.25, shrink: 0.06, life: 0.3 });
+    for (let i = 0; i < 5; i++) {
+      const ang = from + Math.PI + rand(-1.2, 1.2), sp = rand(50, 110);
+      P({ frames: [4 + (i % 3)], x: tgt.x, y: tgt.y, mx: Math.cos(ang) * sp, my: Math.sin(ang) * sp * 0.55, vz: rand(90, 160), g: 650, rot: rand(0, TAU), vr: rand(-10, 10), sc: rand(0.45, 0.7), life: 0.7, shrink: 0.12 });
+    }
+    for (let i = 0; i < 4; i++) {
+      const ang = rand(0, TAU);
+      P({ frames: [0, 1, 2, 3], x: tgt.x + Math.cos(ang) * tgt.r * 0.6, y: tgt.y + Math.sin(ang) * tgt.r * 0.3, mx: Math.cos(ang) * 35, my: Math.sin(ang) * 15, rise: 10, sc: rand(0.4, 0.55), swell: 0.3, ay: 0.85, life: 0.6, flip: Math.random() < 0.5 });
+    }
+    this.addShake(5);
   }
 
   // Eruption from pieces (r182): parts of the owner's P1 sheet (frames: 0-3 flame tongue, 4-6 rocks, 7-9 embers,

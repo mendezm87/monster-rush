@@ -16,7 +16,7 @@ and the game moves them **60 times a second**:
 - **Depth:** pieces on the far side of the Coreature are drawn behind it and the ones on the near side in front,
   so it stands *inside* its attack (the owner's idea, r183).
 
-**Eruption is done** (prompt P1 in `docs/attack-prompts.md`, picture `docs/refs/p1-eruption-pieces.png`), and it's on in
+**Received so far:** COMMON-1 (r186: Body Slam, Heavy Stomp, Quake's stomp for now, Belly Flop's landing). **Eruption is done** (prompt P1 in `docs/attack-prompts.md`, picture `docs/refs/p1-eruption-pieces.png`), and it's on in
 the game since r185. **Thunder** is already built this way (code-drawn gathering clouds, then the E2b storm cloud and
 the E2c bolt) and stays as it is. Everything else is below.
 

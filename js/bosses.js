@@ -79,7 +79,10 @@ const BOSS_PATTERNS = {
     const F = b.F, P = b.P, x = clamp(P.x, F.x0 + 34, F.x1 - 34), y = clamp(P.y, F.y0 + 30, F.y1 - 12), sx = m.x, sy = m.y;
     B.act(m, 1.55, 'windup'); b.ui.callout('enemy', 'Belly Flop', 'beast');
     B.hazard(b, { shape: 'circle', x, y, r: 46, delay: 1.3, mv: BOSS_MV.flop, force: 230,
-      onLand(b, h) { if (!h.echo) { m.x = x; m.y = y; m.jump = 0; } b.addShake(9); b.burst(x, y - 1, DUST, 26, 110, -20, 4); b.decalAt(x, y, 30); Sfx.play('bigHit'); } });
+      onLand(b, h) { if (!h.echo) { m.x = x; m.y = y; m.jump = 0; } b.addShake(9);
+        if (FX_PIECES && FXS.common1) b.fxGroundSlam(x, y, 46, h.echo ? null : m, { big: true });   // COMMON-1 pieces (r186)
+        else b.burst(x, y - 1, DUST, 26, 110, -20, 4);
+        b.decalAt(x, y, 30); Sfx.play('bigHit'); } });
     B.during(0.35, 0.95, k => { m.x = sx + (x - sx) * k; m.y = sy + (y - sy) * k; m.jump = Math.sin(k * Math.PI) * 70; });
   } },
   // a yawn so big its shockwave rolls across the room: safe right next to him, or far away
