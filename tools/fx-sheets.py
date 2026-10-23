@@ -54,10 +54,10 @@ SHEETS = {
     # SMUG-1: smug beam sections x4, smirk tip x3, charge glow x3, supreme beam sections x4, petals x3, sparkles x2
     'smug1':         ('pk-smug-1.png', 24, [4, 6, 4, 5]),
     # SMUG-1b: patterned body x4, core strand x4, muzzle x3 + smug face, impact x4
-    'smug1b':        ('pk-smug-1b.png', 26, [4, 4, 4, 4]),
+    'smug1b':        ('pk-smug-1b.png', 40, [4, 4, 4, 4]),
     # BEAST-2: stars x6 (two spinning loops of 3), speed lines x2 + zigzag, sound waves x3 + shout lines x2, shout bubble x3
     # SMUG-1c: supreme body x4, core strand x4, muzzle x4, impact x4
-    'smug1c':        ('pk-smug-1c.png', 26, [4, 4, 4, 4]),
+    'smug1c':        ('pk-smug-1c.png', 44, [4, 4, 4, 4]),
     # BEAST-3: cookie x4 (bites), crumbs x5 + milk, blanket x3 (falling, settling, tucked), Z x3, moon, star
     'beast3':        ('pk-beast-3.png', 30, [4, 6, 3, 5]),
     # BEAST-1: Mega Beam body x4, core x4, muzzle x4, impact x4
