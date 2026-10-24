@@ -1025,10 +1025,24 @@ mixInto(Battle, class {
   fxCone(m, a) {
     const mv = a.mv, fx = fxOf(mv), speed = a.r / 0.35, snow = styleOf(mv) === 'ice';
     if (mv.id === 'magmaWave') {   // the wave is the sheet (drawSheetMagma); when it's spent, a pool of lava stays a moment
+      if (FX_PIECES && FXS.fire4 && !a.pooled) {   // FIRE-4 (r207): globs of lava thrown ahead of the waves, splashing where they land
+        a.globT = (a.globT || 0) - 1 / 30;
+        if (a.globT <= 0) {
+          a.globT = 0.06;
+          const ang = a.dir + rand(-mv.cone, mv.cone) * 0.8, d = a.r * rand(0.5, 1), sp = d / 0.45;
+          this.addPiece('fire4', null, { frames: [11 + ((Math.random() * 2) | 0)], x: m.x + Math.cos(a.dir) * 14, y: m.y, mx: Math.cos(ang) * sp, my: Math.sin(ang) * sp * 0.6,
+            vz: rand(90, 140), g: 600, rot: rand(0, TAU), vr: rand(-6, 6), sc: rand(0.35, 0.5), life: 0.45, shrink: 0.1 });
+          const lx = m.x + Math.cos(a.dir) * 14 + Math.cos(ang) * d, ly = m.y + Math.sin(ang) * d * 0.6;
+          this.addPiece('fire4', null, { frames: [13, 14, 14], x: lx, y: ly + 2, ay: 1, sc: rand(0.35, 0.5), life: 0.35, delay: 0.4 });
+        }
+      }
       if (!a.pooled && a.blowT + 1 / 30 >= mv.blow) {
         a.pooled = true;
         const flip = Math.cos(a.dir) < 0;
-        for (const w of magmaFront(a, mv, a.r * 0.92, 0.85)) sheetPart(this, 'magmaWave', [7], m.x + w.x, m.y + w.y, 0.7, { sc: w.sc, ay: 1, flip });
+        for (const w of magmaFront(a, mv, a.r * 0.92, 0.85)) {
+          sheetPart(this, 'magmaWave', [7], m.x + w.x, m.y + w.y, 0.7, { sc: w.sc, ay: 1, flip });
+          if (FX_PIECES && FXS.fire4) this.addPiece('fire4', null, { frames: [15], x: m.x + w.x, y: m.y + w.y, ground: true, sc: w.sc * 0.8, life: 1.2, delay: 0.5, shrink: 0.5 });   // cooling into a crusted puddle that smokes
+        }
       }
       return;
     }
@@ -1071,6 +1085,7 @@ mixInto(Battle, class {
       return;
     }
     if (mv.fx === 'bolt' && FXS.thunder) { sheetPart(this, 'thunder', [3, 4, 4, 5, 6, 7], x, y + 6, 0.7, { ay: 1, sc: 1.3 }); this.addShake(6); return; }   // E2 (r171): the strike, the burst, the scorch ring
+    if (mv.id === 'steamEruption' && FX_PIECES && FXS.fire4) { this.fxSteamVent(x, y, r, mv.linger || 2.4); return; }   // FIRE-4 (r207)
     if (mv.id === 'steamEruption') { const sc = r * 1.4 / sheetW('steamEruption', 0); sheetPart(this, 'steamEruption', [1, 2, 2, 3, 4], x, y + sheetH('steamEruption', 0) * sc / 2, 1.1, { sc, ay: 1 }); return; }
     this.particles.push({ kind: 'wave', x, y: y - 2, r0: 4, r1: r, life: 0.32, max: 0.32, color: fx[2], w: 4 });
     this.particles.push({ kind: 'wave', x, y: y - 2, r0: 2, r1: r * 0.7, life: 0.42, max: 0.42, color: fx[1], w: 3 });
@@ -1574,6 +1589,22 @@ mixInto(Battle, class {
     }
   }
 
+  // Steam Eruption's vent (FIRE-4, r207): a geyser of scalding steam shooting up and venting for as long as it
+  // lingers, steam billowing off it and drifting away, scalding drops falling round it, the bubbling vent under it
+  fxSteamVent(x, y, r, linger) {
+    const id = 'fire4', P = o => this.addPiece(id, null, o), sc = r * 1.6 / sheetW(id, 6);
+    P({ frames: [0, 1], fps: 8, x, y, ground: true, sc: r * 2 / sheetW(id, 0), life: linger, shrink: 0.3 });
+    P({ frames: [4, 5, 6], fps: 10, x, y: y + 2, ay: 1, sc, grow: 0.12, shrink: 0.35, life: linger });
+    for (let t = 0; t < linger; t += 0.2) {   // steam billowing off the top and drifting away
+      P({ frames: [7, 8, 9, 10], x: x + rand(-6, 6), y: y - sheetH(id, 6) * sc * 0.85, mx: rand(-25, 25), rise: rand(25, 45), sc: sc * rand(0.6, 0.9), swell: 0.5, life: rand(0.8, 1.1), delay: t, flip: Math.random() < 0.5 });
+      if (Math.random() < 0.6) {
+        const ang = rand(0, TAU);
+        P({ frames: [2 + ((Math.random() * 2) | 0)], x, y: y - sheetH(id, 6) * sc * 0.6, mx: Math.cos(ang) * rand(20, 45), my: Math.sin(ang) * 15, vz: rand(30, 60), g: 400, sc: sc * 0.5, life: 0.7, delay: t + rand(0, 0.2), shrink: 0.1 });
+      }
+    }
+    this.addShake(3);
+  }
+
   // a star popping out of a hit (Zoomies)
   fxStarPop(tgt) {
     for (let i = 0; i < 3; i++) {
@@ -2034,6 +2065,9 @@ mixInto(Battle, class {
       } else if (z.mv.fx === 'rock' && left < 0.35) {
         const k = 1 - left / 0.35;
         FXD.rock(c, zx, zy - 150 * (1 - k * k) - 6, z.id, 8, FX_STYLES.rock, z.id);
+      } else if (z.mv.id === 'steamEruption' && FX_PIECES && FXS.fire4) {   // the vent bubbling, more and more (FIRE-4)
+        const k = 1 - left / z.delay;
+        drawSheet(c, 'fire4', k < 0.5 ? 0 : (Math.floor(this.time * 8) % 2), zx, zy, { sc: z.r * 2 / sheetW('fire4', 0) * (0.6 + 0.4 * k) });
       } else if (z.mv.id === 'steamEruption') {   // the ground bubbling and cracking before the geyser (sheet frame 0)
         drawSheet(c, 'steamEruption', 0, zx, zy, { sc: z.r * 1.4 / sheetW('steamEruption', 0) * (0.5 + 0.5 * (1 - left / z.delay)) });
       } else if (z.mv.fx === 'bolt' && FXS.thunder) {   // E2 (r171): the cloud gathering over the spot, then a crackle reaching down
