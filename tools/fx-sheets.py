@@ -111,6 +111,20 @@ SHEETS = {
     # GLITCH-2 (Toxic Pool): sludge pool x3, data tear x2
     # GHOST-1: ghost fireball x4, will-o'-wisp x3 + wisps x3, spirit flame x4, ghost streak x2 + mist x3
     # GHOST-2 (Spectral Ray): beam section x4, core strand x4, muzzle swirl x4, impact x4
+    # ELEC-1: bolt x3, spark star x3 + spark dots x2, lightning ball x4, static ball x3 + green sparks x2
+    # ELEC-2a (Volt Cannon): section x4, core x4, muzzle x4, impact x4
+    # STEEL-1a (Flash Cannon): section x4, core x4, muzzle x4, impact sparks x4
+    'steel1a':       ('pk-steel-1a.png', 40, [4, 4, 4, 4]),
+    # STEEL-1 (Drone Swarm): drone x2 + drone bursting x3, metal sparks x3 + bolts x2
+    'steel1':        ('pk-steel-1.png', 40, [5, 5]),
+    # STEEL-2: clang star x3 + dent, magnet + field lines x3, armour plates x3, tower shield x3
+    'steel2':        ('pk-steel-2.png', 38, [4, 4, 3, 3]),
+    'elec2a':        ('pk-elec-2a.png', 40, [4, 4, 4, 4]),
+    # ELEC-2b (Rail Shot): section x4, core x4, muzzle x4, impact x4
+    'elec2b':        ('pk-elec-2b.png', 40, [4, 4, 4, 4]),
+    # ELEC-3: arc x3, ground ring x2, lightning spearhead x3, blue lance x3 + scorch mark
+    'elec3':         ('pk-elec-3.png', 38, [3, 2, 3, 4]),
+    'elec1':         ('pk-elec-1.png', 36, [3, 5, 4, 5]),
     'ghost2':        ('pk-ghost-2.png', 40, [4, 4, 4, 4]),
     'ghost1':        ('pk-ghost-1.png', 36, [4, 6, 4, 5]),
     'glitch2':       ('pk-glitch-2.png', 40, [3, 2]),
@@ -361,7 +375,7 @@ def drop_specks(im, m, most=12):
                 for x, y in comp: m[y][x] = True
 
 # Sheets that need more than 20 colours (E6: its few green draining sparks were lost among the yellows)
-COLOURS = {'staticSiphon': 40, 'glitch1': 40, 'glitch2a': 40, 'glitch2': 40}
+COLOURS = {'staticSiphon': 40, 'glitch1': 40, 'glitch2a': 40, 'glitch2': 40, 'elec1': 40}
 
 def build(only=None, sheet=False):
     data, review = {}, []
@@ -373,7 +387,7 @@ def build(only=None, sheet=False):
             for yy in range(im.size[1]):
                 for xx in range(im.size[0]):
                     if isbg(*px_[xx, yy], xx, yy): px_[xx, yy] = bgc
-        m = bg_mask(im, 40 if (sid in CLEAN_SHRINK and sid != 'thunder') or sid in ('eruptionParts', 'common1', 'common2', 'hits1', 'hits2', 'hits3', 'hits4', 'smug1', 'smug1b', 'smug1c', 'beast1', 'beast2', 'beast3', 'beast4', 'fire2a', 'fire2b', 'fire3', 'fire4', 'water1a', 'water1b', 'water2', 'water3', 'plant1', 'plant2a', 'plant2', 'plant3', 'bug1', 'ice1', 'ice2a', 'ice2', 'earth1', 'earth2', 'dark1', 'dark2', 'dark3', 'fight1', 'fight2a', 'fight2', 'wind1', 'wind2', 'wind2b', 'glitch1', 'glitch2a', 'glitch2', 'ghost1', 'ghost2') else 400)   # electric arcs close round gaps of background: only tiny ones are part of it (Thunder's cloud undersides are near the background colour, so not there)
+        m = bg_mask(im, 40 if (sid in CLEAN_SHRINK and sid != 'thunder') or sid in ('eruptionParts', 'common1', 'common2', 'hits1', 'hits2', 'hits3', 'hits4', 'smug1', 'smug1b', 'smug1c', 'beast1', 'beast2', 'beast3', 'beast4', 'fire2a', 'fire2b', 'fire3', 'fire4', 'water1a', 'water1b', 'water2', 'water3', 'plant1', 'plant2a', 'plant2', 'plant3', 'bug1', 'ice1', 'ice2a', 'ice2', 'earth1', 'earth2', 'dark1', 'dark2', 'dark3', 'fight1', 'fight2a', 'fight2', 'wind1', 'wind2', 'wind2b', 'glitch1', 'glitch2a', 'glitch2', 'ghost1', 'ghost2', 'elec1', 'elec2a', 'elec2b', 'elec3', 'steel1a', 'steel1', 'steel2') else 400)   # electric arcs close round gaps of background: only tiny ones are part of it (Thunder's cloud undersides are near the background colour, so not there)
         if sid in PANELS: drop_specks(im, m)
         if sid in MANUAL:
             boxes = []
