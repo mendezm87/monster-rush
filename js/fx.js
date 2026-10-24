@@ -786,6 +786,9 @@ const PIECE_BEAMS = {
   hydroCannon: { body: ['water1a', [0, 1, 2, 3]], muzzle: ['water1a', [8, 9, 10, 11], 0.6, 0, 0.55], charge: ['water1a', [8, 9, 10], 0, 0.55], chargeOne: true,
     impact: ['water1a', [12, 13, 14, 15], 0.45, 0, 0.45], impactFlip: true, head: ['water1a', [12, 13, 14, 15], 0.45, 0, 0.45], headFlip: true,
     thick: 2.6, muzzleSc: 1.1, headSc: 1.2, impactSc: 1.3, chargeSc: 0.3 },   // WATER-1a (r208): no core layer (it hid the ripples); the splash picture's beam comes from the right, so it's mirrored and its stub cut
+  tidalCannon: { body: ['water1b', [0, 1, 2, 3]], muzzle: ['water1b', [8, 9, 10, 11], 0.6, 0, 0.55], charge: ['water1b', [8, 9, 10], 0, 0.55], chargeOne: true,
+    impact: ['water1b', [12, 13, 14, 15], 0.5, 0, 0.4], impactFlip: true, head: ['water1b', [12, 13, 14, 15], 0.5, 0, 0.4], headFlip: true,
+    thick: 2.4, muzzleSc: 1.1, headSc: 1.0, impactSc: 1.1, chargeSc: 0.3 },   // WATER-1b (r209): Gemini drew arrows on the muzzle and impact; they're cut off
   megaBeam: { body: ['beast1', [0, 1, 2, 3]], muzzle: ['beast1', [8, 9, 10, 11], 0.3],
     impact: ['beast1', [12, 13, 14, 15], 0.25], head: ['beast1', [12, 13, 14], 0.25], charge: ['beast1', [8, 9, 10], 0, 0.63], thick: 2.2 },   // BEAST-1 (r199)
   supremeSmug: { body: ['smug1c', [0, 1, 2, 3]], muzzle: ['smug1c', [8, 9, 10, 11], 0.3],
