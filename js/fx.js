@@ -790,6 +790,9 @@ const PIECE_BEAMS = {
     // r211 (the owner: the crashing-wave tip didn't fit): the tip is its own whirlpool, churning on the end of the beam
     impact: ['water1b', [8, 9, 10, 11], 0.5, 0, 0.55], head: ['water1b', [8, 9, 10, 11], 0.5, 0, 0.55],
     thick: 2.4, muzzleSc: 1.1, headSc: 1.25, impactSc: 1.15, chargeSc: 0.3 },   // WATER-1b (r209): Gemini drew arrows on the muzzle and impact; they're cut off
+  solarBeam: { body: ['plant2a', [0, 1, 2, 3], 0, 0.05, 0.05], muzzle: ['plant2a', [8, 9, 10, 11], 0.6, 0, 0.66], charge: ['plant2a', [8, 9, 10], 0, 0.66], chargeOne: true,
+    impact: ['plant2a', [12, 13, 14, 15], 0.45, 0, 0.5], impactFlip: true, head: ['plant2a', [12, 13, 14], 0.45, 0, 0.5], headFlip: true,
+    thick: 2.2, muzzleSc: 1.2, headSc: 1.1, impactSc: 1.3, chargeSc: 0.35 },   // PLANT-2a (r214): its sections' end caps and its burst's beam stub cut, the burst mirrored
   megaBeam: { body: ['beast1', [0, 1, 2, 3]], muzzle: ['beast1', [8, 9, 10, 11], 0.3],
     impact: ['beast1', [12, 13, 14, 15], 0.25], head: ['beast1', [12, 13, 14], 0.25], charge: ['beast1', [8, 9, 10], 0, 0.63], thick: 2.2 },   // BEAST-1 (r199)
   supremeSmug: { body: ['smug1c', [0, 1, 2, 3]], muzzle: ['smug1c', [8, 9, 10, 11], 0.3],
