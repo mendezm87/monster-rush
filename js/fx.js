@@ -1239,6 +1239,7 @@ mixInto(Battle, class {
     if (FX_PIECES && FXS.beast4 && mv.id === 'coffeeBreak') this.fxCoffee(m);
     if (FX_PIECES && FXS.plant3 && mv.id === 'cottonGuard') this.fxCotton(m);   // its own show first (PLANT-3, r216; BEAST-4, r201)
     if (FX_PIECES && FXS.ice2 && mv.id === 'frostArmor') this.fxFrostArmor(m);   // ICE-2, r220
+    if (FX_PIECES && FXS.fight2 && mv.id === 'bulkUp') this.fxBulkUp(m);   // FIGHT-2, r228
     if (FX_PIECES && FXS.common2) { this.fxBuffPieces(m, mv); return; }
     const fx = fxOf(mv), b = mv.buff || {};
     if (b.def) this.particles.push({ kind: 'shield', x: m.x, y: m.cy, r: m.r + 12, color: fx[2], life: 0.9, max: 0.9 });
@@ -1982,6 +1983,20 @@ mixInto(Battle, class {
         ay: 0.85, sc: rand(0.3, 0.4), flip: Math.cos(ang) < 0, life: 0.8, delay: 0.15, near: false });
     }
     this.addShake(6);
+  }
+
+  // Bulk Up (FIGHT-2, r228): a power burst, tongues of fighting aura flaring up all round it (the far ones behind
+  // it, the near ones small and low in front) and puffs of steam huffing off its head
+  fxBulkUp(m) {
+    const id = 'fight2', P = o => this.addPiece(id, m, o), k = clamp(m.h / 30, 0.8, 1.5);
+    m.piecesUntil = this.time + 1.4;
+    P({ frames: [5], x: m.x, y: m.y - m.h * 0.5, near: false, sc: k * 1.2, grow: 0.06, swell: 0.6, shrink: 0.2, life: 0.35 });
+    for (let i = 0; i < 8; i++) {
+      const ang = i / 8 * TAU + rand(-0.2, 0.2), near = Math.sin(ang) > 0.3;
+      P({ frames: [0, 1, 2], fps: 12, ph: i % 3, x: m.x + Math.cos(ang) * m.r * (near ? 1.3 : 1), y: m.y + Math.sin(ang) * m.r * 0.4, near, ay: 1, rise: near ? 4 : 12,
+        sc: k * rand(0.5, 0.65) * (near ? 0.4 : 1), grow: 0.12, shrink: 0.3, life: 1, delay: 0.05 + i * 0.03, flip: Math.random() < 0.5 });
+    }
+    for (let i = 0; i < 3; i++) P({ frames: [3 + (i % 2)], x: m.x + (i - 1) * 7, y: m.y - m.h * 0.9, rise: rand(15, 25), mx: (i - 1) * 15, near: true, sc: k * 0.5, grow: 0.1, shrink: 0.35, life: 0.6, delay: 0.5 + i * 0.12, flip: i === 0 });
   }
 
   // a star popping out of a hit (Zoomies)
