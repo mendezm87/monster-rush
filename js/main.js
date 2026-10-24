@@ -2,7 +2,7 @@
 
 // Shown on the title screen so players can tell whether their browser has the latest
 // build (GitHub Pages lets browsers cache files for up to 10 minutes). Bump on every release.
-const VERSION = '2026.10.24-r222';
+const VERSION = '2026.10.24-r223';
 
 const App = {
   endless: false,   // the mode picked on the title screen

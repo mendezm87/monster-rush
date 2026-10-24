@@ -821,7 +821,8 @@ const PIECE_DASH = { bodySlam: { thud: true },
   woolTackle: { wool: 0.05, woolPop: true },
   // FIRE-3 (r206): fire dashes trail flames and scorch the ground instead of dust, and explode on the hit
   aquaJet: { draw: 'stream', water: true, splash: true },
-  rollout: { rubble: 0.05, smash: true },   // EARTH-1 (r221): rubble kicked up as it rolls, a rock smash on the hit
+  rollout: { rubble: 0.05, smash: true },
+  nightSlash: { wisps: 0.022, crescent: true },   // DARK-1 (r223): shadow wisps streaming off it, a crescent cut on the hit   // EARTH-1 (r221): rubble kicked up as it rolls, a rock smash on the hit
   megahorn: { draw: 'horn', xflash: true }, beetleBarrage: { xflash: true },   // BUG-1 (r217)   // WATER-3 (r212): wrapped in a streamer of water, spray behind, a splash on the hit
   flameWheel: { draw: 'wheel', fire: true, scorch: true, boom: true }, blazeRush: { draw: 'comet', fire: true, boom: true } };   // BEAST-4 (r201): storm-cloud wool streaming off Lumawool   // BEAST-2 (r195): Smugshi's line
 // each look's hit pieces (r188): [sheet, row]; a row is a burst in 3 frames then 3 bits (docs/attack-pieces.md HITS-1..4)
@@ -978,6 +979,7 @@ const PIECE_SHOTS = {
   razorLeaf:  { sheet: 'plant1', fly: [0, 1, 2, 3, 4], len: 20, spin: true },
   pinMissile: { sheet: 'bug1', fly: [11, 12], len: 18, ax: 0.6 },
   iceShard:   { sheet: 'ice1', fly: [0, 1, 2], len: 22, ax: 0.55 },
+  gloomOrb:   { sheet: 'dark1', fly: [6, 7, 8, 9], len: 34, ax: 0.5 },   // DARK-1 (r223): a dark orb, its wisps curling
   mudShot:    { sheet: 'earth2', fly: [3, 4, 5], len: 30, ax: 0.6 },   // EARTH-2 (r222): a clod of wet mud, dripping   // ICE-1 (r218)   // BUG-1 (r217): a needle-missile   // PLANT-1 (r213): a spinning leaf
 };
 const PIECE_SHOT_HITS = {
@@ -985,6 +987,7 @@ const PIECE_SHOT_HITS = {
   bubbleBeam: ['water2', [11, 12, 13], 0.7],
   pinMissile: ['bug1', [16, 17, 18], 0.6],
   mudShot: ['earth2', [8, 9, 9], 0.9],
+  gloomOrb: ['dark1', [10, 11, 12], 1.1],
   iceShard: ['ice1', [4, 5, 6], 0.9],
 };
 // a frame sequence played as a particle (an explosion, a geyser)
@@ -1061,6 +1064,10 @@ mixInto(Battle, class {
       this.addPiece('bug1', null, { frames: [5, 6, 6], x: tgt.x + rand(-4, 4), y: tgt.cy + rand(-4, 4), near: true, sc: tgt.r * 2.2 / sheetW('bug1', 5), rot: rand(-0.3, 0.3), life: 0.22 });
       for (let i = 0; i < 3; i++) { const ang = rand(0, TAU), sp = rand(50, 100); this.addPiece('bug1', null, { frames: [8 + i], x: tgt.x, y: tgt.cy, mx: Math.cos(ang) * sp, my: Math.sin(ang) * sp * 0.6, vz: rand(30, 70), g: 400, rot: rand(0, TAU), vr: rand(-8, 8), sc: 0.6, life: 0.45, shrink: 0.1 }); }
     }
+    if (PD && PD.crescent && FXS.dark1) {   // a crescent cut across it, a small burst of darkness behind (DARK-1)
+      this.addPiece('dark1', null, { frames: [0, 1, 1, 2], x: tgt.x, y: tgt.cy, sc: tgt.r * 2.4 / sheetW('dark1', 1), rot: toward + rand(-0.3, 0.3), flip: Math.random() < 0.5, life: 0.3 });
+      if (big) this.addPiece('dark1', null, { frames: [10, 11, 12], x: tgt.x, y: tgt.cy, sc: tgt.r * 1.6 / sheetW('dark1', 11), life: 0.35 });
+    }
     if (big && PD && PD.smash && FXS.earth1) this.fxRockSmash(tgt.x, tgt.cy, tgt.r * 1.6, tgt, src);   // EARTH-1
     if (big && PD && PD.splash && FXS.water2) { this.addPiece('water2', null, { frames: [4, 5, 6], x: tgt.x, y: tgt.cy, sc: tgt.r * 2.4 / sheetW('water2', 5), life: 0.4 }); }
     if (big && PD && PD.boom && FXS.fire3) this.fxFireBoom(tgt.x, tgt.cy, tgt.r * 2.4, tgt);   // or explodes (FIRE-3)
@@ -1079,7 +1086,7 @@ mixInto(Battle, class {
     }
     else if (big && !PD && SM && SM.hit) { const hs = SM.hitSheet || SM.sheet || mv.id; sheetPart(this, hs, SM.hit, tgt.x, tgt.cy, 0.5, { sc: tgt.r * 3 / sheetW(hs, SM.hit[0]), flip: SM.face && src && src.x > tgt.x }); }   // its sheet's impact
     if (mv.fx === 'claw') this.particles.push({ kind: 'claw', x: tgt.x, y: tgt.cy, size: 34, rot: toward + Math.PI / 2 + rand(-0.3, 0.3), color: fx[1], life: 0.3, max: 0.3 });
-    if (mv.fx === 'slash') this.particles.push({ kind: 'slash', x: tgt.x, y: tgt.cy, size: 22, rot: toward + rand(-0.4, 0.4), color: fx[1], life: 0.28, max: 0.28 });
+    if (mv.fx === 'slash' && !(PD && PD.crescent && FXS.dark1)) this.particles.push({ kind: 'slash', x: tgt.x, y: tgt.cy, size: 22, rot: toward + rand(-0.4, 0.4), color: fx[1], life: 0.28, max: 0.28 });
     if (mv.fx === 'flurry') {   // fists everywhere at once
       for (let i = 0; i < 3; i++) this.particles.push({ kind: 'impact', x: tgt.x + rand(-14, 14), y: tgt.cy + rand(-14, 10), size: rand(7, 11), rot: rand(0, TAU), color: i ? fx[1] : '#ffffff', life: 0.14, max: 0.14 });
     }
@@ -1540,7 +1547,7 @@ mixInto(Battle, class {
     const id = 'common1', back = a.dir + Math.PI, cx = Math.cos(a.dir), cy = Math.sin(a.dir);
     if (!a.launched) {
       a.launched = true; this.addShake(2);
-      if (!PIECE_DASH[a.mv.id].fire && !PIECE_DASH[a.mv.id].water) for (let i = 0; i < 3; i++) this.addPiece(id, m, { frames: [0, 1, 2, 3], x: m.x - cx * m.r * 0.6 + rand(-4, 4), y: m.y - cy * 4 + rand(-3, 3),
+      if (!PIECE_DASH[a.mv.id].fire && !PIECE_DASH[a.mv.id].water && !PIECE_DASH[a.mv.id].wisps) for (let i = 0; i < 3; i++) this.addPiece(id, m, { frames: [0, 1, 2, 3], x: m.x - cx * m.r * 0.6 + rand(-4, 4), y: m.y - cy * 4 + rand(-3, 3),
         mx: Math.cos(back + rand(-0.6, 0.6)) * rand(25, 50), my: Math.sin(back) * 15, rise: 8, sc: rand(0.45, 0.6), swell: 0.3, ay: 0.85, life: 0.5, flip: cx > 0 });
     }
     const PD0 = PIECE_DASH[a.mv.id];
@@ -1567,13 +1574,21 @@ mixInto(Battle, class {
         if (Math.random() < 0.3 && FXS.water3) this.addPiece('water3', null, { frames: [12 + ((Math.random() * 2) | 0)], x: m.x - cx * m.r * 0.6, y: m.y, mx: -cx * 20, rise: 8, sc: 0.6, life: 0.4, shrink: 0.2 });
       }
     }
-    a.dustT = (PD0.fire || PD0.water) ? 1 : (a.dustT || 0) - dt;
+    a.dustT = (PD0.fire || PD0.water || PD0.wisps) ? 1 : (a.dustT || 0) - dt;
     while (a.dustT <= 0) {   // dust kicked up at its feet
       a.dustT += PD0.rubble ? 0.17 : 0.085;
       this.addPiece(id, m, { frames: [0, 1, 2, 3], x: m.x - cx * m.r * 0.5 + rand(-3, 3), y: m.y + rand(-2, 2), mx: -cx * rand(10, 30), rise: rand(8, 16),
         sc: rand(0.22, 0.34), swell: 0.4, ay: 0.85, life: rand(0.3, 0.42), flip: cx > 0 });
     }
     const PD = PIECE_DASH[a.mv.id];
+    if (PD.wisps && FXS.dark1) {   // wisps of shadow curling off it and rising (DARK-1)
+      a.wispT = (a.wispT || 0) - dt;
+      while (a.wispT <= 0) {
+        a.wispT += PD.wisps;
+        this.addPiece('dark1', null, { frames: [3 + ((Math.random() * 3) | 0)], x: m.x - cx * m.r * 0.4 + rand(-4, 4), y: m.y - m.h * rand(0.1, 0.6), mx: -cx * rand(20, 50), rise: rand(15, 35),
+          sc: rand(0.5, 0.75), grow: 0.05, shrink: 0.3, life: rand(0.35, 0.5), flip: Math.random() < 0.5 });
+      }
+    }
     if (PD.rubble && FXS.earth1) {   // chips of rock kicked up behind it, bouncing (EARTH-1)
       a.rubT = (a.rubT || 0) - dt;
       while (a.rubT <= 0) {
