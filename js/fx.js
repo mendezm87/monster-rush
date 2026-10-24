@@ -822,7 +822,8 @@ const PIECE_DASH = { bodySlam: { thud: true },
   // FIRE-3 (r206): fire dashes trail flames and scorch the ground instead of dust, and explode on the hit
   aquaJet: { draw: 'stream', water: true, splash: true },
   rollout: { rubble: 0.05, smash: true },
-  nightSlash: { wisps: 0.022, crescent: true },   // DARK-1 (r223): shadow wisps streaming off it, a crescent cut on the hit   // EARTH-1 (r221): rubble kicked up as it rolls, a rock smash on the hit
+  nightSlash: { wisps: 0.022, crescent: true },
+  deadlineDash: { papers: 0.05, calendar: true },   // DARK-3 (r225): Mondaze's paperwork flying off it, a calendar page and a burst of papers on the hit   // DARK-1 (r223): shadow wisps streaming off it, a crescent cut on the hit   // EARTH-1 (r221): rubble kicked up as it rolls, a rock smash on the hit
   megahorn: { draw: 'horn', xflash: true }, beetleBarrage: { xflash: true },   // BUG-1 (r217)   // WATER-3 (r212): wrapped in a streamer of water, spray behind, a splash on the hit
   flameWheel: { draw: 'wheel', fire: true, scorch: true, boom: true }, blazeRush: { draw: 'comet', fire: true, boom: true } };   // BEAST-4 (r201): storm-cloud wool streaming off Lumawool   // BEAST-2 (r195): Smugshi's line
 // each look's hit pieces (r188): [sheet, row]; a row is a burst in 3 frames then 3 bits (docs/attack-pieces.md HITS-1..4)
@@ -1068,6 +1069,10 @@ mixInto(Battle, class {
       this.addPiece('dark1', null, { frames: [0, 1, 1, 2], x: tgt.x, y: tgt.cy, sc: tgt.r * 2.4 / sheetW('dark1', 1), rot: toward + rand(-0.3, 0.3), flip: Math.random() < 0.5, life: 0.3 });
       if (big) this.addPiece('dark1', null, { frames: [10, 11, 12], x: tgt.x, y: tgt.cy, sc: tgt.r * 1.6 / sheetW('dark1', 11), life: 0.35 });
     }
+    if (big && PD && PD.calendar && FXS.dark3) {   // a calendar page torn off, papers bursting everywhere (DARK-3)
+      this.addPiece('dark3', null, { frames: [3], x: tgt.x, y: tgt.y - tgt.h - 6, rise: 25, sc: 0.5, grow: 0.08, swell: 0.3, shrink: 0.25, rot: rand(-0.3, 0.3), life: 0.8 });
+      for (let i = 0; i < 6; i++) { const ang = rand(0, TAU), sp = rand(50, 100); this.addPiece('dark3', null, { frames: [0, 1, 2], fps: 10, ph: i % 3, x: tgt.x, y: tgt.cy, mx: Math.cos(ang) * sp, my: Math.sin(ang) * sp * 0.6, vz: rand(30, 70), g: 80, sc: rand(0.3, 0.4), shrink: 0.25, life: rand(0.7, 1) }); }
+    }
     if (big && PD && PD.smash && FXS.earth1) this.fxRockSmash(tgt.x, tgt.cy, tgt.r * 1.6, tgt, src);   // EARTH-1
     if (big && PD && PD.splash && FXS.water2) { this.addPiece('water2', null, { frames: [4, 5, 6], x: tgt.x, y: tgt.cy, sc: tgt.r * 2.4 / sheetW('water2', 5), life: 0.4 }); }
     if (big && PD && PD.boom && FXS.fire3) this.fxFireBoom(tgt.x, tgt.cy, tgt.r * 2.4, tgt);   // or explodes (FIRE-3)
@@ -1090,7 +1095,10 @@ mixInto(Battle, class {
     if (mv.fx === 'flurry') {   // fists everywhere at once
       for (let i = 0; i < 3; i++) this.particles.push({ kind: 'impact', x: tgt.x + rand(-14, 14), y: tgt.cy + rand(-14, 10), size: rand(7, 11), rot: rand(0, TAU), color: i ? fx[1] : '#ffffff', life: 0.14, max: 0.14 });
     }
-    if (mv.fx === 'stare') {   // the target is left baffled
+    if (mv.fx === 'stare' && FX_PIECES && FXS.dark3) {   // the target is left baffled: question marks pop up (DARK-3)
+      for (let i = 0; i < 2; i++) this.addPiece('dark3', null, { frames: [6], x: tgt.x + (i ? 10 : -8) + rand(-3, 3), y: tgt.y - tgt.h - 2, rise: rand(20, 30), mx: rand(-6, 6), sc: 0.32 - i * 0.07, grow: 0.08, shrink: 0.25, rot: rand(-0.3, 0.3), life: 0.9, delay: i * 0.12 });
+      this.particles.push({ kind: 'glyph', str: 'z', x: tgt.x + 6, y: tgt.y - tgt.h - 4, vx: rand(-6, 6), vy: -rand(18, 30), size: 10, color: '#e8e0ff', life: 0.9, max: 0.9 });
+    } else if (mv.fx === 'stare') {   // the target is left baffled
       for (const [str, dx] of [['?', -8], ['z', 6], ['?', 14]]) this.particles.push({ kind: 'glyph', str, x: tgt.x + dx + rand(-3, 3), y: tgt.y - tgt.h - 4, vx: rand(-6, 6), vy: -rand(18, 30), size: rand(9, 12), color: '#e8e0ff', life: 0.9, max: 0.9 });
     }
   }
@@ -1346,9 +1354,9 @@ mixInto(Battle, class {
         }
       }
       const k = Math.min(1, a.ripT / a.mv.ripple), fr = 3 + (Math.floor(T * 10) % 2);
-      for (const sc of [1, 0.6]) {
+      for (const sc of [1]) {   // one ring (a second one inside buried the user)
         const r = R * sc; if (r < 10) continue;
-        drawSheet(c, 'dark2', fr, m.x, m.y - 2, { sc: 1, sx: r * 2.1 / (sheetW('dark2', fr) * FX_PX), sy: r * 1.35 / (sheetH('dark2', fr) * FX_PX) * (k > 0.85 ? (1 - k) / 0.15 : 1) });
+        drawSheet(c, 'dark2', fr, m.x, m.y - 2, { sc: 1, sx: r * 2.1 / sheetW('dark2', fr), sy: r * 1.15 / sheetH('dark2', fr) * (k > 0.85 ? (1 - k) / 0.15 : 1) });
       }
       return;
     }
@@ -1447,6 +1455,25 @@ mixInto(Battle, class {
   drawStare(c, m, a) {
     const mv = a.mv, T = this.time, ey = m.y - m.h * 0.66, k = a.phase === 'charge' ? a.t / mv.charge : 1;
     const eyes = [m.x - 4, m.x + 4];
+    if (FX_PIECES && FXS.dark3) {   // DARK-3 (r225): the owner's bubble, eyes, stare beams and hypnotic swirl
+      drawSheet(c, 'dark3', k < 0.35 ? 4 : 5, m.x + 18, m.y - m.h - 14, { sc: (k < 0.35 ? 0.55 : 0.4) * Math.min(1, 0.4 + k * 2) });
+      if (a.phase !== 'charge') {
+        const fade = Math.min(1, (mv.dur - a.t) / 0.15), len = mv.len * Math.min(1, a.t / 0.15);
+        const cos = Math.cos(a.dir), sin = Math.sin(a.dir), sc = 1, seg = sheetW('dark3', 12) * sc * 0.95;   // full size: its thin lines vanish when shrunk
+        const at = (ex, x) => { const t = x / mv.len; return [ex + cos * x, ey + sin * x + t * (1 - t) * 26]; };   // the gaze droops in the middle
+        for (const [j, ex] of [m.x].entries()) for (let x = 0, n = 0; x < len; x += seg, n++) {   // one droopy stare from between its eyes
+          const x1 = Math.min(len, x + seg), [ax, ay] = at(ex, x), [bx, by] = at(ex, x + seg), fr = 12 + ((n + j + Math.floor(T * 9)) % 3);
+          drawSheet(c, 'dark3', fr, ax, ay, { sc, sy: fade, ax: 0, trim: 0, dir: Math.atan2(by - ay, bx - ax), cutR: 1 - (x1 - x) / seg });
+        }
+        for (let j = 0; j < 4; j++) {   // sleepy z's drifting along
+          const x = (T * 70 + j * len / 4) % Math.max(1, len), t = x / mv.len;
+          FX_PARTS.glyph(c, { str: j % 2 ? 'z' : 'Z', x: m.x + cos * x, y: ey + sin * x + t * (1 - t) * 26 - 9 - Math.sin(T * 6 + j) * 3, size: 8 + j % 2 * 2, color: '#e8e0ff' });
+        }
+        drawSheet(c, 'dark3', 9 + (Math.floor(T * 8) % 3), m.x + cos * len, ey + sin * len, { sc: 0.6 * fade + 0.2 });
+      }
+      for (const ex of eyes) drawSheet(c, 'dark3', k < 0.6 ? 7 : 8, ex, ey, { sc: 0.12 + 0.12 * k, flip: ex < m.x });
+      return;
+    }
     // the speech bubble
     const bx = m.x + 16, by = m.y - m.h - 12;
     FXD.ink(c, () => { c.ellipse(bx, by, 11, 7, 0, 0, TAU); c.moveTo(bx - 6, by + 5); c.lineTo(bx - 10, by + 11); c.lineTo(bx - 1, by + 6); }, '#ffffff');
@@ -1565,7 +1592,7 @@ mixInto(Battle, class {
     const id = 'common1', back = a.dir + Math.PI, cx = Math.cos(a.dir), cy = Math.sin(a.dir);
     if (!a.launched) {
       a.launched = true; this.addShake(2);
-      if (!PIECE_DASH[a.mv.id].fire && !PIECE_DASH[a.mv.id].water && !PIECE_DASH[a.mv.id].wisps) for (let i = 0; i < 3; i++) this.addPiece(id, m, { frames: [0, 1, 2, 3], x: m.x - cx * m.r * 0.6 + rand(-4, 4), y: m.y - cy * 4 + rand(-3, 3),
+      if (!PIECE_DASH[a.mv.id].fire && !PIECE_DASH[a.mv.id].water && !PIECE_DASH[a.mv.id].wisps && !PIECE_DASH[a.mv.id].papers) for (let i = 0; i < 3; i++) this.addPiece(id, m, { frames: [0, 1, 2, 3], x: m.x - cx * m.r * 0.6 + rand(-4, 4), y: m.y - cy * 4 + rand(-3, 3),
         mx: Math.cos(back + rand(-0.6, 0.6)) * rand(25, 50), my: Math.sin(back) * 15, rise: 8, sc: rand(0.45, 0.6), swell: 0.3, ay: 0.85, life: 0.5, flip: cx > 0 });
     }
     const PD0 = PIECE_DASH[a.mv.id];
@@ -1592,13 +1619,22 @@ mixInto(Battle, class {
         if (Math.random() < 0.3 && FXS.water3) this.addPiece('water3', null, { frames: [12 + ((Math.random() * 2) | 0)], x: m.x - cx * m.r * 0.6, y: m.y, mx: -cx * 20, rise: 8, sc: 0.6, life: 0.4, shrink: 0.2 });
       }
     }
-    a.dustT = (PD0.fire || PD0.water || PD0.wisps) ? 1 : (a.dustT || 0) - dt;
+    a.dustT = (PD0.fire || PD0.water || PD0.wisps || PD0.papers) ? 1 : (a.dustT || 0) - dt;
     while (a.dustT <= 0) {   // dust kicked up at its feet
       a.dustT += PD0.rubble ? 0.17 : 0.085;
       this.addPiece(id, m, { frames: [0, 1, 2, 3], x: m.x - cx * m.r * 0.5 + rand(-3, 3), y: m.y + rand(-2, 2), mx: -cx * rand(10, 30), rise: rand(8, 16),
         sc: rand(0.22, 0.34), swell: 0.4, ay: 0.85, life: rand(0.3, 0.42), flip: cx > 0 });
     }
     const PD = PIECE_DASH[a.mv.id];
+    if (PD.papers && FXS.dark3) {   // sheets of paper flying off it, fluttering as they drift down (DARK-3)
+      a.papT = (a.papT || 0) - dt;
+      while (a.papT <= 0) {
+        a.papT += PD.papers;
+        const ang = back + rand(-0.8, 0.8), sp = rand(30, 70);
+        this.addPiece('dark3', null, { frames: [0, 1, 2], fps: rand(7, 11), ph: (Math.random() * 3) | 0, x: m.x - cx * m.r * 0.3, y: m.y - m.h * rand(0.3, 0.8), mx: Math.cos(ang) * sp, my: Math.sin(ang) * sp * 0.5,
+          vz: rand(10, 40), g: 60, sc: rand(0.28, 0.38), shrink: 0.25, life: rand(0.6, 0.9), flip: Math.random() < 0.5 });
+      }
+    }
     if (PD.wisps && FXS.dark1) {   // wisps of shadow curling off it and rising (DARK-1)
       a.wispT = (a.wispT || 0) - dt;
       while (a.wispT <= 0) {
