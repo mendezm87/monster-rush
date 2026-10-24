@@ -1191,7 +1191,8 @@ mixInto(Battle, class {
   // Buffs and heals: a shield for defence, chevrons for attack and speed, + signs for healing.
   fxBuff(m, mv) {
     if (FX_PIECES && FXS.beast4 && mv.id === 'coffeeBreak') this.fxCoffee(m);
-    if (FX_PIECES && FXS.plant3 && mv.id === 'cottonGuard') this.fxCotton(m);   // its own show first (PLANT-3, r216)   // its own show first (BEAST-4, r201)
+    if (FX_PIECES && FXS.plant3 && mv.id === 'cottonGuard') this.fxCotton(m);   // its own show first (PLANT-3, r216; BEAST-4, r201)
+    if (FX_PIECES && FXS.ice2 && mv.id === 'frostArmor') this.fxFrostArmor(m);   // ICE-2, r220
     if (FX_PIECES && FXS.common2) { this.fxBuffPieces(m, mv); return; }
     const fx = fxOf(mv), b = mv.buff || {};
     if (b.def) this.particles.push({ kind: 'shield', x: m.x, y: m.cy, r: m.r + 12, color: fx[2], life: 0.9, max: 0.9 });
@@ -1760,6 +1761,26 @@ mixInto(Battle, class {
         sc: m.h / 30 * rand(0.26, 0.34) * (near ? 0.7 : 1), grow: 0.06, shrink: 0.3, life: 0.85, delay: i * 0.05, flip: Math.random() < 0.5 });
     }
     for (let i = 0; i < 4; i++) P({ frames: [6 + (i % 3)], x: m.x + rand(-m.r, m.r), y: m.y - m.h * rand(0.4, 0.9), rise: rand(15, 30), mx: rand(-20, 20), sc: 0.45, life: 1, delay: 0.5 + i * 0.1, shrink: 0.3, near: true });
+  }
+
+  // Frost Armor (ICE-2): frost spreads over the ground round its feet, ice spikes crack up through it in a ring (the
+  // far ones behind it, the near ones small in front), ice crystals and an ice shield form round its body, then the
+  // spikes shatter and frost mist drifts off
+  fxFrostArmor(m) {
+    const id = 'ice2', P = o => this.addPiece(id, m, o), k = clamp(m.r / 16, 0.8, 1.4);
+    m.piecesUntil = this.time + 1.7;
+    P({ frames: [3, 4], x: m.x, y: m.y + 2, ground: true, sc: m.r * 3 / sheetW(id, 3), grow: 0.2, shrink: 0.35, life: 1.4 });
+    for (let i = 0; i < 7; i++) {   // ice spikes cracking up round it
+      const ang = i / 7 * TAU + 0.3 + rand(-0.15, 0.15), near = Math.sin(ang) > 0.25, rr = m.r * (near ? 1.35 : 1.1);
+      P({ frames: [5, 6, 6, 6, 7], x: m.x + Math.cos(ang) * rr, y: m.y + Math.sin(ang) * rr * 0.45, near, ay: 1,
+        sc: k * rand(0.42, 0.55) * (near ? 0.6 : 1), grow: 0.08, life: 0.95, delay: 0.08 + i * 0.04, flip: Math.cos(ang) < 0 });
+    }
+    // an ice shield rising behind it, crystals settling on its far side
+    P({ frames: [0], x: m.x - m.face * m.r * 1.25, y: m.y - m.h * 0.4, near: false, sc: k * 0.62, grow: 0.12, swell: 0.3, shrink: 0.25, life: 0.85, delay: 0.3, flip: m.face < 0 });
+    for (let i = 0; i < 3; i++) P({ frames: [1], x: m.x + (i - 1) * m.r * 1.15 + m.face * m.r * 0.3, y: m.y - m.h * (0.5 + (i === 1) * 0.5), near: false, rot: (i - 1) * 0.6,
+      sc: k * 0.48, grow: 0.1, swell: 0.3, shrink: 0.25, life: 0.9, delay: 0.25 + i * 0.06 });
+    for (let i = 0; i < 4; i++) P({ frames: [8 + (i % 3)], x: m.x + rand(-m.r, m.r), y: m.y - m.h * rand(0.1, 0.5), rise: rand(10, 20), mx: rand(-18, 18),
+      sc: k * rand(0.3, 0.4), grow: 0.1, shrink: 0.4, life: 0.9, delay: 0.75 + i * 0.08, near: i === 0 });
   }
 
   // a star popping out of a hit (Zoomies)

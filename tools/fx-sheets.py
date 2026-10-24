@@ -94,6 +94,8 @@ SHEETS = {
     'ice1':          ('pk-ice-1.png', 30, [3, 4, 4, 3]),
     # ICE-2a: Frost Ray body x4 (rounded right ends), core x4, frost swirl x4, ice burst x4 (spraying right)
     'ice2a':         ('pk-ice-2a.png', 40, [4, 4, 4, 4]),
+    # ICE-2: ice armour plates x3, frost patch x2 + ice spike bursting up x3, frost mist x3 (cut from MANUAL boxes)
+    'ice2':          ('pk-ice-2.png', 34, [3, 5, 3]),
     'beast2':        ('pk-beast-2.png', 48, [6, 2, 5, 3]),   # (cut from MANUAL boxes: Gemini laid its rows out unevenly)
     'stormCloud':    ('e2b-storm-cloud.png', 36, [8]),   # Thunder's cloud (E2's own is sliced flat at the sides; its bolt is kept)
     'staticSiphon':  ('e6-static-siphon.png', 28, [8]),
@@ -297,7 +299,8 @@ FRAME_REPAIRS = {('thunderBolt', 3): lambda fr: ring_mirror(fr, 50, 82)}
 
 # Sheets whose pieces are found in hand-measured boxes (reference pixels), in sheet order, when Gemini's rows overlap
 # (BEAST-2's shout lines reach down into the shout bubbles' row). Each box is shrunk to what's drawn inside it.
-MANUAL = {'ice1': [(451, 77, 986, 317), (1169, 77, 1612, 317), (1844, 77, 2344, 317), (176, 415, 662, 739), (866, 415, 1288, 739), (1507, 415, 1971, 739), (2119, 415, 2654, 739), (352, 788, 535, 1105), (901, 788, 1218, 1105), (1591, 788, 1837, 1105), (2260, 788, 2464, 1105), (359, 1148, 683, 1464), (1070, 1148, 1654, 1464), (1922, 1148, 2527, 1464)],
+MANUAL = {'ice2': [(162, 77, 577, 577), (810, 120, 1014, 493), (1225, 120, 1542, 528), (99, 655, 683, 943), (746, 641, 1331, 943), (1394, 641, 1795, 957), (1901, 472, 2225, 943), (2302, 486, 2717, 957), (246, 1169, 591, 1415), (753, 1056, 1485, 1429), (1584, 1077, 2246, 1429)],
+          'ice1': [(451, 77, 986, 317), (1169, 77, 1612, 317), (1844, 77, 2344, 317), (176, 415, 662, 739), (866, 415, 1288, 739), (1507, 415, 1971, 739), (2119, 415, 2654, 739), (352, 788, 535, 1105), (901, 788, 1218, 1105), (1591, 788, 1837, 1105), (2260, 788, 2464, 1105), (359, 1148, 683, 1464), (1070, 1148, 1654, 1464), (1922, 1148, 2527, 1464)],
           'bug1': [(127, 113, 577, 345), (662, 113, 1105, 345), (1190, 113, 1640, 345), (1718, 113, 2168, 345), (2232, 113, 2689, 345), (127, 415, 429, 711), (549, 415, 852, 711), (986, 415, 1232, 711), (1422, 415, 1542, 711), (1697, 415, 1816, 711), (1964, 415, 2091, 711), (134, 781, 408, 922), (634, 781, 908, 922), (1112, 781, 1331, 922), (1464, 781, 1683, 922), (1767, 781, 1915, 922), (134, 979, 352, 1155), (549, 979, 746, 1155), (950, 979, 1169, 1155), (148, 1260, 359, 1436), (591, 1260, 732, 1436), (986, 1260, 1133, 1436)],
           'beast1': [(10, 20, 245, 112), (265, 20, 500, 112), (520, 20, 755, 112), (775, 20, 1010, 112), (10, 145, 245, 195), (265, 145, 500, 195), (520, 145, 755, 195), (775, 145, 1010, 195), (10, 210, 245, 365), (265, 210, 500, 365), (520, 210, 755, 365), (775, 210, 1010, 365), (10, 385, 245, 540), (265, 385, 500, 540), (520, 385, 755, 540), (775, 385, 1010, 540)],
           'beast2': [(45, 20, 160, 120), (210, 20, 320, 120), (375, 20, 485, 120), (540, 20, 690, 120), (700, 15, 845, 120), (870, 20, 985, 120),
@@ -336,7 +339,7 @@ def build(only=None, sheet=False):
             for yy in range(im.size[1]):
                 for xx in range(im.size[0]):
                     if isbg(*px_[xx, yy], xx, yy): px_[xx, yy] = bgc
-        m = bg_mask(im, 40 if (sid in CLEAN_SHRINK and sid != 'thunder') or sid in ('eruptionParts', 'common1', 'common2', 'hits1', 'hits2', 'hits3', 'hits4', 'smug1', 'smug1b', 'smug1c', 'beast1', 'beast2', 'beast3', 'beast4', 'fire2a', 'fire2b', 'fire3', 'fire4', 'water1a', 'water1b', 'water2', 'water3', 'plant1', 'plant2a', 'plant2', 'plant3', 'bug1', 'ice1', 'ice2a') else 400)   # electric arcs close round gaps of background: only tiny ones are part of it (Thunder's cloud undersides are near the background colour, so not there)
+        m = bg_mask(im, 40 if (sid in CLEAN_SHRINK and sid != 'thunder') or sid in ('eruptionParts', 'common1', 'common2', 'hits1', 'hits2', 'hits3', 'hits4', 'smug1', 'smug1b', 'smug1c', 'beast1', 'beast2', 'beast3', 'beast4', 'fire2a', 'fire2b', 'fire3', 'fire4', 'water1a', 'water1b', 'water2', 'water3', 'plant1', 'plant2a', 'plant2', 'plant3', 'bug1', 'ice1', 'ice2a', 'ice2') else 400)   # electric arcs close round gaps of background: only tiny ones are part of it (Thunder's cloud undersides are near the background colour, so not there)
         if sid in PANELS: drop_specks(im, m)
         if sid in MANUAL:
             boxes = []
