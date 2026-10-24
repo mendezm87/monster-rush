@@ -812,6 +812,9 @@ const PIECE_BEAMS = {
   auraCannon: { body: ['fight2a', [0, 1, 2, 3], 0, 0.13, 0.13], muzzle: ['fight2a', [8, 9, 10, 11], 0.5], charge: ['fight2a', [8, 9, 10]],
     impact: ['fight2a', [12, 13, 14, 15], 0.25], head: ['fight2a', [12, 13, 14, 15], 0.25],
     thick: 2.2, muzzleSc: 0.8, headSc: 0.9, impactSc: 1.1, chargeSc: 0.35 },   // FIGHT-2a (r227): its sections' glowing end caps trimmed off both ends
+  venomJet: { body: ['glitch2a', [0, 1, 2, 3], 0, 0.02, 0.02], muzzle: ['glitch2a', [8, 9, 10, 11], 0.5], charge: ['glitch2a', [8, 9, 10]],
+    impact: ['glitch2a', [12, 13, 14, 15], 0.3], head: ['glitch2a', [12, 13, 14], 0.3],
+    thick: 2.2, muzzleSc: 0.7, headSc: 0.9, impactSc: 1.1, chargeSc: 0.35 },   // GLITCH-2a (r233): a sputtering stream of corrupted sludge
   megaBeam: { body: ['beast1', [0, 1, 2, 3]], muzzle: ['beast1', [8, 9, 10, 11], 0.3],
     impact: ['beast1', [12, 13, 14, 15], 0.25], head: ['beast1', [12, 13, 14], 0.25], charge: ['beast1', [8, 9, 10], 0, 0.63], thick: 2.2 },   // BEAST-1 (r199)
   supremeSmug: { body: ['smug1c', [0, 1, 2, 3]], muzzle: ['smug1c', [8, 9, 10, 11], 0.3],
