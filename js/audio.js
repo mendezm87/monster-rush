@@ -547,7 +547,7 @@ const Sfx = (() => {
     bubbleBeam: { cast() { for (let i = 0; i < 5; i++) { const p = 500 + Math.random() * 400; tone(p, 0.07, 'sine', 0.14, p * 1.3, i * 0.05); } } },
     // a wet splat
     mudShot: { cast() { noise(0.12, 0.35, 500); tone(110, 0.14, 'sine', 0.25, -50); tone(220, 0.08, 'sine', 0.12, -120, 0.06); } },
-    thunderbolt: { cast() { lib.zap(); typeLayer('electric', 0.18, 0.6); } },
+    ballLightning: { cast() { lib.zap(); typeLayer('electric', 0.18, 0.6); } },
     // a rumbling roll
     rollout: { cast(mv) { const f = sweep(mv.dur + 0.15, 180, 120, 0.5, 1.2); const l = ctx.createOscillator(), lg = ctx.createGain(); l.frequency.value = 16; lg.gain.value = 60; l.connect(lg).connect(f.frequency); l.start(); l.stop(ctx.currentTime + mv.dur + 0.2); typeLayer('rock', mv.dur, 0.6); } },
     // a roaring ring of fire

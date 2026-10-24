@@ -582,7 +582,7 @@ const DASH_ART = {
     FXD.ink(c, () => { c.moveTo(R + 10, 0); c.lineTo(R - 1, -R * 0.4); c.lineTo(R + 3, 0); c.lineTo(R - 1, R * 0.4); c.closePath(); }, '#ffffff', 0);
   },
   // a glowing green horn lance thrust forward, leaf-shaped streaks and torn leaves behind
-  megahorn(c, R, T, fx, back) {
+  hornLance(c, R, T, fx, back) {
     if (back) {
       for (const s of [-1, 1]) {
         const pts = [];
@@ -704,7 +704,7 @@ DASH_ART.zoomiesMax = DASH_ART.zoomies;
 const DASH_TRAIL = {
   voltRush: { shape: 'bolt', rate: 34, size: [3, 5] },
   aquaJet: { shape: 'drop', rate: 34, size: [2.6, 4] },
-  megahorn: { shape: 'leaf', rate: 22, size: [2.6, 3.6] },
+  hornLance: { shape: 'leaf', rate: 22, size: [2.6, 3.6] },
   ironSlam: { shape: 'spark', rate: 40, size: [2, 3], fx: ['#a86a1a', '#ffd23f', '#fff3b0'] },
   braveDive: { shape: 'feather', rate: 22, size: [3, 4.4] },
   lanceCharge: { shape: 'bolt', rate: 26, size: [2.4, 3.6], fx: ['#2a6ad8', '#9fd8ff', '#ffffff'] },
@@ -818,16 +818,16 @@ const PIECE_BEAMS = {
   spectralRay: { body: ['ghost2', [0, 1, 2, 3], 0, 0.11, 0.11], muzzle: ['ghost2', [8, 9, 10, 11], 0.5], charge: ['ghost2', [8, 9, 10]],
     impact: ['ghost2', [12, 13, 14, 15], 0.25], head: ['ghost2', [12, 13, 14, 15], 0.25],
     thick: 2.2, muzzleSc: 0.75, headSc: 0.9, impactSc: 1.1, chargeSc: 0.35 },   // GHOST-2 (r236): its sections' bulging end caps trimmed off
-  dragonPulse: { body: ['dragon1a', [0, 1, 2, 3], 0, 0.02, 0.02], muzzle: ['dragon1a', [8, 9, 10, 11], 0.5], charge: ['dragon1a', [8, 9, 10]],
+  starWyrm: { body: ['dragon1a', [0, 1, 2, 3], 0, 0.02, 0.02], muzzle: ['dragon1a', [8, 9, 10, 11], 0.5], charge: ['dragon1a', [8, 9, 10]],
     impact: ['dragon2', [3, 4, 5, 6], 0.5], head: ['dragon1a', [12, 13, 14, 15], 0.32], headAlways: true, sparkles: ['dragon2', [8, 9]],
     thick: 2.3, muzzleSc: 0.7, headSc: 1.25, impactSc: 0.9, chargeSc: 0.35 },   // DRAGON-1a (r241): a roaring dragon's head of starlight on its tip
-  psybeam: { body: ['psy1a', [0, 1, 2, 3], 0, 0.02, 0.02], muzzle: ['psy1a', [8, 9, 10, 11], 0.5], charge: ['psy1a', [8, 9, 10]],
+  mindRay: { body: ['psy1a', [0, 1, 2, 3], 0, 0.02, 0.02], muzzle: ['psy1a', [8, 9, 10, 11], 0.5], charge: ['psy1a', [8, 9, 10]],
     impact: ['psy1a', [12, 13, 14, 15], 0.3], head: ['psy1a', [12, 13, 14], 0.3],
     thick: 2.2, muzzleSc: 0.7, headSc: 0.9, impactSc: 1.1, chargeSc: 0.35 },   // PSY-1a (r240)
   dazzleBeam: { body: ['fairy2a', [0, 1, 2, 3], 0, 0.1, 0.1], muzzle: ['fairy2a', [8, 9, 10, 11], 0.5], charge: ['fairy2a', [8, 9, 10]],
     impact: ['fairy2a', [12, 13, 14, 15], 0.4], head: ['fairy2a', [12, 13, 14], 0.4], sparkles: ['fairy1', [11, 12]],
     thick: 2.3, muzzleSc: 0.75, headSc: 0.9, impactSc: 1.1, chargeSc: 0.35 },   // FAIRY-2a (r239): its sections' rounded ends trimmed
-  flashCannon: { body: ['steel1a', [0, 1, 2, 3], 0, 0.08, 0.08], muzzle: ['steel1a', [8, 9, 10, 11], 0.5], charge: ['steel1a', [8, 9, 10]],
+  chromeCannon: { body: ['steel1a', [0, 1, 2, 3], 0, 0.08, 0.08], muzzle: ['steel1a', [8, 9, 10, 11], 0.5], charge: ['steel1a', [8, 9, 10]],
     impact: ['steel1a', [12, 13, 14, 15], 0.2], head: ['steel1a', [8, 9, 10, 11], 0.5],
     thick: 2.4, muzzleSc: 0.8, headSc: 0.7, impactSc: 1.2, chargeSc: 0.35 },   // STEEL-1a (r238): its sections' rounded ends trimmed, a flash star at its tip
   voltCannon: { body: ['elec2a', [0, 1, 2, 3], 0, 0.1, 0.1], muzzle: ['elec2a', [8, 9, 10, 11], 0.5], charge: ['elec2a', [8, 9, 10]],
@@ -858,7 +858,7 @@ const PIECE_DASH = { bodySlam: { thud: true },
   voltRush: { front: ['elec3', [5, 6, 7], 0.3, 2.1], bolts: 0.04, zap: true },   // ELEC-3 (r237): a spearhead of lightning on its nose, bolts crackling off it, a zap on the hit
   lanceCharge: { front: ['elec3', [8, 9, 10], 0.38, 2], bolts: 0.06, zap: true, scorch2: true },   // ELEC-3: its lance of blue lightning, a scorch mark where it hits
   phantomStrike: { spirit: 0.035, ghostSlash: true },   // GHOST-1 (r235): will-o'-wisps and wisps trailing off it, a streak of spirit light and mist on the hit   // WIND-2b (r231): a bow wave of air round its front, feathers and wind streaks behind
-  megahorn: { draw: 'horn', xflash: true }, beetleBarrage: { xflash: true },   // BUG-1 (r217)   // WATER-3 (r212): wrapped in a streamer of water, spray behind, a splash on the hit
+  hornLance: { draw: 'horn', xflash: true }, beetleBarrage: { xflash: true },   // BUG-1 (r217)   // WATER-3 (r212): wrapped in a streamer of water, spray behind, a splash on the hit
   flameWheel: { draw: 'wheel', fire: true, scorch: true, boom: true }, blazeRush: { draw: 'comet', fire: true, boom: true } };   // BEAST-4 (r201): storm-cloud wool streaming off Lumawool   // BEAST-2 (r195): Smugshi's line
 // each look's hit pieces (r188): [sheet, row]; a row is a burst in 3 frames then 3 bits (docs/attack-pieces.md HITS-1..4)
 const HIT_KITS = { fire: ['hits1', 0], water: ['hits1', 1], electric: ['hits1', 2], ice: ['hits1', 3],
@@ -919,7 +919,7 @@ const SHEET_MOVES = {
   // dasher's; tilt undoes the angle a sheet was drawn at (measured by its frames' long axis)
   voltRush:      { dash: true, pre: [0], go: [1, 2], hit: [3, 4], hitSheet: 'voltRushB', fit: 1.5 },   // the owner: D1's travel, D1b's impact
   aquaJet:       { dash: true, pre: [0], go: [1, 2], hit: [3, 4], fit: 1.5 },
-  megahorn:      { dash: true, pre: [0], go: [1, 2], hit: [3, 4], fit: 1.5 },
+  hornLance:      { dash: true, pre: [0], go: [1, 2], hit: [3, 4], fit: 1.5 },
   ironSlam:      { dash: true, pre: [0], go: [1, 2], hit: [3, 4], fit: 1.6, tilt: 60 * Math.PI / 180 },
   braveDive:     { dash: true, pre: [0], go: [1, 2], hit: [3, 4], fit: 1.6, tilt: 56 * Math.PI / 180 },
   lanceCharge:   { dash: true, pre: [0], go: [1, 2], hit: [3, 4], fit: 1.7, tilt: 54 * Math.PI / 180 },
@@ -933,7 +933,7 @@ const SHEET_MOVES = {
   cuffCannon: { sheet: 'waterShot', hit: [5, 6, 7] },
   twinCannon: { sheet: 'waterShot', hit: [5, 6, 7] },
   bubbleBeam: { sheet: 'bubbleSpray', hit: [5, 6, 7] },
-  thunderbolt: { hit: [5, 6, 7] },   // E1: the spark star, bolts splitting, fading sparks
+  ballLightning: { hit: [5, 6, 7] },   // E1: the spark star, bolts splitting, fading sparks
   staticSiphon: { hit: [4, 5, 6, 7], face: true },   // E6: clinging and fizzing, then green sparks flowing back (face: mirrored so they flow toward the user)
 };
 // Where Magma Wave's waves stand: along the arc of its cone at distance d (squashed like the floor, as its
@@ -969,7 +969,7 @@ const SHEET_SHOTS = {
   cuffCannon: { sheet: 'waterShot', fly: [1, 2, 3, 4], len: 38 },
   twinCannon: { sheet: 'waterShot', fly: [1, 2, 3, 4], len: 32 },
   bubbleBeam: { sheet: 'bubbleSpray', fly: [1, 2, 3, 4], len: 17, spin: true },
-  thunderbolt: { sheet: 'thunderbolt', fly: [2, 3, 4], len: 36, ax: 0.78 },
+  ballLightning: { sheet: 'ballLightning', fly: [2, 3, 4], len: 36, ax: 0.78 },
   fireBlast: { sheet: 'fire3', fly: [0, 1, 2, 3], len: 40, ax: 0.78, pieces: true },   // FIRE-3 (r206)   // E1 (r171): the orb leads, its forked tail behind
   staticSiphon: { sheet: 'staticSiphon', fly: [2, 3], len: 34, ax: 0.7 },   // E6 (r174): a fuzzy ball of static with a wobbly trail
 };
@@ -1015,17 +1015,17 @@ const PIECE_SHOTS = {
   pinMissile: { sheet: 'bug1', fly: [11, 12], len: 18, ax: 0.6 },
   iceShard:   { sheet: 'ice1', fly: [0, 1, 2], len: 22, ax: 0.55 },
   mindOrbs:   { sheet: 'psy1', fly: [0, 1, 2, 3], len: 22, spin: true },   // PSY-1 (r240): a pink orb, its spiral turning
-  moonblast:  { sheet: 'fairy1', fly: [0, 1, 2, 3], len: 30, spin: true },   // FAIRY-1 (r239): a spinning crescent moon
+  moonSickle:  { sheet: 'fairy1', fly: [0, 1, 2, 3], len: 30, spin: true },   // FAIRY-1 (r239): a spinning crescent moon
   fairyWind:  { sheet: 'fairy1', fly: [7, 8, 9], len: 22, ax: 0.5 },   // FAIRY-1: curls of pink fairy wind
   droneSwarm: { sheet: 'steel1', fly: [0, 1], len: 30, ax: 0.5 },   // STEEL-1 (r238): little drones, propellers spinning
-  thunderbolt: { sheet: 'elec1', fly: [8, 9, 10, 11], len: 36, ax: 0.68 },   // ELEC-1 (r237): a crackling ball of lightning, bolts flicking off behind
+  ballLightning: { sheet: 'elec1', fly: [8, 9, 10, 11], len: 36, ax: 0.68 },   // ELEC-1 (r237): a crackling ball of lightning, bolts flicking off behind
   staticSiphon: { sheet: 'elec1', fly: [12, 13, 14], len: 28, spin: true },   // ELEC-1: a fuzzy ball of static
-  shadowBall: { sheet: 'ghost1', fly: [0, 1, 2, 3], len: 36, spin: true },   // GHOST-1 (r235): a ball of ghost fire
+  ghostfire: { sheet: 'ghost1', fly: [0, 1, 2, 3], len: 36, spin: true },   // GHOST-1 (r235): a ball of ghost fire
   sludgeBomb: { sheet: 'glitch1', fly: [0, 1, 2, 1], len: 30, spin: true },   // GLITCH-1 (r232): a dripping glob of corrupted sludge
   acidSpray:  { sheet: 'glitch1', fly: [3, 4], len: 12, spin: true },   // GLITCH-1: drops of green acid
   airSlash:   { sheet: 'wind1', fly: [0, 1, 2], len: 34, ax: 0.6 },   // WIND-1 (r229): a crescent blade of wind
   razorGale:  { sheet: 'wind1', fly: [3, 4, 5, 6], len: 40, spin: true },   // WIND-1: a spinning shuriken of wind
-  auraSphere: { sheet: 'fight1', fly: [8, 9, 10, 11], len: 32, spin: true },   // FIGHT-1 (r226): a sphere of aura, its swirl spinning
+  chiSphere: { sheet: 'fight1', fly: [8, 9, 10, 11], len: 32, spin: true },   // FIGHT-1 (r226): a sphere of aura, its swirl spinning
   gloomOrb:   { sheet: 'dark1', fly: [6, 7, 8, 9], len: 34, ax: 0.5 },   // DARK-1 (r223): a dark orb, its wisps curling
   mudShot:    { sheet: 'earth2', fly: [3, 4, 5], len: 30, ax: 0.6 },   // EARTH-2 (r222): a clod of wet mud, dripping   // ICE-1 (r218)   // BUG-1 (r217): a needle-missile   // PLANT-1 (r213): a spinning leaf
 };
@@ -1035,12 +1035,12 @@ const PIECE_SHOT_HITS = {
   pinMissile: ['bug1', [16, 17, 18], 0.6],
   mudShot: ['earth2', [8, 9, 9], 0.9],
   gloomOrb: ['dark1', [10, 11, 12], 1.1],
-  auraSphere: ['fight1', [2, 3, 4], 1.1],
+  chiSphere: ['fight1', [2, 3, 4], 1.1],
   acidSpray: ['glitch1', [12, 13], 0.5],
-  shadowBall: ['ghost1', [16, 17, 18], 1],
+  ghostfire: ['ghost1', [16, 17, 18], 1],
   droneSwarm: ['steel1', [2, 3, 4], 1.1], mindOrbs: ['psy1', [4, 5, 6], 1],
-  moonblast: ['fairy1', [4, 5, 6], 1.6], fairyWind: ['fairy1', [4, 6, 6], 0.7],
-  thunderbolt: ['elec1', [3, 4, 5], 2.3], staticSiphon: ['elec1', [3, 4, 5], 1.4],
+  moonSickle: ['fairy1', [4, 5, 6], 1.6], fairyWind: ['fairy1', [4, 6, 6], 0.7],
+  ballLightning: ['elec1', [3, 4, 5], 2.3], staticSiphon: ['elec1', [3, 4, 5], 1.4],
   iceShard: ['ice1', [4, 5, 6], 0.9],
 };
 // a frame sequence played as a particle (an explosion, a geyser)
@@ -1341,8 +1341,8 @@ mixInto(Battle, class {
       return;
     }
     if (mv.fx === 'bolt' && FXS.thunder) { sheetPart(this, 'thunder', [3, 4, 4, 5, 6, 7], x, y + 6, 0.7, { ay: 1, sc: 1.3 }); this.addShake(6); return; }   // E2 (r171): the strike, the burst, the scorch ring
-    if (mv.id === 'steamEruption' && FX_PIECES && FXS.fire4) { this.fxSteamVent(x, y, r, mv.linger || 2.4); return; }   // FIRE-4 (r207)
-    if (mv.id === 'steamEruption') { const sc = r * 1.4 / sheetW('steamEruption', 0); sheetPart(this, 'steamEruption', [1, 2, 2, 3, 4], x, y + sheetH('steamEruption', 0) * sc / 2, 1.1, { sc, ay: 1 }); return; }
+    if (mv.id === 'steamGeyser' && FX_PIECES && FXS.fire4) { this.fxSteamVent(x, y, r, mv.linger || 2.4); return; }   // FIRE-4 (r207)
+    if (mv.id === 'steamGeyser') { const sc = r * 1.4 / sheetW('steamGeyser', 0); sheetPart(this, 'steamGeyser', [1, 2, 2, 3, 4], x, y + sheetH('steamGeyser', 0) * sc / 2, 1.1, { sc, ay: 1 }); return; }
     this.particles.push({ kind: 'wave', x, y: y - 2, r0: 4, r1: r, life: 0.32, max: 0.32, color: fx[2], w: 4 });
     this.particles.push({ kind: 'wave', x, y: y - 2, r0: 2, r1: r * 0.7, life: 0.42, max: 0.42, color: fx[1], w: 3 });
     this.fxDebris(x, y - 4, mv, Math.round(10 + r / 6), r * 2.4, 4.2, 4);
@@ -1372,7 +1372,7 @@ mixInto(Battle, class {
     if (FX_PIECES && FXS.ice2 && mv.id === 'frostArmor') this.fxFrostArmor(m);   // ICE-2, r220
     if (FX_PIECES && FXS.fight2 && mv.id === 'bulkUp') this.fxBulkUp(m);   // FIGHT-2, r228
     if (FX_PIECES && FXS.steel2 && mv.id === 'ironDefense') this.fxIronDefense(m);   // STEEL-2, r238
-    if (FX_PIECES && FXS.psy2 && mv.id === 'calmMind') this.fxCalmMind(m);   // PSY-2, r240
+    if (FX_PIECES && FXS.psy2 && mv.id === 'stillMind') this.fxCalmMind(m);   // PSY-2, r240
     if (FX_PIECES && FXS.dragon2 && mv.id === 'dragonDance') this.fxDragonDance(m);   // DRAGON-2, r241
     if (FX_PIECES && FXS.steel2 && mv.id === 'towerShield') this.fxTowerShield(m);   // STEEL-2, r238
     if (FX_PIECES && FXS.wind2 && mv.id === 'tailwind') this.fxTailwind(m);   // WIND-2, r230
@@ -1493,7 +1493,7 @@ mixInto(Battle, class {
     }
   }
 
-  // Dark Pulse: jagged dark rings rolling outwards.
+  // Shadow Ripple: jagged dark rings rolling outwards.
   drawRipple(c, m, a) {
     const fx = fxOf(a.mv), T = this.time, R = a.r * Math.min(1, a.ripT / a.mv.ripple);
     if (FX_PIECES && FXS.dark2) {   // DARK-2 (r224): rings of spiky darkness rolling out, tendrils bursting up as they pass
@@ -2008,7 +2008,7 @@ mixInto(Battle, class {
     }
   }
 
-  // Steam Eruption's vent (FIRE-4, r207): a geyser of scalding steam shooting up and venting for as long as it
+  // Steam Geyser's vent (FIRE-4, r207): a geyser of scalding steam shooting up and venting for as long as it
   // lingers, steam billowing off it and drifting away, scalding drops falling round it, the bubbling vent under it
   fxSteamVent(x, y, r, linger) {
     const id = 'fire4', P = o => this.addPiece(id, null, o), sc = r * 1.6 / sheetW(id, 6);
@@ -2275,7 +2275,7 @@ mixInto(Battle, class {
     this.addPiece(id, null, { frames: [4, 5, 6], x: m.x, y: m.y - m.h * 0.6, sc: k * 0.85, life: t * 0.4, delay: t * 0.75 });
   }
 
-  // Calm Mind (PSY-2, r240): a ring of glowing runes forms round its feet and slowly turns, violet motes float up
+  // Still Mind (PSY-2, r240): a ring of glowing runes forms round its feet and slowly turns, violet motes float up
   // round it
   fxCalmMind(m) {
     const id = 'psy2', P = o => this.addPiece(id, m, o);
@@ -2596,7 +2596,7 @@ mixInto(Battle, class {
     if (B.core) layer(B.core, 260, 0.5, B.coreH || 1);
     const [mid, mf, max, mcL, mcR] = B.muzzle;
     drawSheet(c, mid, loop(mf, 14), ox, oy, { dir: a.dir, ax: max, sc: sc * (B.muzzleSc || 1) * (0.95 + Math.sin(T * 30) * 0.08) * (B.coreH ? 1.15 : 1), ...(mcL || mcR ? { trim: 0, cutL: mcL || 0, cutR: mcR || 0 } : {}) });
-    const shooting = mv.len * out < reach;   // (headAlways: the head stays on the tip the whole time, biting into what it hits: Dragon Pulse)
+    const shooting = mv.len * out < reach;   // (headAlways: the head stays on the tip the whole time, biting into what it hits: Star Wyrm)
     if (shooting || B.headAlways) { const [hid, hf, hax, hcL, hcR] = B.head; drawSheet(c, hid, loop(hf, 14), ox + cs * len, oy + sn * len, { dir: a.dir, ax: hax, sc: sc * (B.headSc || 1), flip: !!B.headFlip, ...(hcL || hcR ? { trim: 0, cutL: hcL || 0, cutR: hcR || 0 } : {}) }); }
     if (!shooting) for (const [, t] of hits) {   // an impact on everything it's hitting, on the side facing the beam
       const [iid, ifr, iax, icL, icR] = B.impact;   // (impactFlip: a splash drawn with its beam coming from the other side, mirrored)
@@ -2795,11 +2795,11 @@ mixInto(Battle, class {
       } else if (z.mv.id === 'quicksand' && FX_PIECES && FXS.earth2) {   // the sand starting to turn and sink (EARTH-2)
         const k = clamp(1 - left / z.delay, 0, 1);
         drawSheet(c, 'earth2', Math.floor(this.time * 6) % 3, zx, zy, { sc: z.r * 2.2 / sheetW('earth2', 0) * (0.3 + 0.7 * k) });
-      } else if (z.mv.id === 'steamEruption' && FX_PIECES && FXS.fire4) {   // the vent bubbling, more and more (FIRE-4)
+      } else if (z.mv.id === 'steamGeyser' && FX_PIECES && FXS.fire4) {   // the vent bubbling, more and more (FIRE-4)
         const k = 1 - left / z.delay;
         drawSheet(c, 'fire4', k < 0.5 ? 0 : (Math.floor(this.time * 8) % 2), zx, zy, { sc: z.r * 2 / sheetW('fire4', 0) * (0.6 + 0.4 * k) });
-      } else if (z.mv.id === 'steamEruption') {   // the ground bubbling and cracking before the geyser (sheet frame 0)
-        drawSheet(c, 'steamEruption', 0, zx, zy, { sc: z.r * 1.4 / sheetW('steamEruption', 0) * (0.5 + 0.5 * (1 - left / z.delay)) });
+      } else if (z.mv.id === 'steamGeyser') {   // the ground bubbling and cracking before the geyser (sheet frame 0)
+        drawSheet(c, 'steamGeyser', 0, zx, zy, { sc: z.r * 1.4 / sheetW('steamGeyser', 0) * (0.5 + 0.5 * (1 - left / z.delay)) });
       } else if (z.mv.fx === 'bolt' && FXS.thunder) {   // E2 (r171): the cloud gathering over the spot, then a crackle reaching down
         if (left > 0.3) this.drawStormGather(c, z, left);   // small white clouds drifting in from the edges, darkening (r172)
         if (left < 0.34 && FXS.stormCloud) {   // E2b's cloud swelling and flickering, E2's crackle reaching down from under it

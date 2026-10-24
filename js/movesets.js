@@ -44,7 +44,10 @@ function validSet(id, moves) {
 
 // Coreatures whose code names changed (r158, the owner: no old names left in the code to confuse anyone): saves
 // made before then still say the old ones, so everything loaded from storage goes through renameIds first.
-const ID_RENAMES = { boulderon: 'slabominable', drakorn: 'nyxdrake', scarablade: 'bugilist', polarest: 'polaroar', bambooze: 'pandawn', grizzleep: 'grizzquake' };
+const ID_RENAMES = { boulderon: 'slabominable', drakorn: 'nyxdrake', scarablade: 'bugilist', polarest: 'polaroar', bambooze: 'pandawn', grizzleep: 'grizzquake',
+  // moves renamed off Pokémon's names (r239)
+  thunderbolt: 'ballLightning', psybeam: 'mindRay', moonblast: 'moonSickle', megahorn: 'hornLance', shadowBall: 'ghostfire', auraSphere: 'chiSphere',
+  darkPulse: 'shadowRipple', dragonPulse: 'starWyrm', flashCannon: 'chromeCannon', steamEruption: 'steamGeyser', calmMind: 'stillMind' };
 const renameIds = json => (typeof json === 'string' ? json.replace(new RegExp(`"(${Object.keys(ID_RENAMES).join('|')})"`, 'g'), (m, id) => `"${ID_RENAMES[id]}"`) : json);
 
 const MoveSets = {

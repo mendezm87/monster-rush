@@ -337,7 +337,7 @@ mixInto(Battle, class {
           }
           break;
         }
-        // a ripple (Dark Pulse): a ring that travels out, hitting each opponent once as it passes
+        // a ripple (Shadow Ripple): a ring that travels out, hitting each opponent once as it passes
         if (mv.ripple) {
           if (!a.done && a.t >= mv.delay) { a.done = true; a.ripT = 0; a.hitIds = new Set(); this.addShake(3); Sfx.move(mv, 'release'); }
           if (a.done) {

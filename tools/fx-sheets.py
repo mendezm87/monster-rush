@@ -19,7 +19,7 @@ SHEETS = {
     'fireBlast':     ('f4-fire-blast.png', 34, [5]),
     'eruption':      ('f5-eruption.png', 90, [5]),
     'infernoBeam':   ('f6-inferno-beam.png', 34, [2, 2]),
-    'steamEruption': ('f7-steam-eruption.png', 80, [5]),
+    'steamGeyser': ('f7-steam-eruption.png', 80, [5]),
     'magmaWave':     ('f8b-magma-wave.png', 52, [4, 4]),   # the owner's second sheet: 8 frames, nothing cut off
     # batch 3, water (W1-W5)
     'hydroCannon':   ('w1-hydro-cannon.webp', 40, [2, 2, 2, 2]),
@@ -30,7 +30,7 @@ SHEETS = {
     'whirlpool':     ('w6-whirlpool.webp', 90, [4, 4]),
     'maelstrom':     ('w7-maelstrom.webp', 100, [4, 4]),
     # batch 4, electric (E1-E4)
-    'thunderbolt':   ('e1-thunderbolt.png', 30, [8]),
+    'ballLightning':   ('e1-ballLightning.png', 30, [8]),
     'thunder':       ('e2-thunder.png', 110, [8]),
     'discharge':     ('e3-discharge.png', 60, [4, 4]),
     'voltCannon':    ('e4-volt-cannon.webp', 40, [2, 2, 2, 2]),
@@ -113,10 +113,10 @@ SHEETS = {
     # GHOST-2 (Spectral Ray): beam section x4, core strand x4, muzzle swirl x4, impact x4
     # ELEC-1: bolt x3, spark star x3 + spark dots x2, lightning ball x4, static ball x3 + green sparks x2
     # ELEC-2a (Volt Cannon): section x4, core x4, muzzle x4, impact x4
-    # STEEL-1a (Flash Cannon): section x4, core x4, muzzle x4, impact sparks x4
+    # STEEL-1a (Chrome Cannon): section x4, core x4, muzzle x4, impact sparks x4
     # FAIRY-1: crescent moon x4, moonlight burst x3, fairy wind ribbon x3, sparkles x3
-    # PSY-1a (Psybeam): section x4, core x4, muzzle x4, impact x4
-    # DRAGON-1a (Dragon Pulse): section x4, core x4, muzzle orb x4, dragon's head x4
+    # PSY-1a (Mind Ray): section x4, core x4, muzzle x4, impact x4
+    # DRAGON-1a (Star Wyrm): section x4, core x4, muzzle orb x4, dragon's head x4
     # BOSS-1 (Slumbear): icicle + shattering x3, ice slab x3, bamboo spear + splinters x2 + leaf, landing shadow + dust ring (MANUAL boxes)
     'boss1':         ('pk-boss-1.png', 38, [4, 3, 4, 2]),
     'dragon1a':      ('pk-dragon-1a.png', 40, [4, 4, 4, 4]),
@@ -169,7 +169,7 @@ SHEETS = {
     'voltRush':      ('d1-volt-rush.png', 46, [5]),
     'voltRushB':     ('d1b-volt-rush.png', 46, [5]),
     'aquaJet':       ('d2-aqua-jet.png', 46, [5]),
-    'megahorn':      ('d3-megahorn.png', 46, [5]),
+    'hornLance':      ('d3-hornLance.png', 46, [5]),
     'ironSlam':      ('d4-iron-slam.png', 46, [5]),
     'braveDive':     ('d5-brave-dive.png', 46, [5]),
     'lanceCharge':   ('d6-lance-charge.png', 46, [5]),
@@ -261,7 +261,7 @@ def frames_of(im, m, counts):
 # Sheets shrunk keeping their bright lines: a pixel that a bright line runs through takes the line's colour, instead
 # of averaging it with the dark outline round it (thin lightning forks turned dark grey). The older sheets were made
 # before this and the owner approved them as they are, so it's per sheet.
-CLEAN_SHRINK = {'thunderbolt', 'thunder', 'thunderBolt', 'hits1', 'hits2', 'hits3', 'hits4', 'smug1b', 'smug1c', 'beast1', 'railShot', 'railShotB', 'discharge', 'voltCannon', 'staticSiphon'}
+CLEAN_SHRINK = {'ballLightning', 'thunder', 'thunderBolt', 'hits1', 'hits2', 'hits3', 'hits4', 'smug1b', 'smug1c', 'beast1', 'railShot', 'railShotB', 'discharge', 'voltCannon', 'staticSiphon'}
 
 # Small accents that must survive the shrink (E6's green draining sparks): a pixel any of them runs through takes their colour
 ACCENT = {'staticSiphon': lambda r, g, b: g > r + 15 and g > b + 40}

@@ -92,7 +92,7 @@ function typeEffect(moveType, defTypes) {
   hitGap: s     - (combo dash) seconds between hits (0.13 by default)
   cone: a       - (burst) blows out in front instead of all round: a cone of half-angle a radians,
                   reaching `r`, lasting `blow` seconds and hitting 3 times (Blizzard, Gust); push = knockback
-  ripple: s     - (burst) a ring that travels out to `r` over s seconds, hitting as it passes (Dark Pulse)
+  ripple: s     - (burst) a ring that travels out to `r` over s seconds, hitting as it passes (Shadow Ripple)
   fx: name      - a look of its own, drawn in fx.js (wheel, aura, roll, claw, slash, flurry, wool,
                   bubble, mud, stare, tornado)
  status: [kind, chance]  (par / brn / frz / psn)
@@ -101,7 +101,7 @@ function typeEffect(moveType, defTypes) {
 const MOVES = {
   // electric
   voltRush:     { name: 'Volt Rush', type: 'electric', kind: 'dash', power: 300, cd: 5, speed: 330, dur: 0.4, recoil: 0.2, status: ['par', 0.3] },
-  thunderbolt:  { name: 'Thunderbolt', type: 'electric', kind: 'projectile', power: 150, cd: 2.2, speed: 250, r: 5, status: ['par', 0.15] },
+  ballLightning:  { name: 'Ball Lightning', type: 'electric', kind: 'projectile', power: 150, cd: 2.2, speed: 250, r: 5, status: ['par', 0.15] },
   thunder:      { name: 'Thunder', type: 'electric', kind: 'zone', power: 270, cd: 6, r: 24, delay: 0.85, status: ['par', 0.3], fx: 'bolt' },
   woolTackle:   { name: 'Wool Tackle', type: 'beast', style: 'normal', kind: 'dash', power: 170, cd: 2.6, speed: 320, dur: 0.38, fx: 'wool' },
   staticSiphon: { name: 'Static Siphon', type: 'electric', kind: 'projectile', power: 105, cd: 3.5, speed: 240, r: 6, drain: 0.5 },
@@ -124,7 +124,7 @@ const MOVES = {
   cuffCannon:   { name: 'Cuff Cannon', type: 'water', kind: 'projectile', power: 150, cd: 2, speed: 270, r: 5 },
   // the turtle line's legendary 4th stages (evolution altar)
   geyserVent:   { name: 'Geyser Vent', type: 'water', kind: 'burst', power: 260, cd: 4.5, r: 72, delay: 0.4, status: ['brn', 0.2] },
-  steamEruption: { name: 'Steam Eruption', type: 'fire', kind: 'zone', power: 200, cd: 6.5, r: 28, delay: 0.85, count: 3, scatter: 50, linger: 2.4, tick: 0.25, status: ['brn', 0.3] },
+  steamGeyser: { name: 'Steam Geyser', type: 'fire', kind: 'zone', power: 200, cd: 6.5, r: 28, delay: 0.85, count: 3, scatter: 50, linger: 2.4, tick: 0.25, status: ['brn', 0.3] },
   magmaWave:    { name: 'Magma Wave', type: 'fire', kind: 'burst', power: 300, cd: 6.5, r: 120, delay: 0.5, cone: 0.6, blow: 0.5, status: ['brn', 0.3] },
   railShot:     { name: 'Rail Shot', type: 'electric', kind: 'beam', power: 360, cd: 5, charge: 0.4, dur: 0.3, width: 7, len: 380, status: ['par', 0.25] },
   lanceCharge:  { name: 'Lance Charge', type: 'electric', kind: 'dash', power: 230, cd: 3, speed: 470, dur: 0.32, status: ['par', 0.2] },
@@ -149,7 +149,7 @@ const MOVES = {
   blizzard:     { name: 'Blizzard', type: 'ice', kind: 'burst', power: 230, cd: 7, r: 130, delay: 0.35, cone: 0.55, blow: 0.6, status: ['frz', 0.25] },
   frostArmor:   { name: 'Frost Armor', type: 'ice', kind: 'buff', buff: { def: 1.5 }, dur: 8, cd: 15 },
   // dragon
-  dragonPulse:  { name: 'Dragon Pulse', type: 'dragonkin', style: 'dragon', kind: 'beam', power: 270, cd: 5, charge: 0.45, dur: 0.55, width: 12, len: 290 },
+  starWyrm:  { name: 'Star Wyrm', type: 'dragonkin', style: 'dragon', kind: 'beam', power: 270, cd: 5, charge: 0.45, dur: 0.55, width: 12, len: 290 },
   dragonClaw:   { name: 'Dragon Claw', type: 'dragonkin', style: 'dragon', kind: 'dash', power: 165, cd: 2.4, speed: 340, dur: 0.3, fx: 'claw' },
   starfall:     { name: 'Starfall', type: 'arcane', style: 'dragon', kind: 'zone', power: 200, cd: 9, r: 26, delay: 1.0, count: 4, scatter: 50, fx: 'meteor' },
   dragonDance:  { name: 'Dragon Dance', type: 'dragonkin', style: 'dragon', kind: 'buff', buff: { atk: 1.3, spd: 1.3 }, dur: 8, cd: 15 },
@@ -157,19 +157,19 @@ const MOVES = {
   rockSlide:    { name: 'Rock Slide', type: 'earth', style: 'rock', kind: 'zone', power: 145, cd: 4, r: 20, delay: 0.7, count: 4, scatter: 40, fx: 'rock' },
   rollout:      { name: 'Rollout', type: 'earth', style: 'rock', kind: 'dash', power: 185, cd: 3.2, speed: 280, dur: 0.55, fx: 'roll' },
   // psychic
-  psybeam:      { name: 'Psybeam', type: 'arcane', style: 'psychic', kind: 'beam', power: 210, cd: 4, charge: 0.35, dur: 0.5, width: 9, len: 270, slow: 2 },
+  mindRay:      { name: 'Mind Ray', type: 'arcane', style: 'psychic', kind: 'beam', power: 210, cd: 4, charge: 0.35, dur: 0.5, width: 9, len: 270, slow: 2 },
   mindOrbs:     { name: 'Mind Orbs', type: 'arcane', style: 'psychic', kind: 'projectile', power: 120, cd: 2.4, speed: 165, r: 5, count: 2, spread: 0.7, homing: 2.6 },
   foresight:    { name: 'Foresight', type: 'arcane', style: 'psychic', kind: 'zone', power: 300, cd: 8, r: 30, delay: 1.6 },
-  calmMind:     { name: 'Calm Mind', type: 'arcane', style: 'psychic', kind: 'buff', buff: { atk: 1.3, def: 1.3 }, dur: 8, cd: 15 },
+  stillMind:     { name: 'Still Mind', type: 'arcane', style: 'psychic', kind: 'buff', buff: { atk: 1.3, def: 1.3 }, dur: 8, cd: 15 },
   // dark
   nightSlash:   { name: 'Night Slash', type: 'shade', style: 'dark', kind: 'dash', power: 175, cd: 2.2, speed: 370, dur: 0.25, crit: 0.3, fx: 'slash' },
   darkWave:     { name: 'Dark Wave', type: 'shade', style: 'dark', kind: 'burst', power: 195, cd: 4.5, r: 56, delay: 0.4 },
   gloomOrb:     { name: 'Gloom Orb', type: 'shade', style: 'dark', kind: 'projectile', power: 180, cd: 3, speed: 185, r: 7 },
-  darkPulse:    { name: 'Dark Pulse', type: 'shade', style: 'dark', kind: 'burst', power: 250, cd: 5, r: 120, delay: 0.3, ripple: 0.55 },
+  shadowRipple:    { name: 'Shadow Ripple', type: 'shade', style: 'dark', kind: 'burst', power: 250, cd: 5, r: 120, delay: 0.3, ripple: 0.55 },
   // fighting
   closeCombat:  { name: 'Close Combat', type: 'brawl', style: 'fighting', kind: 'dash', power: 65, cd: 5.5, speed: 320, dur: 0.38, hits: 6, hitGap: 0.06, selfDebuff: { def: 0.75 }, fx: 'flurry' },
   jab:          { name: 'Rapid Jab', type: 'brawl', style: 'fighting', kind: 'dash', power: 90, cd: 1.4, speed: 420, dur: 0.18 },
-  auraSphere:   { name: 'Aura Sphere', type: 'brawl', style: 'fighting', kind: 'projectile', power: 170, cd: 2.8, speed: 200, r: 6, homing: 3.5 },
+  chiSphere:   { name: 'Chi Sphere', type: 'brawl', style: 'fighting', kind: 'projectile', power: 170, cd: 2.8, speed: 200, r: 6, homing: 3.5 },
   auraCannon:   { name: 'Aura Cannon', type: 'brawl', style: 'fighting', kind: 'beam', power: 300, cd: 6.5, charge: 0.6, dur: 0.5, width: 14, len: 260 },
   bulkUp:       { name: 'Bulk Up', type: 'brawl', style: 'fighting', kind: 'buff', buff: { atk: 1.3, def: 1.3 }, dur: 8, cd: 15 },
   // flying
@@ -186,21 +186,21 @@ const MOVES = {
   acidSpray:    { name: 'Acid Spray', type: 'glitch', style: 'poison', kind: 'projectile', power: 55, cd: 1.9, speed: 210, r: 4, count: 4, spread: 0.5, status: ['psn', 0.1] },
   venomJet:     { name: 'Venom Jet', type: 'glitch', style: 'poison', kind: 'beam', power: 220, cd: 5, charge: 0.4, dur: 0.6, width: 10, len: 250, status: ['psn', 0.4] },
   // bug
-  megahorn:     { name: 'Megahorn', type: 'plant', style: 'bug', kind: 'dash', power: 290, cd: 5, speed: 310, dur: 0.4 },
+  hornLance:     { name: 'Horn Lance', type: 'plant', style: 'bug', kind: 'dash', power: 290, cd: 5, speed: 310, dur: 0.4 },
   beetleBarrage:{ name: 'Beetle Barrage', type: 'plant', style: 'bug', kind: 'dash', power: 58, cd: 5, speed: 360, dur: 0.35, hits: 4 },
   pinMissile:   { name: 'Pin Missile', type: 'plant', style: 'bug', kind: 'projectile', power: 40, cd: 1.8, speed: 340, r: 3, count: 5, spread: 0.3, fx: 'pin' },
   // ghost
-  shadowBall:   { name: 'Shadow Ball', type: 'phantom', style: 'ghost', kind: 'projectile', power: 175, cd: 2.8, speed: 190, r: 7, homing: 2 },
+  ghostfire:   { name: 'Ghostfire', type: 'phantom', style: 'ghost', kind: 'projectile', power: 175, cd: 2.8, speed: 190, r: 7, homing: 2 },
   phantomStrike:{ name: 'Phantom Strike', type: 'phantom', style: 'ghost', kind: 'dash', power: 190, cd: 3, speed: 400, dur: 0.28, crit: 0.3 },
   spiritFlames: { name: 'Spirit Flames', type: 'phantom', style: 'ghost', kind: 'zone', power: 110, cd: 5, r: 18, delay: 0.8, count: 3, scatter: 34, status: ['brn', 0.4] },
   spectralRay:  { name: 'Spectral Ray', type: 'phantom', style: 'ghost', kind: 'beam', power: 250, cd: 5, charge: 0.45, dur: 0.6, width: 10, len: 290 },
   // steel
-  flashCannon:  { name: 'Flash Cannon', type: 'metal', style: 'steel', kind: 'beam', power: 330, cd: 7, charge: 0.6, dur: 0.7, width: 14, len: 300 },
+  chromeCannon:  { name: 'Chrome Cannon', type: 'metal', style: 'steel', kind: 'beam', power: 330, cd: 7, charge: 0.6, dur: 0.7, width: 14, len: 300 },
   ironSlam:     { name: 'Iron Slam', type: 'metal', style: 'steel', kind: 'dash', power: 260, cd: 4, speed: 260, dur: 0.45 },
   magnetStorm:  { name: 'Magnet Storm', type: 'metal', style: 'steel', kind: 'zone', power: 160, cd: 6, r: 22, delay: 0.9, count: 3, scatter: 40, status: ['par', 0.15] },
   ironDefense:  { name: 'Iron Defense', type: 'metal', style: 'steel', kind: 'buff', buff: { def: 1.6 }, dur: 8, cd: 15 },
   // fairy
-  moonblast:    { name: 'Moonblast', type: 'arcane', style: 'fairy', kind: 'projectile', power: 210, cd: 3.2, speed: 200, r: 7 },
+  moonSickle:    { name: 'Moon Sickle', type: 'arcane', style: 'fairy', kind: 'projectile', power: 210, cd: 3.2, speed: 200, r: 7 },
   dazzleBeam:   { name: 'Dazzle Beam', type: 'arcane', style: 'fairy', kind: 'beam', power: 240, cd: 5, charge: 0.4, dur: 0.6, width: 12, len: 270 },
   fairyWind:    { name: 'Fairy Wind', type: 'arcane', style: 'fairy', kind: 'projectile', power: 50, cd: 2, speed: 240, r: 4, count: 5, spread: 0.7, fx: 'breeze' },
   wish:         { name: 'Wish', type: 'arcane', style: 'fairy', kind: 'heal', amount: 0.35, cd: 16 },
@@ -243,7 +243,7 @@ const ITEMS = {
 // size: M (32px sprite) or L (44px sprite). spd is movement in px/sec.
 const ROSTER = [
   { id: 'sparkit',   name: 'SPARKIT',   types: ['electric'], hp: 820,  atk: 1.2,  def: 0.85, spd: 105, size: 'M', item: 'voltCharm',
-    moves: ['voltRush', 'thunderbolt', 'thunder', 'voltCannon'] },
+    moves: ['voltRush', 'ballLightning', 'thunder', 'voltCannon'] },
   { id: 'cinderox',  name: 'CINDEROX',  types: ['fire'],     hp: 1280, atk: 1.15, def: 1.1,  spd: 98,  size: 'M', item: 'emberStone',
     moves: ['flameWheel', 'flamethrower', 'rockSlide', 'eruption'] },   // Rock Slide: Earth coverage for Fire-proof rooms (r90)
   { id: 'tidalisk',  name: 'TIDALISK',  types: ['water'],    hp: 1290, atk: 1.04, def: 1.1,  spd: 86,  size: 'M', item: 'mysticDrop',
@@ -256,36 +256,36 @@ const ROSTER = [
     moves: ['iceShard', 'frostRay', 'blizzard', 'frostArmor'] },
   // The night-sky dragons (r98, the owner's design): smug little Cosmite grows into Nyxdrake. Dragonkin/Arcane (r99).
   { id: 'cosmite',   name: 'COSMITE',   types: ['dragonkin', 'arcane'], hp: 980, atk: 1.05, def: 1.0, spd: 84, size: 'M', item: 'powerBand',
-    moves: ['moonblast', 'dragonClaw', 'starfall', 'dragonDance'], evolve: { to: 'nyxdrake' } },
+    moves: ['moonSickle', 'dragonClaw', 'starfall', 'dragonDance'], evolve: { to: 'nyxdrake' } },
   { id: 'nyxdrake',   name: 'NYXDRAKE',   types: ['dragonkin', 'arcane'], hp: 1350, atk: 1.25, def: 1.05, spd: 90, size: 'L', item: 'powerBand',
-    moves: ['dragonPulse', 'dragonClaw', 'starfall', 'dragonDance'] },
+    moves: ['starWyrm', 'dragonClaw', 'starfall', 'dragonDance'] },
   { id: 'slabominable', name: 'SLABOMINABLE', types: ['earth'], hp: 1420, atk: 1.15, def: 1.38, spd: 55, size: 'L', item: 'ironPlate',
     moves: ['rockSlide', 'quicksand', 'rollout', 'quake'] },
   // The mind line (r97): a mind trapped in an old brass astrolabe, freed as an oracle jelly, then its stone face restored.
   { id: 'gyroculus', name: 'GYROCULUS', types: ['arcane', 'metal'], hp: 820, atk: 1.0, def: 1.05, spd: 90, size: 'M', item: 'quickCharm',
-    moves: ['psybeam', 'mindOrbs', 'magnetStorm', 'calmMind'], evolve: { to: 'mindra' } },
+    moves: ['mindRay', 'mindOrbs', 'magnetStorm', 'stillMind'], evolve: { to: 'mindra' } },
   { id: 'mindra',    name: 'MINDRA',    types: ['arcane'],  hp: 900,  atk: 1.22, def: 0.86, spd: 92,  size: 'M', item: 'quickCharm',
-    moves: ['psybeam', 'mindOrbs', 'foresight', 'calmMind'], evolve: { to: 'stonicface' } },
+    moves: ['mindRay', 'mindOrbs', 'foresight', 'stillMind'], evolve: { to: 'stonicface' } },
   { id: 'stonicface', name: 'STONICFACE', types: ['arcane', 'phantom'], hp: 1250, atk: 1.3, def: 1.0, spd: 84, size: 'L', item: 'quickCharm',
-    moves: ['spectralRay', 'shadowBall', 'foresight', 'calmMind'] },
+    moves: ['spectralRay', 'ghostfire', 'foresight', 'stillMind'] },
   { id: 'shadefang', name: 'SHADEFANG', types: ['shade'],     hp: 980,  atk: 1.2,  def: 0.9,  spd: 108, size: 'M', item: 'swiftFeather',
-    moves: ['nightSlash', 'darkWave', 'gloomOrb', 'darkPulse'] },
+    moves: ['nightSlash', 'darkWave', 'gloomOrb', 'shadowRipple'] },
   { id: 'lumawool',  name: 'LUMAWOOL',  types: ['electric'], hp: 1010, atk: 1.04, def: 1.08, spd: 76,  size: 'M', item: 'voltCharm',
-    moves: ['thunderbolt', 'discharge', 'woolTackle', 'cottonGuard'] },
+    moves: ['ballLightning', 'discharge', 'woolTackle', 'cottonGuard'] },
   { id: 'brawlix',   name: 'BRAWLIX',   types: ['brawl'], hp: 1100, atk: 1.25, def: 1.0,  spd: 95,  size: 'M', item: 'powerBand',
-    moves: ['closeCombat', 'jab', 'auraSphere', 'auraCannon'] },
+    moves: ['closeCombat', 'jab', 'chiSphere', 'auraCannon'] },
   { id: 'galewing',  name: 'GALEWING',  types: ['wind'],   hp: 820,  atk: 1.08, def: 0.92, spd: 115, size: 'M', item: 'swiftFeather',
     moves: ['airSlash', 'gust', 'razorGale', 'tornado'] },
   { id: 'venomire',  name: 'VENOMIRE',  types: ['glitch'],   hp: 1020, atk: 1.02, def: 1.08, spd: 78,  size: 'M', item: 'toxicVial',
     moves: ['sludgeBomb', 'toxicPool', 'acidSpray', 'venomJet'] },
   { id: 'bugilist',name: 'BUGILIST',  types: ['plant', 'brawl'], hp: 950, atk: 1.1, def: 1.05, spd: 82, size: 'M', item: 'powerBand',
-    moves: ['megahorn', 'pinMissile', 'beetleBarrage', 'bulkUp'] },
+    moves: ['hornLance', 'pinMissile', 'beetleBarrage', 'bulkUp'] },
   { id: 'wispurr',   name: 'WISPURR',   types: ['phantom'],    hp: 950,  atk: 1.25, def: 0.88, spd: 104, size: 'M', item: 'quickCharm',
-    moves: ['shadowBall', 'phantomStrike', 'spiritFlames', 'spectralRay'] },
+    moves: ['ghostfire', 'phantomStrike', 'spiritFlames', 'spectralRay'] },
   { id: 'gearhulk',  name: 'GEARHULK',  types: ['metal'],    hp: 1450, atk: 1.05, def: 1.35, spd: 52,  size: 'L', item: 'ironPlate',
-    moves: ['flashCannon', 'ironSlam', 'magnetStorm', 'ironDefense'] },
+    moves: ['chromeCannon', 'ironSlam', 'magnetStorm', 'ironDefense'] },
   { id: 'pixibelle', name: 'PIXIBELLE', types: ['arcane'],    hp: 940,  atk: 1.08, def: 0.96,  spd: 94,  size: 'M', item: 'pixieDust',
-    moves: ['moonblast', 'dazzleBeam', 'fairyWind', 'wish'] },
+    moves: ['moonSickle', 'dazzleBeam', 'fairyWind', 'wish'] },
   // Toshi, the owner's real Shiba Inu: fast, smug, loves a blanket
   { id: 'smugshi',   name: 'SMUGSHI',   types: ['beast', 'arcane'], hp: 1080, atk: 1.05, def: 1.0, spd: 110, size: 'M', item: 'snackPouch',
     moves: ['zoomies', 'shibaScream', 'smugBeam', 'blanketNap'] },
@@ -294,9 +294,9 @@ const ROSTER = [
   // r48, designed from the owner's picks: a crackling ball of static fur (fragile, hits hard) and a
   // spring-tailed cliff gecko (sturdy; Rollout is it springing off its coiled tail)
   { id: 'voltergeist', name: 'VOLTERGEIST', types: ['electric', 'phantom'], hp: 900, atk: 1.22, def: 0.88, spd: 98, size: 'M', item: 'quickCharm',
-    moves: ['discharge', 'shadowBall', 'thunder', 'staticSiphon'] },
+    moves: ['discharge', 'ghostfire', 'thunder', 'staticSiphon'] },
   { id: 'coilizard', name: 'COILIZARD', types: ['electric', 'earth'], hp: 1080, atk: 1.12, def: 1.12, spd: 92, size: 'M', item: 'ironPlate',
-    moves: ['rollout', 'thunderbolt', 'rockSlide', 'thunder'] },
+    moves: ['rollout', 'ballLightning', 'rockSlide', 'thunder'] },
   // a calm lantern-belled alpaca (a sturdy guardian that heals) and a smouldering coal calf (a tank)
   { id: 'bellpaca', name: 'BELLPACA', types: ['electric', 'beast'], hp: 1150, atk: 1.0, def: 1.12, spd: 80, size: 'M', item: 'snackPouch',
     moves: ['bodySlam', 'staticSiphon', 'voltCannon', 'wish'] },
@@ -330,7 +330,7 @@ const EVOLVED = [
   { id: 'infernox', name: 'INFERNOX', types: ['fire', 'earth'], hp: 1400, atk: 1.26, def: 1.15, spd: 90, size: 'L', item: 'emberStone',
     moves: ['blazeRush', 'infernoBeam', 'fireBlast', 'magmaQuake'], from: 'cinderox' },
   { id: 'maelstrisk', name: 'MAELSTRISK', types: ['water', 'arcane'], hp: 1560, atk: 1.16, def: 1.22, spd: 88, size: 'L', item: 'mysticDrop',
-    moves: ['tidalCannon', 'bubbleBeam', 'dragonPulse', 'maelstrom'], from: 'tidalisk' },
+    moves: ['tidalCannon', 'bubbleBeam', 'starWyrm', 'maelstrom'], from: 'tidalisk' },
 ];
 // Legendary 4th stages: made at an evolution altar from a Coreature at its last stage by offering two
 // relics, one of each element in its `recipe` (RELIC_TAGS); any relic of those elements works, and
@@ -338,7 +338,7 @@ const EVOLVED = [
 // A Coreature's branches come from here (def.branches = { id: recipe }).
 const LEGENDS = [
   { id: 'magmabastion', name: 'MAGMA BASTION', types: ['water', 'fire'], hp: 2300, atk: 1.32, def: 1.5, spd: 46, size: 'L', item: 'emberStone',
-    moves: ['geyserVent', 'steamEruption', 'magmaWave', 'ironDefense'], from: 'garrishell', recipe: ['fire', 'water'] },
+    moves: ['geyserVent', 'steamGeyser', 'magmaWave', 'ironDefense'], from: 'garrishell', recipe: ['fire', 'water'] },
   { id: 'railwarden', name: 'RAILWARDEN', types: ['water', 'electric'], hp: 1550, atk: 1.42, def: 1.1, spd: 108, size: 'L', item: 'quickCharm',
     moves: ['railShot', 'hydroCannon', 'lanceCharge', 'towerShield'], from: 'garrishell', recipe: ['electric', 'metal'] },
   { id: 'citadrone', name: 'CITADRONE', types: ['water', 'metal'], hp: 1900, atk: 1.28, def: 1.42, spd: 72, size: 'L', item: 'ironPlate',
