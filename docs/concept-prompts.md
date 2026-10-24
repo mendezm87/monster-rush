@@ -951,3 +951,18 @@ martial artist, a red headband, a pale horn. Three directions; each comes with n
 > dojo yard, original creature design, no text
 
 Attack art prompts live in their own file: `docs/attack-prompts.md`.
+
+---
+
+## Round 8: Smugshogun redraw guide (r242, the owner: "looks very low quality, especially from the side and back")
+
+The design stays (Toshi in red lacquered samurai armour on four legs, from the owner's first reference). The sprite
+needs a proper guide for its side and back, which were drawn from words alone. Run this once:
+
+> Pixel art game sprite sheet of a slim, fox-like Shiba Inu dog on all four legs wearing red lacquered Japanese
+> samurai armour: overlapping red plates over its back laced with navy cord and studded with gold, gold-rimmed
+> shoulder guards over its front legs, a small breastplate; soft ginger coat with lots of white (white cheeks,
+> throat, chest, legs and the backs of its thighs), big upright ears with pink insides, a smug half-closed stare,
+> a fluffy cream-and-ginger curled tail over its back. The same dog shown four times in a row: from the front,
+> three-quarter front, from the side facing right, and from behind. 44 pixels tall, limited palette, dark
+> outline, plain flat grey background, no text, no shadow, crisp pixels, no blur

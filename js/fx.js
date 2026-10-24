@@ -394,7 +394,7 @@ const FX_PARTS = {
     }
     const s = (p.sc || 1) * (p.grow ? Math.min(1, age / p.grow) : 1) * (p.shrink ? Math.min(1, (p.max - age) / p.shrink) : 1) * (1 + (p.swell || 0) * age);
     if (s < 0.05) return;
-    const o = { sc: s, ax: p.ax ?? 0.5, ay: p.ay ?? 0.5, rot, flip: p.flip };
+    const o = { sc: s, ax: p.ax ?? 0.5, ay: p.ay ?? 0.5, rot, flip: p.flip, bot: p.bot, sy: p.sy };
     const yy = y - z - (p.rise || 0) * age;
     if (fb !== null) drawSheetMix(c, p.id, fr, fb, ft, x, yy, o); else drawSheet(c, p.id, fr, x, yy, o);
   },
@@ -766,9 +766,9 @@ function drawSheet(c, id, i, x, y, o = {}) {
     c.drawImage(img, f[0] + t + cl, f[1], iw - cl - cr, f[3], -w2 * (o.ax ?? 0.5), -h * (o.ay ?? 0.5), w2, h);
     c.restore(); return;
   }
-  const top = o.top || 0, cut = h * top / f[3];
-  if (o.src) c.drawImage(o.src, 0, top, f[2], f[3] - top, -w * (o.ax ?? 0.5), -h * (o.ay ?? 0.5) + cut, w, h - cut);   // a dissolved copy (drawSheetMix)
-  else c.drawImage(img, f[0], f[1] + top, f[2], f[3] - top, -w * (o.ax ?? 0.5), -h * (o.ay ?? 0.5) + cut, w, h - cut);
+  const top = o.top || 0, bot = Math.round((o.bot || 0) * f[3]), cut = h * top / f[3], cutB = h * bot / f[3];   // top: rows left off the top; bot: a share left off the bottom
+  if (o.src) c.drawImage(o.src, 0, top, f[2], f[3] - top - bot, -w * (o.ax ?? 0.5), -h * (o.ay ?? 0.5) + cut, w, h - cut - cutB);   // a dissolved copy (drawSheetMix)
+  else c.drawImage(img, f[0], f[1] + top, f[2], f[3] - top - bot, -w * (o.ax ?? 0.5), -h * (o.ay ?? 0.5) + cut, w, h - cut - cutB);
   c.restore();
 }
 // Smoother sheets (r181, the owner: "the ones that were drawn before were a lot smoother"): a sheet has 5-8 pictures
@@ -1022,7 +1022,7 @@ const PIECE_SHOTS = {
   staticSiphon: { sheet: 'elec1', fly: [12, 13, 14], len: 28, spin: true },   // ELEC-1: a fuzzy ball of static
   ghostfire: { sheet: 'ghost1', fly: [0, 1, 2, 3], len: 36, spin: true },   // GHOST-1 (r235): a ball of ghost fire
   sludgeBomb: { sheet: 'glitch1', fly: [0, 1, 2, 1], len: 30, spin: true },   // GLITCH-1 (r232): a dripping glob of corrupted sludge
-  acidSpray:  { sheet: 'glitch1', fly: [3, 4], len: 12, spin: true },   // GLITCH-1: drops of green acid
+  acidSpray:  { sheet: 'glitch1', fly: [3, 4], len: 12, ax: 0.5, tilt: -Math.PI / 2 },   // GLITCH-1: drops of green acid, round end first (the picture's drops fall downward, so they're turned to face the way they fly)
   airSlash:   { sheet: 'wind1', fly: [0, 1, 2], len: 34, ax: 0.6 },   // WIND-1 (r229): a crescent blade of wind
   razorGale:  { sheet: 'wind1', fly: [3, 4, 5, 6], len: 40, spin: true },   // WIND-1: a spinning shuriken of wind
   chiSphere: { sheet: 'fight1', fly: [8, 9, 10, 11], len: 32, spin: true },   // FIGHT-1 (r226): a sphere of aura, its swirl spinning
@@ -1288,7 +1288,7 @@ mixInto(Battle, class {
     }
     if (FX_PIECES && FXS.glitch2 && mv.id === 'toxicPool') {   // GLITCH-2 (r234): the glob splats, then a pool of bubbling sludge for as long as it lingers
       const id = 'glitch2', zr = r / 1.2, linger = mv.linger || 3;
-      this.addPiece(id, null, { frames: [0, 1, 2], fps: 6, x, y: y + 2, ground: true, sc: zr * 2.3 / sheetW(id, 0), grow: 0.1, shrink: 0.2, life: linger });
+      this.addPiece(id, null, { frames: [0, 1, 2], fps: 6, x, y: y + 3, ground: true, bot: 0.26, sy: 0.75, sc: zr * 2.3 / sheetW(id, 0), grow: 0.1, shrink: 0.2, life: linger });   // its drips and thick rim left off: a flat puddle on the floor, not a floating disc
       if (FXS.glitch1) {
         this.addPiece('glitch1', null, { frames: [5, 6], x, y: y - 4, sc: zr * 1.8 / sheetW('glitch1', 6), life: 0.3 });
         for (let t = 0.3; t < linger - 0.3; t += 0.2) { const ang = rand(0, TAU), rr = zr * rand(0, 0.7); this.addPiece('glitch1', null, { frames: [9, 10, 11], x: x + Math.cos(ang) * rr, y: y - 3 + Math.sin(ang) * rr * 0.45, sc: rand(0.35, 0.5), life: 0.4, delay: t }); }
@@ -2446,7 +2446,7 @@ mixInto(Battle, class {
     const SS = (FX_PIECES && PIECE_SHOTS[p.mv.id] && FXS[PIECE_SHOTS[p.mv.id].sheet] && PIECE_SHOTS[p.mv.id]) || SHEET_SHOTS[p.mv.id];
     if (SS && FXS[SS.sheet] && (!SS.pieces || FX_PIECES)) {   // played from the owner's sheet, pointing the way it flies
       const age = 2.6 - p.life, [fa, fb, ft] = framePlace(SS.fly, age / 0.07 + (SS.spin ? p.spin : 0), true);
-      drawSheetMix(c, SS.sheet, fa, fb, ft, p.x, p.y, { dir: SS.spin ? undefined : Math.atan2(p.vy, p.vx), ax: SS.spin ? 0.5 : SS.ax ?? 0.65, sc: SS.len / sheetW(SS.sheet, SS.fly[0]) });
+      drawSheetMix(c, SS.sheet, fa, fb, ft, p.x, p.y, { dir: SS.spin ? undefined : Math.atan2(p.vy, p.vx), tilt: SS.tilt, ax: SS.spin ? 0.5 : SS.ax ?? 0.65, sc: SS.len / sheetW(SS.sheet, SS.fly[0]) });
       return;
     }
     const t = styleOf(p.mv), fx = fxOf(p.mv), R = p.r * 2.2, a = Math.atan2(p.vy, p.vx), T = this.time, x = p.x, y = p.y;
