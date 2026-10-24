@@ -984,6 +984,8 @@ const PIECE_SHOTS = {
   razorLeaf:  { sheet: 'plant1', fly: [0, 1, 2, 3, 4], len: 20, spin: true },
   pinMissile: { sheet: 'bug1', fly: [11, 12], len: 18, ax: 0.6 },
   iceShard:   { sheet: 'ice1', fly: [0, 1, 2], len: 22, ax: 0.55 },
+  airSlash:   { sheet: 'wind1', fly: [0, 1, 2], len: 34, ax: 0.6 },   // WIND-1 (r229): a crescent blade of wind
+  razorGale:  { sheet: 'wind1', fly: [3, 4, 5, 6], len: 40, spin: true },   // WIND-1: a spinning shuriken of wind
   auraSphere: { sheet: 'fight1', fly: [8, 9, 10, 11], len: 32, spin: true },   // FIGHT-1 (r226): a sphere of aura, its swirl spinning
   gloomOrb:   { sheet: 'dark1', fly: [6, 7, 8, 9], len: 34, ax: 0.5 },   // DARK-1 (r223): a dark orb, its wisps curling
   mudShot:    { sheet: 'earth2', fly: [3, 4, 5], len: 30, ax: 0.6 },   // EARTH-2 (r222): a clod of wet mud, dripping   // ICE-1 (r218)   // BUG-1 (r217): a needle-missile   // PLANT-1 (r213): a spinning leaf
@@ -1127,6 +1129,15 @@ mixInto(Battle, class {
         const kind = Math.random(), fr = kind < 0.55 ? 7 + ((Math.random() * 3) | 0) : kind < 0.85 ? 11 + ((Math.random() * 2) | 0) : 10;
         this.addPiece('ice1', null, { frames: [fr], x: ox, y: oy, mx: Math.cos(ang) * sp, my: Math.sin(ang) * sp * 0.7, rot: rand(0, TAU), vr: fr < 10 ? rand(-6, 6) : 0,
           sc: fr >= 11 ? rand(0.35, 0.5) : rand(0.4, 0.6), swell: fr >= 11 ? 0.8 : 0, life, shrink: 0.12 });
+      }
+      return;
+    }
+    if (mv.id === 'gust' && FX_PIECES && FXS.wind1) {   // WIND-1 (r229): streaks of wind rushing out across the wedge, leaves and feathers tumbling with them
+      for (let i = 0; i < 1; i++) {
+        const ang = a.dir + rand(-mv.cone, mv.cone) * 0.9, sp = speed * rand(0.7, 1.1), life = a.r / sp, ox = m.x + Math.cos(a.dir) * 10, oy = m.cy;
+        const bit = Math.random() < 0.35, cs = Math.cos(ang) < 0;
+        this.addPiece('wind1', null, bit ? { frames: [10 + ((Math.random() * 3) | 0)], x: ox, y: oy, mx: Math.cos(ang) * sp, my: Math.sin(ang) * sp * 0.7, rot: rand(0, TAU), vr: rand(-10, 10), sc: rand(0.6, 0.8), life, shrink: 0.15 }
+          : { frames: [7 + ((Math.random() * 3) | 0)], x: ox, y: oy, mx: Math.cos(ang) * sp, my: Math.sin(ang) * sp * 0.7, rot: cs ? ang + Math.PI : ang, flip: cs, ax: cs ? 0.3 : 0.7, sc: rand(0.95, 1.1), grow: 0.1, life, shrink: 0.25 });   // full size: thin streaks vanish when shrunk
       }
       return;
     }
