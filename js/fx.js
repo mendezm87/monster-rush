@@ -972,12 +972,14 @@ const PIECE_SHOTS = {
   twinCannon: { sheet: 'water2', fly: [3], len: 26, ax: 0.7 },
   bubbleBeam: { sheet: 'water2', fly: [8, 9, 8, 10], len: 21, spin: true },
   razorLeaf:  { sheet: 'plant1', fly: [0, 1, 2, 3, 4], len: 20, spin: true },
-  pinMissile: { sheet: 'bug1', fly: [11, 12], len: 18, ax: 0.6 },   // BUG-1 (r217): a needle-missile   // PLANT-1 (r213): a spinning leaf
+  pinMissile: { sheet: 'bug1', fly: [11, 12], len: 18, ax: 0.6 },
+  iceShard:   { sheet: 'ice1', fly: [0, 1, 2], len: 22, ax: 0.55 },   // ICE-1 (r218)   // BUG-1 (r217): a needle-missile   // PLANT-1 (r213): a spinning leaf
 };
 const PIECE_SHOT_HITS = {
   spoutShot: ['water2', [4, 5, 6], 1], cuffCannon: ['water2', [4, 5, 6], 1.2], twinCannon: ['water2', [4, 5, 6], 1],
   bubbleBeam: ['water2', [11, 12, 13], 0.7],
   pinMissile: ['bug1', [16, 17, 18], 0.6],
+  iceShard: ['ice1', [4, 5, 6], 0.9],
 };
 // a frame sequence played as a particle (an explosion, a geyser)
 function sheetPart(b, id, frames, x, y, life, o = {}) {
@@ -1078,6 +1080,15 @@ mixInto(Battle, class {
   // Blowing a cone (Blizzard, Gust): snow or wind pouring out in front of the user.
   fxCone(m, a) {
     const mv = a.mv, fx = fxOf(mv), speed = a.r / 0.35, snow = styleOf(mv) === 'ice';
+    if (mv.id === 'blizzard' && FX_PIECES && FXS.ice1) {   // ICE-1 (r218): snowflakes, frost mist and ice chunks blown out across the wedge
+      for (let i = 0; i < 3; i++) {
+        const ang = a.dir + rand(-mv.cone, mv.cone), sp = speed * rand(0.6, 1), life = a.r / sp, ox = m.x + Math.cos(a.dir) * 10, oy = m.cy;
+        const kind = Math.random(), fr = kind < 0.55 ? 7 + ((Math.random() * 3) | 0) : kind < 0.85 ? 11 + ((Math.random() * 2) | 0) : 10;
+        this.addPiece('ice1', null, { frames: [fr], x: ox, y: oy, mx: Math.cos(ang) * sp, my: Math.sin(ang) * sp * 0.7, rot: rand(0, TAU), vr: fr < 10 ? rand(-6, 6) : 0,
+          sc: fr >= 11 ? rand(0.35, 0.5) : rand(0.4, 0.6), swell: fr >= 11 ? 0.8 : 0, life, shrink: 0.12 });
+      }
+      return;
+    }
     if (mv.id === 'magmaWave') {   // the wave is the sheet (drawSheetMagma); when it's spent, a pool of lava stays a moment
       if (FX_PIECES && FXS.fire4 && !a.pooled) {   // FIRE-4 (r207): globs of lava thrown ahead of the waves, splashing where they land
         a.globT = (a.globT || 0) - 1 / 30;
