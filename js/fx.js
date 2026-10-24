@@ -821,6 +821,7 @@ const PIECE_DASH = { bodySlam: { thud: true },
   woolTackle: { wool: 0.05, woolPop: true },
   // FIRE-3 (r206): fire dashes trail flames and scorch the ground instead of dust, and explode on the hit
   aquaJet: { draw: 'stream', water: true, splash: true },
+  rollout: { rubble: 0.05, smash: true },   // EARTH-1 (r221): rubble kicked up as it rolls, a rock smash on the hit
   megahorn: { draw: 'horn', xflash: true }, beetleBarrage: { xflash: true },   // BUG-1 (r217)   // WATER-3 (r212): wrapped in a streamer of water, spray behind, a splash on the hit
   flameWheel: { draw: 'wheel', fire: true, scorch: true, boom: true }, blazeRush: { draw: 'comet', fire: true, boom: true } };   // BEAST-4 (r201): storm-cloud wool streaming off Lumawool   // BEAST-2 (r195): Smugshi's line
 // each look's hit pieces (r188): [sheet, row]; a row is a burst in 3 frames then 3 bits (docs/attack-pieces.md HITS-1..4)
@@ -1058,6 +1059,7 @@ mixInto(Battle, class {
       this.addPiece('bug1', null, { frames: [5, 6, 6], x: tgt.x + rand(-4, 4), y: tgt.cy + rand(-4, 4), near: true, sc: tgt.r * 2.2 / sheetW('bug1', 5), rot: rand(-0.3, 0.3), life: 0.22 });
       for (let i = 0; i < 3; i++) { const ang = rand(0, TAU), sp = rand(50, 100); this.addPiece('bug1', null, { frames: [8 + i], x: tgt.x, y: tgt.cy, mx: Math.cos(ang) * sp, my: Math.sin(ang) * sp * 0.6, vz: rand(30, 70), g: 400, rot: rand(0, TAU), vr: rand(-8, 8), sc: 0.6, life: 0.45, shrink: 0.1 }); }
     }
+    if (big && PD && PD.smash && FXS.earth1) this.fxRockSmash(tgt.x, tgt.cy, tgt.r * 1.6, tgt, src);   // EARTH-1
     if (big && PD && PD.splash && FXS.water2) { this.addPiece('water2', null, { frames: [4, 5, 6], x: tgt.x, y: tgt.cy, sc: tgt.r * 2.4 / sheetW('water2', 5), life: 0.4 }); }
     if (big && PD && PD.boom && FXS.fire3) this.fxFireBoom(tgt.x, tgt.cy, tgt.r * 2.4, tgt);   // or explodes (FIRE-3)
     const PH = FX_PIECES && PIECE_SHOT_HITS[mv.id] && FXS[PIECE_SHOT_HITS[mv.id][0]] && PIECE_SHOT_HITS[mv.id];
@@ -1146,7 +1148,12 @@ mixInto(Battle, class {
     if (mv.id === 'eruption' && FX_PIECES && FXS.eruptionParts) { this.fxEruptionPieces(x, y, r, this.mons.find(o => o.action && o.action.mv === mv && Math.hypot(o.x - x, o.y - y) < 2)); return; }
     if (FX_PIECES && FXS.beast4 && mv.id === 'heavySigh') { this.fxSigh(x, y, r, user); return; }   // BEAST-4 (r201)
     if (FX_PIECES && FXS.beast2 && (mv.id === 'shibaScream' || mv.id === 'shibaRoar')) { this.fxShout(x, y, r, user, mv.id === 'shibaRoar'); return; }   // BEAST-2 (r195)
-    if (FX_PIECES && FXS.common1 && (mv.id === 'heavyStomp' || mv.id === 'quake')) { this.fxGroundSlam(x, y, r, user, { big: mv.id === 'quake' }); return; }   // COMMON-1 (r186; Quake gets rock spikes with EARTH-1)
+    if (FX_PIECES && FXS.earth1 && mv.id === 'rockSlide') { this.fxRockSmash(x, y - 4, r * 1.1, null); this.addPiece('earth1', null, { frames: [11], x, y: y + 1, ground: true, sc: r * 1.7 / sheetW('earth1', 11), shrink: 0.4, life: 1.6 }); return; }   // EARTH-1 (r221)
+    if (FX_PIECES && FXS.earth1 && mv.id === 'quake') { this.fxQuake(x, y, r, user); return; }   // EARTH-1 (r221)
+    if (FX_PIECES && FXS.common1 && (mv.id === 'heavyStomp' || mv.id === 'quake')) {   // COMMON-1 (r186), on cracked earth (EARTH-1)
+      if (FXS.earth1) this.addPiece('earth1', null, { frames: [11], x, y: y + 1, ground: true, sc: r * 1.3 / sheetW('earth1', 11), grow: 0.06, shrink: 0.4, life: 1.3 });
+      this.fxGroundSlam(x, y, r, user, { big: mv.id === 'quake' }); return;
+    }
     if (mv.id === 'eruption') { const sc = r * 1.25 / sheetW('eruption', 0); sheetPart(this, 'eruption', [1, 2, 2, 3, 4], x, y + sheetH('eruption', 0) * sc / 2, 1.1, { sc, ay: 1, user }); this.addShake(8); return; }
     if (mv.id === 'geyserVent' && FX_PIECES && FXS.water3) { this.fxGeyserRing(x, y, r, user); return; }   // WATER-3 (r212)
     if (mv.id === 'geyserVent' && FXS.geyserVent) { const sc = r * 1.7 / sheetW('geyserVent', 0); sheetPart(this, 'geyserVent', [2, 3, 4, 5, 6, 7, 8], x, y + 4 + sheetH('geyserVent', 0) * sc / 2, 1.1, { sc, ay: 1, user }); this.addShake(6); return; }
@@ -1512,11 +1519,11 @@ mixInto(Battle, class {
       P({ frames: [4 + (i % 3)], x: x + Math.cos(ang) * r * 0.2, y: y + Math.sin(ang) * r * 0.2 * ry, mx: Math.cos(ang) * sp, my: Math.sin(ang) * sp * ry,
         vz: rand(110, 200), g: 650, rot: rand(0, TAU), vr: rand(-10, 10), sc: rand(0.55, 0.85), life: 0.9, shrink: 0.15 });
     }
-    const nd = big ? 9 : 6;
+    const nd = o.light ? 5 : big ? 9 : 6;
     for (let i = 0; i < nd; i++) {   // dust rolling outward round it, a moment after the rings so they read first
       const ang = i / nd * TAU + rand(-0.2, 0.2), rr = r * rand(0.6, 0.9);
       P({ frames: [0, 1, 2, 3], x: x + Math.cos(ang) * rr, y: y + Math.sin(ang) * rr * ry, mx: Math.cos(ang) * rand(25, 45), my: Math.sin(ang) * rand(25, 45) * ry,
-        rise: rand(8, 18), sc: rand(0.32, 0.48) * (big ? 1.2 : 1), swell: 0.35, ay: 0.85, life: rand(0.6, 0.85), delay: rand(0.1, 0.2), flip: Math.random() < 0.5 });
+        rise: rand(8, 18), sc: rand(0.32, 0.48) * (big && !o.light ? 1.2 : 1), swell: 0.35, ay: 0.85, life: rand(0.6, 0.85), delay: rand(0.1, 0.2) + (o.light ? 0.25 : 0), flip: Math.random() < 0.5 });
     }
     this.addShake(big ? 9 : 6);
   }
@@ -1554,11 +1561,20 @@ mixInto(Battle, class {
     }
     a.dustT = (PD0.fire || PD0.water) ? 1 : (a.dustT || 0) - dt;
     while (a.dustT <= 0) {   // dust kicked up at its feet
-      a.dustT += 0.085;
+      a.dustT += PD0.rubble ? 0.17 : 0.085;
       this.addPiece(id, m, { frames: [0, 1, 2, 3], x: m.x - cx * m.r * 0.5 + rand(-3, 3), y: m.y + rand(-2, 2), mx: -cx * rand(10, 30), rise: rand(8, 16),
         sc: rand(0.22, 0.34), swell: 0.4, ay: 0.85, life: rand(0.3, 0.42), flip: cx > 0 });
     }
     const PD = PIECE_DASH[a.mv.id];
+    if (PD.rubble && FXS.earth1) {   // chips of rock kicked up behind it, bouncing (EARTH-1)
+      a.rubT = (a.rubT || 0) - dt;
+      while (a.rubT <= 0) {
+        a.rubT += PD.rubble;
+        const ang = back + rand(-0.7, 0.7), sp = rand(30, 70);
+        this.addPiece('earth1', null, { frames: [8 + ((Math.random() * 3) | 0)], x: m.x - cx * m.r * 0.5, y: m.y + rand(-2, 2), mx: Math.cos(ang) * sp, my: Math.sin(ang) * sp * 0.5,
+          vz: rand(50, 100), g: 500, rot: rand(0, TAU), vr: rand(-12, 12), sc: rand(0.3, 0.45), life: 0.5, shrink: 0.15 });
+      }
+    }
     if (PD.stars && FXS.beast2) {   // little gold stars spinning off it (BEAST-2)
       a.starT = (a.starT || 0) - dt;
       while (a.starT <= 0) {
@@ -1781,6 +1797,37 @@ mixInto(Battle, class {
       sc: k * 0.48, grow: 0.1, swell: 0.3, shrink: 0.25, life: 0.9, delay: 0.25 + i * 0.06 });
     for (let i = 0; i < 4; i++) P({ frames: [8 + (i % 3)], x: m.x + rand(-m.r, m.r), y: m.y - m.h * rand(0.1, 0.5), rise: rand(10, 20), mx: rand(-18, 18),
       sc: k * rand(0.3, 0.4), grow: 0.1, shrink: 0.4, life: 0.9, delay: 0.75 + i * 0.08, near: i === 0 });
+  }
+
+  // EARTH-1 (r221): a boulder smashing apart (Rock Slide's landing, Rollout's hit): the smash, rubble thrown and
+  // bouncing, a puff of dust
+  fxRockSmash(x, y, r, tgt, src) {
+    const id = 'earth1', from = src ? Math.atan2(src.y - y, src.x - x) : -Math.PI / 2;
+    this.addPiece(id, tgt, { frames: [5, 6, 7], x, y, near: !!tgt, sc: r * 2 / sheetW(id, 6), grow: 0.05, life: 0.4 });
+    for (let i = 0; i < 6; i++) {
+      const ang = (tgt ? from + Math.PI : -Math.PI / 2) + rand(-1.5, 1.5), sp = rand(50, 110);
+      this.addPiece(id, null, { frames: [8 + (i % 3)], x, y, mx: Math.cos(ang) * sp, my: Math.sin(ang) * sp * 0.5, vz: rand(60, 130), g: 550, rot: rand(0, TAU), vr: rand(-10, 10), sc: rand(0.35, 0.55), life: 0.7, shrink: 0.12 });
+    }
+    if (FXS.common1) for (let i = 0; i < 3; i++) this.addPiece('common1', null, { frames: [0, 1, 2, 3], x: x + rand(-r, r) * 0.6, y: y + 4, rise: rand(8, 16), mx: rand(-20, 20), sc: rand(0.3, 0.42), swell: 0.35, ay: 0.85, life: 0.6, delay: 0.08, flip: i % 2 === 0 });
+    this.addShake(4);
+  }
+  // Quake (EARTH-1, r221): the ground cracks open in a star of cracks round it, a ring of rock spikes bursts up and
+  // crumbles (the far ones behind it, the near ones small in front), then COMMON-1's stamp: rings, pebbles, dust
+  fxQuake(x, y, r, user) {
+    const id = 'earth1', P = q => this.addPiece(id, user, q), ry = 0.55;
+    if (user) user.piecesUntil = this.time + 1.6;
+    P({ frames: [11], x, y: y + 1, ground: true, sc: r * 1.3 / sheetW(id, 11), grow: 0.08, shrink: 0.35, life: 1.6 });
+    for (let i = 0; i < 6; i++) {   // cracks tearing outward
+      const ang = i / 6 * TAU + rand(-0.25, 0.25), len = r * rand(0.8, 1.05);
+      P({ frames: [12], x: x + Math.cos(ang) * len * 0.5, y: y + Math.sin(ang) * len * 0.5 * ry, ground: true, rot: Math.atan2(Math.sin(ang) * ry, Math.cos(ang)),
+        sc: len / sheetW(id, 12), grow: 0.12, shrink: 0.35, life: 1.5, delay: i * 0.02 });
+    }
+    for (let i = 0; i < 10; i++) {   // rock spikes bursting up in a ring, then crumbling
+      const ang = i / 10 * TAU + rand(-0.15, 0.15), rr = r * rand(0.7, 0.95), near = Math.sin(ang) > 0.3;
+      P({ frames: [0, 1, 1, 1, 2], x: x + Math.cos(ang) * rr, y: y + Math.sin(ang) * rr * ry, near, ay: 0.9, flip: Math.cos(ang) < 0,
+        sc: rand(0.85, 1.05) * (near ? 0.7 : 1), grow: 0.06, life: 0.9, delay: 0.05 + rand(0, 0.12) });
+    }
+    this.fxGroundSlam(x, y, r * 0.8, user, { big: true, light: true });
   }
 
   // a star popping out of a hit (Zoomies)
@@ -2249,6 +2296,9 @@ mixInto(Battle, class {
       if (z.mv.fx === 'meteor' && left < 0.45) {
         const k = 1 - left / 0.45;
         FXD.flame(c, zx - 70 * (1 - k), zy - 170 * (1 - k), Math.atan2(170, 70), 7, fx, this.time);
+      } else if (z.mv.id === 'rockSlide' && FX_PIECES && FXS.earth1) {   // EARTH-1 (r221): a boulder dropping onto the spot, tumbling
+        const k = clamp(1 - left / z.delay, 0, 1), f = clamp((k - 0.45) / 0.55, 0, 1);
+        if (f > 0) drawSheet(c, 'earth1', 3 + (z.id & 1), zx, zy - 160 * (1 - f * f) - 8, { sc: z.r * 1.5 / sheetW('earth1', 3), rot: (z.id & 2 ? -1 : 1) * f * 2 });
       } else if (z.mv.fx === 'rock' && left < 0.35) {
         const k = 1 - left / 0.35;
         FXD.rock(c, zx, zy - 150 * (1 - k * k) - 6, z.id, 8, FX_STYLES.rock, z.id);
