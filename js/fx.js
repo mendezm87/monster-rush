@@ -817,7 +817,8 @@ const PIECE_DASH = { bodySlam: { thud: true },
   zoomies: { stars: 0.09, starPop: true }, zoomiesMax: { stars: 0.05, starPop: true, zigzag: true },
   woolTackle: { wool: 0.05, woolPop: true },
   // FIRE-3 (r206): fire dashes trail flames and scorch the ground instead of dust, and explode on the hit
-  aquaJet: { draw: 'stream', water: true, splash: true },   // WATER-3 (r212): wrapped in a streamer of water, spray behind, a splash on the hit
+  aquaJet: { draw: 'stream', water: true, splash: true },
+  megahorn: { draw: 'horn', xflash: true }, beetleBarrage: { xflash: true },   // BUG-1 (r217)   // WATER-3 (r212): wrapped in a streamer of water, spray behind, a splash on the hit
   flameWheel: { draw: 'wheel', fire: true, scorch: true, boom: true }, blazeRush: { draw: 'comet', fire: true, boom: true } };   // BEAST-4 (r201): storm-cloud wool streaming off Lumawool   // BEAST-2 (r195): Smugshi's line
 // each look's hit pieces (r188): [sheet, row]; a row is a burst in 3 frames then 3 bits (docs/attack-pieces.md HITS-1..4)
 const HIT_KITS = { fire: ['hits1', 0], water: ['hits1', 1], electric: ['hits1', 2], ice: ['hits1', 3],
@@ -970,11 +971,13 @@ const PIECE_SHOTS = {
   cuffCannon: { sheet: 'water2', fly: [3], len: 30, ax: 0.7 },
   twinCannon: { sheet: 'water2', fly: [3], len: 26, ax: 0.7 },
   bubbleBeam: { sheet: 'water2', fly: [8, 9, 8, 10], len: 21, spin: true },
-  razorLeaf:  { sheet: 'plant1', fly: [0, 1, 2, 3, 4], len: 20, spin: true },   // PLANT-1 (r213): a spinning leaf
+  razorLeaf:  { sheet: 'plant1', fly: [0, 1, 2, 3, 4], len: 20, spin: true },
+  pinMissile: { sheet: 'bug1', fly: [11, 12], len: 18, ax: 0.6 },   // BUG-1 (r217): a needle-missile   // PLANT-1 (r213): a spinning leaf
 };
 const PIECE_SHOT_HITS = {
   spoutShot: ['water2', [4, 5, 6], 1], cuffCannon: ['water2', [4, 5, 6], 1.2], twinCannon: ['water2', [4, 5, 6], 1],
   bubbleBeam: ['water2', [11, 12, 13], 0.7],
+  pinMissile: ['bug1', [16, 17, 18], 0.6],
 };
 // a frame sequence played as a particle (an explosion, a geyser)
 function sheetPart(b, id, frames, x, y, life, o = {}) {
@@ -1046,6 +1049,10 @@ mixInto(Battle, class {
     if (big && PD && PD.thud) this.fxThud(tgt, src);   // a dash built from pieces lands with a thud
     if (big && PD && PD.starPop && FXS.beast2) this.fxStarPop(tgt);   // or pops a star
     if (big && PD && PD.woolPop && FXS.beast4) this.fxWoolPop(tgt, src);   // or bursts into a poof of wool
+    if (big && PD && PD.xflash && FXS.bug1) {   // an X-shaped strike flash and chitin shards flying (BUG-1)
+      this.addPiece('bug1', null, { frames: [5, 6, 6], x: tgt.x + rand(-4, 4), y: tgt.cy + rand(-4, 4), near: true, sc: tgt.r * 2.2 / sheetW('bug1', 5), rot: rand(-0.3, 0.3), life: 0.22 });
+      for (let i = 0; i < 3; i++) { const ang = rand(0, TAU), sp = rand(50, 100); this.addPiece('bug1', null, { frames: [8 + i], x: tgt.x, y: tgt.cy, mx: Math.cos(ang) * sp, my: Math.sin(ang) * sp * 0.6, vz: rand(30, 70), g: 400, rot: rand(0, TAU), vr: rand(-8, 8), sc: 0.6, life: 0.45, shrink: 0.1 }); }
+    }
     if (big && PD && PD.splash && FXS.water2) { this.addPiece('water2', null, { frames: [4, 5, 6], x: tgt.x, y: tgt.cy, sc: tgt.r * 2.4 / sheetW('water2', 5), life: 0.4 }); }
     if (big && PD && PD.boom && FXS.fire3) this.fxFireBoom(tgt.x, tgt.cy, tgt.r * 2.4, tgt);   // or explodes (FIRE-3)
     const PH = FX_PIECES && PIECE_SHOT_HITS[mv.id] && FXS[PIECE_SHOT_HITS[mv.id][0]] && PIECE_SHOT_HITS[mv.id];
@@ -1633,6 +1640,10 @@ mixInto(Battle, class {
       parts.filter(q => !q.near).forEach(one);
       if (m.visible && !m.fainted) cutOutSprite(c, m);
       parts.filter(q => q.near).forEach(one);
+      return;
+    }
+    if (PD.draw === 'horn' && FXS.bug1) {   // a horn-shaped lance of green light curving up in front of it (BUG-1)
+      drawSheet(c, 'bug1', Math.floor(T * 12) % 4, m.x + Math.cos(a.dir) * m.r * 0.2, cy + Math.sin(a.dir) * m.r * 0.1, { dir: a.dir, ax: 0.1, sc: m.h * 0.55 / sheetH('bug1', 0) });
       return;
     }
     if (PD.draw === 'stream' && FXS.water3) {   // a streamer of water curling round its front, the part behind its body cut out
