@@ -828,6 +828,7 @@ const PIECE_DASH = { bodySlam: { thud: true },
   nightSlash: { wisps: 0.022, crescent: true },
   deadlineDash: { papers: 0.05, calendar: true },
   jab: { aura: 0.03, punch: 1 }, closeCombat: { aura: 0.03, punch: 2 },   // FIGHT-1 (r226): aura wisps and motion lines streaming off it, fists of aura on every hit   // DARK-3 (r225): Mondaze's paperwork flying off it, a calendar page and a burst of papers on the hit   // DARK-1 (r223): shadow wisps streaming off it, a crescent cut on the hit   // EARTH-1 (r221): rubble kicked up as it rolls, a rock smash on the hit
+  braveDive: { draw: 'bow', feathers: 0.05 },   // WIND-2b (r231): a bow wave of air round its front, feathers and wind streaks behind
   megahorn: { draw: 'horn', xflash: true }, beetleBarrage: { xflash: true },   // BUG-1 (r217)   // WATER-3 (r212): wrapped in a streamer of water, spray behind, a splash on the hit
   flameWheel: { draw: 'wheel', fire: true, scorch: true, boom: true }, blazeRush: { draw: 'comet', fire: true, boom: true } };   // BEAST-4 (r201): storm-cloud wool streaming off Lumawool   // BEAST-2 (r195): Smugshi's line
 // each look's hit pieces (r188): [sheet, row]; a row is a burst in 3 frames then 3 bits (docs/attack-pieces.md HITS-1..4)
@@ -1634,7 +1635,7 @@ mixInto(Battle, class {
     const id = 'common1', back = a.dir + Math.PI, cx = Math.cos(a.dir), cy = Math.sin(a.dir);
     if (!a.launched) {
       a.launched = true; this.addShake(2);
-      if (!PIECE_DASH[a.mv.id].fire && !PIECE_DASH[a.mv.id].water && !PIECE_DASH[a.mv.id].wisps && !PIECE_DASH[a.mv.id].papers && !PIECE_DASH[a.mv.id].aura) for (let i = 0; i < 3; i++) this.addPiece(id, m, { frames: [0, 1, 2, 3], x: m.x - cx * m.r * 0.6 + rand(-4, 4), y: m.y - cy * 4 + rand(-3, 3),
+      if (!PIECE_DASH[a.mv.id].fire && !PIECE_DASH[a.mv.id].water && !PIECE_DASH[a.mv.id].wisps && !PIECE_DASH[a.mv.id].papers && !PIECE_DASH[a.mv.id].aura && !PIECE_DASH[a.mv.id].feathers) for (let i = 0; i < 3; i++) this.addPiece(id, m, { frames: [0, 1, 2, 3], x: m.x - cx * m.r * 0.6 + rand(-4, 4), y: m.y - cy * 4 + rand(-3, 3),
         mx: Math.cos(back + rand(-0.6, 0.6)) * rand(25, 50), my: Math.sin(back) * 15, rise: 8, sc: rand(0.45, 0.6), swell: 0.3, ay: 0.85, life: 0.5, flip: cx > 0 });
     }
     const PD0 = PIECE_DASH[a.mv.id];
@@ -1661,7 +1662,7 @@ mixInto(Battle, class {
         if (Math.random() < 0.3 && FXS.water3) this.addPiece('water3', null, { frames: [12 + ((Math.random() * 2) | 0)], x: m.x - cx * m.r * 0.6, y: m.y, mx: -cx * 20, rise: 8, sc: 0.6, life: 0.4, shrink: 0.2 });
       }
     }
-    a.dustT = (PD0.fire || PD0.water || PD0.wisps || PD0.papers || PD0.aura) ? 1 : (a.dustT || 0) - dt;
+    a.dustT = (PD0.fire || PD0.water || PD0.wisps || PD0.papers || PD0.aura || PD0.feathers) ? 1 : (a.dustT || 0) - dt;
     while (a.dustT <= 0) {   // dust kicked up at its feet
       a.dustT += PD0.rubble ? 0.17 : 0.085;
       this.addPiece(id, m, { frames: [0, 1, 2, 3], x: m.x - cx * m.r * 0.5 + rand(-3, 3), y: m.y + rand(-2, 2), mx: -cx * rand(10, 30), rise: rand(8, 16),
@@ -1675,6 +1676,15 @@ mixInto(Battle, class {
         const line = Math.random() < 0.4;
         this.addPiece('fight1', null, line ? { frames: [15 + ((Math.random() * 2) | 0)], x: m.x - cx * m.r * 0.8, y: m.y - m.h * rand(0.2, 0.8), mx: -cx * rand(60, 100), my: -cy * 30, rot: a.dir, sc: rand(0.6, 0.9), shrink: 0.3, life: 0.2 }
           : { frames: [12 + ((Math.random() * 3) | 0)], x: m.x - cx * m.r * 0.4 + rand(-4, 4), y: m.y - m.h * rand(0.1, 0.7), mx: -cx * rand(15, 35), rise: rand(20, 40), sc: rand(0.6, 0.85), shrink: 0.3, life: rand(0.25, 0.4), flip: Math.random() < 0.5 });
+      }
+    }
+    if (PD.feathers && FXS.wind1) {   // feathers and curls of wind peeling off behind it (WIND-1)
+      a.featT = (a.featT || 0) - dt;
+      while (a.featT <= 0) {
+        a.featT += PD.feathers;
+        const streak = Math.random() < 0.5, ang = back + rand(-0.5, 0.5), sp = rand(40, 80), f = cx < 0;
+        this.addPiece('wind1', null, streak ? { frames: [7 + ((Math.random() * 3) | 0)], x: m.x - cx * m.r * 0.8, y: m.y - m.h * rand(0.2, 0.7), mx: Math.cos(ang) * sp, my: Math.sin(ang) * sp * 0.5, rot: f ? a.dir : a.dir + Math.PI, flip: !f, sc: 1, shrink: 0.3, life: 0.3 }
+          : { frames: [11 + ((Math.random() * 2) | 0)], x: m.x, y: m.y - m.h * rand(0.3, 0.8), mx: Math.cos(ang) * sp, my: Math.sin(ang) * sp * 0.5, vz: rand(10, 30), g: 40, rot: rand(0, TAU), vr: rand(-6, 6), sc: 1, shrink: 0.25, life: rand(0.5, 0.8) });
       }
     }
     if (PD.papers && FXS.dark3) {   // sheets of paper flying off it, fluttering as they drift down (DARK-3)
@@ -1803,6 +1813,13 @@ mixInto(Battle, class {
     }
     if (PD.draw === 'horn' && FXS.bug1) {   // a horn-shaped lance of green light curving up in front of it (BUG-1)
       drawSheet(c, 'bug1', Math.floor(T * 12) % 4, m.x + Math.cos(a.dir) * m.r * 0.2, cy + Math.sin(a.dir) * m.r * 0.1, { dir: a.dir, ax: 0.1, sc: m.h * 0.55 / sheetH('bug1', 0) });
+      return;
+    }
+    if (PD.draw === 'bow' && FXS.wind2b) {   // a bow wave of rushing air round its front (WIND-2b): the air passing behind it, the body cut out, its tip over its nose
+      const fr = Math.floor(T * 14) % 3, sc = m.r * 5 / sheetW('wind2b', fr), o = { dir: a.dir, ax: 0.55, sc };
+      drawSheet(c, 'wind2b', fr, m.x, cy, o);
+      if (m.visible && !m.fainted) cutOutSprite(c, m);
+      drawSheet(c, 'wind2b', fr, m.x, cy, { ...o, trim: 0, cutL: 0.8, ax: (0.55 - 0.8) / (1 - 0.8) });   // lined up with the whole picture
       return;
     }
     if (PD.draw === 'stream' && FXS.water3) {   // a streamer of water curling round its front, the part behind its body cut out

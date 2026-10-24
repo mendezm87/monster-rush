@@ -105,6 +105,8 @@ SHEETS = {
     # FIGHT-2 (Bulk Up): aura flame x3, steam puff x2 + power lines
     # WIND-1: wind crescent x3, wind shuriken x4, wind streak x3, leaf + feather x2
     # WIND-2: tornado funnel x4, dust ring x2 + rock, twig, leaf, wind arrow x3 (unused: came as plain arrows, see WIND-2b), green wind ribbon x3
+    # WIND-2b: Brave Dive's bow wave of air x3
+    'wind2b':        ('pk-wind-2b.png', 44, [3]),
     'wind2':         ('pk-wind-2.png', 40, [4, 5, 3, 3]),
     'wind1':         ('pk-wind-1.png', 36, [3, 4, 3, 3]),
     'fight2':        ('pk-fight-2.png', 36, [3, 3]),
@@ -360,7 +362,7 @@ def build(only=None, sheet=False):
             for yy in range(im.size[1]):
                 for xx in range(im.size[0]):
                     if isbg(*px_[xx, yy], xx, yy): px_[xx, yy] = bgc
-        m = bg_mask(im, 40 if (sid in CLEAN_SHRINK and sid != 'thunder') or sid in ('eruptionParts', 'common1', 'common2', 'hits1', 'hits2', 'hits3', 'hits4', 'smug1', 'smug1b', 'smug1c', 'beast1', 'beast2', 'beast3', 'beast4', 'fire2a', 'fire2b', 'fire3', 'fire4', 'water1a', 'water1b', 'water2', 'water3', 'plant1', 'plant2a', 'plant2', 'plant3', 'bug1', 'ice1', 'ice2a', 'ice2', 'earth1', 'earth2', 'dark1', 'dark2', 'dark3', 'fight1', 'fight2a', 'fight2', 'wind1', 'wind2') else 400)   # electric arcs close round gaps of background: only tiny ones are part of it (Thunder's cloud undersides are near the background colour, so not there)
+        m = bg_mask(im, 40 if (sid in CLEAN_SHRINK and sid != 'thunder') or sid in ('eruptionParts', 'common1', 'common2', 'hits1', 'hits2', 'hits3', 'hits4', 'smug1', 'smug1b', 'smug1c', 'beast1', 'beast2', 'beast3', 'beast4', 'fire2a', 'fire2b', 'fire3', 'fire4', 'water1a', 'water1b', 'water2', 'water3', 'plant1', 'plant2a', 'plant2', 'plant3', 'bug1', 'ice1', 'ice2a', 'ice2', 'earth1', 'earth2', 'dark1', 'dark2', 'dark3', 'fight1', 'fight2a', 'fight2', 'wind1', 'wind2', 'wind2b') else 400)   # electric arcs close round gaps of background: only tiny ones are part of it (Thunder's cloud undersides are near the background colour, so not there)
         if sid in PANELS: drop_specks(im, m)
         if sid in MANUAL:
             boxes = []
