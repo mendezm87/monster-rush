@@ -945,6 +945,18 @@ function drawScreenFlash(ctx, b) {
   ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height); ctx.restore();
 }
 
+// Shots from pieces (WATER-2, r210): water slugs (frames 0-3, growing; the biggest flies), splash 4-7, bubble 8-10
+// wobbling, pop 11-13, droplets 14-16, spray 17. Each hit plays its own pieces (PIECE_SHOT_HITS: sheet, frames, size).
+const PIECE_SHOTS = {
+  spoutShot:  { sheet: 'water2', fly: [3], len: 26, ax: 0.7 },
+  cuffCannon: { sheet: 'water2', fly: [3], len: 30, ax: 0.7 },
+  twinCannon: { sheet: 'water2', fly: [3], len: 26, ax: 0.7 },
+  bubbleBeam: { sheet: 'water2', fly: [8, 9, 8, 10], len: 21, spin: true },
+};
+const PIECE_SHOT_HITS = {
+  spoutShot: ['water2', [4, 5, 6], 1], cuffCannon: ['water2', [4, 5, 6], 1.2], twinCannon: ['water2', [4, 5, 6], 1],
+  bubbleBeam: ['water2', [11, 12, 13], 0.7],
+};
 // a frame sequence played as a particle (an explosion, a geyser)
 function sheetPart(b, id, frames, x, y, life, o = {}) {
   b.particles.push({ kind: 'sheet', id, frames, x, y, life, max: life, o });
@@ -1016,6 +1028,15 @@ mixInto(Battle, class {
     if (big && PD && PD.starPop && FXS.beast2) this.fxStarPop(tgt);   // or pops a star
     if (big && PD && PD.woolPop && FXS.beast4) this.fxWoolPop(tgt, src);   // or bursts into a poof of wool
     if (big && PD && PD.boom && FXS.fire3) this.fxFireBoom(tgt.x, tgt.cy, tgt.r * 2.4, tgt);   // or explodes (FIRE-3)
+    const PH = FX_PIECES && PIECE_SHOT_HITS[mv.id] && FXS[PIECE_SHOT_HITS[mv.id][0]] && PIECE_SHOT_HITS[mv.id];
+    if (PH) {   // a shot from pieces: its splash or pop where it hits, droplets flying (WATER-2)
+      const [hs, hf, hsc] = PH, from = src ? Math.atan2(src.y - tgt.y, src.x - tgt.x) : 0, x = tgt.x + Math.cos(from) * tgt.r * 0.5, y = tgt.cy;
+      this.addPiece(hs, null, { frames: hf, x, y, sc: hsc * tgt.r * 2.2 / sheetW(hs, hf[1]), life: 0.35 });
+      if (hs === 'water2' && hf[0] === 4) for (let i = 0; i < 4; i++) {
+        const ang = from + Math.PI + rand(-1.2, 1.2), sp = rand(50, 100);
+        this.addPiece(hs, null, { frames: [14 + (i % 3)], x, y, mx: Math.cos(ang) * sp, my: Math.sin(ang) * sp * 0.6, vz: rand(40, 80), g: 400, sc: 0.6, life: 0.45, shrink: 0.1 });
+      }
+    }
     else if (big && !PD && SM && SM.hit) { const hs = SM.hitSheet || SM.sheet || mv.id; sheetPart(this, hs, SM.hit, tgt.x, tgt.cy, 0.5, { sc: tgt.r * 3 / sheetW(hs, SM.hit[0]), flip: SM.face && src && src.x > tgt.x }); }   // its sheet's impact
     if (mv.fx === 'claw') this.particles.push({ kind: 'claw', x: tgt.x, y: tgt.cy, size: 34, rot: toward + Math.PI / 2 + rand(-0.3, 0.3), color: fx[1], life: 0.3, max: 0.3 });
     if (mv.fx === 'slash') this.particles.push({ kind: 'slash', x: tgt.x, y: tgt.cy, size: 22, rot: toward + rand(-0.4, 0.4), color: fx[1], life: 0.28, max: 0.28 });
@@ -1747,7 +1768,7 @@ mixInto(Battle, class {
   }
 
   drawProjectile(c, p) {
-    const SS = SHEET_SHOTS[p.mv.id];
+    const SS = (FX_PIECES && PIECE_SHOTS[p.mv.id] && FXS[PIECE_SHOTS[p.mv.id].sheet] && PIECE_SHOTS[p.mv.id]) || SHEET_SHOTS[p.mv.id];
     if (SS && FXS[SS.sheet] && (!SS.pieces || FX_PIECES)) {   // played from the owner's sheet, pointing the way it flies
       const age = 2.6 - p.life, [fa, fb, ft] = framePlace(SS.fly, age / 0.07 + (SS.spin ? p.spin : 0), true);
       drawSheetMix(c, SS.sheet, fa, fb, ft, p.x, p.y, { dir: SS.spin ? undefined : Math.atan2(p.vy, p.vx), ax: SS.spin ? 0.5 : SS.ax ?? 0.65, sc: SS.len / sheetW(SS.sheet, SS.fly[0]) });
