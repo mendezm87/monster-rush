@@ -801,6 +801,7 @@ const PIECE_DASH = { bodySlam: { thud: true },
   zoomies: { stars: 0.09, starPop: true }, zoomiesMax: { stars: 0.05, starPop: true, zigzag: true },
   woolTackle: { wool: 0.05, woolPop: true },
   // FIRE-3 (r206): fire dashes trail flames and scorch the ground instead of dust, and explode on the hit
+  aquaJet: { draw: 'stream', water: true, splash: true },   // WATER-3 (r212): wrapped in a streamer of water, spray behind, a splash on the hit
   flameWheel: { draw: 'wheel', fire: true, scorch: true, boom: true }, blazeRush: { draw: 'comet', fire: true, boom: true } };   // BEAST-4 (r201): storm-cloud wool streaming off Lumawool   // BEAST-2 (r195): Smugshi's line
 // each look's hit pieces (r188): [sheet, row]; a row is a burst in 3 frames then 3 bits (docs/attack-pieces.md HITS-1..4)
 const HIT_KITS = { fire: ['hits1', 0], water: ['hits1', 1], electric: ['hits1', 2], ice: ['hits1', 3],
@@ -1028,6 +1029,7 @@ mixInto(Battle, class {
     if (big && PD && PD.thud) this.fxThud(tgt, src);   // a dash built from pieces lands with a thud
     if (big && PD && PD.starPop && FXS.beast2) this.fxStarPop(tgt);   // or pops a star
     if (big && PD && PD.woolPop && FXS.beast4) this.fxWoolPop(tgt, src);   // or bursts into a poof of wool
+    if (big && PD && PD.splash && FXS.water2) { this.addPiece('water2', null, { frames: [4, 5, 6], x: tgt.x, y: tgt.cy, sc: tgt.r * 2.4 / sheetW('water2', 5), life: 0.4 }); }
     if (big && PD && PD.boom && FXS.fire3) this.fxFireBoom(tgt.x, tgt.cy, tgt.r * 2.4, tgt);   // or explodes (FIRE-3)
     const PH = FX_PIECES && PIECE_SHOT_HITS[mv.id] && FXS[PIECE_SHOT_HITS[mv.id][0]] && PIECE_SHOT_HITS[mv.id];
     if (PH) {   // a shot from pieces: its splash or pop where it hits, droplets flying (WATER-2)
@@ -1098,6 +1100,7 @@ mixInto(Battle, class {
     if (FX_PIECES && FXS.beast2 && (mv.id === 'shibaScream' || mv.id === 'shibaRoar')) { this.fxShout(x, y, r, user, mv.id === 'shibaRoar'); return; }   // BEAST-2 (r195)
     if (FX_PIECES && FXS.common1 && (mv.id === 'heavyStomp' || mv.id === 'quake')) { this.fxGroundSlam(x, y, r, user, { big: mv.id === 'quake' }); return; }   // COMMON-1 (r186; Quake gets rock spikes with EARTH-1)
     if (mv.id === 'eruption') { const sc = r * 1.25 / sheetW('eruption', 0); sheetPart(this, 'eruption', [1, 2, 2, 3, 4], x, y + sheetH('eruption', 0) * sc / 2, 1.1, { sc, ay: 1, user }); this.addShake(8); return; }
+    if (mv.id === 'geyserVent' && FX_PIECES && FXS.water3) { this.fxGeyserRing(x, y, r, user); return; }   // WATER-3 (r212)
     if (mv.id === 'geyserVent' && FXS.geyserVent) { const sc = r * 1.7 / sheetW('geyserVent', 0); sheetPart(this, 'geyserVent', [2, 3, 4, 5, 6, 7, 8], x, y + 4 + sheetH('geyserVent', 0) * sc / 2, 1.1, { sc, ay: 1, user }); this.addShake(6); return; }
     if (mv.id === 'discharge' && FXS.discharge) { sheetPart(this, 'discharge', [2, 3, 4, 5, 6, 7], x, y, 0.75, { sc: r * 2.2 / sheetW('discharge', 5), user }); this.addShake(5); return; }   // E3 (r171)
     if (mv.fx === 'bolt' && FXS.thunder && FXS.stormCloud) {   // the strike under the cloud lit from below, which then breaks up
@@ -1472,7 +1475,7 @@ mixInto(Battle, class {
     const id = 'common1', back = a.dir + Math.PI, cx = Math.cos(a.dir), cy = Math.sin(a.dir);
     if (!a.launched) {
       a.launched = true; this.addShake(2);
-      if (!PIECE_DASH[a.mv.id].fire) for (let i = 0; i < 3; i++) this.addPiece(id, m, { frames: [0, 1, 2, 3], x: m.x - cx * m.r * 0.6 + rand(-4, 4), y: m.y - cy * 4 + rand(-3, 3),
+      if (!PIECE_DASH[a.mv.id].fire && !PIECE_DASH[a.mv.id].water) for (let i = 0; i < 3; i++) this.addPiece(id, m, { frames: [0, 1, 2, 3], x: m.x - cx * m.r * 0.6 + rand(-4, 4), y: m.y - cy * 4 + rand(-3, 3),
         mx: Math.cos(back + rand(-0.6, 0.6)) * rand(25, 50), my: Math.sin(back) * 15, rise: 8, sc: rand(0.45, 0.6), swell: 0.3, ay: 0.85, life: 0.5, flip: cx > 0 });
     }
     const PD0 = PIECE_DASH[a.mv.id];
@@ -1489,7 +1492,17 @@ mixInto(Battle, class {
         if (a.scT <= 0) { a.scT = 0.07; this.addPiece('fire3', null, { frames: [11], x: m.x, y: m.y + 1, ground: true, rot: Math.atan2(cy * 0.55, cx), sc: 0.45, life: 0.9, shrink: 0.4 }); }
       }
     }
-    a.dustT = PD0.fire ? 1 : (a.dustT || 0) - dt;
+    if (PD0.water && FXS.water2) {   // spray and droplets streaming back off it instead of dust
+      a.wetT = (a.wetT || 0) - dt;
+      while (a.wetT <= 0) {
+        a.wetT += 0.035;
+        const ang = back + rand(-0.5, 0.5), sp = rand(40, 90);
+        this.addPiece('water2', null, { frames: [14 + ((Math.random() * 3) | 0)], x: m.x - cx * m.r * 0.5, y: m.y - m.h * rand(0.2, 0.6), mx: Math.cos(ang) * sp, my: Math.sin(ang) * sp * 0.5,
+          vz: rand(20, 50), g: 300, sc: rand(0.5, 0.8), life: 0.35, shrink: 0.1 });
+        if (Math.random() < 0.3 && FXS.water3) this.addPiece('water3', null, { frames: [12 + ((Math.random() * 2) | 0)], x: m.x - cx * m.r * 0.6, y: m.y, mx: -cx * 20, rise: 8, sc: 0.6, life: 0.4, shrink: 0.2 });
+      }
+    }
+    a.dustT = (PD0.fire || PD0.water) ? 1 : (a.dustT || 0) - dt;
     while (a.dustT <= 0) {   // dust kicked up at its feet
       a.dustT += 0.085;
       this.addPiece(id, m, { frames: [0, 1, 2, 3], x: m.x - cx * m.r * 0.5 + rand(-3, 3), y: m.y + rand(-2, 2), mx: -cx * rand(10, 30), rise: rand(8, 16),
@@ -1594,6 +1607,13 @@ mixInto(Battle, class {
       parts.filter(q => q.near).forEach(one);
       return;
     }
+    if (PD.draw === 'stream' && FXS.water3) {   // a streamer of water curling round its front, the part behind its body cut out
+      const fr = Math.floor(T * 14) % 3, f = Math.cos(a.dir) < 0;
+      drawSheet(c, 'water3', [1, 2, 1][fr], m.x, cy, { dir: a.dir, ax: 0.25, sc: m.h * 1.1 / sheetH('water3', 2), flip: true });
+      if (m.visible && !m.fainted) cutOutSprite(c, m);
+      drawSheet(c, 'water3', [1, 2, 1][fr], m.x + Math.cos(a.dir) * m.r * 0.5, cy + Math.sin(a.dir) * m.r * 0.3, { dir: a.dir, ax: 0.2, sc: m.h * 0.7 / sheetH('water3', 2), flip: true, trim: 0, cutL: 0.5 });
+      return;
+    }
     if (PD.draw === 'comet' && FXS.eruptionParts) {
       if (a.t <= pre) {   // the wind-up: flames bursting up all round it until it's engulfed (far ones behind, near ones in front)
         const k = clamp(a.t / pre, 0, 1), flames = [];
@@ -1631,6 +1651,48 @@ mixInto(Battle, class {
       }
     }
     this.addShake(3);
+  }
+
+  // WATER-3 (r212): frames 0-2 streamer, 3-5 geyser, 6-8 wave arc, 9-11 whirlpool, 12-13 foam, 14-15 rune stones.
+  // Geyser Vent: geysers shoot up in a ring round it (far ones behind, near ones in front), steam and spray
+  fxGeyserRing(x, y, r, user) {
+    if (user) user.piecesUntil = this.time + 1.4;
+    const n = 7;
+    for (let i = 0; i < n; i++) {
+      const ang = i / n * TAU + 0.2, rr = r * 0.75, gx = x + Math.cos(ang) * rr, gy = y + Math.sin(ang) * rr * 0.55;
+      this.addPiece('water3', user, { frames: [3, 4, 5, 5, 4], x: gx, y: gy + 2, ay: 1, sc: r * 0.9 / sheetH('water3', 5) * (Math.sin(ang) > 0 ? 0.75 : 1), life: 0.9, delay: rand(0, 0.08), grow: 0.08, shrink: 0.25 });
+      if (FXS.fire4) this.addPiece('fire4', null, { frames: [7, 8, 9, 10], x: gx, y: gy - r * 0.6, rise: 30, mx: rand(-15, 15), sc: 0.45, swell: 0.5, life: 0.9, delay: 0.3, flip: Math.random() < 0.5 });
+      if (FXS.water2) for (let k = 0; k < 2; k++) this.addPiece('water2', null, { frames: [14 + k], x: gx, y: gy - r * 0.5, mx: rand(-40, 40), my: rand(-10, 10), vz: rand(30, 70), g: 400, sc: 0.6, life: 0.6, delay: rand(0.1, 0.4), shrink: 0.1 });
+    }
+    this.addShake(6);
+  }
+  // Whirlpool and Maelstrom: the swirl spreading flat across the ground round its user, arcs of water racing round
+  // it (the ones behind it drawn behind), foam spinning inward; Maelstrom's rune stones whirl in it
+  drawWhirlPieces(c, m, a) {
+    const mv = a.mv, T = this.time, R = mv.r * (mv.id === 'maelstrom' ? 0.75 : 0.7), k = clamp(Math.min(a.t / 0.25, (mv.dur - a.t) / 0.3), 0, 1), ry = 0.5;
+    m.piecesUntil = this.time + 0.2;
+    drawSheet(c, 'water3', 9 + Math.floor(T * 10) % 3, m.x, m.y, { sc: R * 2.1 * (0.4 + 0.6 * k) / sheetW('water3', 9) });
+    const parts = [], n = mv.id === 'maelstrom' ? 5 : 4, spin = T * 4;
+    for (let i = 0; i < n; i++) {
+      const ang = spin + i / n * TAU, rr = R * (0.55 + 0.25 * (i % 2)) * (0.5 + 0.5 * k);
+      parts.push({ kind: 'arc', ang, x: m.x + Math.cos(ang) * rr, y: m.y + Math.sin(ang) * rr * ry - 4, near: Math.sin(ang) > 0, i });
+    }
+    if (mv.id === 'maelstrom' && FXS.water3) for (let i = 0; i < 3; i++) {
+      const ang = -spin * 1.3 + i / 3 * TAU, rr = R * 0.6 * k;
+      parts.push({ kind: 'rune', ang, x: m.x + Math.cos(ang) * rr, y: m.y + Math.sin(ang) * rr * ry - 14 - Math.sin(T * 3 + i) * 4, near: Math.sin(ang) > 0, i });
+    }
+    for (let i = 0; i < 6; i++) {   // foam spinning inward
+      const t = (T * 0.8 + i / 6) % 1, ang = spin * 1.5 + i * 1.7 + t * 3, rr = R * (1 - t) * k;
+      parts.push({ kind: 'foam', ang, x: m.x + Math.cos(ang) * rr, y: m.y + Math.sin(ang) * rr * ry - 2, near: Math.sin(ang) > 0, i });
+    }
+    const one = q => {
+      if (q.kind === 'arc') drawSheet(c, 'water3', 6 + q.i % 3, q.x, q.y, { sc: R * 0.9 / sheetW('water3', 7) * k, rot: q.ang + Math.PI / 2, ay: 0.7 });
+      else if (q.kind === 'rune') drawSheet(c, 'water3', 14 + q.i % 2, q.x, q.y, { sc: 0.5 * k });
+      else drawSheet(c, 'water3', 12 + q.i % 2, q.x, q.y, { sc: 0.55 * k, flip: q.i % 2 === 0 });
+    };
+    parts.filter(q => !q.near).sort((p, q) => p.y - q.y).forEach(one);
+    if (m.visible && !m.fainted) cutOutSprite(c, m);
+    parts.filter(q => q.near).sort((p, q) => p.y - q.y).forEach(one);
   }
 
   // a star popping out of a hit (Zoomies)
@@ -1737,6 +1799,13 @@ mixInto(Battle, class {
     if (a.mv.id === 'eruption') {   // the ground cracks round it, lava glowing through (sheet frame 0)
       const sc = a.r * 1.25 / sheetW('eruption', 0) * (0.6 + 0.4 * k);
       drawSheetAround(c, 'eruption', 0, m.x, m.y, { sc }, m);
+      return;
+    }
+    if (a.mv.id === 'geyserVent' && FX_PIECES && FXS.water3 && FXS.fire4) {   // vents bubbling in a ring round it (FIRE-4), more and more (r212)
+      for (let i = 0; i < 7; i++) {
+        const ang = i / 7 * TAU + 0.2, rr = a.r * 0.75;
+        drawSheet(c, 'fire4', k < 0.5 ? 0 : (Math.floor(this.time * 8) + i) % 2, m.x + Math.cos(ang) * rr, m.y + Math.sin(ang) * rr * 0.55, { sc: 0.3 + 0.2 * k });
+      }
       return;
     }
     if (a.mv.id === 'geyserVent' && FXS.geyserVent) {   // the ground bubbling, then cracking (W5 frames 0-1)
@@ -2020,6 +2089,7 @@ mixInto(Battle, class {
   // A vortex: a tornado for flying, a whirlpool for water, a spiral of the type's colour otherwise.
   drawVortex(c, m, a) {
     const mv = a.mv, fx = fxOf(mv), T = this.time;
+    if (FX_PIECES && FXS.water3 && (mv.id === 'whirlpool' || mv.id === 'maelstrom')) { this.drawWhirlPieces(c, m, a); return; }   // WATER-3 (r212)
     if (FXS[mv.id] && (mv.id === 'whirlpool' || mv.id === 'maelstrom')) {   // the owner's sheets (W6, W7): forming, spinning (looped), breaking up
       const left = mv.dur - a.t, fr = a.t < 0.24 ? Math.floor(a.t / 0.08) : left < 0.24 ? 6 + (left < 0.12 ? 1 : 0) : 3 + Math.floor(T / 0.08) % 3;
       if (a.t >= 0.24 && left >= 0.24) {   // spinning: its three looping frames dissolving into each other (r181)
