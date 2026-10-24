@@ -792,7 +792,9 @@ const PIECE_BEAMS = {
 // dashes built from pieces so far: COMMON-1's dust, speed lines and thud (r186)
 const PIECE_DASH = { bodySlam: { thud: true },
   zoomies: { stars: 0.09, starPop: true }, zoomiesMax: { stars: 0.05, starPop: true, zigzag: true },
-  woolTackle: { wool: 0.05, woolPop: true } };   // BEAST-4 (r201): storm-cloud wool streaming off Lumawool   // BEAST-2 (r195): Smugshi's line
+  woolTackle: { wool: 0.05, woolPop: true },
+  // FIRE-3 (r206): fire dashes trail flames and scorch the ground instead of dust, and explode on the hit
+  flameWheel: { draw: 'wheel', fire: true, scorch: true, boom: true }, blazeRush: { draw: 'comet', fire: true, boom: true } };   // BEAST-4 (r201): storm-cloud wool streaming off Lumawool   // BEAST-2 (r195): Smugshi's line
 // each look's hit pieces (r188): [sheet, row]; a row is a burst in 3 frames then 3 bits (docs/attack-pieces.md HITS-1..4)
 const HIT_KITS = { fire: ['hits1', 0], water: ['hits1', 1], electric: ['hits1', 2], ice: ['hits1', 3],
   grass: ['hits2', 0], rock: ['hits2', 1], flying: ['hits2', 2], steel: ['hits2', 3],
@@ -902,7 +904,8 @@ const SHEET_SHOTS = {
   cuffCannon: { sheet: 'waterShot', fly: [1, 2, 3, 4], len: 38 },
   twinCannon: { sheet: 'waterShot', fly: [1, 2, 3, 4], len: 32 },
   bubbleBeam: { sheet: 'bubbleSpray', fly: [1, 2, 3, 4], len: 17, spin: true },
-  thunderbolt: { sheet: 'thunderbolt', fly: [2, 3, 4], len: 36, ax: 0.78 },   // E1 (r171): the orb leads, its forked tail behind
+  thunderbolt: { sheet: 'thunderbolt', fly: [2, 3, 4], len: 36, ax: 0.78 },
+  fireBlast: { sheet: 'fire3', fly: [0, 1, 2, 3], len: 40, ax: 0.78, pieces: true },   // FIRE-3 (r206)   // E1 (r171): the orb leads, its forked tail behind
   staticSiphon: { sheet: 'staticSiphon', fly: [2, 3], len: 34, ax: 0.7 },   // E6 (r174): a fuzzy ball of static with a wobbly trail
 };
 // Thunder's gathering clouds (r172-r173): puffs [x, y, r] in units of r, an outline round the whole cloud, a flat
@@ -1006,7 +1009,8 @@ mixInto(Battle, class {
     if (big && PD && PD.thud) this.fxThud(tgt, src);   // a dash built from pieces lands with a thud
     if (big && PD && PD.starPop && FXS.beast2) this.fxStarPop(tgt);   // or pops a star
     if (big && PD && PD.woolPop && FXS.beast4) this.fxWoolPop(tgt, src);   // or bursts into a poof of wool
-    else if (big && SM && SM.hit) { const hs = SM.hitSheet || SM.sheet || mv.id; sheetPart(this, hs, SM.hit, tgt.x, tgt.cy, 0.5, { sc: tgt.r * 3 / sheetW(hs, SM.hit[0]), flip: SM.face && src && src.x > tgt.x }); }   // its sheet's impact
+    if (big && PD && PD.boom && FXS.fire3) this.fxFireBoom(tgt.x, tgt.cy, tgt.r * 2.4, tgt);   // or explodes (FIRE-3)
+    else if (big && !PD && SM && SM.hit) { const hs = SM.hitSheet || SM.sheet || mv.id; sheetPart(this, hs, SM.hit, tgt.x, tgt.cy, 0.5, { sc: tgt.r * 3 / sheetW(hs, SM.hit[0]), flip: SM.face && src && src.x > tgt.x }); }   // its sheet's impact
     if (mv.fx === 'claw') this.particles.push({ kind: 'claw', x: tgt.x, y: tgt.cy, size: 34, rot: toward + Math.PI / 2 + rand(-0.3, 0.3), color: fx[1], life: 0.3, max: 0.3 });
     if (mv.fx === 'slash') this.particles.push({ kind: 'slash', x: tgt.x, y: tgt.cy, size: 22, rot: toward + rand(-0.4, 0.4), color: fx[1], life: 0.28, max: 0.28 });
     if (mv.fx === 'flurry') {   // fists everywhere at once
@@ -1044,6 +1048,7 @@ mixInto(Battle, class {
   fxBlast(x, y, r, mv) {
     const fx = fxOf(mv);
     // played from the owner's sheets (r152)
+    if (mv.id === 'fireBlast' && FX_PIECES && FXS.fire3) { this.fxFireBoom(x, y - 4, r * 2.6, null); return; }   // FIRE-3 (r206)
     if (mv.id === 'fireBlast') { sheetPart(this, 'fireBlast', [2, 3, 3, 4], x, y - 4, 0.75, { sc: r * 2.4 / sheetW('fireBlast', 3) }); this.addShake(5); return; }
     const user = this.mons.find(o => o.action && o.action.mv === mv && Math.hypot(o.x - x, o.y - y) < 2);   // a burst's user stands in the middle of it
     if (mv.id === 'eruption' && FX_PIECES && FXS.eruptionParts) { this.fxEruptionPieces(x, y, r, this.mons.find(o => o.action && o.action.mv === mv && Math.hypot(o.x - x, o.y - y) < 2)); return; }
@@ -1157,7 +1162,7 @@ mixInto(Battle, class {
 
   drawDashFx(c, m, a) {
     const mv = a.mv, fx = fxOf(mv), T = this.time, cx = m.x, cy = m.cy, R = m.r + 7;
-    if (FX_PIECES && PIECE_DASH[mv.id] && FXS.common1) return;   // built from pieces (fxDashPieces): nothing to draw on the dasher itself
+    if (FX_PIECES && PIECE_DASH[mv.id] && FXS.common1) { if (PIECE_DASH[mv.id].draw) this.drawDashPieces(c, m, a, PIECE_DASH[mv.id]); return; }   // built from pieces (fxDashPieces)
     if (SHEET_MOVES[mv.id] && SHEET_MOVES[mv.id].dash && a.phase !== 'combo') { this.drawSheetDash(c, m, a, SHEET_MOVES[mv.id]); return; }
     // its own art (DASH_ART), drawn in its frame; the ones with an older look of their own (fx) keep it
     const art = DASH_ART[mv.id] || (!mv.fx || mv.fx === 'claw' || mv.fx === 'slash' ? DASH_ART._default : null);
@@ -1424,10 +1429,24 @@ mixInto(Battle, class {
     const id = 'common1', back = a.dir + Math.PI, cx = Math.cos(a.dir), cy = Math.sin(a.dir);
     if (!a.launched) {
       a.launched = true; this.addShake(2);
-      for (let i = 0; i < 3; i++) this.addPiece(id, m, { frames: [0, 1, 2, 3], x: m.x - cx * m.r * 0.6 + rand(-4, 4), y: m.y - cy * 4 + rand(-3, 3),
+      if (!PIECE_DASH[a.mv.id].fire) for (let i = 0; i < 3; i++) this.addPiece(id, m, { frames: [0, 1, 2, 3], x: m.x - cx * m.r * 0.6 + rand(-4, 4), y: m.y - cy * 4 + rand(-3, 3),
         mx: Math.cos(back + rand(-0.6, 0.6)) * rand(25, 50), my: Math.sin(back) * 15, rise: 8, sc: rand(0.45, 0.6), swell: 0.3, ay: 0.85, life: 0.5, flip: cx > 0 });
     }
-    a.dustT = (a.dustT || 0) - dt;
+    const PD0 = PIECE_DASH[a.mv.id];
+    if (PD0.fire && FXS.eruptionParts) {   // flames streaming off it instead of dust, a scorched track on the ground
+      a.fireT = (a.fireT || 0) - dt;
+      while (a.fireT <= 0) {
+        a.fireT += 0.04;
+        this.addPiece('eruptionParts', null, { frames: [0, 1, 2, 3], fps: 14, ph: (Math.random() * 4) | 0, x: m.x - cx * m.r * 0.6 + rand(-4, 4), y: m.y + rand(-3, 3), ay: 1,
+          mx: -cx * rand(10, 30), rise: rand(10, 30), sc: rand(0.3, 0.45), shrink: 0.2, life: rand(0.3, 0.45), flip: Math.random() < 0.5 });
+        if (Math.random() < 0.5) this.addPiece('eruptionParts', null, { frames: [7, 8, 9], fps: 9, x: m.x + rand(-6, 6), y: m.y - m.h * rand(0.2, 0.7), mx: -cx * 30 + rand(-15, 15), rise: rand(30, 60), sc: 0.6, life: 0.5, shrink: 0.2 });
+      }
+      if (PD0.scorch && FXS.fire3) {
+        a.scT = (a.scT || 0) - dt;
+        if (a.scT <= 0) { a.scT = 0.07; this.addPiece('fire3', null, { frames: [11], x: m.x, y: m.y + 1, ground: true, rot: Math.atan2(cy * 0.55, cx), sc: 0.45, life: 0.9, shrink: 0.4 }); }
+      }
+    }
+    a.dustT = PD0.fire ? 1 : (a.dustT || 0) - dt;
     while (a.dustT <= 0) {   // dust kicked up at its feet
       a.dustT += 0.085;
       this.addPiece(id, m, { frames: [0, 1, 2, 3], x: m.x - cx * m.r * 0.5 + rand(-3, 3), y: m.y + rand(-2, 2), mx: -cx * rand(10, 30), rise: rand(8, 16),
@@ -1501,6 +1520,58 @@ mixInto(Battle, class {
       P({ frames: [14 + (i % 2)], x: hx, y: hy - 4, mx: Math.cos(ang) * 50, my: Math.sin(ang) * 30, vz: rand(50, 90), g: 300, rot: rand(0, TAU), vr: rand(-8, 8), sc: 0.45, shrink: 0.15, life: 0.6, delay: 0.8 + i * 0.04, near: true });
     }
     for (let i = 0; i < 2; i++) P({ frames: [16], x: m.x + (i ? 1 : -1) * m.r * 1.1, y: m.y - m.h * 0.6, sc: 0.45, life: 0.5, delay: 1.0 + i * 0.1, grow: 0.05, shrink: 0.15, near: true, flip: !!i });
+  }
+
+  // FIRE-3 (r206): frames 0-3 fireball, 4-7 explosion (flash, fireball, rolling fire with smoke, breaking up), 8-10
+  // flame crescent, 11 scorch mark, 12-14 comet head. A fiery explosion of size w at (x, y): the explosion, embers and
+  // smoke from P1 thrown out
+  fxFireBoom(x, y, w, near) {
+    this.addPiece('fire3', near, { frames: [4, 5, 6, 7], x, y, near: true, sc: w / sheetW('fire3', 5), life: 0.6, grow: 0.04 });
+    if (!FXS.eruptionParts) return;
+    for (let i = 0; i < 8; i++) {
+      const ang = rand(0, TAU), sp = rand(50, 120);
+      this.addPiece('eruptionParts', null, { frames: [7, 8, 9], fps: 10, x, y, mx: Math.cos(ang) * sp, my: Math.sin(ang) * sp * 0.6, rise: 20, sc: rand(0.5, 0.8), life: rand(0.4, 0.7), shrink: 0.2 });
+    }
+    for (let i = 0; i < 3; i++) this.addPiece('eruptionParts', null, { frames: [10, 11, 12, 13], x: x + rand(-8, 8), y: y - 6, rise: 30, mx: rand(-15, 15), sc: rand(0.35, 0.5), swell: 0.5, life: 0.9, delay: 0.25 + i * 0.05, flip: Math.random() < 0.5 });
+    this.addShake(5);
+  }
+  // fire dashes drawn round their user (FIRE-3): the far half behind it, then it cut out, then the near half
+  drawDashPieces(c, m, a, PD) {
+    const T = this.time, pre = 0.1 + (a.mv.windup || 0), cx = m.x, cy = m.cy;
+    if (PD.draw === 'wheel' && FXS.fire3) {   // flame crescents spinning round it like a wheel of fire
+      const R = Math.max(m.r * 1.3, m.h * 0.6), n = 4, spin = T * 14 * (Math.cos(a.dir) < 0 ? -1 : 1), parts = [];
+      for (let i = 0; i < n; i++) {
+        const ang = spin + i / n * TAU;
+        parts.push({ ang, near: Math.sin(ang) > 0, x: cx + Math.cos(ang) * R * 0.62, y: cy + Math.sin(ang) * R * 0.62 });
+      }
+      // each crescent's round side faces out from its middle (the picture's faces left)
+      const one = q => drawSheet(c, 'fire3', 8 + (Math.floor(T * 14) + parts.indexOf(q)) % 3, q.x, q.y, { sc: R * 1.25 / sheetH('fire3', 8), rot: q.ang - Math.PI });
+      parts.filter(q => !q.near).forEach(one);
+      if (m.visible && !m.fainted) cutOutSprite(c, m);
+      parts.filter(q => q.near).forEach(one);
+      return;
+    }
+    if (PD.draw === 'comet' && FXS.eruptionParts) {
+      if (a.t <= pre) {   // the wind-up: flames bursting up all round it until it's engulfed (far ones behind, near ones in front)
+        const k = clamp(a.t / pre, 0, 1), flames = [];
+        for (let i = 0; i < 9; i++) {
+          const ang = i / 9 * TAU + 0.3, rr = m.r * 0.75;
+          flames.push({ x: m.x + Math.cos(ang) * rr, y: m.y + Math.sin(ang) * rr * 0.5 + 2, near: Math.sin(ang) > 0, i });
+        }
+        const one = f => drawSheet(c, 'eruptionParts', (Math.floor(T * 14) + f.i) % 4, f.x, f.y, { ay: 1, sc: (0.3 + 0.7 * k) * (f.near ? 0.6 : 0.85) * m.h / sheetH('eruptionParts', 0), flip: f.i % 2 === 0 });
+        flames.filter(f => !f.near).forEach(one);
+        if (m.visible && !m.fainted) cutOutSprite(c, m);
+        flames.filter(f => f.near).forEach(one);
+        return;
+      }
+      // charging: a comet head wrapped round its front, its body cut out of the part behind it
+      if (FXS.fire3) {
+        // the comet's tail streaming back behind it, its body cut out of that, then the head leading in front
+        drawSheet(c, 'fire3', 12 + Math.floor(T * 14) % 3, m.x, cy, { dir: a.dir, ax: 0.7, sc: m.h * 0.75 / sheetH('fire3', 12) });
+        if (m.visible && !m.fainted) cutOutSprite(c, m);
+        drawSheet(c, 'fire3', 12 + Math.floor(T * 14) % 3, m.x + Math.cos(a.dir) * m.r * 0.9, cy + Math.sin(a.dir) * m.r * 0.5, { dir: a.dir, ax: 0.75, sc: m.h * 0.55 / sheetH('fire3', 12), trim: 0, cutL: 0.55 });
+      }
+    }
   }
 
   // a star popping out of a hit (Zoomies)
@@ -1640,7 +1711,7 @@ mixInto(Battle, class {
 
   drawProjectile(c, p) {
     const SS = SHEET_SHOTS[p.mv.id];
-    if (SS && FXS[SS.sheet]) {   // played from the owner's sheet, pointing the way it flies
+    if (SS && FXS[SS.sheet] && (!SS.pieces || FX_PIECES)) {   // played from the owner's sheet, pointing the way it flies
       const age = 2.6 - p.life, [fa, fb, ft] = framePlace(SS.fly, age / 0.07 + (SS.spin ? p.spin : 0), true);
       drawSheetMix(c, SS.sheet, fa, fb, ft, p.x, p.y, { dir: SS.spin ? undefined : Math.atan2(p.vy, p.vx), ax: SS.spin ? 0.5 : SS.ax ?? 0.65, sc: SS.len / sheetW(SS.sheet, SS.fly[0]) });
       return;
