@@ -1169,7 +1169,8 @@ mixInto(Battle, class {
 
   // Buffs and heals: a shield for defence, chevrons for attack and speed, + signs for healing.
   fxBuff(m, mv) {
-    if (FX_PIECES && FXS.beast4 && mv.id === 'coffeeBreak') this.fxCoffee(m);   // its own show first (BEAST-4, r201)
+    if (FX_PIECES && FXS.beast4 && mv.id === 'coffeeBreak') this.fxCoffee(m);
+    if (FX_PIECES && FXS.plant3 && mv.id === 'cottonGuard') this.fxCotton(m);   // its own show first (PLANT-3, r216)   // its own show first (BEAST-4, r201)
     if (FX_PIECES && FXS.common2) { this.fxBuffPieces(m, mv); return; }
     const fx = fxOf(mv), b = mv.buff || {};
     if (b.def) this.particles.push({ kind: 'shield', x: m.x, y: m.cy, r: m.r + 12, color: fx[2], life: 0.9, max: 0.9 });
@@ -1720,6 +1721,20 @@ mixInto(Battle, class {
     parts.filter(q => !q.near).sort((p, q) => p.y - q.y).forEach(one);
     if (m.visible && !m.fainted) cutOutSprite(c, m);
     parts.filter(q => q.near).sort((p, q) => p.y - q.y).forEach(one);
+  }
+
+  // Cotton Guard (PLANT-3): cotton puffs pop out all over it and fluff up (the ones behind drawn behind), a ring of
+  // cotton settles round its feet, wisps and seeds float off
+  fxCotton(m) {
+    const id = 'plant3', P = o => this.addPiece(id, m, o);
+    m.piecesUntil = this.time + 1.6;
+    P({ frames: [9, 10], x: m.x, y: m.y + 2, ground: true, sc: m.r * 2.6 / sheetW(id, 9), grow: 0.15, shrink: 0.3, life: 1.3 });
+    for (let i = 0; i < 7; i++) {   // puffs round its edges (the near ones small, so it stays in view)
+      const ang = i / 7 * TAU + rand(-0.2, 0.2), rr = m.r * rand(0.8, 1.05), near = Math.sin(ang) > 0.3;
+      P({ frames: [0, 1, 2, 2], x: m.x + Math.cos(ang) * rr, y: m.y - m.h * rand(0.2, 0.6) + Math.sin(ang) * rr * 0.35, near,
+        sc: m.h / 30 * rand(0.26, 0.34) * (near ? 0.7 : 1), grow: 0.06, shrink: 0.3, life: 0.85, delay: i * 0.05, flip: Math.random() < 0.5 });
+    }
+    for (let i = 0; i < 4; i++) P({ frames: [6 + (i % 3)], x: m.x + rand(-m.r, m.r), y: m.y - m.h * rand(0.4, 0.9), rise: rand(15, 30), mx: rand(-20, 20), sc: 0.45, life: 1, delay: 0.5 + i * 0.1, shrink: 0.3, near: true });
   }
 
   // a star popping out of a hit (Zoomies)
