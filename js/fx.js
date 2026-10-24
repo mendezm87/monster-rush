@@ -815,6 +815,9 @@ const PIECE_BEAMS = {
   venomJet: { body: ['glitch2a', [0, 1, 2, 3], 0, 0.02, 0.02], muzzle: ['glitch2a', [8, 9, 10, 11], 0.5], charge: ['glitch2a', [8, 9, 10]],
     impact: ['glitch2a', [12, 13, 14, 15], 0.3], head: ['glitch2a', [12, 13, 14], 0.3],
     thick: 2.2, muzzleSc: 0.7, headSc: 0.9, impactSc: 1.1, chargeSc: 0.35 },   // GLITCH-2a (r233): a sputtering stream of corrupted sludge
+  spectralRay: { body: ['ghost2', [0, 1, 2, 3], 0, 0.11, 0.11], muzzle: ['ghost2', [8, 9, 10, 11], 0.5], charge: ['ghost2', [8, 9, 10]],
+    impact: ['ghost2', [12, 13, 14, 15], 0.25], head: ['ghost2', [12, 13, 14, 15], 0.25],
+    thick: 2.2, muzzleSc: 0.75, headSc: 0.9, impactSc: 1.1, chargeSc: 0.35 },   // GHOST-2 (r236): its sections' bulging end caps trimmed off
   megaBeam: { body: ['beast1', [0, 1, 2, 3]], muzzle: ['beast1', [8, 9, 10, 11], 0.3],
     impact: ['beast1', [12, 13, 14, 15], 0.25], head: ['beast1', [12, 13, 14], 0.25], charge: ['beast1', [8, 9, 10], 0, 0.63], thick: 2.2 },   // BEAST-1 (r199)
   supremeSmug: { body: ['smug1c', [0, 1, 2, 3]], muzzle: ['smug1c', [8, 9, 10, 11], 0.3],

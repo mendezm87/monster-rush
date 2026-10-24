@@ -110,6 +110,8 @@ SHEETS = {
     # GLITCH-2a (Venom Jet): sludge stream section x4, core strand x4, muzzle glob x4, splatter x4
     # GLITCH-2 (Toxic Pool): sludge pool x3, data tear x2
     # GHOST-1: ghost fireball x4, will-o'-wisp x3 + wisps x3, spirit flame x4, ghost streak x2 + mist x3
+    # GHOST-2 (Spectral Ray): beam section x4, core strand x4, muzzle swirl x4, impact x4
+    'ghost2':        ('pk-ghost-2.png', 40, [4, 4, 4, 4]),
     'ghost1':        ('pk-ghost-1.png', 36, [4, 6, 4, 5]),
     'glitch2':       ('pk-glitch-2.png', 40, [3, 2]),
     'glitch2a':      ('pk-glitch-2a.png', 40, [4, 4, 4, 4]),
@@ -371,7 +373,7 @@ def build(only=None, sheet=False):
             for yy in range(im.size[1]):
                 for xx in range(im.size[0]):
                     if isbg(*px_[xx, yy], xx, yy): px_[xx, yy] = bgc
-        m = bg_mask(im, 40 if (sid in CLEAN_SHRINK and sid != 'thunder') or sid in ('eruptionParts', 'common1', 'common2', 'hits1', 'hits2', 'hits3', 'hits4', 'smug1', 'smug1b', 'smug1c', 'beast1', 'beast2', 'beast3', 'beast4', 'fire2a', 'fire2b', 'fire3', 'fire4', 'water1a', 'water1b', 'water2', 'water3', 'plant1', 'plant2a', 'plant2', 'plant3', 'bug1', 'ice1', 'ice2a', 'ice2', 'earth1', 'earth2', 'dark1', 'dark2', 'dark3', 'fight1', 'fight2a', 'fight2', 'wind1', 'wind2', 'wind2b', 'glitch1', 'glitch2a', 'glitch2', 'ghost1') else 400)   # electric arcs close round gaps of background: only tiny ones are part of it (Thunder's cloud undersides are near the background colour, so not there)
+        m = bg_mask(im, 40 if (sid in CLEAN_SHRINK and sid != 'thunder') or sid in ('eruptionParts', 'common1', 'common2', 'hits1', 'hits2', 'hits3', 'hits4', 'smug1', 'smug1b', 'smug1c', 'beast1', 'beast2', 'beast3', 'beast4', 'fire2a', 'fire2b', 'fire3', 'fire4', 'water1a', 'water1b', 'water2', 'water3', 'plant1', 'plant2a', 'plant2', 'plant3', 'bug1', 'ice1', 'ice2a', 'ice2', 'earth1', 'earth2', 'dark1', 'dark2', 'dark3', 'fight1', 'fight2a', 'fight2', 'wind1', 'wind2', 'wind2b', 'glitch1', 'glitch2a', 'glitch2', 'ghost1', 'ghost2') else 400)   # electric arcs close round gaps of background: only tiny ones are part of it (Thunder's cloud undersides are near the background colour, so not there)
         if sid in PANELS: drop_specks(im, m)
         if sid in MANUAL:
             boxes = []
