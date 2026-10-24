@@ -985,6 +985,8 @@ const PIECE_SHOTS = {
   razorLeaf:  { sheet: 'plant1', fly: [0, 1, 2, 3, 4], len: 20, spin: true },
   pinMissile: { sheet: 'bug1', fly: [11, 12], len: 18, ax: 0.6 },
   iceShard:   { sheet: 'ice1', fly: [0, 1, 2], len: 22, ax: 0.55 },
+  sludgeBomb: { sheet: 'glitch1', fly: [0, 1, 2, 1], len: 30, spin: true },   // GLITCH-1 (r232): a dripping glob of corrupted sludge
+  acidSpray:  { sheet: 'glitch1', fly: [3, 4], len: 12, spin: true },   // GLITCH-1: drops of green acid
   airSlash:   { sheet: 'wind1', fly: [0, 1, 2], len: 34, ax: 0.6 },   // WIND-1 (r229): a crescent blade of wind
   razorGale:  { sheet: 'wind1', fly: [3, 4, 5, 6], len: 40, spin: true },   // WIND-1: a spinning shuriken of wind
   auraSphere: { sheet: 'fight1', fly: [8, 9, 10, 11], len: 32, spin: true },   // FIGHT-1 (r226): a sphere of aura, its swirl spinning
@@ -998,6 +1000,7 @@ const PIECE_SHOT_HITS = {
   mudShot: ['earth2', [8, 9, 9], 0.9],
   gloomOrb: ['dark1', [10, 11, 12], 1.1],
   auraSphere: ['fight1', [2, 3, 4], 1.1],
+  acidSpray: ['glitch1', [12, 13], 0.5],
   iceShard: ['ice1', [4, 5, 6], 0.9],
 };
 // a frame sequence played as a particle (an explosion, a geyser)
@@ -1197,6 +1200,14 @@ mixInto(Battle, class {
     if (FX_PIECES && FXS.beast4 && mv.id === 'heavySigh') { this.fxSigh(x, y, r, user); return; }   // BEAST-4 (r201)
     if (FX_PIECES && FXS.beast2 && (mv.id === 'shibaScream' || mv.id === 'shibaRoar')) { this.fxShout(x, y, r, user, mv.id === 'shibaRoar'); return; }   // BEAST-2 (r195)
     if (FX_PIECES && FXS.earth1 && mv.id === 'rockSlide') { this.fxRockSmash(x, y - 4, r * 1.1, null); this.addPiece('earth1', null, { frames: [11], x, y: y + 1, ground: true, sc: r * 1.7 / sheetW('earth1', 11), shrink: 0.4, life: 1.6 }); return; }   // EARTH-1 (r221)
+    if (FX_PIECES && FXS.glitch1 && mv.id === 'sludgeBomb') {   // GLITCH-1 (r232): the glob bursts into a splat with flying globs and data blocks, leaving a puddle
+      const id = 'glitch1';
+      this.addPiece(id, null, { frames: [5, 6, 6], x, y: y - 4, sc: r * 2.2 / sheetW(id, 6), life: 0.35 });
+      this.addPiece(id, null, { frames: [7, 8], x, y: y + 2, ground: true, sc: r * 2.2 / sheetW(id, 7), life: 1.4, delay: 0.25, shrink: 0.4 });
+      for (let i = 0; i < 6; i++) { const ang = rand(0, TAU), sp = rand(50, 100); this.addPiece(id, null, { frames: [i % 2 ? 18 : 19], x, y: y - 6, mx: Math.cos(ang) * sp, my: Math.sin(ang) * sp * 0.6, vz: rand(40, 90), g: 300, sc: 1, shrink: 0.2, life: rand(0.4, 0.6) }); }
+      this.addShake(4); return;
+    }
+    if (FX_PIECES && FXS.glitch1 && mv.id === 'fatalError') { this.fxFatalError(x, y, r, user); return; }   // GLITCH-1 (r232)
     if (FX_PIECES && FXS.dark2 && mv.id === 'darkWave') { this.fxDarkWave(x, y, r, user); return; }   // DARK-2 (r224)
     if (FX_PIECES && FXS.earth2 && mv.id === 'quicksand') { this.fxQuicksand(x, y, r / 1.2, mv.linger || 3); return; }   // EARTH-2 (r222)
     if (FX_PIECES && FXS.earth2 && mv.id === 'magmaQuake') { this.fxMagmaQuake(x, y, r, user); return; }   // EARTH-2 (r222)
@@ -2053,6 +2064,22 @@ mixInto(Battle, class {
         mx: -Math.sin(ang) * 30, sc: k * (near ? 0.55 : 0.7), flip: i % 2 === 1, grow: 0.1, shrink: 0.3, life: 0.8, delay: i * 0.06 });
     }
     for (let i = 0; i < 4; i++) P({ frames: [8], x: m.x + rand(-m.r, m.r), y: m.y - m.h * rand(0, 0.4), rise: rand(40, 60), mx: rand(-25, 25), rot: rand(0, TAU), vr: rand(-8, 8), sc: 1.1, shrink: 0.3, life: 0.8, delay: 0.1 + i * 0.1 });
+  }
+
+  // Fatal Error (GLITCH-1, r232): it flickers, then shatters outward like broken data: a burst of magenta and cyan
+  // blocks, loose blocks scattering across the ground, sludge splatting in a ring
+  fxFatalError(x, y, r, user) {
+    const id = 'glitch1', cy = y - (user ? user.h * 0.45 : 12);
+    this.addPiece(id, null, { frames: [14, 15, 16, 17], x, y: cy, sc: r * 1.6 / sheetW(id, 15), life: 0.6 });
+    for (let i = 0; i < 14; i++) {
+      const ang = i / 14 * TAU + rand(-0.2, 0.2), sp = r * rand(1.6, 2.4);
+      this.addPiece(id, null, { frames: [18 + (i % 2)], x, y: cy, mx: Math.cos(ang) * sp, my: Math.sin(ang) * sp * 0.6, vz: rand(20, 60), g: 200, sc: rand(1, 1.4), shrink: 0.25, life: rand(0.45, 0.65), delay: 0.08 });
+    }
+    for (let i = 0; i < 6; i++) {
+      const ang = i / 6 * TAU + 0.3;
+      this.addPiece(id, null, { frames: [5, 7], x: x + Math.cos(ang) * r * 0.75, y: y + Math.sin(ang) * r * 0.75 * 0.6, ground: true, sc: rand(0.45, 0.6), shrink: 0.4, life: 0.9, delay: 0.12 });
+    }
+    this.addShake(7);
   }
 
   // a star popping out of a hit (Zoomies)

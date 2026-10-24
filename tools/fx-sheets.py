@@ -106,6 +106,8 @@ SHEETS = {
     # WIND-1: wind crescent x3, wind shuriken x4, wind streak x3, leaf + feather x2
     # WIND-2: tornado funnel x4, dust ring x2 + rock, twig, leaf, wind arrow x3 (unused: came as plain arrows, see WIND-2b), green wind ribbon x3
     # WIND-2b: Brave Dive's bow wave of air x3
+    # GLITCH-1: sludge glob x3 + acid drop x2, sludge splat x4, bubble pop x3 + acid sizzle x2, data burst x4 + loose blocks x2 (MANUAL boxes)
+    'glitch1':       ('pk-glitch-1.png', 34, [5, 4, 5, 6]),
     'wind2b':        ('pk-wind-2b.png', 44, [3]),
     'wind2':         ('pk-wind-2.png', 40, [4, 5, 3, 3]),
     'wind1':         ('pk-wind-1.png', 36, [3, 4, 3, 3]),
@@ -321,7 +323,8 @@ FRAME_REPAIRS = {('thunderBolt', 3): lambda fr: ring_mirror(fr, 50, 82)}
 
 # Sheets whose pieces are found in hand-measured boxes (reference pixels), in sheet order, when Gemini's rows overlap
 # (BEAST-2's shout lines reach down into the shout bubbles' row). Each box is shrunk to what's drawn inside it.
-MANUAL = {'fight1': [(138, 117, 502, 323), (633, 89, 1149, 337), (1383, 131, 1576, 303), (1768, 34, 2140, 413), (2312, 83, 2587, 351), (268, 509, 399, 757), (812, 440, 1011, 832), (1342, 406, 1617, 867), (165, 894, 502, 1245), (839, 888, 1211, 1252), (1541, 888, 1906, 1252), (2229, 894, 2587, 1245), (268, 1300, 399, 1479), (791, 1300, 915, 1479), (1314, 1335, 1431, 1431), (1768, 1369, 2002, 1404), (2325, 1362, 2511, 1404)],
+MANUAL = {'glitch1': [(186, 62, 447, 344), (722, 62, 998, 378), (1273, 62, 1534, 344), (1906, 117, 1995, 268), (2442, 117, 2525, 316), (206, 550, 461, 709), (743, 406, 1204, 750), (1404, 530, 1954, 729), (2147, 509, 2614, 722), (186, 839, 440, 1094), (681, 791, 1032, 1128), (1225, 819, 1576, 1128), (1844, 874, 2016, 1046), (2387, 888, 2525, 1039), (255, 1293, 365, 1397), (674, 1176, 1046, 1493), (1218, 1183, 1582, 1493), (1803, 1225, 2050, 1459), (2325, 1307, 2401, 1383), (2518, 1307, 2594, 1383)],
+          'fight1': [(138, 117, 502, 323), (633, 89, 1149, 337), (1383, 131, 1576, 303), (1768, 34, 2140, 413), (2312, 83, 2587, 351), (268, 509, 399, 757), (812, 440, 1011, 832), (1342, 406, 1617, 867), (165, 894, 502, 1245), (839, 888, 1211, 1252), (1541, 888, 1906, 1252), (2229, 894, 2587, 1245), (268, 1300, 399, 1479), (791, 1300, 915, 1479), (1314, 1335, 1431, 1431), (1768, 1369, 2002, 1404), (2325, 1362, 2511, 1404)],
           'ice2': [(162, 77, 577, 577), (810, 120, 1014, 493), (1225, 120, 1542, 528), (99, 655, 683, 943), (746, 641, 1331, 943), (1394, 641, 1795, 957), (1901, 472, 2225, 943), (2302, 486, 2717, 957), (246, 1169, 591, 1415), (753, 1056, 1485, 1429), (1584, 1077, 2246, 1429)],
           'ice1': [(451, 77, 986, 317), (1169, 77, 1612, 317), (1844, 77, 2344, 317), (176, 415, 662, 739), (866, 415, 1288, 739), (1507, 415, 1971, 739), (2119, 415, 2654, 739), (352, 788, 535, 1105), (901, 788, 1218, 1105), (1591, 788, 1837, 1105), (2260, 788, 2464, 1105), (359, 1148, 683, 1464), (1070, 1148, 1654, 1464), (1922, 1148, 2527, 1464)],
           'bug1': [(127, 113, 577, 345), (662, 113, 1105, 345), (1190, 113, 1640, 345), (1718, 113, 2168, 345), (2232, 113, 2689, 345), (127, 415, 429, 711), (549, 415, 852, 711), (986, 415, 1232, 711), (1422, 415, 1542, 711), (1697, 415, 1816, 711), (1964, 415, 2091, 711), (134, 781, 408, 922), (634, 781, 908, 922), (1112, 781, 1331, 922), (1464, 781, 1683, 922), (1767, 781, 1915, 922), (134, 979, 352, 1155), (549, 979, 746, 1155), (950, 979, 1169, 1155), (148, 1260, 359, 1436), (591, 1260, 732, 1436), (986, 1260, 1133, 1436)],
@@ -350,7 +353,7 @@ def drop_specks(im, m, most=12):
                 for x, y in comp: m[y][x] = True
 
 # Sheets that need more than 20 colours (E6: its few green draining sparks were lost among the yellows)
-COLOURS = {'staticSiphon': 40}
+COLOURS = {'staticSiphon': 40, 'glitch1': 40}
 
 def build(only=None, sheet=False):
     data, review = {}, []
@@ -362,7 +365,7 @@ def build(only=None, sheet=False):
             for yy in range(im.size[1]):
                 for xx in range(im.size[0]):
                     if isbg(*px_[xx, yy], xx, yy): px_[xx, yy] = bgc
-        m = bg_mask(im, 40 if (sid in CLEAN_SHRINK and sid != 'thunder') or sid in ('eruptionParts', 'common1', 'common2', 'hits1', 'hits2', 'hits3', 'hits4', 'smug1', 'smug1b', 'smug1c', 'beast1', 'beast2', 'beast3', 'beast4', 'fire2a', 'fire2b', 'fire3', 'fire4', 'water1a', 'water1b', 'water2', 'water3', 'plant1', 'plant2a', 'plant2', 'plant3', 'bug1', 'ice1', 'ice2a', 'ice2', 'earth1', 'earth2', 'dark1', 'dark2', 'dark3', 'fight1', 'fight2a', 'fight2', 'wind1', 'wind2', 'wind2b') else 400)   # electric arcs close round gaps of background: only tiny ones are part of it (Thunder's cloud undersides are near the background colour, so not there)
+        m = bg_mask(im, 40 if (sid in CLEAN_SHRINK and sid != 'thunder') or sid in ('eruptionParts', 'common1', 'common2', 'hits1', 'hits2', 'hits3', 'hits4', 'smug1', 'smug1b', 'smug1c', 'beast1', 'beast2', 'beast3', 'beast4', 'fire2a', 'fire2b', 'fire3', 'fire4', 'water1a', 'water1b', 'water2', 'water3', 'plant1', 'plant2a', 'plant2', 'plant3', 'bug1', 'ice1', 'ice2a', 'ice2', 'earth1', 'earth2', 'dark1', 'dark2', 'dark3', 'fight1', 'fight2a', 'fight2', 'wind1', 'wind2', 'wind2b', 'glitch1') else 400)   # electric arcs close round gaps of background: only tiny ones are part of it (Thunder's cloud undersides are near the background colour, so not there)
         if sid in PANELS: drop_specks(im, m)
         if sid in MANUAL:
             boxes = []
