@@ -1162,6 +1162,7 @@ mixInto(Battle, class {
     if (FX_PIECES && FXS.beast4 && mv.id === 'heavySigh') { this.fxSigh(x, y, r, user); return; }   // BEAST-4 (r201)
     if (FX_PIECES && FXS.beast2 && (mv.id === 'shibaScream' || mv.id === 'shibaRoar')) { this.fxShout(x, y, r, user, mv.id === 'shibaRoar'); return; }   // BEAST-2 (r195)
     if (FX_PIECES && FXS.earth1 && mv.id === 'rockSlide') { this.fxRockSmash(x, y - 4, r * 1.1, null); this.addPiece('earth1', null, { frames: [11], x, y: y + 1, ground: true, sc: r * 1.7 / sheetW('earth1', 11), shrink: 0.4, life: 1.6 }); return; }   // EARTH-1 (r221)
+    if (FX_PIECES && FXS.dark2 && mv.id === 'darkWave') { this.fxDarkWave(x, y, r, user); return; }   // DARK-2 (r224)
     if (FX_PIECES && FXS.earth2 && mv.id === 'quicksand') { this.fxQuicksand(x, y, r / 1.2, mv.linger || 3); return; }   // EARTH-2 (r222)
     if (FX_PIECES && FXS.earth2 && mv.id === 'magmaQuake') { this.fxMagmaQuake(x, y, r, user); return; }   // EARTH-2 (r222)
     if (FX_PIECES && FXS.earth1 && mv.id === 'quake') { this.fxQuake(x, y, r, user); return; }   // EARTH-1 (r221)
@@ -1334,6 +1335,23 @@ mixInto(Battle, class {
   // Dark Pulse: jagged dark rings rolling outwards.
   drawRipple(c, m, a) {
     const fx = fxOf(a.mv), T = this.time, R = a.r * Math.min(1, a.ripT / a.mv.ripple);
+    if (FX_PIECES && FXS.dark2) {   // DARK-2 (r224): rings of spiky darkness rolling out, tendrils bursting up as they pass
+      if (!a.pieced) {
+        a.pieced = true;
+        this.addPiece('dark2', null, { frames: [9, 10, 10], x: m.x, y: m.y + 1, ground: true, sc: m.r * 2.6 / sheetW('dark2', 10), shrink: 0.4, life: 1 });
+        for (let i = 0; i < 14; i++) {
+          const ang = i / 14 * TAU + rand(-0.15, 0.15), d = a.r * rand(0.35, 0.95);
+          this.addPiece('dark2', null, { frames: [0, 1, 1, 2], x: m.x + Math.cos(ang) * d, y: m.y + Math.sin(ang) * d * 0.62, ay: 0.95, flip: Math.random() < 0.5,
+            sc: rand(0.6, 0.85), grow: 0.08, life: 0.55, delay: d / a.r * a.mv.ripple });
+        }
+      }
+      const k = Math.min(1, a.ripT / a.mv.ripple), fr = 3 + (Math.floor(T * 10) % 2);
+      for (const sc of [1, 0.6]) {
+        const r = R * sc; if (r < 10) continue;
+        drawSheet(c, 'dark2', fr, m.x, m.y - 2, { sc: 1, sx: r * 2.1 / (sheetW('dark2', fr) * FX_PX), sy: r * 1.35 / (sheetH('dark2', fr) * FX_PX) * (k > 0.85 ? (1 - k) / 0.15 : 1) });
+      }
+      return;
+    }
     for (const [sc, col] of [[1, fx[1]], [0.72, fx[2]], [0.45, fx[1]]]) {
       const r = R * sc; if (r < 4) continue;
       const path = () => {
@@ -1883,6 +1901,27 @@ mixInto(Battle, class {
     }
     if (FXS.common1) this.fxGroundSlam(x, y, r * 0.7, user, { light: true });
     else this.addShake(8);
+  }
+
+  // Dark Wave (DARK-2, r224): the ground splits with purple light under it, a burst of darkness (DARK-1), shadow
+  // tendrils bursting up in a ring round it (the far ones behind it, the near ones small in front), smoke rolling out
+  fxDarkWave(x, y, r, user) {
+    const id = 'dark2', P = q => this.addPiece(id, user, q), ry = 0.6;
+    if (user) user.piecesUntil = this.time + 1.4;
+    P({ frames: [9, 10, 10], x, y: y + 1, ground: true, sc: r * 1.3 / sheetW(id, 10), grow: 0.1, shrink: 0.4, life: 1.1 });
+    P({ frames: [3, 4], fps: 10, x, y: y - 1, ground: true, sc: r * 1.2 / sheetW(id, 3), grow: 0.3, swell: 0.8, shrink: 0.2, life: 0.5 });
+    if (FXS.dark1) this.addPiece('dark1', null, { frames: [10, 11, 12], x, y: y - (user ? user.h * 0.4 : 10), sc: r * 1.1 / sheetW('dark1', 11), life: 0.4 });
+    for (let i = 0; i < 9; i++) {
+      const ang = i / 9 * TAU + rand(-0.2, 0.2), rr = r * rand(0.85, 1.1), near = Math.sin(ang) > 0.3;
+      P({ frames: [0, 1, 1, 2], x: x + Math.cos(ang) * rr, y: y + Math.sin(ang) * rr * ry, near, ay: 0.95, flip: Math.cos(ang) < 0,
+        sc: rand(0.7, 0.9) * (near ? 0.55 : 1), grow: 0.08, life: 0.65, delay: rand(0, 0.12) });
+    }
+    for (let i = 0; i < 6; i++) {
+      const ang = i / 6 * TAU + rand(-0.3, 0.3);
+      P({ frames: [5, 6, 7, 8], x: x + Math.cos(ang) * r * 0.4, y: y + Math.sin(ang) * r * 0.4 * ry, mx: Math.cos(ang) * r * 0.8, my: Math.sin(ang) * r * 0.5, rise: 10,
+        ay: 0.85, sc: rand(0.3, 0.4), flip: Math.cos(ang) < 0, life: 0.8, delay: 0.15, near: false });
+    }
+    this.addShake(6);
   }
 
   // a star popping out of a hit (Zoomies)

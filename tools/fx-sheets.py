@@ -98,6 +98,8 @@ SHEETS = {
     # EARTH-1: rock spike x3, boulder x2 + smashing x3, rubble x3 + cracked patch, a long ground crack
     # EARTH-2: quicksand x3, mud clod x3 + sand grain x2, mud splash/splat/puddle + drip, lava cracks x2 + magma spurt x3
     # DARK-1: crescent slash x3, shadow wisps x3, dark orb x4, burst of darkness x3
+    # DARK-2: shadow tendril x3, ring of darkness x2, dark smoke x4, glowing crack x2
+    'dark2':         ('pk-dark-2.png', 36, [3, 2, 4, 2]),
     'dark1':         ('pk-dark-1.png', 36, [3, 3, 4, 3]),
     'earth2':        ('pk-earth-2.png', 36, [3, 5, 4, 5]),
     'earth1':        ('pk-earth-1.png', 36, [3, 5, 4, 1]),
@@ -345,7 +347,7 @@ def build(only=None, sheet=False):
             for yy in range(im.size[1]):
                 for xx in range(im.size[0]):
                     if isbg(*px_[xx, yy], xx, yy): px_[xx, yy] = bgc
-        m = bg_mask(im, 40 if (sid in CLEAN_SHRINK and sid != 'thunder') or sid in ('eruptionParts', 'common1', 'common2', 'hits1', 'hits2', 'hits3', 'hits4', 'smug1', 'smug1b', 'smug1c', 'beast1', 'beast2', 'beast3', 'beast4', 'fire2a', 'fire2b', 'fire3', 'fire4', 'water1a', 'water1b', 'water2', 'water3', 'plant1', 'plant2a', 'plant2', 'plant3', 'bug1', 'ice1', 'ice2a', 'ice2', 'earth1', 'earth2', 'dark1') else 400)   # electric arcs close round gaps of background: only tiny ones are part of it (Thunder's cloud undersides are near the background colour, so not there)
+        m = bg_mask(im, 40 if (sid in CLEAN_SHRINK and sid != 'thunder') or sid in ('eruptionParts', 'common1', 'common2', 'hits1', 'hits2', 'hits3', 'hits4', 'smug1', 'smug1b', 'smug1c', 'beast1', 'beast2', 'beast3', 'beast4', 'fire2a', 'fire2b', 'fire3', 'fire4', 'water1a', 'water1b', 'water2', 'water3', 'plant1', 'plant2a', 'plant2', 'plant3', 'bug1', 'ice1', 'ice2a', 'ice2', 'earth1', 'earth2', 'dark1', 'dark2') else 400)   # electric arcs close round gaps of background: only tiny ones are part of it (Thunder's cloud undersides are near the background colour, so not there)
         if sid in PANELS: drop_specks(im, m)
         if sid in MANUAL:
             boxes = []
