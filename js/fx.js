@@ -954,6 +954,7 @@ const PIECE_SHOTS = {
   cuffCannon: { sheet: 'water2', fly: [3], len: 30, ax: 0.7 },
   twinCannon: { sheet: 'water2', fly: [3], len: 26, ax: 0.7 },
   bubbleBeam: { sheet: 'water2', fly: [8, 9, 8, 10], len: 21, spin: true },
+  razorLeaf:  { sheet: 'plant1', fly: [0, 1, 2, 3, 4], len: 20, spin: true },   // PLANT-1 (r213): a spinning leaf
 };
 const PIECE_SHOT_HITS = {
   spoutShot: ['water2', [4, 5, 6], 1], cuffCannon: ['water2', [4, 5, 6], 1.2], twinCannon: ['water2', [4, 5, 6], 1],
@@ -1092,6 +1093,16 @@ mixInto(Battle, class {
   fxBlast(x, y, r, mv) {
     const fx = fxOf(mv);
     // played from the owner's sheets (r152)
+    if (mv.id === 'seedBomb' && FX_PIECES && FXS.plant1) {   // PLANT-1 (r213): the pod bursts into leaves and pollen, a tuft of torn grass left
+      this.addPiece('plant1', null, { frames: [12, 13, 14, 15], x, y: y + 2, ay: 0.9, sc: r * 1.5 / sheetW('plant1', 14), life: 0.55 });
+      for (let i = 0; i < 6; i++) {
+        const ang = -Math.PI / 2 + rand(-1.4, 1.4), sp = rand(40, 90);
+        this.addPiece('plant1', null, { frames: [5 + (i % 3)], x, y: y - 6, mx: Math.cos(ang) * sp, my: Math.sin(ang) * sp * 0.6, vz: rand(40, 90), g: 300, rot: rand(0, TAU), vr: rand(-8, 8), sc: 0.55, life: 0.7, shrink: 0.2 });
+        if (i % 2) this.addPiece('plant1', null, { frames: [8 + (i % 4 > 1 ? 1 : 0)], x: x + rand(-10, 10), y: y - 8, rise: rand(15, 30), mx: rand(-15, 15), sc: 0.5, life: 0.7, shrink: 0.3 });
+      }
+      this.addPiece('plant1', null, { frames: [17], x, y: y + 2, ay: 0.9, sc: 0.6, life: 1.2, delay: 0.3, shrink: 0.4, ground: true });
+      this.addShake(3); return;
+    }
     if (mv.id === 'fireBlast' && FX_PIECES && FXS.fire3) { this.fxFireBoom(x, y - 4, r * 2.6, null); return; }   // FIRE-3 (r206)
     if (mv.id === 'fireBlast') { sheetPart(this, 'fireBlast', [2, 3, 3, 4], x, y - 4, 0.75, { sc: r * 2.4 / sheetW('fireBlast', 3) }); this.addShake(5); return; }
     const user = this.mons.find(o => o.action && o.action.mv === mv && Math.hypot(o.x - x, o.y - y) < 2);   // a burst's user stands in the middle of it
@@ -2164,6 +2175,10 @@ mixInto(Battle, class {
       } else if (z.mv.fx === 'rock' && left < 0.35) {
         const k = 1 - left / 0.35;
         FXD.rock(c, zx, zy - 150 * (1 - k * k) - 6, z.id, 8, FX_STYLES.rock, z.id);
+      } else if (z.mv.id === 'seedBomb' && FX_PIECES && FXS.plant1) {   // PLANT-1: a seed pod dropping onto the spot, its shadow growing under it
+        const k = clamp(1 - left / z.delay, 0, 1), f = clamp((k - 0.4) / 0.6, 0, 1);
+        drawSheet(c, 'plant1', 16, zx, zy, { sc: z.r * 1.6 / sheetW('plant1', 16) * (0.3 + 0.7 * k) });
+        if (f > 0) drawSheet(c, 'plant1', f > 0.5 ? 11 : 10, zx, zy - 150 * (1 - f * f) - 6, { sc: 0.55, rot: f * 3 });
       } else if (z.mv.id === 'steamEruption' && FX_PIECES && FXS.fire4) {   // the vent bubbling, more and more (FIRE-4)
         const k = 1 - left / z.delay;
         drawSheet(c, 'fire4', k < 0.5 ? 0 : (Math.floor(this.time * 8) % 2), zx, zy, { sc: z.r * 2 / sheetW('fire4', 0) * (0.6 + 0.4 * k) });

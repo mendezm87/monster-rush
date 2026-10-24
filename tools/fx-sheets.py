@@ -80,6 +80,8 @@ SHEETS = {
     'water2':        ('pk-water-2.png', 30, [4, 4, 6, 4]),
     # WATER-3: streamer x3 + geyser x3, wave arc x3, whirlpool x3, foam x2 + rune stone x2
     'water3':        ('pk-water-3.png', 40, [6, 3, 3, 4]),
+    # PLANT-1: spinning leaf x5, leaves x3 + pollen x2, seed pod x2 + burst x4, shadow + grass tuft
+    'plant1':        ('pk-plant-1.png', 30, [5, 5, 6, 2]),
     'beast2':        ('pk-beast-2.png', 48, [6, 2, 5, 3]),   # (cut from MANUAL boxes: Gemini laid its rows out unevenly)
     'stormCloud':    ('e2b-storm-cloud.png', 36, [8]),   # Thunder's cloud (E2's own is sliced flat at the sides; its bolt is kept)
     'staticSiphon':  ('e6-static-siphon.png', 28, [8]),
@@ -320,7 +322,7 @@ def build(only=None, sheet=False):
             for yy in range(im.size[1]):
                 for xx in range(im.size[0]):
                     if isbg(*px_[xx, yy], xx, yy): px_[xx, yy] = bgc
-        m = bg_mask(im, 40 if (sid in CLEAN_SHRINK and sid != 'thunder') or sid in ('eruptionParts', 'common1', 'common2', 'hits1', 'hits2', 'hits3', 'hits4', 'smug1', 'smug1b', 'smug1c', 'beast1', 'beast2', 'beast3', 'beast4', 'fire2a', 'fire2b', 'fire3', 'fire4', 'water1a', 'water1b', 'water2', 'water3') else 400)   # electric arcs close round gaps of background: only tiny ones are part of it (Thunder's cloud undersides are near the background colour, so not there)
+        m = bg_mask(im, 40 if (sid in CLEAN_SHRINK and sid != 'thunder') or sid in ('eruptionParts', 'common1', 'common2', 'hits1', 'hits2', 'hits3', 'hits4', 'smug1', 'smug1b', 'smug1c', 'beast1', 'beast2', 'beast3', 'beast4', 'fire2a', 'fire2b', 'fire3', 'fire4', 'water1a', 'water1b', 'water2', 'water3', 'plant1') else 400)   # electric arcs close round gaps of background: only tiny ones are part of it (Thunder's cloud undersides are near the background colour, so not there)
         if sid in PANELS: drop_specks(im, m)
         if sid in MANUAL:
             boxes = []
