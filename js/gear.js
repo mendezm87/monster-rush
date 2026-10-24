@@ -119,6 +119,27 @@ function pendant(g, a, v, big, charm) {
   else { g.rect(cx - (w >> 1), y - 1, w, 1, '#d8b040'); return; }   // just the chain from behind
   charm(isSide(v) ? cx + 2 : cx, y + 1);
 }
+// Fixed spots on the head for gear (r240): the same place on the Coreature in every view.
+// The top of the head: the middle of its top row (a Coreature with no neck: the middle of its top).
+function headTopAt(a) {
+  // the head's own top row (at least 3 pixels wide, ears and horns aside); a Coreature with no neck: the top of it
+  // (the head's own pixels when the rig knows them, even without a neck: a lizard's head is out in front, not on top)
+  let y = Math.max(a.crown, 2), rows = a.bodyRow;
+  for (let yy = 0; yy < 64; yy++) { const r = a.headRow(yy); if (r && r[1] - r[0] >= 2) { y = yy; rows = a.headRow; break; } }
+  const row = rows(y + 1) || rows(y);
+  y = Math.max(y, 2);   // room above for what stands on it (the picture's margin is GEAR_PAD)
+  return { x: r0(row ? (row[0] + row[1]) / 2 : a.topX), y };
+}
+// The middle of the forehead, just above the eyes: between the eyes from the front; from the side, at the brow's front
+// edge (that's where the middle of a forehead is, seen side-on); in between at three-quarters; hidden from behind.
+function foreheadAt(a, v, big) {
+  if (v === 'back' || v === 'bside' || !a.lenses.length) return null;
+  const ly = Math.min(...a.lenses.map(l => l.y)), y = r0(ly) - (big ? 4 : 3);
+  const eyes = a.lenses.reduce((t, l) => t + l.x, 0) / a.lenses.length;
+  const row = (a.neck ? a.headRow : a.bodyRow)(r0(ly) - 1), front = row ? row[1] - 1 : eyes;   // side views face right
+  const x = v === 'front' ? eyes : v === 'side' ? Math.max(eyes, front - 1) : a.lenses.length > 1 ? eyes : (eyes + front) / 2;
+  return { x: r0(x), y };
+}
 // Each piece: (g, a = anchors already moved with the head and legs, v, big = a 44px Coreature)
 const GEAR_ART = {
   crown(g, a, v, big) {   // not a relic yet; kept for a boss or an unlock
@@ -182,49 +203,45 @@ const GEAR_ART = {
     pendant(g, a, v, big, (x, y) => { g.ellipse(x + 0.5, y + 1.5, 2, 2, P('#ff6a1a', '#c02a0a', '#ffe070'), { edge: true }); g.px(x, y + 1, '#fff8c0'); });
   },
   // ---- r240's relics ----
-  // (things worn on one side of the head go on its left ear in every view: the picture's right from the front, the
-  // picture's left from behind, and the back of the head side-on, where that ear is, so they never jump about)
-  // Ricochet Prism: a cyan crystal set in the middle of its forehead
+  // Each piece has one spot on the body that it keeps in every view (the owner: gear mustn't wander from the head to
+  // the mouth, or swap sides, as a Coreature turns): the top of the head (headTopAt) or the middle of the forehead
+  // (foreheadAt), worked out per view from the head's own shape and eyes.
+  // Ricochet Prism: a cyan crystal in the middle of the forehead
   ricochetPrism(g, a, v, big) {
-    if (!a.lenses.length) return;   // from behind it's hidden by the head
-    // just above the eyes, centred between them (from the side, above the near eye): the forehead in every view
-    const x = r0(a.lenses.reduce((t, l) => t + l.x, 0) / a.lenses.length), y = r0(Math.min(...a.lenses.map(l => l.y))) - (big ? 4 : 3);
+    const f = foreheadAt(a, v, big); if (!f) return;
+    const { x, y } = f;
     g.poly([[x + 0.5, y - 2], [x + 2.5, y + 0.5], [x + 0.5, y + 3], [x - 1.5, y + 0.5]], P('#7af0ff', '#3a9ad0', '#e0fcff'), { edge: true });
     g.px(x, y - 1, '#ffffff');
   },
-  // Echo Chamber: a little brass ear horn stuck on the side of its head
+  // Echo Chamber: a little brass horn standing on top of the head, its bell open to the sky
   echoChamber(g, a, v, big) {
-    const y = (a.neck ? a.headTop : Math.max(a.crown, 2)) + 3, row = (a.neck ? a.headRow : a.bodyRow)(y + 1);   // on the head's own edge, so it never floats
-    if (!row) return;
-    const d = v === 'front' ? 1 : -1, reach = big ? 6 : 5;   // its mouthpiece a pixel into the head, never out on a wing or horn beside it
-    const x = Math.max(r0(a.topX) - reach, Math.min(r0(a.topX) + reach, (v === 'front' ? row[1] : row[0]) - d));
-    g.poly([[x, y + 1], [x + d * 2, y], [x + d * 4, y - 2], [x + d * 4, y + 4], [x + d * 2, y + 2], [x, y + 2]], GP.gold, { edge: true });
-    g.px(x + d * 3, y + 1, '#6a4a10');
+    const { x, y } = headTopAt(a);
+    g.poly([[x - 0.5, y + 1], [x + 1.5, y + 1], [x + 1.5, y - 1], [x + 3, y - 4], [x - 2, y - 4], [x - 0.5, y - 1]], GP.gold, { edge: true });
+    g.rect(x - 1, y - 4, 3, 1, '#6a4a10'); g.px(x, y - 2, '#fff0a0');
   },
-  // Frost Rune: a snowflake hair clip
+  // Frost Rune: a snowflake clip in the middle of the top of the head
   frostRune(g, a, v, big) {
-    const row = (a.neck ? a.headRow : a.bodyRow)(Math.max(a.crown, 3) + 2) || [a.left, a.right], x = Math.max(r0(a.topX) - 4, Math.min(r0(a.topX) + 4, v === 'front' ? row[1] - 2 : row[0] + 2)), y = Math.max(a.crown, 3) + 1;   // (kept near the middle: a wing beside the head isn't the head)
-    g.rect(x - 1, y, 3, 1, '#a8e8ff'); g.rect(x, y - 1, 1, 3, '#a8e8ff'); g.px(x, y, '#ffffff'); g.px(x - 1, y - 1, '#e0f8ff').px(x + 1, y + 1, '#e0f8ff').px(x + 1, y - 1, '#e0f8ff').px(x - 1, y + 1, '#e0f8ff');
+    const { x, y } = headTopAt(a), cy = y - 1;
+    g.rect(x - 1, cy, 3, 1, '#a8e8ff'); g.rect(x, cy - 1, 1, 3, '#a8e8ff'); g.px(x, cy, '#ffffff');
+    g.px(x - 1, cy - 1, '#e0f8ff').px(x + 1, cy + 1, '#e0f8ff').px(x + 1, cy - 1, '#e0f8ff').px(x - 1, cy + 1, '#e0f8ff');
   },
-  // Seedling: a little sprout growing on top of its head
+  // Seedling: a little sprout growing from the top of the head
   seedling(g, a, v, big) {
-    const x = r0(a.topX), y = Math.max(a.crown, 6);
-    g.rect(x, y - 3, 1, 3, '#2a7a30');
-    g.ellipse(x - 1, y - 4, 1.6, 1, GP.leaf, { edge: true }); g.ellipse(x + 2, y - 5, 1.6, 1, GP.leaf, { edge: true });
+    const { x, y } = headTopAt(a);
+    g.rect(x, y - 2, 1, 3, '#2a7a30');
+    g.ellipse(x - 1, y - 3, 1.6, 1, GP.leaf, { edge: true }); g.ellipse(x + 2, y - 3, 1.6, 1, GP.leaf, { edge: true });
   },
-  // Twin Fang: a band with two white fangs hanging from it, worn like a headband charm
+  // Twin Fang: a band across the top of the head with two white fangs hanging from it
   twinFang(g, a, v, big) {
-    const x = r0(a.topX) + (isSide(v) ? -1 : 0), y = Math.max(a.crown, 4);
+    const { x, y } = headTopAt(a);
     g.rect(x - 2, y, 5, 1, '#a82a40');
     for (const dx of [-2, 1]) g.poly([[x + dx, y + 1], [x + dx + 2, y + 1], [x + dx + 1, y + 3.5]], GP.white, { edge: true });
   },
-  // Second Wind: a white feather tucked behind its head, sticking up
+  // Second Wind: a white feather standing straight up from the top of the head
   secondWind(g, a, v, big) {
-    const y = (a.neck ? a.headTop : Math.max(a.crown, 2)) + 3, row = (a.neck ? a.headRow : a.bodyRow)(y);   // tucked in at the head's edge
-    if (!row) return;
-    const d = v === 'front' ? 1 : -1, x = Math.max(r0(a.topX) - (big ? 6 : 5), Math.min(r0(a.topX) + (big ? 6 : 5), v === 'front' ? row[1] - 1 : row[0] + 1));
-    g.poly([[x, y + 1], [x + d * 1, y - 2], [x + d * 3, y - 6], [x + d * 3, y - 4], [x + d * 1, y + 1]], GP.white, { edge: true });
-    g.px(x + d * 2, y - 4, '#8ab8e8');
+    const { x, y } = headTopAt(a);
+    g.poly([[x, y + 1], [x - 1, y - 1], [x, y - 5], [x + 1, y - 1], [x + 1, y + 1]], GP.white, { edge: true });
+    g.rect(x, y - 3, 1, 4, '#8ab8e8');
   },
   // Overclock Chip: goggles with glowing cyan lenses and circuit frames
   overclock(g, a, v, big) { glasses(g, a, v, big, '#7af0ff', P('#3a5a6a', '#2a3a4a', '#5a8a9a'), true); },

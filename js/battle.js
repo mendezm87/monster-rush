@@ -606,7 +606,8 @@ class Battle {
           const held = Input.moves(0);
           for (let i = 0; i < 4; i++) if (held[i]) this.tryMove(P, i);
           this.emit('tick', P, dt);   // e.g. Thorn Collar
-          if (P.echoMove != null && P.alive && !P.action && P.gcd <= 0) {   // Echo Chamber: the move fires again
+          if (P.echoMove != null && !this.foe(P)) P.echoMove = null;   // nothing left to aim at
+          if (P.echoMove != null && P.alive && !P.action && P.gcd <= 0 && P.canAct()) {   // Echo Chamber: the move fires again
             const i = P.echoMove, cd = P.cd[i]; P.echoMove = null;
             if (P.moves[i]) { P.echoing = true; this.execute(P, i); P.echoing = false; P.cd[i] = cd; this.text(P.x, P.y - P.h - 14, 'ECHO!', '#c8e8ff', P.y); }
           }
