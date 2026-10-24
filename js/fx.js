@@ -1251,6 +1251,7 @@ mixInto(Battle, class {
     if (FX_PIECES && FXS.plant3 && mv.id === 'cottonGuard') this.fxCotton(m);   // its own show first (PLANT-3, r216; BEAST-4, r201)
     if (FX_PIECES && FXS.ice2 && mv.id === 'frostArmor') this.fxFrostArmor(m);   // ICE-2, r220
     if (FX_PIECES && FXS.fight2 && mv.id === 'bulkUp') this.fxBulkUp(m);   // FIGHT-2, r228
+    if (FX_PIECES && FXS.wind2 && mv.id === 'tailwind') this.fxTailwind(m);   // WIND-2, r230
     if (FX_PIECES && FXS.common2) { this.fxBuffPieces(m, mv); return; }
     const fx = fxOf(mv), b = mv.buff || {};
     if (b.def) this.particles.push({ kind: 'shield', x: m.x, y: m.cy, r: m.r + 12, color: fx[2], life: 0.9, max: 0.9 });
@@ -1421,39 +1422,53 @@ mixInto(Battle, class {
     const rAt = t => r0 + (r1 - r0) * Math.pow(t, 1.6);
     const cxAt = t => z.x + Math.sin(T * 4 - t * 3) * 6 * (1 - t);
 
-    // dust storm round the base, and a scuffed ring on the ground
-    if (reach > 0.9) {
-      FXD.ring(c, z.x, ground, z.r * 1.15, '#d8ccb0', 1.6, 0.35);
-      for (let i = 0; i < 8; i++) {
+    if (FX_PIECES && FXS.wind2) {   // WIND-2 (r230): the owner's spinning funnel reaching down from the cloud, its ring of dust, debris whirling round it
+      const fr = Math.floor(T * 14) % 4, sc = Hh / sheetH('wind2', 0), deb = [];
+      for (let i = 0; i < 6; i++) {
+        const t = 0.15 + ((i * 0.19 + T * 0.35) % 1) * 0.75, ang = -T * 9 + i * 2.3, r = z.r * 1.1 * (0.35 + 0.65 * t);
+        if (t > reach) continue;
+        deb.push({ i, x: z.x + Math.cos(ang) * r, y: ground - t * Hh * 0.9 + Math.sin(ang) * r * 0.3, near: Math.sin(ang) > 0, ang });
+      }
+      const bit = d => drawSheet(c, 'wind2', 6 + (d.i % 3), d.x, d.y, { sc: 1.1, rot: d.ang * 2 });
+      if (reach > 0.9) drawSheet(c, 'wind2', 4 + (Math.floor(T * 8) % 2), z.x, ground - 2, { sc: z.r * 2.8 / sheetW('wind2', 4) * Math.min(1, (reach - 0.9) * 10) });
+      deb.filter(d => !d.near).forEach(bit);
+      if (reach > 0.02) drawSheet(c, 'wind2', fr, z.x, cloudY, { sc, sy: reach, ay: 0 });
+      deb.filter(d => d.near).forEach(bit);
+    } else {
+      // dust storm round the base, and a scuffed ring on the ground
+      if (reach > 0.9) {
+        FXD.ring(c, z.x, ground, z.r * 1.15, '#d8ccb0', 1.6, 0.35);
+        for (let i = 0; i < 8; i++) {
+          const ang = -T * 7 + i * TAU / 8, rr = 11 + (i % 3) * 4;
+          if (Math.sin(ang) < 0) FXD.circle(c, cxAt(0) + Math.cos(ang) * rr, ground - 3 + Math.sin(ang) * rr * 0.32, 4 + (i % 2) * 1.5, '#a8987a');
+        }
+      }
+      // the funnel: wind strands spiralling up, the far side dimmer than the near side
+      const strands = 12, segs = [];
+      for (let j = 0; j < strands; j++) {
+        let prev = null;
+        for (let t = tb; t <= 1.0001; t += 0.05) {
+          const ang = -T * 11 + j * TAU / strands + t * 5.5, r = rAt(t);
+          const pt = [cxAt(t) + Math.cos(ang) * r, ground - t * Hh + Math.sin(ang) * r * 0.26];
+          if (prev && (j + Math.floor(t * 20 + T * 9)) % 4 !== 0) segs.push([prev, pt, Math.sin(ang) >= 0]);   // gaps make it look like streaks
+          prev = pt;
+        }
+      }
+      for (const [a, b, near] of segs) if (!near) FXD.line(c, [a, b], 3, INK);
+      for (const [a, b, near] of segs) if (!near) FXD.line(c, [a, b], 1.3, '#9fb0dc');
+      for (const [a, b, near] of segs) if (near) FXD.line(c, [a, b], 4, INK);
+      for (const [a, b, near] of segs) if (near) FXD.line(c, [a, b], 2, '#ffffff');
+      // the near half of the dust
+      if (reach > 0.9) for (let i = 0; i < 8; i++) {
         const ang = -T * 7 + i * TAU / 8, rr = 11 + (i % 3) * 4;
-        if (Math.sin(ang) < 0) FXD.circle(c, cxAt(0) + Math.cos(ang) * rr, ground - 3 + Math.sin(ang) * rr * 0.32, 4 + (i % 2) * 1.5, '#a8987a');
+        if (Math.sin(ang) >= 0) FXD.circle(c, cxAt(0) + Math.cos(ang) * rr, ground - 3 + Math.sin(ang) * rr * 0.32, 4.5 + (i % 2) * 1.5, '#c8b898');
       }
-    }
-    // the funnel: wind strands spiralling up, the far side dimmer than the near side
-    const strands = 12, segs = [];
-    for (let j = 0; j < strands; j++) {
-      let prev = null;
-      for (let t = tb; t <= 1.0001; t += 0.05) {
-        const ang = -T * 11 + j * TAU / strands + t * 5.5, r = rAt(t);
-        const pt = [cxAt(t) + Math.cos(ang) * r, ground - t * Hh + Math.sin(ang) * r * 0.26];
-        if (prev && (j + Math.floor(t * 20 + T * 9)) % 4 !== 0) segs.push([prev, pt, Math.sin(ang) >= 0]);   // gaps make it look like streaks
-        prev = pt;
+      // rocks and leaves caught in the wind
+      for (let i = 0; i < 6; i++) {
+        const t = tb + ((i * 0.19 + T * 0.35) % 1) * (1 - tb), ang = -T * 9 + i * 2.3, r = rAt(t) + 4;
+        const x = cxAt(t) + Math.cos(ang) * r, y = ground - t * Hh + Math.sin(ang) * r * 0.26;
+        if (i % 2) FXD.leaf(c, x, y, ang * 2, 3.2, '#8be04e', '#2f9e3a'); else FXD.rock(c, x, y, ang, 2.4, FX_STYLES.rock, i + 1);
       }
-    }
-    for (const [a, b, near] of segs) if (!near) FXD.line(c, [a, b], 3, INK);
-    for (const [a, b, near] of segs) if (!near) FXD.line(c, [a, b], 1.3, '#9fb0dc');
-    for (const [a, b, near] of segs) if (near) FXD.line(c, [a, b], 4, INK);
-    for (const [a, b, near] of segs) if (near) FXD.line(c, [a, b], 2, '#ffffff');
-    // the near half of the dust
-    if (reach > 0.9) for (let i = 0; i < 8; i++) {
-      const ang = -T * 7 + i * TAU / 8, rr = 11 + (i % 3) * 4;
-      if (Math.sin(ang) >= 0) FXD.circle(c, cxAt(0) + Math.cos(ang) * rr, ground - 3 + Math.sin(ang) * rr * 0.32, 4.5 + (i % 2) * 1.5, '#c8b898');
-    }
-    // rocks and leaves caught in the wind
-    for (let i = 0; i < 6; i++) {
-      const t = tb + ((i * 0.19 + T * 0.35) % 1) * (1 - tb), ang = -T * 9 + i * 2.3, r = rAt(t) + 4;
-      const x = cxAt(t) + Math.cos(ang) * r, y = ground - t * Hh + Math.sin(ang) * r * 0.26;
-      if (i % 2) FXD.leaf(c, x, y, ang * 2, 3.2, '#8be04e', '#2f9e3a'); else FXD.rock(c, x, y, ang, 2.4, FX_STYLES.rock, i + 1);
     }
     // the storm cloud: a flat, lumpy disc, dark underneath, with a slow swirl on top
     const crx = r1 * 1.45 * cloudK, cry = 12 * cloudK, lumpy = (y, ry) => () => {
@@ -2008,6 +2023,19 @@ mixInto(Battle, class {
         sc: k * rand(0.5, 0.65) * (near ? 0.4 : 1), grow: 0.12, shrink: 0.3, life: 1, delay: 0.05 + i * 0.03, flip: Math.random() < 0.5 });
     }
     for (let i = 0; i < 3; i++) P({ frames: [3 + (i % 2)], x: m.x + (i - 1) * 7, y: m.y - m.h * 0.9, rise: rand(15, 25), mx: (i - 1) * 15, near: true, sc: k * 0.5, grow: 0.1, shrink: 0.35, life: 0.6, delay: 0.5 + i * 0.12, flip: i === 0 });
+  }
+
+  // Tailwind (WIND-2, r230): ribbons of green wind spiralling up round it (the far ones behind it, the near ones in
+  // front), leaves caught in them
+  fxTailwind(m) {
+    const id = 'wind2', P = o => this.addPiece(id, m, o), k = clamp(m.h / 30, 0.8, 1.4);
+    m.piecesUntil = this.time + 1.3;
+    for (let i = 0; i < 6; i++) {
+      const ang = i / 6 * TAU, near = Math.sin(ang) > 0;
+      P({ frames: [12, 13, 14], fps: 12, ph: i % 3, x: m.x + Math.cos(ang) * m.r * 0.8, y: m.y - m.h * (0.1 + i * 0.12) + Math.sin(ang) * m.r * 0.3, near, rise: 25,
+        mx: -Math.sin(ang) * 30, sc: k * (near ? 0.55 : 0.7), flip: i % 2 === 1, grow: 0.1, shrink: 0.3, life: 0.8, delay: i * 0.06 });
+    }
+    for (let i = 0; i < 4; i++) P({ frames: [8], x: m.x + rand(-m.r, m.r), y: m.y - m.h * rand(0, 0.4), rise: rand(40, 60), mx: rand(-25, 25), rot: rand(0, TAU), vr: rand(-8, 8), sc: 1.1, shrink: 0.3, life: 0.8, delay: 0.1 + i * 0.1 });
   }
 
   // a star popping out of a hit (Zoomies)
