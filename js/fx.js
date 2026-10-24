@@ -831,7 +831,8 @@ const PIECE_DASH = { bodySlam: { thud: true },
   nightSlash: { wisps: 0.022, crescent: true },
   deadlineDash: { papers: 0.05, calendar: true },
   jab: { aura: 0.03, punch: 1 }, closeCombat: { aura: 0.03, punch: 2 },   // FIGHT-1 (r226): aura wisps and motion lines streaming off it, fists of aura on every hit   // DARK-3 (r225): Mondaze's paperwork flying off it, a calendar page and a burst of papers on the hit   // DARK-1 (r223): shadow wisps streaming off it, a crescent cut on the hit   // EARTH-1 (r221): rubble kicked up as it rolls, a rock smash on the hit
-  braveDive: { draw: 'bow', feathers: 0.05 },   // WIND-2b (r231): a bow wave of air round its front, feathers and wind streaks behind
+  braveDive: { draw: 'bow', feathers: 0.05 },
+  phantomStrike: { spirit: 0.035, ghostSlash: true },   // GHOST-1 (r235): will-o'-wisps and wisps trailing off it, a streak of spirit light and mist on the hit   // WIND-2b (r231): a bow wave of air round its front, feathers and wind streaks behind
   megahorn: { draw: 'horn', xflash: true }, beetleBarrage: { xflash: true },   // BUG-1 (r217)   // WATER-3 (r212): wrapped in a streamer of water, spray behind, a splash on the hit
   flameWheel: { draw: 'wheel', fire: true, scorch: true, boom: true }, blazeRush: { draw: 'comet', fire: true, boom: true } };   // BEAST-4 (r201): storm-cloud wool streaming off Lumawool   // BEAST-2 (r195): Smugshi's line
 // each look's hit pieces (r188): [sheet, row]; a row is a burst in 3 frames then 3 bits (docs/attack-pieces.md HITS-1..4)
@@ -988,6 +989,7 @@ const PIECE_SHOTS = {
   razorLeaf:  { sheet: 'plant1', fly: [0, 1, 2, 3, 4], len: 20, spin: true },
   pinMissile: { sheet: 'bug1', fly: [11, 12], len: 18, ax: 0.6 },
   iceShard:   { sheet: 'ice1', fly: [0, 1, 2], len: 22, ax: 0.55 },
+  shadowBall: { sheet: 'ghost1', fly: [0, 1, 2, 3], len: 36, spin: true },   // GHOST-1 (r235): a ball of ghost fire
   sludgeBomb: { sheet: 'glitch1', fly: [0, 1, 2, 1], len: 30, spin: true },   // GLITCH-1 (r232): a dripping glob of corrupted sludge
   acidSpray:  { sheet: 'glitch1', fly: [3, 4], len: 12, spin: true },   // GLITCH-1: drops of green acid
   airSlash:   { sheet: 'wind1', fly: [0, 1, 2], len: 34, ax: 0.6 },   // WIND-1 (r229): a crescent blade of wind
@@ -1004,6 +1006,7 @@ const PIECE_SHOT_HITS = {
   gloomOrb: ['dark1', [10, 11, 12], 1.1],
   auraSphere: ['fight1', [2, 3, 4], 1.1],
   acidSpray: ['glitch1', [12, 13], 0.5],
+  shadowBall: ['ghost1', [16, 17, 18], 1],
   iceShard: ['ice1', [4, 5, 6], 0.9],
 };
 // a frame sequence played as a particle (an explosion, a geyser)
@@ -1092,6 +1095,10 @@ mixInto(Battle, class {
         this.addPiece('fight1', null, { frames: [2, 3, 4], x: hx, y: hy, sc: (big ? 0.75 : 0.5), life: 0.22, delay: 0.06 });
       }
       if (big) this.addPiece('fight1', null, { frames: [5, 6, 7], x: tgt.x, y: tgt.cy, sc: tgt.h * 0.9 / sheetH('fight1', 7), rot: from, life: 0.3, delay: 0.05 });
+    }
+    if (PD && PD.ghostSlash && FXS.ghost1) {   // a streak of spirit light through it and a puff of ghost mist (GHOST-1)
+      this.addPiece('ghost1', null, { frames: [14, 15], x: tgt.x, y: tgt.cy, rot: toward, sc: 1, grow: 0.05, shrink: 0.3, life: 0.3 });
+      if (big) this.addPiece('ghost1', null, { frames: [16, 17, 18], x: tgt.x, y: tgt.cy, sc: tgt.r * 1.6 / sheetW('ghost1', 16), life: 0.45, delay: 0.05 });
     }
     if (big && PD && PD.calendar && FXS.dark3) {   // a calendar page torn off, papers bursting everywhere (DARK-3)
       this.addPiece('dark3', null, { frames: [3], x: tgt.x, y: tgt.y - tgt.h - 6, rise: 25, sc: 0.5, grow: 0.08, swell: 0.3, shrink: 0.25, rot: rand(-0.3, 0.3), life: 0.8 });
@@ -1212,6 +1219,13 @@ mixInto(Battle, class {
     }
     if (FX_PIECES && FXS.glitch1 && mv.id === 'fatalError') { this.fxFatalError(x, y, r, user); return; }   // GLITCH-1 (r232)
     if (FX_PIECES && FXS.dark2 && mv.id === 'darkWave') { this.fxDarkWave(x, y, r, user); return; }   // DARK-2 (r224)
+    if (FX_PIECES && FXS.ghost1 && mv.id === 'spiritFlames') {   // GHOST-1 (r235): a tongue of spirit flame bursts up from the spot and flickers, wisps drifting off, a puff of mist
+      const id = 'ghost1', zr = r / 1.2;
+      this.addPiece(id, null, { frames: [10, 11, 12, 13], fps: 12, x, y: y + 2, ay: 1, sc: zr * 2.2 / sheetW(id, 10), grow: 0.08, shrink: 0.3, life: 0.8 });
+      this.addPiece(id, null, { frames: [16, 17, 18], x, y: y - 4, sc: zr * 1.4 / sheetW(id, 16), life: 0.5, delay: 0.5 });
+      for (let i = 0; i < 2; i++) this.addPiece(id, null, { frames: [7 + i], x: x + rand(-8, 8), y: y - zr * 1.5, rise: rand(25, 40), mx: rand(-15, 15), sc: 0.7, shrink: 0.3, life: 0.6, delay: 0.15 + i * 0.15 });
+      return;
+    }
     if (FX_PIECES && FXS.glitch2 && mv.id === 'toxicPool') {   // GLITCH-2 (r234): the glob splats, then a pool of bubbling sludge for as long as it lingers
       const id = 'glitch2', zr = r / 1.2, linger = mv.linger || 3;
       this.addPiece(id, null, { frames: [0, 1, 2], fps: 6, x, y: y + 2, ground: true, sc: zr * 2.3 / sheetW(id, 0), grow: 0.1, shrink: 0.2, life: linger });
@@ -1658,7 +1672,7 @@ mixInto(Battle, class {
     const id = 'common1', back = a.dir + Math.PI, cx = Math.cos(a.dir), cy = Math.sin(a.dir);
     if (!a.launched) {
       a.launched = true; this.addShake(2);
-      if (!PIECE_DASH[a.mv.id].fire && !PIECE_DASH[a.mv.id].water && !PIECE_DASH[a.mv.id].wisps && !PIECE_DASH[a.mv.id].papers && !PIECE_DASH[a.mv.id].aura && !PIECE_DASH[a.mv.id].feathers) for (let i = 0; i < 3; i++) this.addPiece(id, m, { frames: [0, 1, 2, 3], x: m.x - cx * m.r * 0.6 + rand(-4, 4), y: m.y - cy * 4 + rand(-3, 3),
+      if (!PIECE_DASH[a.mv.id].fire && !PIECE_DASH[a.mv.id].water && !PIECE_DASH[a.mv.id].wisps && !PIECE_DASH[a.mv.id].papers && !PIECE_DASH[a.mv.id].aura && !PIECE_DASH[a.mv.id].feathers && !PIECE_DASH[a.mv.id].spirit) for (let i = 0; i < 3; i++) this.addPiece(id, m, { frames: [0, 1, 2, 3], x: m.x - cx * m.r * 0.6 + rand(-4, 4), y: m.y - cy * 4 + rand(-3, 3),
         mx: Math.cos(back + rand(-0.6, 0.6)) * rand(25, 50), my: Math.sin(back) * 15, rise: 8, sc: rand(0.45, 0.6), swell: 0.3, ay: 0.85, life: 0.5, flip: cx > 0 });
     }
     const PD0 = PIECE_DASH[a.mv.id];
@@ -1685,7 +1699,7 @@ mixInto(Battle, class {
         if (Math.random() < 0.3 && FXS.water3) this.addPiece('water3', null, { frames: [12 + ((Math.random() * 2) | 0)], x: m.x - cx * m.r * 0.6, y: m.y, mx: -cx * 20, rise: 8, sc: 0.6, life: 0.4, shrink: 0.2 });
       }
     }
-    a.dustT = (PD0.fire || PD0.water || PD0.wisps || PD0.papers || PD0.aura || PD0.feathers) ? 1 : (a.dustT || 0) - dt;
+    a.dustT = (PD0.fire || PD0.water || PD0.wisps || PD0.papers || PD0.aura || PD0.feathers || PD0.spirit) ? 1 : (a.dustT || 0) - dt;
     while (a.dustT <= 0) {   // dust kicked up at its feet
       a.dustT += PD0.rubble ? 0.17 : 0.085;
       this.addPiece(id, m, { frames: [0, 1, 2, 3], x: m.x - cx * m.r * 0.5 + rand(-3, 3), y: m.y + rand(-2, 2), mx: -cx * rand(10, 30), rise: rand(8, 16),
@@ -1699,6 +1713,15 @@ mixInto(Battle, class {
         const line = Math.random() < 0.4;
         this.addPiece('fight1', null, line ? { frames: [15 + ((Math.random() * 2) | 0)], x: m.x - cx * m.r * 0.8, y: m.y - m.h * rand(0.2, 0.8), mx: -cx * rand(60, 100), my: -cy * 30, rot: a.dir, sc: rand(0.6, 0.9), shrink: 0.3, life: 0.2 }
           : { frames: [12 + ((Math.random() * 3) | 0)], x: m.x - cx * m.r * 0.4 + rand(-4, 4), y: m.y - m.h * rand(0.1, 0.7), mx: -cx * rand(15, 35), rise: rand(20, 40), sc: rand(0.6, 0.85), shrink: 0.3, life: rand(0.25, 0.4), flip: Math.random() < 0.5 });
+      }
+    }
+    if (PD.spirit && FXS.ghost1) {   // will-o'-wisps and curling wisps drifting up off it (GHOST-1)
+      a.spT = (a.spT || 0) - dt;
+      while (a.spT <= 0) {
+        a.spT += PD.spirit;
+        const wisp = Math.random() < 0.5;
+        this.addPiece('ghost1', null, { frames: wisp ? [4, 5, 6] : [7 + ((Math.random() * 3) | 0)], fps: 10, x: m.x - cx * m.r * 0.5 + rand(-5, 5), y: m.y - m.h * rand(0.2, 0.8), mx: -cx * rand(15, 35), rise: rand(20, 40),
+          sc: rand(0.6, 0.85), shrink: 0.35, life: rand(0.35, 0.5), flip: Math.random() < 0.5 });
       }
     }
     if (PD.feathers && FXS.wind1) {   // feathers and curls of wind peeling off behind it (WIND-1)
@@ -2570,6 +2593,9 @@ mixInto(Battle, class {
         const k = clamp(1 - left / z.delay, 0, 1), f = clamp((k - 0.4) / 0.6, 0, 1);
         drawSheet(c, 'plant1', 16, zx, zy, { sc: z.r * 1.6 / sheetW('plant1', 16) * (0.3 + 0.7 * k) });
         if (f > 0) drawSheet(c, 'plant1', f > 0.5 ? 11 : 10, zx, zy - 150 * (1 - f * f) - 6, { sc: 0.55, rot: f * 3 });
+      } else if (z.mv.id === 'spiritFlames' && FX_PIECES && FXS.ghost1) {   // a will-o'-wisp drifting down onto the spot (GHOST-1)
+        const k = clamp(1 - left / z.delay, 0, 1);
+        drawSheet(c, 'ghost1', 4 + (Math.floor(this.time * 10) % 3), zx + Math.sin(this.time * 6 + z.id) * 4 * (1 - k), zy - 40 * (1 - k) - 8, { sc: 0.6 + 0.4 * k });
       } else if (z.mv.id === 'toxicPool' && FX_PIECES && FXS.glitch1) {   // a glob of sludge dropping onto the spot (GLITCH-1)
         const k = clamp(1 - left / z.delay, 0, 1), f = clamp((k - 0.4) / 0.6, 0, 1);
         if (f > 0) drawSheet(c, 'glitch1', Math.floor(this.time * 10) % 3, zx, zy - 150 * (1 - f * f) - 8, { sc: z.r * 1.3 / sheetW('glitch1', 0) });
