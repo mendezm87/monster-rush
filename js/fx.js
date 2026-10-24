@@ -783,6 +783,9 @@ const PIECE_BEAMS = {
   infernoBeam: { body: ['fire2b', [0, 1, 2, 3]], overlap: 0.95, muzzle: ['fire2b', [8, 9, 10, 11], 0.25],
     impact: ['fire2b', [12, 13, 14, 15], 0.3], head: ['fire2b', [12, 13, 14, 15], 0.4, 0.3], charge: ['fire2b', [8, 9, 10], 0, 0.75],
     thick: 2.6, muzzleSc: 0.8, chargeSc: 0.8, headSc: 0.6 },   // FIRE-2b (r204)
+  hydroCannon: { body: ['water1a', [0, 1, 2, 3]], muzzle: ['water1a', [8, 9, 10, 11], 0.6, 0, 0.55], charge: ['water1a', [8, 9, 10], 0, 0.55], chargeOne: true,
+    impact: ['water1a', [12, 13, 14, 15], 0.45, 0, 0.45], impactFlip: true, head: ['water1a', [12, 13, 14, 15], 0.45, 0, 0.45], headFlip: true,
+    thick: 2.6, muzzleSc: 1.1, headSc: 1.2, impactSc: 1.3, chargeSc: 0.3 },   // WATER-1a (r208): no core layer (it hid the ripples); the splash picture's beam comes from the right, so it's mirrored and its stub cut
   megaBeam: { body: ['beast1', [0, 1, 2, 3]], muzzle: ['beast1', [8, 9, 10, 11], 0.3],
     impact: ['beast1', [12, 13, 14, 15], 0.25], head: ['beast1', [12, 13, 14], 0.25], charge: ['beast1', [8, 9, 10], 0, 0.63], thick: 2.2 },   // BEAST-1 (r199)
   supremeSmug: { body: ['smug1c', [0, 1, 2, 3]], muzzle: ['smug1c', [8, 9, 10, 11], 0.3],
@@ -1867,6 +1870,7 @@ mixInto(Battle, class {
       const k = clamp(a.t / mv.charge, 0, 1), [cid, cf, , cutR, cutL] = B.charge;   // cutR: a muzzle picture with a beam stub, cut at its orb's middle (what's left of it is mirrored); cutL: just its right part
       const fr = cf[Math.min(cf.length - 1, Math.floor(k * cf.length))], sc = (0.6 + k * 0.7) * (B.chargeSc || 1);
       if (cutL) drawSheet(c, cid, fr, ox, oy, { sc, trim: 0, cutL, dir: a.dir });
+      else if (cutR && B.chargeOne) drawSheet(c, cid, fr, ox, oy, { sc, trim: 0, cutR, dir: a.dir });   // just its left part (a swirl), not mirrored
       else if (cutR) for (const flip of [false, true]) drawSheet(c, cid, fr, ox, oy, { sc, trim: 0, cutR, ax: 1, flip });   // its left half and that half mirrored: a round orb
       else drawSheet(c, cid, fr, ox, oy, { sc });
       return;
@@ -1891,12 +1895,12 @@ mixInto(Battle, class {
     };
     layer(B.body, 140, 0, 1);
     if (B.core) layer(B.core, 260, 0.5, B.coreH || 1);
-    const [mid, mf, max, mcL] = B.muzzle;
-    drawSheet(c, mid, loop(mf, 14), ox, oy, { dir: a.dir, ax: max, sc: sc * (B.muzzleSc || 1) * (0.95 + Math.sin(T * 30) * 0.08) * (B.coreH ? 1.15 : 1), ...(mcL ? { trim: 0, cutL: mcL } : {}) });
-    if (mv.len * out < reach) { const [hid, hf, hax, hcL] = B.head; drawSheet(c, hid, loop(hf, 14), ox + cs * len, oy + sn * len, { dir: a.dir, ax: hax, sc: sc * (B.headSc || 1), ...(hcL ? { trim: 0, cutL: hcL } : {}) }); }
+    const [mid, mf, max, mcL, mcR] = B.muzzle;
+    drawSheet(c, mid, loop(mf, 14), ox, oy, { dir: a.dir, ax: max, sc: sc * (B.muzzleSc || 1) * (0.95 + Math.sin(T * 30) * 0.08) * (B.coreH ? 1.15 : 1), ...(mcL || mcR ? { trim: 0, cutL: mcL || 0, cutR: mcR || 0 } : {}) });
+    if (mv.len * out < reach) { const [hid, hf, hax, hcL, hcR] = B.head; drawSheet(c, hid, loop(hf, 14), ox + cs * len, oy + sn * len, { dir: a.dir, ax: hax, sc: sc * (B.headSc || 1), flip: !!B.headFlip, ...(hcL || hcR ? { trim: 0, cutL: hcL || 0, cutR: hcR || 0 } : {}) }); }
     else for (const [, t] of hits) {   // an impact on everything it's hitting, on the side facing the beam
-      const [iid, ifr, iax] = B.impact;
-      drawSheet(c, iid, loop(ifr, 16), ox + cs * t, oy + sn * t, { dir: a.dir, ax: iax, sc: sc * 1.15 });
+      const [iid, ifr, iax, icL, icR] = B.impact;   // (impactFlip: a splash drawn with its beam coming from the other side, mirrored)
+      drawSheet(c, iid, loop(ifr, 16), ox + cs * t, oy + sn * t, { dir: a.dir, ax: iax, sc: sc * 1.15 * (B.impactSc || 1), flip: !!B.impactFlip, ...(icL || icR ? { trim: 0, cutL: icL || 0, cutR: icR || 0 } : {}) });
     }
     a.bitT = (a.bitT || 0) - 1 / 60;
     if (a.bitT <= 0 && fade > 0.5) {   // bits drifting off along it
