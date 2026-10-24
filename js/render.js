@@ -754,7 +754,8 @@ mixInto(Battle, class {
       if (!z.done && z.owner.side === 'player') continue;
       if (z.done) {
         if (!z.mv.linger || z.mv.fx === 'tornado') continue;   // a tornado draws its own base (fx.js)
-        if (z.mv.id === 'quicksand' && typeof FX_PIECES !== 'undefined' && FX_PIECES && FXS.earth2) continue;   // its swirling sand shows where it is (EARTH-2)
+        if (z.mv.id === 'quicksand' && typeof FX_PIECES !== 'undefined' && FX_PIECES && FXS.earth2) continue;
+        if (z.mv.id === 'toxicPool' && typeof FX_PIECES !== 'undefined' && FX_PIECES && FXS.glitch2) continue;   // its bubbling sludge shows where it is (GLITCH-2)   // its swirling sand shows where it is (EARTH-2)
         // lingering pool: fades in and out, with bubbles popping across it
         const age = z.t - z.delay, left = z.mv.linger - age;
         const fade = clamp(Math.min(age / 0.15, left / 0.4), 0, 1);

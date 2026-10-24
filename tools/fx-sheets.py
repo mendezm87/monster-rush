@@ -108,6 +108,8 @@ SHEETS = {
     # WIND-2b: Brave Dive's bow wave of air x3
     # GLITCH-1: sludge glob x3 + acid drop x2, sludge splat x4, bubble pop x3 + acid sizzle x2, data burst x4 + loose blocks x2 (MANUAL boxes)
     # GLITCH-2a (Venom Jet): sludge stream section x4, core strand x4, muzzle glob x4, splatter x4
+    # GLITCH-2 (Toxic Pool): sludge pool x3, data tear x2
+    'glitch2':       ('pk-glitch-2.png', 40, [3, 2]),
     'glitch2a':      ('pk-glitch-2a.png', 40, [4, 4, 4, 4]),
     'glitch1':       ('pk-glitch-1.png', 34, [5, 4, 5, 6]),
     'wind2b':        ('pk-wind-2b.png', 44, [3]),
@@ -355,7 +357,7 @@ def drop_specks(im, m, most=12):
                 for x, y in comp: m[y][x] = True
 
 # Sheets that need more than 20 colours (E6: its few green draining sparks were lost among the yellows)
-COLOURS = {'staticSiphon': 40, 'glitch1': 40, 'glitch2a': 40}
+COLOURS = {'staticSiphon': 40, 'glitch1': 40, 'glitch2a': 40, 'glitch2': 40}
 
 def build(only=None, sheet=False):
     data, review = {}, []
@@ -367,7 +369,7 @@ def build(only=None, sheet=False):
             for yy in range(im.size[1]):
                 for xx in range(im.size[0]):
                     if isbg(*px_[xx, yy], xx, yy): px_[xx, yy] = bgc
-        m = bg_mask(im, 40 if (sid in CLEAN_SHRINK and sid != 'thunder') or sid in ('eruptionParts', 'common1', 'common2', 'hits1', 'hits2', 'hits3', 'hits4', 'smug1', 'smug1b', 'smug1c', 'beast1', 'beast2', 'beast3', 'beast4', 'fire2a', 'fire2b', 'fire3', 'fire4', 'water1a', 'water1b', 'water2', 'water3', 'plant1', 'plant2a', 'plant2', 'plant3', 'bug1', 'ice1', 'ice2a', 'ice2', 'earth1', 'earth2', 'dark1', 'dark2', 'dark3', 'fight1', 'fight2a', 'fight2', 'wind1', 'wind2', 'wind2b', 'glitch1', 'glitch2a') else 400)   # electric arcs close round gaps of background: only tiny ones are part of it (Thunder's cloud undersides are near the background colour, so not there)
+        m = bg_mask(im, 40 if (sid in CLEAN_SHRINK and sid != 'thunder') or sid in ('eruptionParts', 'common1', 'common2', 'hits1', 'hits2', 'hits3', 'hits4', 'smug1', 'smug1b', 'smug1c', 'beast1', 'beast2', 'beast3', 'beast4', 'fire2a', 'fire2b', 'fire3', 'fire4', 'water1a', 'water1b', 'water2', 'water3', 'plant1', 'plant2a', 'plant2', 'plant3', 'bug1', 'ice1', 'ice2a', 'ice2', 'earth1', 'earth2', 'dark1', 'dark2', 'dark3', 'fight1', 'fight2a', 'fight2', 'wind1', 'wind2', 'wind2b', 'glitch1', 'glitch2a', 'glitch2') else 400)   # electric arcs close round gaps of background: only tiny ones are part of it (Thunder's cloud undersides are near the background colour, so not there)
         if sid in PANELS: drop_specks(im, m)
         if sid in MANUAL:
             boxes = []

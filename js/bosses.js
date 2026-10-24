@@ -445,7 +445,11 @@ mixInto(Battle, class {
       if (h.done) {
         if (!h.linger) continue;
         const age = h.t - h.delay, fade = clamp(Math.min(age / 0.2, h.linger === Infinity ? 1 : (h.linger - age) / 0.5), 0, 1);
-        if (h.kind === 'tear') {   // a tear in the floor: flickering magenta and cyan blocks
+        if (h.kind === 'tear' && typeof FX_PIECES !== 'undefined' && FX_PIECES && FXS.glitch2) {   // GLITCH-2 (r234): the owner's torn patch of broken data, flickering
+          const w = h.x1 - h.x0, hh = h.y1 - h.y0, fr = 3 + (Math.floor(this.time * 9) % 2);
+          if (!outlines) { ctx.globalAlpha = fade; drawSheet(ctx, 'glitch2', fr, (h.x0 + h.x1) / 2, (h.y0 + h.y1) / 2, { sx: w * 1.15 / sheetW('glitch2', fr), sy: hh * 1.3 / sheetH('glitch2', fr) }); }
+          ctx.globalAlpha = 0.45 * fade; ctx.strokeStyle = TEAR_COLS[Math.floor(this.time * 9) % 2]; path(h); ctx.stroke();
+        } else if (h.kind === 'tear') {   // a tear in the floor: flickering magenta and cyan blocks
           ctx.globalAlpha = 0.5 * fade; ctx.fillStyle = '#15111f'; path(h); if (!outlines) ctx.fill();
           const n = 7, seed = Math.floor(this.time * 9);
           for (let i = 0; i < n; i++) {

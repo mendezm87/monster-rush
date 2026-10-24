@@ -1212,6 +1212,15 @@ mixInto(Battle, class {
     }
     if (FX_PIECES && FXS.glitch1 && mv.id === 'fatalError') { this.fxFatalError(x, y, r, user); return; }   // GLITCH-1 (r232)
     if (FX_PIECES && FXS.dark2 && mv.id === 'darkWave') { this.fxDarkWave(x, y, r, user); return; }   // DARK-2 (r224)
+    if (FX_PIECES && FXS.glitch2 && mv.id === 'toxicPool') {   // GLITCH-2 (r234): the glob splats, then a pool of bubbling sludge for as long as it lingers
+      const id = 'glitch2', zr = r / 1.2, linger = mv.linger || 3;
+      this.addPiece(id, null, { frames: [0, 1, 2], fps: 6, x, y: y + 2, ground: true, sc: zr * 2.3 / sheetW(id, 0), grow: 0.1, shrink: 0.2, life: linger });
+      if (FXS.glitch1) {
+        this.addPiece('glitch1', null, { frames: [5, 6], x, y: y - 4, sc: zr * 1.8 / sheetW('glitch1', 6), life: 0.3 });
+        for (let t = 0.3; t < linger - 0.3; t += 0.2) { const ang = rand(0, TAU), rr = zr * rand(0, 0.7); this.addPiece('glitch1', null, { frames: [9, 10, 11], x: x + Math.cos(ang) * rr, y: y - 3 + Math.sin(ang) * rr * 0.45, sc: rand(0.35, 0.5), life: 0.4, delay: t }); }
+      }
+      this.addShake(3); return;
+    }
     if (FX_PIECES && FXS.earth2 && mv.id === 'quicksand') { this.fxQuicksand(x, y, r / 1.2, mv.linger || 3); return; }   // EARTH-2 (r222)
     if (FX_PIECES && FXS.earth2 && mv.id === 'magmaQuake') { this.fxMagmaQuake(x, y, r, user); return; }   // EARTH-2 (r222)
     if (FX_PIECES && FXS.earth1 && mv.id === 'quake') { this.fxQuake(x, y, r, user); return; }   // EARTH-1 (r221)
@@ -2561,6 +2570,9 @@ mixInto(Battle, class {
         const k = clamp(1 - left / z.delay, 0, 1), f = clamp((k - 0.4) / 0.6, 0, 1);
         drawSheet(c, 'plant1', 16, zx, zy, { sc: z.r * 1.6 / sheetW('plant1', 16) * (0.3 + 0.7 * k) });
         if (f > 0) drawSheet(c, 'plant1', f > 0.5 ? 11 : 10, zx, zy - 150 * (1 - f * f) - 6, { sc: 0.55, rot: f * 3 });
+      } else if (z.mv.id === 'toxicPool' && FX_PIECES && FXS.glitch1) {   // a glob of sludge dropping onto the spot (GLITCH-1)
+        const k = clamp(1 - left / z.delay, 0, 1), f = clamp((k - 0.4) / 0.6, 0, 1);
+        if (f > 0) drawSheet(c, 'glitch1', Math.floor(this.time * 10) % 3, zx, zy - 150 * (1 - f * f) - 8, { sc: z.r * 1.3 / sheetW('glitch1', 0) });
       } else if (z.mv.id === 'quicksand' && FX_PIECES && FXS.earth2) {   // the sand starting to turn and sink (EARTH-2)
         const k = clamp(1 - left / z.delay, 0, 1);
         drawSheet(c, 'earth2', Math.floor(this.time * 6) % 3, zx, zy, { sc: z.r * 2.2 / sheetW('earth2', 0) * (0.3 + 0.7 * k) });
