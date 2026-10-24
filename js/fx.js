@@ -295,6 +295,19 @@ const FX_PARTS = {
   },
   // Photosynth: the sun comes out and pours light down onto the user
   sunbeam(c, p, k) {
+    if (FX_PIECES && FXS.plant2) {   // PLANT-2 (r215): the owner's sun comes out above it and a column of sunlight pours down onto it, leaves and sparkles rising
+      const m = p.mon, age = (1 - k) * p.max, T = age, grow = Math.min(1, age / 0.2) * Math.min(1, k * p.max / 0.2);
+      const sx = m.x, sy = m.y - m.h - 34, top = sy + 6, colH = m.y - top, f = sheetSize('plant2', 4);
+      const cfr = 4 + Math.floor(T * 10) % 3;   // see-through light: every other pixel of it (the effect layer has no half-transparency)
+      if (grow > 0.05) drawSheet(c, 'plant2', cfr, sx, m.y + 2, { ay: 1, sc: 1, sx: m.r * 1.6 * grow / (f[2] * FX_PX), sy: colH / (f[3] * FX_PX), src: ditherFrame('plant2', cfr, 7, true) });
+      if (m.visible && !m.fainted) cutOutSprite(c, m);
+      drawSheet(c, 'plant2', Math.floor(T * 8) % 4, sx, sy, { sc: 0.5 * Math.max(0.2, grow) });
+      for (let i = 0; i < 6; i++) {   // leaves and sparkles drifting up through the light
+        const t = (T * 0.9 + i / 6) % 1;
+        if (grow > 0.3) drawSheet(c, 'plant2', 7 + (i % 4), m.x + Math.sin(i * 2.1 + T * 3) * m.r * 0.6, m.y - t * m.h * 1.1, { sc: i % 4 < 2 ? 0.35 : 0.5, rot: i % 4 < 2 ? t * 4 : 0 });
+      }
+      return;
+    }
     const m = p.mon, age = 1 - k, sx = m.x + 26, sy = m.y - m.h - 46, grow = Math.min(1, age * 5) * Math.min(1, k * 4);
     for (let i = -1; i <= 1; i++) {   // the rays
       const tx = m.x + i * 9, ty = m.y - 2, w = (3.5 - Math.abs(i)) * grow;
