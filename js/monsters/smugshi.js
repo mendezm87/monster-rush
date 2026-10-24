@@ -9,6 +9,215 @@ const SAMURAI = { RED: P('#c42a36', '#861824', '#ee6064'), NAVY: P('#2c3c70', '#
 const samuraiPlates = (p, bands) => { for (const pts of bands) p.poly(pts, SAMURAI.RED, { edge: true }); };   // rows of plates, each overlapping the one above
 const samuraiStuds = (p, x0, x1, y, step = 4) => { for (let x = x0; x <= x1; x += step) p.px(x, y, SAMURAI.GOLD); };
 const samuraiLace = (p, x0, x1, y, step = 2) => { for (let x = x0; x <= x1; x += step) p.px(x, y, SAMURAI.CORD); };
+// Smugshogun redrawn from a pixel-art guide (r242, the owner: "looks very low quality, especially from the side and
+// back"). Each view is a colour map traced from the owner's Gemini guide (docs/refs/smugshogun-guide.jpg, with
+// tools/trace-guide.py: shrunk to 43 rows, armour tidied into lacquered bands), drawn pixel by pixel with each pixel on
+// its rig part (ears, head, tail, body, legs), so he still walks, blinks, chews and strikes like everyone else.
+const SHOGUN_PAL = { k: '#1c1428', o: '#d08548', s: '#a85e2c', l: '#e8a868', w: '#f7f1e6', v: '#e2d4bf', c: '#f0d6a0', p: '#e8b4a4',
+  r: '#c42a36', q: '#861824', e: '#ee6064', g: '#ecc452', n: '#1b264c', u: '#b8a68c' };
+const SHOGUN_MAPS = {
+  front: [
+    '....kk.........kkk....',
+    '....kosk......kopk....',
+    '....klok......kolk....',
+    '...kolpok....koplok...',
+    '...kollokkkkkkollok...',
+    '...kolloooooooollok...',
+    '...koloooooooooolok...',
+    '...koooowoooowoooo....',
+    '....koooowoowooook....',
+    '...koookkkookkkoook...',
+    '...kowokkooookowwok...',
+    '...kwwwwooooowwwwwk...',
+    '...kwwwwwkkkwwwwwwk...',
+    '...kwwwwwwkkwwwwwwk...',
+    '....vwwwvkukkvwwwv....',
+    '....kvwwwwwwwwwwvk....',
+    '....kowwwwwwvwwvok....',
+    '..kkkovwwvvvwwwvokk...',
+    '..kskkwwwwwwwwwwkksk..',
+    '..krekkwwwwwwwwkgerk..',
+    '..krrkkkwwwwwwkkgrrk..',
+    '..kqkkkkkkwwkkkkgqnk..',
+    '.kerkkkeegkkeekkkrrek.',
+    '.krrgkorrrrrrrkokgrrk.',
+    'kqnqkkwqnqnqnqkwkknqk.',
+    'krrgkowrrrrrrrkwokgrkk',
+    'krrgkowkrrrrrrkwokgrrk',
+    'kqnkkowwkkkkkkwwoksqnk',
+    'kkgkoowwwwwwwwwwookgkk',
+    '..kkoowwwwwwwwwwookk..',
+    '...koowwkkkkkkwwook...',
+    '...koowwk....kwwoo....',
+    '....koow.....kwook....',
+    '....koow.....kwook....',
+    '....kook......woo.....',
+    '....kook......koo.....',
+    '....kook......koo.....',
+    '....kowk......kwo.....',
+    '....kwwk......kww.....',
+    '....kwwk......kwwk....',
+    '....kwwk......kwwk....',
+    '...kwwwk......kwww....',
+    '......................'],
+  fside: [
+    '................kk.......kkk..',
+    '...............kopk......ksk..',
+    '...............kplok....kolk..',
+    '...............kplok...koplk..',
+    '..............kpllpkkkkkoplk..',
+    '..............kollpooooooplk..',
+    '..............kolpoooooooopk..',
+    '..............kopoooowwooowk..',
+    '..............kooooooowoowoo..',
+    '..............koooookkkoookok.',
+    '....kkkkk....koooowwokooookwkk',
+    '..kcccccck...kooowwwwooooookkk',
+    '.kccoocccck..koowwwwwwwwwwkkkk',
+    'kvcooooccck..koowwwwwwkwwwkkkk',
+    'kcookkoocck...koowwwwwwkkkkwks',
+    'kcokoooocck..kooowwwwwwwwwwk..',
+    'kcokoooccckkkkkoooowwwwuuuk...',
+    'kcookoccukkkkkkkooowwwwwvv....',
+    '.kcookkkkekkkeegkkswwwwwwwk...',
+    '..kkokkkkkkkkgrrrggkwwwwwwkk..',
+    '...kkqnqkknkkqnqnqgkwwwwwkkk..',
+    '..kokrrrkkrkkrrrrrkkkkwwkkkk..',
+    '..kokrrrkkrrrrrrorkkrrkkkkkk..',
+    '..ookqnqkkkqnqnqngkknqnqnqkk..',
+    '..ookrkkkkkgrrrrrgkkrrrrrrkk..',
+    '..oookoorkkrrrrrrkukrrrrrrkk..',
+    '..ooooookkkqnqnqgkwknqnqnkkk..',
+    '..oooooovkkrrrrrkowkkrrrrkkk..',
+    '..ooooowkkkgrrrrkowwwkkkookk..',
+    '..oooowkkuukkkngkwwwwwwvok.k..',
+    '..oooow.kuuukkkkowkvkkuook....',
+    '.kooowk.kuuuksooowk.kvwok.....',
+    'kkoowk..kuuk.koook...kwok.....',
+    'koovk...kuk..koook...kwok.....',
+    'kook....kuk...oook...kwok.....',
+    'kowk....kuk...kook...kwok.....',
+    'kwwk....kuvk..kook...kwok.....',
+    'kwwk.....vuuk.kook...kwwk.....',
+    'kwwwk.....kkk.kowk....wwk.....',
+    '.kkkk.........kwwk....wwwk....',
+    '..............kwwwk...kwvk....',
+    '...............wwwk...........',
+    '...............kkkk...........'],
+  side: [
+    '...........................kk...........',
+    '..........................kokkkk........',
+    '..........................kpkkok........',
+    '.........................koloklk........',
+    '.........................opllklk........',
+    '........................koplokkk........',
+    '........................koppoooook......',
+    '.......................kooooooooook.....',
+    '.......................kooooooooowk.....',
+    '.....kkk..............koooooooookoo.....',
+    '...kvccckk............koooooowwokkokk...',
+    '..vccccccck...........koooowwwwwoooookk.',
+    '.kcvcccccvc..........kooooowwwwwwwwwwwkk',
+    'kcccooooccck.........kooooowwwwwwwwwwwkk',
+    'kccookooccvk.........kooooowwwwwwwwwwk..',
+    'kcooskocccck.......kkekooooowwwwwwwwk...',
+    'kcookkccccck....kkkrkkrkooooowwwuk......',
+    'kccokccccckkkkkkkqnqkonkkkooowwwk.......',
+    '.ccookkkkkkkeeeeerrrkkgegkkkkwww........',
+    '.kkcookrrrrrrrrrrrrrrrrrrrrggkww........',
+    '...koonqnqnqnqnqnqnqnqnqnqnqgkww........',
+    '...kokrrrrrrrrrrrrrrrrrrrrrrkkkk........',
+    '...kokrrrrrrrrrrrrrkkrrrrrrrkkrk........',
+    '..kooonqnqnqnqnqkkkkkqnqnqngnqnq........',
+    '..kooorrrrrkkkkkkkokgrrrrrrgrrrk........',
+    '..koookrkkkokkookkokgrrrrrrkkrrk........',
+    '..koooooooookkoookkknqnqnqnkkqnk........',
+    '..koooooooowwkkookkkrrrrrrgkkkk.........',
+    '..koooooookkkkkwwkrrggggrrkkvk..........',
+    '...kooooockuu.kkkkkukkkkkkkkk...........',
+    '...koooovkuuk.....kkkkooookuk...........',
+    '...koooockuvk........koooouk............',
+    '..koooovkuuk..........oooouk............',
+    '.kooookkvk............kookuk............',
+    '.koookkuu.............kookuk............',
+    '.kook.kuk.............kooku.............',
+    '.kowk.kuk.............kooku.............',
+    '.kowk.kuk.............kooku.............',
+    '.kwwk.kvuk............kwwkvv............',
+    '.kwwk.kkkkk...........kwwkuuk...........',
+    '.kwwwk.................kwwkkk...........',
+    '..kkkk.................kwww.............',
+    '........................................'],
+  back: [
+    '....kk.........kk....',
+    '...kook.......koo....',
+    '...kook......kooo....',
+    '...koook.....koook...',
+    '...kooookkkkkooook...',
+    '...koooooooooooook...',
+    '...koooooooooooook...',
+    '...koooooooooooook...',
+    '...kooooooooooooo....',
+    '...koooooooooooook...',
+    '..kooooooooooooooo...',
+    '..koooooooooooooook..',
+    '..kooooookcckkooook..',
+    '...ooookcccccckook...',
+    '...koooucccccccook...',
+    '...kkokccccooockk....',
+    '....kkkcccoosookk....',
+    '..kkkekvccokoookkkk..',
+    '..kokkkcccokookkgsk..',
+    '..kqkknccccokkkkgqk..',
+    '.kkrkkrkcccokkeegrk..',
+    '.krrkkkkccccookkkrrk.',
+    '.knqnkkoocccoookkgnk.',
+    '.errrkooowvwoookkkrk.',
+    'krgkkkoowwkwwoookkgkk',
+    'kqkkkoowwwwwwwookkkkk',
+    'krkkkoowwwwwwwwookkek',
+    'krkkoowwwwuwwwwoookrk',
+    'kkkkoowwwwuwwwwoookkk',
+    '...koowwwwkuwwwvook..',
+    '...koowwwk.kwwwvoo...',
+    '...koowwwk..kwwook...',
+    '...koowwk...kwwook...',
+    '....koow.....kwoo....',
+    '....koov.....kooo....',
+    '....kook.....kook....',
+    '....kowk.....kwwk....',
+    '....kowk.....kwwk....',
+    '....kowk.....kwwk....',
+    '....kwwk.....kwwk....',
+    '....kwwk.....kwwk....',
+    '...kwwwk.....kwwwk...',
+    '.....................']
+};
+// which part each pixel rides, per view: ears above `ear` (split at earX), the head above `neck` (and right of headX),
+// a tail box, legs below `leg` (split into the two diagonal pairs by legA), the body for the rest; eyes and mouth for
+// blinks and bites. (bside is the back view with the head turned a pixel right.)
+const SHOGUN_PARTS = {
+  front: { ear: 4, earX: 11, neck: 17, leg: 32, legA: x => x < 11, eyes: [[7, 9, 3], [11, 9, 3]], mouth: [10, 14] },
+  fside: { ear: 5, earX: 21, neck: 18, headX: 13, tail: [0, 10, 12, 18], leg: 30, legA: x => x < 8 || (x >= 13 && x < 19), eyes: [[19, 9, 3]], mouth: [24, 15] },
+  side: { ear: 6, earX: 99, neck: 18, headX: 21, tail: [0, 9, 13, 18], leg: 29, legA: x => x < 6 || x >= 22, eyes: [[32, 10, 2]], mouth: [35, 16] },
+  back: { ear: 4, earX: 10, neck: 13, tail: [6, 12, 14, 22], leg: 33, legA: x => x < 10, eyes: [], mouth: null },
+};
+function shogunDraw(g, v) {
+  const key = v === 'bside' ? 'back' : v, map = SHOGUN_MAPS[key], S = SHOGUN_PARTS[key], { Q, b, h, t, earA, earB, legA, legB } = rigParts(g, v);
+  const W = map[0].length, ox = Math.floor((44 - W) / 2), oy = 1, turn = v === 'bside' ? 1 : 0;
+  const tb = S.tail;
+  map.forEach((row, y) => { for (let x = 0; x < W; x++) {
+    const k = row[x]; if (k === '.') continue;
+    if (k === 'k' && [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => ((map[y + dy] || '')[x + dx] || '.') === '.')) continue;   // the traced outer edge: the sprite builder draws its own outline there
+    const inTail = tb && x >= tb[0] && x <= tb[2] && y >= tb[1] && y <= tb[3] && 'cosvlk'.includes(k);
+    const p = y < S.ear && !(S.headX && x < S.headX) ? (x < S.earX ? earA : earB)
+      : y < S.neck && !(S.headX && x < S.headX) && !inTail ? h
+      : inTail ? t : y >= S.leg ? (S.legA(x) ? legA : legB) : b;
+    p.px(ox + x + (p === h || p === earA || p === earB ? turn : 0), oy + y, SHOGUN_PAL[k]);
+  } });
+  for (const [ex, ey, w] of S.eyes) rigEye(h, Q, ox + ex, oy + ey, () => {}, w);   // closed, hurt and fainting eyes over his smug ones
+  if (S.mouth && Q.mouth) rigMouth(h, Q, ox + S.mouth[0], oy + S.mouth[1], 2);
+}
 Object.assign(MONSTER_ART, {
   // Toshi, the owner's real-life Shiba Inu (drawn from photos): a soft ginger coat; a big
   // white bib, belly and legs; white cheeks up to his eyes; pale eyebrow spots; upright
@@ -86,73 +295,7 @@ Object.assign(MONSTER_ART, {
   // ---- Smugshi's two grown-up forms (44px; r116, the owner's picks from two reference pictures) ----
   // Smugshogun: Toshi all grown up, slim on four legs, in red lacquered samurai armour: rows of plates
   // over his back laced with navy cord and studded with gold, gold-rimmed shoulder guards, a breastplate.
-  smugshogun(g, v = 'front') {
-    const O = TOSHI.coat, C = TOSHI.white, Cd = P(C.s, '#b8a68c', C.b), { RED, GOLD } = SAMURAI, PINK = '#e8b4a4';
-    const { Q, b, h, t, earA, earB, legA, legB } = rigParts(g, v), side = v === 'side';
-    if (side) {
-      t.ellipse(9, 20, 5.5, 5.5, O, { edge: true });                                             // curled tail, up over the back
-      t.ellipse(8.5, 19.5, 3.3, 3.3, C); t.px(8, 19, O.s); t.px(9, 20, O.s);
-      legB.ellipse(15, 37.5, 2, 4.8, Cd); legB.ellipse(29, 37.5, 2, 4.8, Cd);                    // far legs
-      b.ellipse(21, 29, 11, 6.5, O, { edge: true });                                             // body
-      b.ellipse(22, 33.6, 8, 2, C);                                                              // white belly
-      b.ellipse(31, 28.5, 3.6, 5, C);                                                            // white chest
-      legA.ellipse(13, 36, 3, 5, O, { edge: true }); legA.ellipse(13.5, 40, 2.3, 2.6, C, { edge: true });   // hind leg, white sock
-      legA.ellipse(30, 37.5, 2.4, 5.5, C, { edge: true });                                       // front leg
-      samuraiPlates(b, [[[11, 22], [29, 21], [30, 25], [10, 26]], [[10, 25], [30, 24], [31, 28.5], [10, 29]], [[10, 28], [31, 27.5], [31, 32], [10, 32]], [[11, 31], [30, 31], [29, 35.5], [12, 35.5]]]);
-      b.rect(17, 32, 1, 3, RED.s); b.rect(23, 32, 1, 3, RED.s);                                  // the skirt hangs in panels
-      samuraiStuds(b, 13, 27, 22); samuraiLace(b, 12, 28, 25); samuraiLace(b, 12, 29, 28); samuraiLace(b, 12, 29, 31);
-      samuraiPlates(b, [[[25, 21], [32, 21.5], [33, 25.5], [25, 25.5]], [[25, 25], [33, 25], [33, 29], [25, 29]], [[25, 28.5], [33, 28.5], [32, 32.5], [26, 32.5]]]);   // shoulder guard
-      b.rect(26, 21, 6, 1, GOLD); samuraiLace(b, 26, 32, 25); samuraiLace(b, 26, 32, 28); b.px(29, 31, GOLD);
-      b.poly([[32, 23], [36, 25], [36, 30], [33, 31]], RED, { edge: true });                     // breastplate
-      b.px(34, 26, GOLD); b.px(34, 29, GOLD);
-      earB.poly([[24, 10], [22, 1], [28, 6]], P(O.s, TOSHI.line, O.b));                         // far ear, in shadow
-      h.ellipse(30, 14, 9, 7.5, O, { edge: true });                                              // head
-      earA.poly([[28, 8], [31, 0], [34, 7]], O, { edge: true });                                 // near ear
-      earA.poly([[30, 6.5], [31, 2.5], [32.8, 6]], PINK); earA.px(30, 6, C.b);
-      h.ellipse(37.5, 18, 5.6, 3.5, C); h.ellipse(32, 18.5, 3, 2.2, C); h.ellipse(32, 21, 3, 1.6, C);   // muzzle, cheek, throat
-      h.px(33, 9, C.b); h.px(34, 9, C.b);                                                        // eyebrow spot
-      rigEye(h, Q, 32, 11, () => { h.rect(32, 11, 5, 1, OUTLINE); h.rect(33, 12, 3, 1, DARK_EYE); }, 5);   // smug lid
-      h.rect(41, 16, 2, 2, OUTLINE); h.px(41, 16, '#5a5060');                                    // nose
-      rigMouth(h, Q, 37, 20, 4, () => { h.rect(37, 20, 4, 1, OUTLINE); h.px(36, 19, OUTLINE); });   // smirk
-      return;
-    }
-    if (v === 'back') {
-      legA.ellipse(16, 39, 2.8, 4, C, { edge: true }); legB.ellipse(28, 39, 2.8, 4, C, { edge: true });
-      b.ellipse(22, 29, 10, 7.5, O, { edge: true });
-      earA.poly([[12, 12], [11, 1], [19, 8]], O, { edge: true }); earB.poly([[32, 12], [33, 1], [25, 8]], O, { edge: true });
-      h.ellipse(22, 14, 10, 8, O, { edge: true });
-      h.ellipseM(12.5, 18, 1.8, 1.8, C);                                                         // cheek fluff peeking out
-      samuraiPlates(b, [[[13, 21], [31, 21], [32, 25], [12, 25]], [[12, 24], [32, 24], [32, 28], [12, 28]], [[12, 27], [32, 27], [32, 31], [12, 31]], [[12, 30], [32, 30], [31, 35], [13, 35]]]);
-      b.rect(17, 31, 1, 4, RED.s); b.rect(26, 31, 1, 4, RED.s);
-      samuraiStuds(b, 14, 30, 22); samuraiLace(b, 13, 31, 24); samuraiLace(b, 13, 31, 27); samuraiLace(b, 13, 31, 30);
-      t.ellipse(22, 23, 5.5, 5, O, { edge: true });                                              // the famous curled tail, over the armour
-      t.ellipse(22, 22.5, 3.2, 2.8, C); t.px(22, 22, O.s); t.px(23, 22, O.s);
-      return;
-    }
-    t.ellipse(34, 22, 5.5, 5.5, O, { edge: true });                                              // tail behind him
-    t.ellipse(34.5, 21.5, 3.3, 3.3, C); t.px(34, 21, O.s);
-    legA.ellipse(16, 38, 2.6, 5, C, { edge: true }); legB.ellipse(28, 38, 2.6, 5, C, { edge: true });   // white front legs
-    legA.px(15, 42, C.s).px(17, 42, C.s); legB.px(27, 42, C.s).px(29, 42, C.s);
-    b.ellipse(22, 29, 9.5, 7, O, { edge: true });                                                // body
-    b.ellipse(22, 29, 5.5, 6, C);                                                                // white chest
-    for (const s of [1, -1]) {                                                                   // shoulder guards on both sides
-      const X = x => (s > 0 ? x : 44 - x);
-      samuraiPlates(b, [[[X(10), 22], [X(16), 22.5], [X(16.5), 26], [X(10), 26]], [[X(10), 25.5], [X(16.5), 25.5], [X(16.5), 29.5], [X(10), 29.5]], [[X(10.5), 29], [X(16.5), 29], [X(16), 33], [X(11.5), 33]]]);
-    }
-    b.rectM(11, 22, 5, 1, GOLD);
-    samuraiPlates(b, [[[17, 25], [27, 25], [26.5, 28], [17.5, 28]], [[17.5, 27.5], [26.5, 27.5], [26, 30.5], [18, 30.5]], [[18, 30], [26, 30], [25.5, 33], [18.5, 33]]]);   // breastplate
-    b.rect(17, 25, 10, 1, GOLD); b.rect(18, 26, 8, 1, RED.l);
-    earA.poly([[12, 12], [11, 1], [19, 8]], O, { edge: true }); earB.poly([[32, 12], [33, 1], [25, 8]], O, { edge: true });
-    earA.poly([[13.5, 10], [12.5, 4], [17, 8]], PINK); earB.poly([[30.5, 10], [31.5, 4], [27, 8]], PINK);
-    earA.px(14, 9, C.b).px(15, 9, C.b); earB.px(29, 9, C.b).px(28, 9, C.b);
-    h.ellipse(22, 15, 10, 8, O, { edge: true });                                                 // head
-    h.ellipse(22, 19.5, 6.5, 4, C); h.ellipseM(14, 18, 2.4, 2.2, C);                            // muzzle, cheeks
-    h.rect(18, 22, 8, 2, C.b);                                                                   // white throat
-    h.pxM(15, 12, C.b); h.pxM(16, 12, C.b);                                                      // eyebrow spots
-    rigEyes(h, Q, 44, 14, 14, 5, () => { h.rectM(14, 14, 5, 1, OUTLINE); h.rectM(15, 15, 3, 1, DARK_EYE); });   // smug lids
-    h.rect(20, 17, 4, 1, OUTLINE); h.rect(21, 18, 2, 1, OUTLINE); h.px(21, 17, '#5a5060');       // nose
-    rigMouth(h, Q, 20, 21, 4, () => { h.rect(20, 21, 4, 1, OUTLINE); h.px(24, 20, OUTLINE); h.rect(20, 22, 4, 1, C.s); });   // smirk
-  },
+  smugshogun(g, v = 'front') { shogunDraw(g, v); },
   // Daimochi (daimyo + mochi): what Smugshi grows into on Grandma's Cooking. A chubby samurai standing
   // up: a round belly in a red breastplate, navy shoulder guards and wide trousers, red shin guards,
   // a red headband, a rope belt and a katana at his hip, puffy cheeks and a smug little "w" smile.
@@ -295,49 +438,7 @@ Object.assign(MONSTER_ART_DIAG, {
     else if (R.mouth === 'open') { h.rect(19, 16, 4, 2, OUTLINE); h.px(20, 17, TONGUE).px(21, 17, TONGUE); }
     else { h.rect(19, 16, 4, 1, OUTLINE); h.px(23, 15, OUTLINE); h.rect(19, 17, 4, 1, C.s); }   // flat mouth, smug corner, and a chin
   },
-  smugshogun(g, v) {
-    const O = TOSHI.coat, C = TOSHI.white, Cd = P(C.s, '#b8a68c', C.b), { RED, GOLD } = SAMURAI, PINK = '#e8b4a4';
-    const { Q, b, h, t, earA, earB, legA, legB } = rigParts(g, v);
-    if (v === 'bside') {
-      legA.ellipse(15, 39, 2.8, 4, C, { edge: true }); legB.ellipse(27, 39.5, 2.4, 3.8, C, { edge: true });
-      b.ellipse(21, 29, 10, 7.5, O, { edge: true });
-      earA.poly([[13, 11], [13, 0], [20, 6]], O, { edge: true }); earB.poly([[26, 8], [31, 0], [33, 9]], O, { edge: true });
-      h.ellipse(24, 14, 9.5, 8, O, { edge: true });
-      h.ellipse(33, 17, 2, 2, C); h.ellipse(34, 15.5, 1.6, 1.6, C);                              // cheek and muzzle peeking out
-      samuraiPlates(b, [[[13, 21], [30, 21], [31, 25], [12, 25]], [[12, 24], [31, 24], [31, 28], [12, 28]], [[12, 27], [31, 27], [31, 31], [12, 31]], [[12, 30], [31, 30], [30, 35], [13, 35]]]);
-      b.rect(17, 31, 1, 4, RED.s); b.rect(25, 31, 1, 4, RED.s);
-      samuraiStuds(b, 14, 30, 22); samuraiLace(b, 13, 30, 24); samuraiLace(b, 13, 30, 27); samuraiLace(b, 13, 30, 30);
-      t.ellipse(19, 23, 5.5, 5, O, { edge: true });                                              // the curled tail, over the armour
-      t.ellipse(19, 22.5, 3.2, 2.8, C); t.px(19, 22, O.s); t.px(20, 22, O.s);
-      return;
-    }
-    t.ellipse(9, 22, 5, 5, O, { edge: true });                                                   // tail behind him
-    t.ellipse(8.5, 21.5, 3.2, 3.2, C); t.px(8, 21, O.s);
-    legB.ellipse(12, 38, 2.2, 4.5, Cd);                                                          // hind leg
-    legA.ellipse(16, 38.5, 2.6, 5, C, { edge: true }); legB.ellipse(27, 38.5, 2.6, 5, C, { edge: true });   // white front legs
-    legA.px(15, 42, C.s); legB.px(26, 42, C.s);
-    b.ellipse(20, 29, 10, 7, O, { edge: true });                                                 // body
-    b.ellipse(24, 29.5, 5, 5.5, C);                                                              // white chest
-    samuraiPlates(b, [[[10, 22], [18, 22], [18, 26], [10, 26]], [[9.5, 25.5], [18, 25.5], [18, 29.5], [9.5, 29.5]], [[10, 29], [18, 29], [17.5, 33], [11, 33]]]);   // armour down his flank
-    samuraiLace(b, 11, 17, 25); samuraiLace(b, 11, 17, 29); b.rect(11, 22, 6, 1, GOLD);
-    samuraiPlates(b, [[[19, 25], [28, 25], [27.5, 28], [19.5, 28]], [[19.5, 27.5], [27.5, 27.5], [27, 30.5], [20, 30.5]], [[20, 30], [27, 30], [26.5, 33], [20.5, 33]]]);   // breastplate
-    b.rect(19, 25, 9, 1, GOLD); b.rect(20, 26, 7, 1, RED.l);
-    samuraiPlates(b, [[[28, 22], [34, 22.5], [34.5, 26], [28, 26]], [[28, 25.5], [34.5, 25.5], [34.5, 29.5], [28, 29.5]], [[28.5, 29], [34.5, 29], [34, 33], [29.5, 33]]]);   // near shoulder guard
-    b.rect(29, 22, 5, 1, GOLD);
-    earA.poly([[13, 11], [13, 0], [20, 6]], O, { edge: true });                                  // near ear
-    earA.poly([[14.5, 9], [14.5, 3], [18, 6]], PINK); earA.px(15, 8, C.b);
-    earB.poly([[27, 8], [31, 0], [34, 8]], P(O.s, TOSHI.line, O.b), { edge: true });             // far ear, in shadow
-    earB.poly([[28.5, 7], [30.7, 3], [32.5, 7]], PINK);
-    h.ellipse(24, 15, 9.5, 8, O, { edge: true });                                                // head
-    h.ellipse(17, 18, 2.4, 2.2, C); h.ellipse(32.5, 18, 1.6, 2, C);                              // white cheeks
-    h.ellipse(26, 19.5, 6, 4, C);                                                                // muzzle, turned his way
-    h.rect(21, 22, 8, 2, C.b);                                                                   // white throat
-    h.rect(17, 12, 2, 1, C.b); h.rect(27, 12, 2, 1, C.b);                                        // eyebrow spots
-    rigEye(h, Q, 17, 14, () => { h.rect(16, 14, 5, 1, OUTLINE); h.rect(17, 15, 3, 1, DARK_EYE); }, 5);   // smug lids
-    rigEye(h, Q, 28, 14, () => { h.rect(27, 14, 4, 1, OUTLINE); h.rect(28, 15, 2, 1, DARK_EYE); }, 4);
-    h.rect(25, 17, 4, 1, OUTLINE); h.rect(26, 18, 2, 1, OUTLINE); h.px(26, 17, '#5a5060');       // nose
-    rigMouth(h, Q, 25, 21, 4, () => { h.rect(25, 21, 4, 1, OUTLINE); h.px(29, 20, OUTLINE); h.rect(25, 22, 4, 1, C.s); });   // smirk
-  },
+  smugshogun(g, v) { shogunDraw(g, v); },
   daimochi(g, v) {
     const O = TOSHI.coat, C = TOSHI.white, { RED, NAVY, GOLD, CORD, HILT, BELT, SANDAL } = SAMURAI, Nd = P(NAVY.s, '#121a36', NAVY.b), PINK = '#e8b4a4';
     const { Q, b, h, t, earA, earB, legA, legB, armA, armB } = rigParts(g, v);
