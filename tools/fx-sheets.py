@@ -101,6 +101,8 @@ SHEETS = {
     # DARK-2: shadow tendril x3, ring of darkness x2, dark smoke x4, glowing crack x2
     # DARK-3: paper x3 + calendar page, thought bubble x2 + question mark, blank eye x2 + spiral x3, stare beam x3
     # FIGHT-1: fist x2 + punch flash x3, shockwave ring x3, aura sphere x4, aura wisps x3 + motion lines x2
+    # FIGHT-2a (Aura Cannon): beam section x4, core strand x4, muzzle x4, impact x4
+    'fight2a':       ('pk-fight-2a.png', 40, [4, 4, 4, 4]),
     'fight1':        ('pk-fight-1.png', 36, [5, 3, 4, 5]),
     'dark3':         ('pk-dark-3.png', 36, [4, 3, 5, 3]),
     'dark2':         ('pk-dark-2.png', 36, [3, 2, 4, 2]),
@@ -352,7 +354,7 @@ def build(only=None, sheet=False):
             for yy in range(im.size[1]):
                 for xx in range(im.size[0]):
                     if isbg(*px_[xx, yy], xx, yy): px_[xx, yy] = bgc
-        m = bg_mask(im, 40 if (sid in CLEAN_SHRINK and sid != 'thunder') or sid in ('eruptionParts', 'common1', 'common2', 'hits1', 'hits2', 'hits3', 'hits4', 'smug1', 'smug1b', 'smug1c', 'beast1', 'beast2', 'beast3', 'beast4', 'fire2a', 'fire2b', 'fire3', 'fire4', 'water1a', 'water1b', 'water2', 'water3', 'plant1', 'plant2a', 'plant2', 'plant3', 'bug1', 'ice1', 'ice2a', 'ice2', 'earth1', 'earth2', 'dark1', 'dark2', 'dark3', 'fight1') else 400)   # electric arcs close round gaps of background: only tiny ones are part of it (Thunder's cloud undersides are near the background colour, so not there)
+        m = bg_mask(im, 40 if (sid in CLEAN_SHRINK and sid != 'thunder') or sid in ('eruptionParts', 'common1', 'common2', 'hits1', 'hits2', 'hits3', 'hits4', 'smug1', 'smug1b', 'smug1c', 'beast1', 'beast2', 'beast3', 'beast4', 'fire2a', 'fire2b', 'fire3', 'fire4', 'water1a', 'water1b', 'water2', 'water3', 'plant1', 'plant2a', 'plant2', 'plant3', 'bug1', 'ice1', 'ice2a', 'ice2', 'earth1', 'earth2', 'dark1', 'dark2', 'dark3', 'fight1', 'fight2a') else 400)   # electric arcs close round gaps of background: only tiny ones are part of it (Thunder's cloud undersides are near the background colour, so not there)
         if sid in PANELS: drop_specks(im, m)
         if sid in MANUAL:
             boxes = []
