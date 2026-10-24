@@ -39,6 +39,7 @@ the E2c bolt) and stays as it is. Everything else is below.
   cost a lot of fixing, and E2c's ring was hidden behind the next panel.
 - **Frames of one piece side by side, each a small step from the last.** A loop's last frame leads back into the first.
 - **Things that point, point right** (shots, beam heads, slashes, spearheads). The game turns them.
+- **Never write "pointing right" or "pointing left" for a beam's muzzle or impact (r219):** Gemini reads it as a request for arrows (WATER-1b and ICE-2a came back with arrows). Describe each as a burst on its own with nothing attached, and say "no arrows or arrowheads" and "no box or border" (ICE-2a's beam body came back as a bordered box).
 - **Ground pieces are "seen from slightly above, a flat oval"** (cracks, pools, rings), to match the game's view.
 - **Beam sections** are asked for as "a straight horizontal section, the same thickness all along, cut off straight at
   both ends so copies placed end to end join into one long beam". If Gemini's ends don't line up, the game overlaps
@@ -683,18 +684,21 @@ Its own picture, laid out like SMUG-1b (a body with a pattern inside, a core str
 
 > A sprite sheet of separate beam effect pieces for an action game, laid out in exactly 4 rows with lots of empty
 > space between every piece. Row 1: a straight horizontal section of a beam of electricity with yellow lightning
-> bolts twisting around a white-hot center and a pale blue glow, the same thickness all along, cut off straight at
-> both ends so copies placed end to end join into one long beam, in 4 frames of a loop as the bolts crackle and
-> twist forward, each a small step from the last. Row 2: a thin straight horizontal strand of white-hot electricity
-> with a jagged flickering edge, the same thickness all along, cut off straight at both ends, in 4 frames of a loop
-> (the beam's bright core). Row 3: a crackling orb of lightning with forked bolts jumping off it at the mouth of a
-> beam pointing right, in 4 frames of a loop as it pulses. Row 4: a burst of sparks and forked lightning bolts
-> spraying outward where a beam hits something, pointing left toward where the beam comes from, in 4 frames of a
-> loop. Every piece complete and fully inside its own space with a wide margin of empty background all round it,
-> nothing touching another piece or the edges of the picture, nothing cut off. No boxes, panels, frames or borders
-> behind the pieces, one plain background everywhere. 16-bit pixel art visual effect sprites for an action game,
-> chunky pixels with a dark 1-pixel outline, light from the top left, limited bright palette with hard-edged
-> shading, no creature or character, plain dark navy background, no text, no labels
+> bolts twisting around a white-hot center and a pale blue glow, with soft rounded glowing edges (not a rectangle
+> with a border), the same thickness all along, its left and right ends simply cut off straight so copies placed end
+> to end join into one long beam, in 4 frames of a loop as the bolts crackle and twist forward, each a small step
+> from the last. Row 2: a thin straight horizontal strand of white-hot electricity with a jagged flickering edge,
+> the same thickness all along, its ends simply cut off straight, in 4 frames of a loop (the beam's bright core).
+> Row 3: a crackling orb of lightning with forked bolts jumping off it, a round burst on its own with nothing
+> attached to it (no beam, no stream, no arrow coming out of it), in 4 frames of a loop as it pulses. Row 4: a burst
+> of sparks and forked lightning bolts, a burst on its own with nothing attached to it (no beam, no stream, no
+> arrow), spraying outward to the right as if hit from the left, in 4 frames of a loop. Draw no arrows or arrowheads
+> anywhere, and no box, frame or border around any piece. Every piece complete and fully inside its own space with a
+> wide margin of empty background all round it, nothing touching another piece or the edges of the picture, nothing
+> cut off. No boxes, panels, frames or borders behind the pieces, one plain background everywhere. 16-bit pixel art
+> visual effect sprites for an action game, chunky pixels with a dark 1-pixel outline, light from the top left,
+> limited bright palette with hard-edged shading, no creature or character, plain dark navy background, no text, no
+> labels
 
 ### ELEC-2b · Rail Shot (Railwarden)
 
@@ -702,18 +706,20 @@ Rail Shot already plays the E5 pictures; this is only needed if those are swappe
 
 > A sprite sheet of separate beam effect pieces for an action game, laid out in exactly 4 rows with lots of empty
 > space between every piece. Row 1: a straight horizontal section of a perfectly straight thin beam of white-blue
-> light with small spinning rings of cyan energy around it, the same thickness all along, cut off straight at both
-> ends so copies placed end to end join into one long beam, in 4 frames of a loop as the rings slide forward, each a
-> small step from the last. Row 2: a thin straight horizontal strand of blazing white light with a cyan shimmering
-> edge, the same thickness all along, cut off straight at both ends, in 4 frames of a loop (the beam's bright core).
-> Row 3: rings of electric blue light spinning with a white flash at the mouth of a beam pointing right, in 4 frames
-> of a loop as it pulses. Row 4: a cross-shaped white and cyan flash with sparks where a beam hits something,
-> pointing left toward where the beam comes from, in 4 frames of a loop. Every piece complete and fully inside its
-> own space with a wide margin of empty background all round it, nothing touching another piece or the edges of the
-> picture, nothing cut off. No boxes, panels, frames or borders behind the pieces, one plain background everywhere.
-> 16-bit pixel art visual effect sprites for an action game, chunky pixels with a dark 1-pixel outline, light from
-> the top left, limited bright palette with hard-edged shading, no creature or character, plain dark navy
-> background, no text, no labels
+> light with small spinning rings of cyan energy around it, with soft rounded glowing edges (not a rectangle with a
+> border), the same thickness all along, its left and right ends simply cut off straight so copies placed end to end
+> join into one long beam, in 4 frames of a loop as the rings slide forward, each a small step from the last. Row 2:
+> a thin straight horizontal strand of blazing white light with a cyan shimmering edge, the same thickness all
+> along, its ends simply cut off straight, in 4 frames of a loop (the beam's bright core). Row 3: rings of electric
+> blue light spinning with a white flash, a round burst on its own with nothing attached to it (no beam, no stream,
+> no arrow coming out of it), in 4 frames of a loop as it pulses. Row 4: a cross-shaped white and cyan flash with
+> sparks, a burst on its own with nothing attached to it (no beam, no stream, no arrow), spraying outward to the
+> right as if hit from the left, in 4 frames of a loop. Draw no arrows or arrowheads anywhere, and no box, frame or
+> border around any piece. Every piece complete and fully inside its own space with a wide margin of empty
+> background all round it, nothing touching another piece or the edges of the picture, nothing cut off. No boxes,
+> panels, frames or borders behind the pieces, one plain background everywhere. 16-bit pixel art visual effect
+> sprites for an action game, chunky pixels with a dark 1-pixel outline, light from the top left, limited bright
+> palette with hard-edged shading, no creature or character, plain dark navy background, no text, no labels
 
 ### ELEC-3 · Discharge, Volt Rush, Lance Charge
 
@@ -849,18 +855,20 @@ Its own picture, laid out like SMUG-1b (a body with a pattern inside, a core str
 
 > A sprite sheet of separate beam effect pieces for an action game, laid out in exactly 4 rows with lots of empty
 > space between every piece. Row 1: a straight horizontal section of a freezing ray of pale blue light with a white
-> center and small ice crystals forming and spinning inside it, the same thickness all along, cut off straight at
-> both ends so copies placed end to end join into one long beam, in 4 frames of a loop as the crystals form and
-> drift forward, each a small step from the last. Row 2: a thin straight horizontal strand of icy white light with a
-> sparkling frosty edge, the same thickness all along, cut off straight at both ends, in 4 frames of a loop (the
-> beam's bright core). Row 3: a swirl of frost mist with snowflakes at the mouth of a beam pointing right, in 4
-> frames of a loop as it pulses. Row 4: a burst of ice crystals and frost spraying outward where a beam hits
-> something, pointing left toward where the beam comes from, in 4 frames of a loop. Every piece complete and fully
-> inside its own space with a wide margin of empty background all round it, nothing touching another piece or the
-> edges of the picture, nothing cut off. No boxes, panels, frames or borders behind the pieces, one plain background
-> everywhere. 16-bit pixel art visual effect sprites for an action game, chunky pixels with a dark 1-pixel outline,
-> light from the top left, limited bright palette with hard-edged shading, no creature or character, plain dark navy
-> background, no text, no labels
+> center and small ice crystals forming and spinning inside it, with soft rounded glowing edges (not a rectangle
+> with a border), the same thickness all along, its left and right ends simply cut off straight so copies placed end
+> to end join into one long beam, in 4 frames of a loop as the crystals form and drift forward, each a small step
+> from the last. Row 2: a thin straight horizontal strand of icy white light with a sparkling frosty edge, the same
+> thickness all along, its ends simply cut off straight, in 4 frames of a loop (the beam's bright core). Row 3: a
+> swirl of frost mist with snowflakes, a round burst on its own with nothing attached to it (no beam, no stream, no
+> arrow coming out of it), in 4 frames of a loop as it pulses. Row 4: a burst of ice crystals and frost, a burst on
+> its own with nothing attached to it (no beam, no stream, no arrow), spraying outward to the right as if hit from
+> the left, in 4 frames of a loop. Draw no arrows or arrowheads anywhere, and no box, frame or border around any
+> piece. Every piece complete and fully inside its own space with a wide margin of empty background all round it,
+> nothing touching another piece or the edges of the picture, nothing cut off. No boxes, panels, frames or borders
+> behind the pieces, one plain background everywhere. 16-bit pixel art visual effect sprites for an action game,
+> chunky pixels with a dark 1-pixel outline, light from the top left, limited bright palette with hard-edged
+> shading, no creature or character, plain dark navy background, no text, no labels
 
 ### ICE-2 · Frost Armor (and the boss's frost and glacier)
 
@@ -1015,18 +1023,20 @@ Its own picture, laid out like SMUG-1b (a body with a pattern inside, a core str
 
 > A sprite sheet of separate beam effect pieces for an action game, laid out in exactly 4 rows with lots of empty
 > space between every piece. Row 1: a straight horizontal section of a beam of fiery red-orange fighting aura with a
-> white-hot center and flickering flame-like wisps streaming along inside it, the same thickness all along, cut off
-> straight at both ends so copies placed end to end join into one long beam, in 4 frames of a loop as the wisps
-> stream forward, each a small step from the last. Row 2: a thin straight horizontal strand of white-hot aura with a
-> red-orange flickering edge, the same thickness all along, cut off straight at both ends, in 4 frames of a loop
-> (the beam's bright core). Row 3: a burst of red-orange aura with a shockwave ring at the mouth of a beam pointing
-> right, in 4 frames of a loop as it pulses. Row 4: a burst of red-orange aura spraying outward with a shockwave
-> where a beam hits something, pointing left toward where the beam comes from, in 4 frames of a loop. Every piece
-> complete and fully inside its own space with a wide margin of empty background all round it, nothing touching
-> another piece or the edges of the picture, nothing cut off. No boxes, panels, frames or borders behind the pieces,
-> one plain background everywhere. 16-bit pixel art visual effect sprites for an action game, chunky pixels with a
-> dark 1-pixel outline, light from the top left, limited bright palette with hard-edged shading, no creature or
-> character, plain dark navy background, no text, no labels
+> white-hot center and flickering flame-like wisps streaming along inside it, with soft rounded glowing edges (not a
+> rectangle with a border), the same thickness all along, its left and right ends simply cut off straight so copies
+> placed end to end join into one long beam, in 4 frames of a loop as the wisps stream forward, each a small step
+> from the last. Row 2: a thin straight horizontal strand of white-hot aura with a red-orange flickering edge, the
+> same thickness all along, its ends simply cut off straight, in 4 frames of a loop (the beam's bright core). Row 3:
+> a burst of red-orange aura with a shockwave ring, a round burst on its own with nothing attached to it (no beam,
+> no stream, no arrow coming out of it), in 4 frames of a loop as it pulses. Row 4: a burst of red-orange aura with
+> a shockwave, a burst on its own with nothing attached to it (no beam, no stream, no arrow), spraying outward to
+> the right as if hit from the left, in 4 frames of a loop. Draw no arrows or arrowheads anywhere, and no box, frame
+> or border around any piece. Every piece complete and fully inside its own space with a wide margin of empty
+> background all round it, nothing touching another piece or the edges of the picture, nothing cut off. No boxes,
+> panels, frames or borders behind the pieces, one plain background everywhere. 16-bit pixel art visual effect
+> sprites for an action game, chunky pixels with a dark 1-pixel outline, light from the top left, limited bright
+> palette with hard-edged shading, no creature or character, plain dark navy background, no text, no labels
 
 ### FIGHT-2 · Bulk Up (Bugilist)
 
@@ -1121,18 +1131,21 @@ Its own picture, laid out like SMUG-1b (a body with a pattern inside, a core str
 
 > A sprite sheet of separate beam effect pieces for an action game, laid out in exactly 4 rows with lots of empty
 > space between every piece. Row 1: a straight horizontal section of a sputtering stream of violet sludge with
-> bubbles and magenta and cyan square pixel flecks churning inside it, the same thickness all along, cut off
-> straight at both ends so copies placed end to end join into one long beam, in 4 frames of a loop as the sludge
-> churns forward, each a small step from the last. Row 2: a thin straight horizontal strand of glowing pale violet
-> sludge with a glitching magenta edge, the same thickness all along, cut off straight at both ends, in 4 frames of
-> a loop (the beam's bright core). Row 3: a glob of violet sludge bursting out with drips at the mouth of a beam
-> pointing right, in 4 frames of a loop as it pulses. Row 4: a splatter of violet sludge bursting outward with drops
-> and magenta and cyan pixel blocks where a beam hits something, pointing left toward where the beam comes from, in
-> 4 frames of a loop. Every piece complete and fully inside its own space with a wide margin of empty background all
-> round it, nothing touching another piece or the edges of the picture, nothing cut off. No boxes, panels, frames or
-> borders behind the pieces, one plain background everywhere. 16-bit pixel art visual effect sprites for an action
-> game, chunky pixels with a dark 1-pixel outline, light from the top left, limited bright palette with hard-edged
-> shading, no creature or character, plain dark navy background, no text, no labels
+> bubbles and magenta and cyan square pixel flecks churning inside it, with soft rounded glowing edges (not a
+> rectangle with a border), the same thickness all along, its left and right ends simply cut off straight so copies
+> placed end to end join into one long beam, in 4 frames of a loop as the sludge churns forward, each a small step
+> from the last. Row 2: a thin straight horizontal strand of glowing pale violet sludge with a glitching magenta
+> edge, the same thickness all along, its ends simply cut off straight, in 4 frames of a loop (the beam's bright
+> core). Row 3: a glob of violet sludge with drips, a round burst on its own with nothing attached to it (no beam,
+> no stream, no arrow coming out of it), in 4 frames of a loop as it pulses. Row 4: a splatter of violet sludge with
+> drops and magenta and cyan pixel blocks, a burst on its own with nothing attached to it (no beam, no stream, no
+> arrow), spraying outward to the right as if hit from the left, in 4 frames of a loop. Draw no arrows or arrowheads
+> anywhere, and no box, frame or border around any piece. Every piece complete and fully inside its own space with a
+> wide margin of empty background all round it, nothing touching another piece or the edges of the picture, nothing
+> cut off. No boxes, panels, frames or borders behind the pieces, one plain background everywhere. 16-bit pixel art
+> visual effect sprites for an action game, chunky pixels with a dark 1-pixel outline, light from the top left,
+> limited bright palette with hard-edged shading, no creature or character, plain dark navy background, no text, no
+> labels
 
 ### GLITCH-2 · Toxic Pool, Data Tear
 
@@ -1179,18 +1192,20 @@ Its own picture, laid out like SMUG-1b (a body with a pattern inside, a core str
 
 > A sprite sheet of separate beam effect pieces for an action game, laid out in exactly 4 rows with lots of empty
 > space between every piece. Row 1: a straight horizontal section of a pale violet spectral ray with a white center
-> and ghostly wisps and faint spirit faces drifting along inside it, the same thickness all along, cut off straight
-> at both ends so copies placed end to end join into one long beam, in 4 frames of a loop as the wisps drift
-> forward, each a small step from the last. Row 2: a thin straight horizontal strand of pale white spirit light with
-> a wispy edge, the same thickness all along, cut off straight at both ends, in 4 frames of a loop (the beam's
-> bright core). Row 3: a swirl of violet spirit light with wisps at the mouth of a beam pointing right, in 4 frames
-> of a loop as it pulses. Row 4: a burst of violet ghost light spraying outward with wisps where a beam hits
-> something, pointing left toward where the beam comes from, in 4 frames of a loop. Every piece complete and fully
-> inside its own space with a wide margin of empty background all round it, nothing touching another piece or the
-> edges of the picture, nothing cut off. No boxes, panels, frames or borders behind the pieces, one plain background
-> everywhere. 16-bit pixel art visual effect sprites for an action game, chunky pixels with a dark 1-pixel outline,
-> light from the top left, limited bright palette with hard-edged shading, no creature or character, plain dark navy
-> background, no text, no labels
+> and ghostly wisps and faint spirit faces drifting along inside it, with soft rounded glowing edges (not a
+> rectangle with a border), the same thickness all along, its left and right ends simply cut off straight so copies
+> placed end to end join into one long beam, in 4 frames of a loop as the wisps drift forward, each a small step
+> from the last. Row 2: a thin straight horizontal strand of pale white spirit light with a wispy edge, the same
+> thickness all along, its ends simply cut off straight, in 4 frames of a loop (the beam's bright core). Row 3: a
+> swirl of violet spirit light with wisps, a round burst on its own with nothing attached to it (no beam, no stream,
+> no arrow coming out of it), in 4 frames of a loop as it pulses. Row 4: a burst of violet ghost light with wisps, a
+> burst on its own with nothing attached to it (no beam, no stream, no arrow), spraying outward to the right as if
+> hit from the left, in 4 frames of a loop. Draw no arrows or arrowheads anywhere, and no box, frame or border
+> around any piece. Every piece complete and fully inside its own space with a wide margin of empty background all
+> round it, nothing touching another piece or the edges of the picture, nothing cut off. No boxes, panels, frames or
+> borders behind the pieces, one plain background everywhere. 16-bit pixel art visual effect sprites for an action
+> game, chunky pixels with a dark 1-pixel outline, light from the top left, limited bright palette with hard-edged
+> shading, no creature or character, plain dark navy background, no text, no labels
 
 ---
 
@@ -1213,18 +1228,20 @@ Its own picture, laid out like SMUG-1b (a body with a pattern inside, a core str
 
 > A sprite sheet of separate beam effect pieces for an action game, laid out in exactly 4 rows with lots of empty
 > space between every piece. Row 1: a straight horizontal section of a beam of polished white-silver light with
-> steel-blue edges and bright glints and facets sliding along inside it, the same thickness all along, cut off
-> straight at both ends so copies placed end to end join into one long beam, in 4 frames of a loop as the glints
-> slide forward, each a small step from the last. Row 2: a thin straight horizontal strand of blinding white light
-> with a silver shimmering edge, the same thickness all along, cut off straight at both ends, in 4 frames of a loop
-> (the beam's bright core). Row 3: a bright white flash with a steel-blue ring and sharp rays at the mouth of a beam
-> pointing right, in 4 frames of a loop as it pulses. Row 4: a spray of white and orange metal sparks bursting
-> outward where a beam hits something, pointing left toward where the beam comes from, in 4 frames of a loop. Every
-> piece complete and fully inside its own space with a wide margin of empty background all round it, nothing
-> touching another piece or the edges of the picture, nothing cut off. No boxes, panels, frames or borders behind
-> the pieces, one plain background everywhere. 16-bit pixel art visual effect sprites for an action game, chunky
-> pixels with a dark 1-pixel outline, light from the top left, limited bright palette with hard-edged shading, no
-> creature or character, plain dark navy background, no text, no labels
+> steel-blue edges and bright glints and facets sliding along inside it, with soft rounded glowing edges (not a
+> rectangle with a border), the same thickness all along, its left and right ends simply cut off straight so copies
+> placed end to end join into one long beam, in 4 frames of a loop as the glints slide forward, each a small step
+> from the last. Row 2: a thin straight horizontal strand of blinding white light with a silver shimmering edge, the
+> same thickness all along, its ends simply cut off straight, in 4 frames of a loop (the beam's bright core). Row 3:
+> a bright white flash with a steel-blue ring and sharp rays, a round burst on its own with nothing attached to it
+> (no beam, no stream, no arrow coming out of it), in 4 frames of a loop as it pulses. Row 4: a spray of white and
+> orange metal sparks, a burst on its own with nothing attached to it (no beam, no stream, no arrow), spraying
+> outward to the right as if hit from the left, in 4 frames of a loop. Draw no arrows or arrowheads anywhere, and no
+> box, frame or border around any piece. Every piece complete and fully inside its own space with a wide margin of
+> empty background all round it, nothing touching another piece or the edges of the picture, nothing cut off. No
+> boxes, panels, frames or borders behind the pieces, one plain background everywhere. 16-bit pixel art visual
+> effect sprites for an action game, chunky pixels with a dark 1-pixel outline, light from the top left, limited
+> bright palette with hard-edged shading, no creature or character, plain dark navy background, no text, no labels
 
 ### STEEL-1 · Drone Swarm (Citadrone)
 
@@ -1287,18 +1304,20 @@ Its own picture, laid out like SMUG-1b (a body with a pattern inside, a core str
 
 > A sprite sheet of separate beam effect pieces for an action game, laid out in exactly 4 rows with lots of empty
 > space between every piece. Row 1: a straight horizontal section of a dazzling beam of pink and white light with
-> rainbow glints and sparkles twinkling along inside it, the same thickness all along, cut off straight at both ends
-> so copies placed end to end join into one long beam, in 4 frames of a loop as the sparkles twinkle forward, each a
-> small step from the last. Row 2: a thin straight horizontal strand of blazing white light with a pink shimmering
-> edge, the same thickness all along, cut off straight at both ends, in 4 frames of a loop (the beam's bright core).
-> Row 3: a ball of pink light with sparkles and short rays at the mouth of a beam pointing right, in 4 frames of a
-> loop as it pulses. Row 4: a pink and white starburst with sparkles flying where a beam hits something, pointing
-> left toward where the beam comes from, in 4 frames of a loop. Every piece complete and fully inside its own space
-> with a wide margin of empty background all round it, nothing touching another piece or the edges of the picture,
-> nothing cut off. No boxes, panels, frames or borders behind the pieces, one plain background everywhere. 16-bit
-> pixel art visual effect sprites for an action game, chunky pixels with a dark 1-pixel outline, light from the top
-> left, limited bright palette with hard-edged shading, no creature or character, plain dark navy background, no
-> text, no labels
+> rainbow glints and sparkles twinkling along inside it, with soft rounded glowing edges (not a rectangle with a
+> border), the same thickness all along, its left and right ends simply cut off straight so copies placed end to end
+> join into one long beam, in 4 frames of a loop as the sparkles twinkle forward, each a small step from the last.
+> Row 2: a thin straight horizontal strand of blazing white light with a pink shimmering edge, the same thickness
+> all along, its ends simply cut off straight, in 4 frames of a loop (the beam's bright core). Row 3: a ball of pink
+> light with sparkles and short rays, a round burst on its own with nothing attached to it (no beam, no stream, no
+> arrow coming out of it), in 4 frames of a loop as it pulses. Row 4: a pink and white starburst with sparkles, a
+> burst on its own with nothing attached to it (no beam, no stream, no arrow), spraying outward to the right as if
+> hit from the left, in 4 frames of a loop. Draw no arrows or arrowheads anywhere, and no box, frame or border
+> around any piece. Every piece complete and fully inside its own space with a wide margin of empty background all
+> round it, nothing touching another piece or the edges of the picture, nothing cut off. No boxes, panels, frames or
+> borders behind the pieces, one plain background everywhere. 16-bit pixel art visual effect sprites for an action
+> game, chunky pixels with a dark 1-pixel outline, light from the top left, limited bright palette with hard-edged
+> shading, no creature or character, plain dark navy background, no text, no labels
 
 ### FAIRY-2 · Wish (Pixibelle, Bellpaca)
 
@@ -1317,18 +1336,21 @@ Its own picture, laid out like SMUG-1b (a body with a pattern inside, a core str
 
 > A sprite sheet of separate beam effect pieces for an action game, laid out in exactly 4 rows with lots of empty
 > space between every piece. Row 1: a straight horizontal section of a wavy beam of pink and magenta mind energy
-> with a white center and rings of mind energy rippling along inside it, the same thickness all along, cut off
-> straight at both ends so copies placed end to end join into one long beam, in 4 frames of a loop as the rings
-> ripple forward, each a small step from the last. Row 2: a thin straight horizontal strand of bright white-pink
-> light with a wavy shimmering edge, the same thickness all along, cut off straight at both ends, in 4 frames of a
-> loop (the beam's bright core). Row 3: a ring of pink mind energy pulsing with a glowing center at the mouth of a
-> beam pointing right, in 4 frames of a loop as it pulses. Row 4: a burst of pink and magenta light spraying outward
-> with small rings where a beam hits something, pointing left toward where the beam comes from, in 4 frames of a
-> loop. Every piece complete and fully inside its own space with a wide margin of empty background all round it,
-> nothing touching another piece or the edges of the picture, nothing cut off. No boxes, panels, frames or borders
-> behind the pieces, one plain background everywhere. 16-bit pixel art visual effect sprites for an action game,
-> chunky pixels with a dark 1-pixel outline, light from the top left, limited bright palette with hard-edged
-> shading, no creature or character, plain dark navy background, no text, no labels
+> with a white center and rings of mind energy rippling along inside it, with soft rounded glowing edges (not a
+> rectangle with a border), the same thickness all along, its left and right ends simply cut off straight so copies
+> placed end to end join into one long beam, in 4 frames of a loop as the rings ripple forward, each a small step
+> from the last. Row 2: a thin straight horizontal strand of bright white-pink light with a wavy shimmering edge,
+> the same thickness all along, its ends simply cut off straight, in 4 frames of a loop (the beam's bright core).
+> Row 3: a ring of pink mind energy pulsing with a glowing center, a round burst on its own with nothing attached to
+> it (no beam, no stream, no arrow coming out of it), in 4 frames of a loop as it pulses. Row 4: a burst of pink and
+> magenta light with small rings, a burst on its own with nothing attached to it (no beam, no stream, no arrow),
+> spraying outward to the right as if hit from the left, in 4 frames of a loop. Draw no arrows or arrowheads
+> anywhere, and no box, frame or border around any piece. Every piece complete and fully inside its own space with a
+> wide margin of empty background all round it, nothing touching another piece or the edges of the picture, nothing
+> cut off. No boxes, panels, frames or borders behind the pieces, one plain background everywhere. 16-bit pixel art
+> visual effect sprites for an action game, chunky pixels with a dark 1-pixel outline, light from the top left,
+> limited bright palette with hard-edged shading, no creature or character, plain dark navy background, no text, no
+> labels
 
 ### PSY-1 · Mind Orbs (Gyroculus, Mindra)
 
@@ -1377,18 +1399,20 @@ Its own picture, laid out like SMUG-1b, except its end is a roaring dragon's hea
 
 > A sprite sheet of separate beam effect pieces for an action game, laid out in exactly 4 rows with lots of empty
 > space between every piece. Row 1: a straight horizontal section of a beam of deep indigo and violet energy full of
-> tiny white stars swirling inside it, with a pink and teal nebula glow, the same thickness all along, cut off
-> straight at both ends so copies placed end to end join into one long beam, in 4 frames of a loop as the stars
-> swirl forward, each a small step from the last. Row 2: a thin straight horizontal strand of bright white starlight
-> with a pink and teal shimmering edge, the same thickness all along, cut off straight at both ends, in 4 frames of
-> a loop (the beam's bright core). Row 3: a ball of indigo energy with stars and a pink and teal glow at the mouth
-> of a beam pointing right, in 4 frames of a loop as it pulses. Row 4: a roaring dragon's head made of the same
-> star-filled violet energy, open jaws pointing right, its neck trailing back to the left, in 4 frames of a loop.
-> Every piece complete and fully inside its own space with a wide margin of empty background all round it, nothing
-> touching another piece or the edges of the picture, nothing cut off. No boxes, panels, frames or borders behind
-> the pieces, one plain background everywhere. 16-bit pixel art visual effect sprites for an action game, chunky
-> pixels with a dark 1-pixel outline, light from the top left, limited bright palette with hard-edged shading, no
-> creature or character, plain dark navy background, no text, no labels
+> tiny white stars swirling inside it, with a pink and teal nebula glow, with soft rounded glowing edges (not a
+> rectangle with a border), the same thickness all along, its left and right ends simply cut off straight so copies
+> placed end to end join into one long beam, in 4 frames of a loop as the stars swirl forward, each a small step
+> from the last. Row 2: a thin straight horizontal strand of bright white starlight with a pink and teal shimmering
+> edge, the same thickness all along, its ends simply cut off straight, in 4 frames of a loop (the beam's bright
+> core). Row 3: a ball of indigo energy with stars and a pink and teal glow, a round burst on its own with nothing
+> attached to it (no beam, no stream, no arrow coming out of it), in 4 frames of a loop as it pulses. Row 4: a
+> roaring dragon's head made of the same star-filled violet energy, open jaws facing right, its neck ending in a
+> short rounded stub on the left, in 4 frames of a loop. Draw no arrows or arrowheads anywhere, and no box, frame or
+> border around any piece. Every piece complete and fully inside its own space with a wide margin of empty
+> background all round it, nothing touching another piece or the edges of the picture, nothing cut off. No boxes,
+> panels, frames or borders behind the pieces, one plain background everywhere. 16-bit pixel art visual effect
+> sprites for an action game, chunky pixels with a dark 1-pixel outline, light from the top left, limited bright
+> palette with hard-edged shading, no creature or character, plain dark navy background, no text, no labels
 
 ### DRAGON-1 · Dragon Claw (Cosmite, Nyxdrake)
 
