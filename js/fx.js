@@ -818,6 +818,15 @@ const PIECE_BEAMS = {
   spectralRay: { body: ['ghost2', [0, 1, 2, 3], 0, 0.11, 0.11], muzzle: ['ghost2', [8, 9, 10, 11], 0.5], charge: ['ghost2', [8, 9, 10]],
     impact: ['ghost2', [12, 13, 14, 15], 0.25], head: ['ghost2', [12, 13, 14, 15], 0.25],
     thick: 2.2, muzzleSc: 0.75, headSc: 0.9, impactSc: 1.1, chargeSc: 0.35 },   // GHOST-2 (r236): its sections' bulging end caps trimmed off
+  dragonPulse: { body: ['dragon1a', [0, 1, 2, 3], 0, 0.02, 0.02], muzzle: ['dragon1a', [8, 9, 10, 11], 0.5], charge: ['dragon1a', [8, 9, 10]],
+    impact: ['dragon2', [3, 4, 5, 6], 0.5], head: ['dragon1a', [12, 13, 14, 15], 0.32], headAlways: true, sparkles: ['dragon2', [8, 9]],
+    thick: 2.3, muzzleSc: 0.7, headSc: 1.25, impactSc: 0.9, chargeSc: 0.35 },   // DRAGON-1a (r241): a roaring dragon's head of starlight on its tip
+  psybeam: { body: ['psy1a', [0, 1, 2, 3], 0, 0.02, 0.02], muzzle: ['psy1a', [8, 9, 10, 11], 0.5], charge: ['psy1a', [8, 9, 10]],
+    impact: ['psy1a', [12, 13, 14, 15], 0.3], head: ['psy1a', [12, 13, 14], 0.3],
+    thick: 2.2, muzzleSc: 0.7, headSc: 0.9, impactSc: 1.1, chargeSc: 0.35 },   // PSY-1a (r240)
+  dazzleBeam: { body: ['fairy2a', [0, 1, 2, 3], 0, 0.1, 0.1], muzzle: ['fairy2a', [8, 9, 10, 11], 0.5], charge: ['fairy2a', [8, 9, 10]],
+    impact: ['fairy2a', [12, 13, 14, 15], 0.4], head: ['fairy2a', [12, 13, 14], 0.4], sparkles: ['fairy1', [11, 12]],
+    thick: 2.3, muzzleSc: 0.75, headSc: 0.9, impactSc: 1.1, chargeSc: 0.35 },   // FAIRY-2a (r239): its sections' rounded ends trimmed
   flashCannon: { body: ['steel1a', [0, 1, 2, 3], 0, 0.08, 0.08], muzzle: ['steel1a', [8, 9, 10, 11], 0.5], charge: ['steel1a', [8, 9, 10]],
     impact: ['steel1a', [12, 13, 14, 15], 0.2], head: ['steel1a', [8, 9, 10, 11], 0.5],
     thick: 2.4, muzzleSc: 0.8, headSc: 0.7, impactSc: 1.2, chargeSc: 0.35 },   // STEEL-1a (r238): its sections' rounded ends trimmed, a flash star at its tip
@@ -844,7 +853,8 @@ const PIECE_DASH = { bodySlam: { thud: true },
   deadlineDash: { papers: 0.05, calendar: true },
   jab: { aura: 0.03, punch: 1 }, closeCombat: { aura: 0.03, punch: 2 },   // FIGHT-1 (r226): aura wisps and motion lines streaming off it, fists of aura on every hit   // DARK-3 (r225): Mondaze's paperwork flying off it, a calendar page and a burst of papers on the hit   // DARK-1 (r223): shadow wisps streaming off it, a crescent cut on the hit   // EARTH-1 (r221): rubble kicked up as it rolls, a rock smash on the hit
   braveDive: { draw: 'bow', feathers: 0.05 },
-  ironSlam: { trail: ['steel1', [5, 6, 7], 0.05], clang: true },   // STEEL-2 (r238): sparks scraping off it, a clang and a dent in the ground on the hit
+  ironSlam: { trail: ['steel1', [5, 6, 7], 0.05], clang: true },
+  dragonClaw: { trail: ['dragon1', [4, 5], 0.05], rake: true, nodust: true },   // DRAGON-1 (r241): stardust trailing off it, three claw marks raked across the target   // STEEL-2 (r238): sparks scraping off it, a clang and a dent in the ground on the hit
   voltRush: { front: ['elec3', [5, 6, 7], 0.3, 2.1], bolts: 0.04, zap: true },   // ELEC-3 (r237): a spearhead of lightning on its nose, bolts crackling off it, a zap on the hit
   lanceCharge: { front: ['elec3', [8, 9, 10], 0.38, 2], bolts: 0.06, zap: true, scorch2: true },   // ELEC-3: its lance of blue lightning, a scorch mark where it hits
   phantomStrike: { spirit: 0.035, ghostSlash: true },   // GHOST-1 (r235): will-o'-wisps and wisps trailing off it, a streak of spirit light and mist on the hit   // WIND-2b (r231): a bow wave of air round its front, feathers and wind streaks behind
@@ -1004,7 +1014,10 @@ const PIECE_SHOTS = {
   razorLeaf:  { sheet: 'plant1', fly: [0, 1, 2, 3, 4], len: 20, spin: true },
   pinMissile: { sheet: 'bug1', fly: [11, 12], len: 18, ax: 0.6 },
   iceShard:   { sheet: 'ice1', fly: [0, 1, 2], len: 22, ax: 0.55 },
-  droneSwarm: { sheet: 'steel1', fly: [0, 1], len: 22, ax: 0.5 },   // STEEL-1 (r238): little drones, propellers spinning
+  mindOrbs:   { sheet: 'psy1', fly: [0, 1, 2, 3], len: 22, spin: true },   // PSY-1 (r240): a pink orb, its spiral turning
+  moonblast:  { sheet: 'fairy1', fly: [0, 1, 2, 3], len: 30, spin: true },   // FAIRY-1 (r239): a spinning crescent moon
+  fairyWind:  { sheet: 'fairy1', fly: [7, 8, 9], len: 22, ax: 0.5 },   // FAIRY-1: curls of pink fairy wind
+  droneSwarm: { sheet: 'steel1', fly: [0, 1], len: 30, ax: 0.5 },   // STEEL-1 (r238): little drones, propellers spinning
   thunderbolt: { sheet: 'elec1', fly: [8, 9, 10, 11], len: 36, ax: 0.68 },   // ELEC-1 (r237): a crackling ball of lightning, bolts flicking off behind
   staticSiphon: { sheet: 'elec1', fly: [12, 13, 14], len: 28, spin: true },   // ELEC-1: a fuzzy ball of static
   shadowBall: { sheet: 'ghost1', fly: [0, 1, 2, 3], len: 36, spin: true },   // GHOST-1 (r235): a ball of ghost fire
@@ -1025,7 +1038,8 @@ const PIECE_SHOT_HITS = {
   auraSphere: ['fight1', [2, 3, 4], 1.1],
   acidSpray: ['glitch1', [12, 13], 0.5],
   shadowBall: ['ghost1', [16, 17, 18], 1],
-  droneSwarm: ['steel1', [2, 3, 4], 1.1],
+  droneSwarm: ['steel1', [2, 3, 4], 1.1], mindOrbs: ['psy1', [4, 5, 6], 1],
+  moonblast: ['fairy1', [4, 5, 6], 1.6], fairyWind: ['fairy1', [4, 6, 6], 0.7],
   thunderbolt: ['elec1', [3, 4, 5], 2.3], staticSiphon: ['elec1', [3, 4, 5], 1.4],
   iceShard: ['ice1', [4, 5, 6], 0.9],
 };
@@ -1116,6 +1130,10 @@ mixInto(Battle, class {
       }
       if (big) this.addPiece('fight1', null, { frames: [5, 6, 7], x: tgt.x, y: tgt.cy, sc: tgt.h * 0.9 / sheetH('fight1', 7), rot: from, life: 0.3, delay: 0.05 });
     }
+    if (PD && PD.rake && FXS.dragon1) {   // three claw streaks raking across it, a dragon scale flung off (DRAGON-1)
+      this.addPiece('dragon1', null, { frames: [0, 1, 1, 2], x: tgt.x, y: tgt.cy, near: true, sc: tgt.h * 1.2 / sheetH('dragon1', 1), flip: src && src.x > tgt.x, life: 0.32 });
+      if (big) { const ang = rand(0, TAU); this.addPiece('dragon1', null, { frames: [3], x: tgt.x, y: tgt.cy, mx: Math.cos(ang) * 60, my: Math.sin(ang) * 40, vz: 70, g: 400, rot: rand(0, TAU), vr: 8, sc: 0.5, shrink: 0.15, life: 0.55 }); }
+    }
     if (big && PD && PD.clang && FXS.steel2) {   // a clang star, a dent in the ground, a bolt or two flying (STEEL-2)
       this.addPiece('steel2', null, { frames: [0, 1, 2], x: tgt.x + (src ? Math.sign(src.x - tgt.x) * tgt.r * 0.4 : 0), y: tgt.cy, near: true, sc: tgt.r * 2.6 / sheetW('steel2', 1), life: 0.3 });
       this.addPiece('steel2', null, { frames: [3], x: tgt.x, y: tgt.y + 1, ground: true, sc: tgt.r * 2.2 / sheetW('steel2', 3), shrink: 0.4, life: 1.2 });
@@ -1163,7 +1181,7 @@ mixInto(Battle, class {
       }
     }
     else if (big && !PD && SM && SM.hit) { const hs = SM.hitSheet || SM.sheet || mv.id; sheetPart(this, hs, SM.hit, tgt.x, tgt.cy, 0.5, { sc: tgt.r * 3 / sheetW(hs, SM.hit[0]), flip: SM.face && src && src.x > tgt.x }); }   // its sheet's impact
-    if (mv.fx === 'claw') this.particles.push({ kind: 'claw', x: tgt.x, y: tgt.cy, size: 34, rot: toward + Math.PI / 2 + rand(-0.3, 0.3), color: fx[1], life: 0.3, max: 0.3 });
+    if (mv.fx === 'claw' && !(PD && PD.rake && FXS.dragon1)) this.particles.push({ kind: 'claw', x: tgt.x, y: tgt.cy, size: 34, rot: toward + Math.PI / 2 + rand(-0.3, 0.3), color: fx[1], life: 0.3, max: 0.3 });
     if (mv.fx === 'slash' && !(PD && PD.crescent && FXS.dark1)) this.particles.push({ kind: 'slash', x: tgt.x, y: tgt.cy, size: 22, rot: toward + rand(-0.4, 0.4), color: fx[1], life: 0.28, max: 0.28 });
     if (mv.fx === 'flurry' && !(PD && PD.punch && FXS.fight1)) {   // fists everywhere at once
       for (let i = 0; i < 3; i++) this.particles.push({ kind: 'impact', x: tgt.x + rand(-14, 14), y: tgt.cy + rand(-14, 10), size: rand(7, 11), rot: rand(0, TAU), color: i ? fx[1] : '#ffffff', life: 0.14, max: 0.14 });
@@ -1287,6 +1305,20 @@ mixInto(Battle, class {
     if (mv.id === 'eruption') { const sc = r * 1.25 / sheetW('eruption', 0); sheetPart(this, 'eruption', [1, 2, 2, 3, 4], x, y + sheetH('eruption', 0) * sc / 2, 1.1, { sc, ay: 1, user }); this.addShake(8); return; }
     if (mv.id === 'geyserVent' && FX_PIECES && FXS.water3) { this.fxGeyserRing(x, y, r, user); return; }   // WATER-3 (r212)
     if (mv.id === 'geyserVent' && FXS.geyserVent) { const sc = r * 1.7 / sheetW('geyserVent', 0); sheetPart(this, 'geyserVent', [2, 3, 4, 5, 6, 7, 8], x, y + 4 + sheetH('geyserVent', 0) * sc / 2, 1.1, { sc, ay: 1, user }); this.addShake(6); return; }
+    if (mv.id === 'starfall' && FX_PIECES && FXS.dragon2) {   // DRAGON-2 (r241): the star lands in a starburst, a ring of sparkles, a crater of glowing stardust
+      const zr = r / 1.2;
+      this.addPiece('dragon2', null, { frames: [3, 4, 5, 6], x, y: y - 6, sc: zr * 2 / sheetW('dragon2', 4), life: 0.5 });
+      this.addPiece('dragon2', null, { frames: [7], x, y: y + 1, ground: true, sc: zr * 2.2 / sheetW('dragon2', 7), shrink: 0.4, life: 1.2, delay: 0.1 });
+      for (let i = 0; i < 4; i++) { const ang = rand(0, TAU), sp = rand(40, 80); this.addPiece('dragon2', null, { frames: [8 + (i % 3)], x, y: y - 8, mx: Math.cos(ang) * sp, my: Math.sin(ang) * sp * 0.6, rise: 15, sc: 0.8, shrink: 0.25, life: 0.5 }); }
+      this.addShake(4); return;
+    }
+    if (mv.id === 'foresight' && FX_PIECES && FXS.psy2) {   // PSY-2 (r240): a column of pink light slams down through the eye, which closes
+      const zr = r / 1.2;
+      this.addPiece('psy2', null, { frames: [3, 4, 4, 5], x, y: y + 2, ay: 1, sc: zr * 1.8 / sheetW('psy2', 4), life: 0.45 });
+      this.addPiece('psy2', null, { frames: [2, 1, 0], x, y, ground: true, sc: zr * 2.3 / sheetW('psy2', 2), shrink: 0.3, life: 0.5 });
+      if (FXS.psy1) for (let i = 0; i < 4; i++) { const ang = rand(0, TAU), sp = rand(40, 80); this.addPiece('psy1', null, { frames: [7 + (i % 3)], x, y: y - 10, mx: Math.cos(ang) * sp, my: Math.sin(ang) * sp * 0.6, rise: 20, sc: 0.7, shrink: 0.2, life: 0.45 }); }
+      this.addShake(5); return;
+    }
     if (mv.id === 'magnetStorm' && FX_PIECES && FXS.steel2) {   // STEEL-2 (r238): rings of magnetic field pulsing out over the spot, sparks crackling
       const zr = r / 1.2;
       this.addPiece('steel2', null, { frames: [5, 6, 7, 6, 7], fps: 12, x, y, ground: true, sc: zr * 2.6 / sheetW('steel2', 6), grow: 0.2, shrink: 0.3, life: 0.6 });
@@ -1340,6 +1372,8 @@ mixInto(Battle, class {
     if (FX_PIECES && FXS.ice2 && mv.id === 'frostArmor') this.fxFrostArmor(m);   // ICE-2, r220
     if (FX_PIECES && FXS.fight2 && mv.id === 'bulkUp') this.fxBulkUp(m);   // FIGHT-2, r228
     if (FX_PIECES && FXS.steel2 && mv.id === 'ironDefense') this.fxIronDefense(m);   // STEEL-2, r238
+    if (FX_PIECES && FXS.psy2 && mv.id === 'calmMind') this.fxCalmMind(m);   // PSY-2, r240
+    if (FX_PIECES && FXS.dragon2 && mv.id === 'dragonDance') this.fxDragonDance(m);   // DRAGON-2, r241
     if (FX_PIECES && FXS.steel2 && mv.id === 'towerShield') this.fxTowerShield(m);   // STEEL-2, r238
     if (FX_PIECES && FXS.wind2 && mv.id === 'tailwind') this.fxTailwind(m);   // WIND-2, r230
     if (FX_PIECES && FXS.common2) { this.fxBuffPieces(m, mv); return; }
@@ -1353,7 +1387,8 @@ mixInto(Battle, class {
   // Heals act out their names (snack, sunbeams, blanket, wishing star), then + signs rise.
   fxHeal(m, mv) {
     const show = { snack: ['snack', 0.95], photosynth: ['sunbeam', 1.1], blanketNap: ['blanket', 1.7], wish: ['wishStar', 1.25] }[mv.id];
-    if (show) this.particles.push({ kind: show[0], mon: m, x: m.x, y: m.y, life: show[1], max: show[1], face: m.face });
+    if (show && mv.id === 'wish' && FX_PIECES && FXS.fairy2) this.fxWish(m, show[1]);   // FAIRY-2 (r239)
+    else if (show) this.particles.push({ kind: show[0], mon: m, x: m.x, y: m.y, life: show[1], max: show[1], face: m.face });
     if (mv.id === 'wish') m.look(0, -1);   // look up at the star
     if (FX_PIECES && FXS.common2) { this.fxHealPieces(m, show ? show[1] * 0.5 : 0); return; }
     for (let i = 0; i < (show ? 4 : 7); i++) {
@@ -1724,7 +1759,7 @@ mixInto(Battle, class {
     const id = 'common1', back = a.dir + Math.PI, cx = Math.cos(a.dir), cy = Math.sin(a.dir);
     if (!a.launched) {
       a.launched = true; this.addShake(2);
-      if (!PIECE_DASH[a.mv.id].fire && !PIECE_DASH[a.mv.id].water && !PIECE_DASH[a.mv.id].wisps && !PIECE_DASH[a.mv.id].papers && !PIECE_DASH[a.mv.id].aura && !PIECE_DASH[a.mv.id].feathers && !PIECE_DASH[a.mv.id].spirit && !PIECE_DASH[a.mv.id].bolts) for (let i = 0; i < 3; i++) this.addPiece(id, m, { frames: [0, 1, 2, 3], x: m.x - cx * m.r * 0.6 + rand(-4, 4), y: m.y - cy * 4 + rand(-3, 3),
+      if (!PIECE_DASH[a.mv.id].fire && !PIECE_DASH[a.mv.id].water && !PIECE_DASH[a.mv.id].wisps && !PIECE_DASH[a.mv.id].papers && !PIECE_DASH[a.mv.id].aura && !PIECE_DASH[a.mv.id].feathers && !PIECE_DASH[a.mv.id].spirit && !PIECE_DASH[a.mv.id].bolts && !PIECE_DASH[a.mv.id].nodust) for (let i = 0; i < 3; i++) this.addPiece(id, m, { frames: [0, 1, 2, 3], x: m.x - cx * m.r * 0.6 + rand(-4, 4), y: m.y - cy * 4 + rand(-3, 3),
         mx: Math.cos(back + rand(-0.6, 0.6)) * rand(25, 50), my: Math.sin(back) * 15, rise: 8, sc: rand(0.45, 0.6), swell: 0.3, ay: 0.85, life: 0.5, flip: cx > 0 });
     }
     const PD0 = PIECE_DASH[a.mv.id];
@@ -1751,7 +1786,7 @@ mixInto(Battle, class {
         if (Math.random() < 0.3 && FXS.water3) this.addPiece('water3', null, { frames: [12 + ((Math.random() * 2) | 0)], x: m.x - cx * m.r * 0.6, y: m.y, mx: -cx * 20, rise: 8, sc: 0.6, life: 0.4, shrink: 0.2 });
       }
     }
-    a.dustT = (PD0.fire || PD0.water || PD0.wisps || PD0.papers || PD0.aura || PD0.feathers || PD0.spirit || PD0.bolts) ? 1 : (a.dustT || 0) - dt;
+    a.dustT = (PD0.fire || PD0.water || PD0.wisps || PD0.papers || PD0.aura || PD0.feathers || PD0.spirit || PD0.bolts || PD0.nodust) ? 1 : (a.dustT || 0) - dt;
     while (a.dustT <= 0) {   // dust kicked up at its feet
       a.dustT += PD0.rubble ? 0.17 : 0.085;
       this.addPiece(id, m, { frames: [0, 1, 2, 3], x: m.x - cx * m.r * 0.5 + rand(-3, 3), y: m.y + rand(-2, 2), mx: -cx * rand(10, 30), rise: rand(8, 16),
@@ -2217,8 +2252,8 @@ mixInto(Battle, class {
     m.piecesUntil = this.time + 1.2;
     for (let i = 0; i < 5; i++) {
       const ang = i / 5 * TAU + 0.4, near = Math.sin(ang) > 0.2, ex = m.x + Math.cos(ang) * m.r * 0.9, ey = m.y - m.h * 0.45 + Math.sin(ang) * m.r * 0.25;
-      P({ frames: [8 + (i % 3)], x: ex + Math.cos(ang) * 40, y: ey + Math.sin(ang) * 20, mx: -Math.cos(ang) * 40 / 0.18, my: -Math.sin(ang) * 20 / 0.18, near, sc: k * (near ? 0.35 : 0.5), life: 0.18, delay: i * 0.05 });
-      P({ frames: [8 + (i % 3)], x: ex, y: ey, near, sc: k * (near ? 0.35 : 0.5), shrink: 0.4, life: 0.8, delay: 0.18 + i * 0.05 });
+      P({ frames: [8 + (i % 3)], x: ex + Math.cos(ang) * 40, y: ey + Math.sin(ang) * 20, mx: -Math.cos(ang) * 40 / 0.18, my: -Math.sin(ang) * 20 / 0.18, near, sc: k * (near ? 0.5 : 0.7), life: 0.18, delay: i * 0.05 });
+      P({ frames: [8 + (i % 3)], x: ex, y: ey, near, sc: k * (near ? 0.5 : 0.7), shrink: 0.4, life: 0.8, delay: 0.18 + i * 0.05 });
       P({ frames: [0, 1, 2], x: ex, y: ey, near: true, sc: k * 0.35, life: 0.2, delay: 0.18 + i * 0.05 });
     }
   }
@@ -2227,8 +2262,42 @@ mixInto(Battle, class {
   fxTowerShield(m) {
     const id = 'steel2', k = clamp(m.h / 30, 0.8, 1.4);
     m.piecesUntil = this.time + 1.4;
-    this.addPiece(id, m, { frames: [11, 12, 12, 13, 12], x: m.x + m.face * m.r * 0.9, y: m.y + 2, near: true, ay: 1, sc: k * m.h * 1.1 / sheetH(id, 12) / k, grow: 0.1, shrink: 0.25, life: 1.1 });
-    this.addPiece(id, null, { frames: [0, 1, 2], x: m.x + m.face * m.r * 0.9, y: m.y - m.h * 0.6, sc: 0.5, life: 0.25, delay: 0.55 });
+    this.addPiece(id, m, { frames: [11, 12, 12, 13, 12], x: m.x + m.face * m.r * 1.35, y: m.y + 4, near: true, ay: 1, sc: m.h * 0.8 / sheetH(id, 12), grow: 0.1, shrink: 0.25, life: 1.1 });
+    this.addPiece(id, null, { frames: [0, 1, 2], x: m.x + m.face * m.r * 1.35, y: m.y - m.h * 0.45, sc: 0.5, life: 0.25, delay: 0.55 });
+  }
+
+  // Wish (FAIRY-2, r239): a golden star appears above it and twinkles, falls onto it with a sparkling tail, and
+  // bursts into sparkles over it
+  fxWish(m, t) {
+    const id = 'fairy2', hy = m.y - m.h - 34, k = clamp(m.h / 30, 0.8, 1.3);
+    this.addPiece(id, null, { frames: [0, 1, 2], fps: 8, x: m.x, y: hy, sc: k * 0.7, grow: 0.12, life: t * 0.55 });
+    this.addPiece(id, null, { frames: [3], x: m.x + 10, y: hy, mx: -10 / (t * 0.2), my: (m.y - m.h * 0.6 - hy) / (t * 0.2), sc: k * 0.7, life: t * 0.2, delay: t * 0.55 });
+    this.addPiece(id, null, { frames: [4, 5, 6], x: m.x, y: m.y - m.h * 0.6, sc: k * 0.85, life: t * 0.4, delay: t * 0.75 });
+  }
+
+  // Calm Mind (PSY-2, r240): a ring of glowing runes forms round its feet and slowly turns, violet motes float up
+  // round it
+  fxCalmMind(m) {
+    const id = 'psy2', P = o => this.addPiece(id, m, o);
+    m.piecesUntil = this.time + 1.3;
+    P({ frames: [6, 7], fps: 5, x: m.x, y: m.y + 1, ground: true, sc: m.r * 3 / sheetW(id, 6), grow: 0.2, shrink: 0.3, life: 1.2 });
+    for (let i = 0; i < 6; i++) {
+      const ang = i / 6 * TAU, near = Math.sin(ang) > 0;
+      P({ frames: [8 + (i % 2)], x: m.x + Math.cos(ang) * m.r * 1.1, y: m.y + Math.sin(ang) * m.r * 0.4, near, rise: rand(25, 40), sc: 1, grow: 0.1, shrink: 0.3, life: 0.9, delay: 0.1 + i * 0.07 });
+    }
+  }
+
+  // Dragon Dance (DRAGON-2, r241): ribbons of violet nebula flame rise round it (the far ones behind it, the near ones
+  // small in front), gold star sparkles twinkling off
+  fxDragonDance(m) {
+    const id = 'dragon2', P = o => this.addPiece(id, m, o), k = clamp(m.h / 30, 0.8, 1.4);
+    m.piecesUntil = this.time + 1.3;
+    for (let i = 0; i < 7; i++) {
+      const ang = i / 7 * TAU + 0.2, near = Math.sin(ang) > 0.3;
+      P({ frames: [11, 12, 13], fps: 10, ph: i % 3, x: m.x + Math.cos(ang) * m.r * (near ? 1.25 : 0.95), y: m.y + Math.sin(ang) * m.r * 0.4, near, ay: 1, rise: 12,
+        sc: k * (near ? 0.4 : 0.65), flip: i % 2 === 0, grow: 0.12, shrink: 0.3, life: 0.95, delay: i * 0.04 });
+    }
+    for (let i = 0; i < 5; i++) P({ frames: [8 + (i % 3)], x: m.x + rand(-m.r, m.r), y: m.y - m.h * rand(0.2, 1), rise: rand(20, 35), sc: 0.9, grow: 0.1, shrink: 0.3, life: 0.6, delay: 0.3 + i * 0.08, near: i % 2 === 0 });
   }
 
   // a star popping out of a hit (Zoomies)
@@ -2527,8 +2596,9 @@ mixInto(Battle, class {
     if (B.core) layer(B.core, 260, 0.5, B.coreH || 1);
     const [mid, mf, max, mcL, mcR] = B.muzzle;
     drawSheet(c, mid, loop(mf, 14), ox, oy, { dir: a.dir, ax: max, sc: sc * (B.muzzleSc || 1) * (0.95 + Math.sin(T * 30) * 0.08) * (B.coreH ? 1.15 : 1), ...(mcL || mcR ? { trim: 0, cutL: mcL || 0, cutR: mcR || 0 } : {}) });
-    if (mv.len * out < reach) { const [hid, hf, hax, hcL, hcR] = B.head; drawSheet(c, hid, loop(hf, 14), ox + cs * len, oy + sn * len, { dir: a.dir, ax: hax, sc: sc * (B.headSc || 1), flip: !!B.headFlip, ...(hcL || hcR ? { trim: 0, cutL: hcL || 0, cutR: hcR || 0 } : {}) }); }
-    else for (const [, t] of hits) {   // an impact on everything it's hitting, on the side facing the beam
+    const shooting = mv.len * out < reach;   // (headAlways: the head stays on the tip the whole time, biting into what it hits: Dragon Pulse)
+    if (shooting || B.headAlways) { const [hid, hf, hax, hcL, hcR] = B.head; drawSheet(c, hid, loop(hf, 14), ox + cs * len, oy + sn * len, { dir: a.dir, ax: hax, sc: sc * (B.headSc || 1), flip: !!B.headFlip, ...(hcL || hcR ? { trim: 0, cutL: hcL || 0, cutR: hcR || 0 } : {}) }); }
+    if (!shooting) for (const [, t] of hits) {   // an impact on everything it's hitting, on the side facing the beam
       const [iid, ifr, iax, icL, icR] = B.impact;   // (impactFlip: a splash drawn with its beam coming from the other side, mirrored)
       drawSheet(c, iid, loop(ifr, 16), ox + cs * t, oy + sn * t, { dir: a.dir, ax: iax, sc: sc * 1.15 * (B.impactSc || 1), flip: !!B.impactFlip, ...(icL || icR ? { trim: 0, cutL: icL || 0, cutR: icR || 0 } : {}) });
     }
@@ -2694,7 +2764,9 @@ mixInto(Battle, class {
     for (const z of this.zones) {
       if (z.done) continue;
       const left = z.delay - z.t, fx = fxOf(z.mv), zx = z.x, zy = z.y;
-      if (z.mv.fx === 'meteor' && left < 0.45) {
+      if (z.mv.id === 'starfall' && FX_PIECES && FXS.dragon2) {   // a falling star streaking down onto the spot (DRAGON-2)
+        if (left < 0.45) { const k = 1 - left / 0.45; drawSheet(c, 'dragon2', Math.floor(this.time * 14) % 3, zx + 70 * (1 - k), zy - 170 * (1 - k) - 8, { ax: 0.15, ay: 0.85, sc: 1.1 }); }
+      } else if (z.mv.fx === 'meteor' && left < 0.45) {
         const k = 1 - left / 0.45;
         FXD.flame(c, zx - 70 * (1 - k), zy - 170 * (1 - k), Math.atan2(170, 70), 7, fx, this.time);
       } else if (z.mv.id === 'rockSlide' && FX_PIECES && FXS.earth1) {   // EARTH-1 (r221): a boulder dropping onto the spot, tumbling
@@ -2707,6 +2779,9 @@ mixInto(Battle, class {
         const k = clamp(1 - left / z.delay, 0, 1), f = clamp((k - 0.4) / 0.6, 0, 1);
         drawSheet(c, 'plant1', 16, zx, zy, { sc: z.r * 1.6 / sheetW('plant1', 16) * (0.3 + 0.7 * k) });
         if (f > 0) drawSheet(c, 'plant1', f > 0.5 ? 11 : 10, zx, zy - 150 * (1 - f * f) - 6, { sc: 0.55, rot: f * 3 });
+      } else if (z.mv.id === 'foresight' && FX_PIECES && FXS.psy2) {   // a glowing eye on the ground slowly opening over the spot (PSY-2)
+        const k = clamp(1 - left / z.delay, 0, 1);
+        drawSheet(c, 'psy2', k < 0.4 ? 0 : k < 0.75 ? 1 : 2, zx, zy, { sc: z.r * 2.3 / sheetW('psy2', 2) * (0.6 + 0.4 * k) });
       } else if (z.mv.id === 'magnetStorm' && FX_PIECES && FXS.steel2) {   // a magnet dropping onto the spot, its field rings growing under it (STEEL-2)
         const k = clamp(1 - left / z.delay, 0, 1);
         drawSheet(c, 'steel2', 5 + (Math.floor(this.time * 10) % 3), zx, zy, { sc: z.r * 2.4 / sheetW('steel2', 6) * (0.3 + 0.7 * k) });

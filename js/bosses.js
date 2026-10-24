@@ -73,13 +73,16 @@ const BOSSES = {
 };
 
 // The hand-made attacks. B is the brain, b the battle, m the boss.
+// BOSS-1 pieces (r242): the owner's icicle, ice slab, bamboo spear, landing shadow and dust ring
+const bossPieces = () => typeof FX_PIECES !== 'undefined' && FX_PIECES && FXS.boss1;
 const BOSS_PATTERNS = {
   // he crouches, leaps and comes down where you were standing
   bellyFlop: { cd: 7, w: 3, run(B, b, m) {
     const F = b.F, P = b.P, x = clamp(P.x, F.x0 + 34, F.x1 - 34), y = clamp(P.y, F.y0 + 30, F.y1 - 12), sx = m.x, sy = m.y;
     B.act(m, 1.55, 'windup'); b.ui.callout('enemy', 'Belly Flop', 'beast');
-    B.hazard(b, { shape: 'circle', x, y, r: 46, delay: 1.3, mv: BOSS_MV.flop, force: 230,
+    B.hazard(b, { shape: 'circle', x, y, r: 46, delay: 1.3, mv: BOSS_MV.flop, force: 230, shadow: true,
       onLand(b, h) { if (!h.echo) { m.x = x; m.y = y; m.jump = 0; } b.addShake(9);
+        if (bossPieces()) b.addPiece('boss1', null, { frames: [12], x, y: y + 2, ground: true, sc: 46 * 2.6 / sheetW('boss1', 12), grow: 0.3, shrink: 0.4, life: 0.8 });
         if (FX_PIECES && FXS.common1) b.fxGroundSlam(x, y, 46, h.echo ? null : m, { big: true });   // COMMON-1 pieces (r186)
         else b.burst(x, y - 1, DUST, 26, 110, -20, 4);
         b.decalAt(x, y, 30); Sfx.play('bigHit'); } });
@@ -89,7 +92,12 @@ const BOSS_PATTERNS = {
   yawn: { cd: 9, w: 2, run(B, b, m) {
     B.act(m, 1.7, 'roar'); b.ui.callout('enemy', 'Big Yawn', 'beast');
     B.hazard(b, { shape: 'ring', x: m.x, y: m.y, r0: 44, r1: 165, delay: 1.45, mv: BOSS_MV.yawn, force: 180,
-      onLand(b, h) { for (let i = 0; i < 3; i++) b.particles.push({ kind: 'wave', x: h.x, y: h.y - 2, r0: h.r0, r1: h.r1 * (1 - i * 0.12), life: 0.4 + i * 0.1, max: 0.4, color: i % 2 ? '#c8b8ff' : '#ffffff', w: 4 }); b.addShake(6); } });
+      onLand(b, h) {
+        if (typeof FX_PIECES !== 'undefined' && FX_PIECES && FXS.psy2) {   // PSY-2's sleepy ring rolling out, sleep bubbles drifting up (r242)
+          for (let i = 0; i < 3; i++) b.addPiece('psy2', null, { frames: [10], x: h.x, y: h.y, ground: true, sc: h.r1 * 2 * (1 - i * 0.18) / sheetW('psy2', 10), grow: 0.8, shrink: 0.3, life: 0.5, delay: i * 0.1 });
+          for (let i = 0; i < 4; i++) b.addPiece('psy2', null, { frames: [11], x: h.x + rand(-30, 30), y: h.y - 20, rise: rand(25, 40), mx: rand(-15, 15), sc: 1.2, shrink: 0.3, life: 0.9, delay: 0.1 + i * 0.1 });
+        } else for (let i = 0; i < 3; i++) b.particles.push({ kind: 'wave', x: h.x, y: h.y - 2, r0: h.r0, r1: h.r1 * (1 - i * 0.12), life: 0.4 + i * 0.1, max: 0.4, color: i % 2 ? '#c8b8ff' : '#ffffff', w: 4 });
+        b.addShake(6); } });
   } },
   // he sits down for a snack: hit him hard enough while he eats and he chokes on it
   snack: { cd: 18, w: 2, when: (B, m) => m.hp / m.maxHp < 0.92, run(B, b, m) {
@@ -106,8 +114,8 @@ const BOSS_PATTERNS = {
     for (let i = 0; i < 5; i++) spots.push([rand(F.x0 + 30, F.x1 - 30), rand(F.y0 + 30, F.y1 - 20)]);
     spots.forEach(([x, y], i) => {
       x = clamp(x, F.x0 + 20, F.x1 - 20); y = clamp(y, F.y0 + 20, F.y1 - 10);
-      B.hazard(b, { shape: 'circle', x, y, r: 23, delay: 1.0 + i * 0.13, mv: BOSS_MV.icicle,
-        onLand(b, h) { b.fxBlast(h.x, h.y, 26, BOSS_MV.icicle); b.addShake(2.5);
+      B.hazard(b, { shape: 'circle', x, y, r: 23, delay: 1.0 + i * 0.13, mv: BOSS_MV.icicle, fall: [0, 0.8],
+        onLand(b, h) { if (bossPieces()) b.addPiece('boss1', null, { frames: [1, 2, 3], x: h.x, y: h.y + 2, ay: 0.9, sc: 0.9, life: 0.4 }); else b.fxBlast(h.x, h.y, 26, BOSS_MV.icicle); b.addShake(2.5);
           if (!h.echo) B.hazard(b, { shape: 'circle', x: h.x, y: h.y, r: 21, delay: 0, linger: 5, every: 1.1, kind: 'frost', noEcho: true,
             onTick(b, h2, P) { P.slowT = Math.max(P.slowT, 0.6); B.frost(b, P, 1); } }); } });
     });
@@ -118,7 +126,10 @@ const BOSS_PATTERNS = {
     const F = b.F, P = b.P, cx = (F.x0 + F.x1) / 2, cy = (F.y0 + F.y1) / 2, wide = Math.random() < 0.65;
     const R = wide ? (P.x < cx ? [F.x0, F.y0, cx, F.y1] : [cx, F.y0, F.x1, F.y1]) : (P.y < cy ? [F.x0, F.y0, F.x1, cy] : [F.x0, cy, F.x1, F.y1]);
     B.hazard(b, { shape: 'rect', x0: R[0], y0: R[1], x1: R[2], y1: R[3], delay: 1.6, mv: BOSS_MV.glacier, force: 200,
-      onLand(b, h) { for (let i = 0; i < 9; i++) b.fxBlast(rand(h.x0 + 20, h.x1 - 20), rand(h.y0 + 20, h.y1 - 10), 24, BOSS_MV.glacier); b.addShake(10); Sfx.play('bigHit'); } });
+      onLand(b, h) {
+        if (bossPieces()) for (let i = 0; i < 10; i++) b.addPiece('boss1', null, { frames: [4, 5, 5, 5, 6], x: rand(h.x0 + 24, h.x1 - 24), y: rand(h.y0 + 30, h.y1 - 4), ay: 1, flip: Math.random() < 0.5, sc: rand(0.8, 1.1), life: 1, delay: rand(0, 0.15) });   // slabs of ice bursting up (BOSS-1)
+        else for (let i = 0; i < 9; i++) b.fxBlast(rand(h.x0 + 20, h.x1 - 20), rand(h.y0 + 20, h.y1 - 10), 24, BOSS_MV.glacier);
+        b.addShake(10); Sfx.play('bigHit'); } });
   } },
   // Pandawn: a fan of bamboo spears, then a second volley aimed at where you went
   bambooVolley: { cd: 6, w: 3, run(B, b, m) {
@@ -128,7 +139,12 @@ const BOSS_PATTERNS = {
       for (let i = 0; i < n; i++) {
         const a = a0 + (n > 1 ? (i / (n - 1) - 0.5) * spread : 0);
         B.hazard(b, { shape: 'line', x: m.x, y: m.y, a, len: rayLen(b.F, m.x, m.y, a), w: 16, delay, mv: BOSS_MV.spear,
-          onLand(b, h) { for (let k = 0; k < 6; k++) { const d = h.len * k / 6; b.particles.push({ kind: 'streak', x: h.x + Math.cos(h.a) * d, y: h.y - 8 + Math.sin(h.a) * d, sx: Math.cos(h.a) * 600, sy: Math.sin(h.a) * 600, color: '#a8dc78', life: 0.2, max: 0.2 }); }
+          onLand(b, h) { if (bossPieces()) {   // the bamboo spear flying the length of its line, splinters and a leaf where it ends (BOSS-1)
+              const t = h.len / 700, ex = h.x + Math.cos(h.a) * h.len, ey = h.y + Math.sin(h.a) * h.len;
+              b.addPiece('boss1', null, { frames: [7], x: h.x, y: h.y - 8, mx: Math.cos(h.a) * 700, my: Math.sin(h.a) * 700, rot: h.a, sc: 1, life: t });
+              for (let k = 0; k < 3; k++) b.addPiece('boss1', null, { frames: [8 + k], x: ex, y: ey - 8, mx: rand(-50, 50), my: rand(-30, 30), vz: rand(40, 80), g: 400, rot: rand(0, TAU), vr: rand(-10, 10), sc: 1, shrink: 0.2, life: 0.5, delay: t });
+              return; }
+            for (let k = 0; k < 6; k++) { const d = h.len * k / 6; b.particles.push({ kind: 'streak', x: h.x + Math.cos(h.a) * d, y: h.y - 8 + Math.sin(h.a) * d, sx: Math.cos(h.a) * 600, sy: Math.sin(h.a) * 600, color: '#a8dc78', life: 0.2, max: 0.2 }); }
             b.burst(h.x + Math.cos(h.a) * h.len, h.y + Math.sin(h.a) * h.len, ['#7ab84a', '#a8dc78', '#4a8a2e'], 6, 60); } });
       }
     };
@@ -139,7 +155,14 @@ const BOSS_PATTERNS = {
   faultLine: { cd: 8, w: 3, run(B, b, m) {
     B.act(m, 1.6, 'windup'); b.ui.callout('enemy', 'Fault Line', 'earth');
     const F = b.F, x = m.x, y = m.y;
-    const land = (b, h) => { const n = 8; for (let i = 0; i < n; i++) b.fxDebris(h.x0 + (h.x1 - h.x0) * (i + 0.5) / n, h.y0 + (h.y1 - h.y0) * (i + 0.5) / n, BOSS_MV.rock, 3, 90); b.addShake(9); Sfx.play('bigHit'); };
+    const land = (b, h) => {
+      if (typeof FX_PIECES !== 'undefined' && FX_PIECES && FXS.earth1) {   // the floor tears open along the line, rock spikes burst up out of it (EARTH-1, r242)
+        const horiz = h.x1 - h.x0 > h.y1 - h.y0, L = horiz ? h.x1 - h.x0 : h.y1 - h.y0, cx = (h.x0 + h.x1) / 2, cy = (h.y0 + h.y1) / 2, seg = sheetW('earth1', 12);
+        for (let d = -L / 2; d < L / 2; d += seg * 0.95) b.addPiece('earth1', null, { frames: [12], x: horiz ? cx + d + seg / 2 : cx, y: horiz ? cy : cy + d + seg / 2, ground: true, rot: horiz ? 0 : Math.PI / 2, sc: 1, grow: 0.1, shrink: 0.3, life: 1.4 });
+        for (let d = -L / 2 + 15; d < L / 2; d += 34) b.addPiece('earth1', null, { frames: [0, 1, 1, 2], x: (horiz ? cx + d : cx) + rand(-6, 6), y: (horiz ? cy : cy + d) + rand(-4, 4), ay: 0.9, flip: Math.random() < 0.5, sc: rand(0.7, 0.9), life: 0.8, delay: rand(0, 0.15) });
+        b.addShake(9); Sfx.play('bigHit'); return;
+      }
+      const n = 8; for (let i = 0; i < n; i++) b.fxDebris(h.x0 + (h.x1 - h.x0) * (i + 0.5) / n, h.y0 + (h.y1 - h.y0) * (i + 0.5) / n, BOSS_MV.rock, 3, 90); b.addShake(9); Sfx.play('bigHit'); };
     B.hazard(b, { shape: 'rect', x0: F.x0, y0: y - 24, x1: F.x1, y1: y + 18, delay: 1.35, mv: BOSS_MV.quake, force: 240, onLand: land });
     B.hazard(b, { shape: 'rect', x0: x - 26, y0: F.y0, x1: x + 26, y1: F.y1, delay: 1.35, mv: BOSS_MV.quake, force: 240, onLand: land, noFx: true });
   } },
@@ -149,7 +172,7 @@ const BOSS_PATTERNS = {
     const F = b.F, P = b.P;
     for (let i = 0; i < 6; i++) {
       const near = i < 2, x = clamp(near ? P.x + rand(-20, 20) : rand(F.x0 + 30, F.x1 - 30), F.x0 + 20, F.x1 - 20), y = clamp(near ? P.y + rand(-16, 16) : rand(F.y0 + 30, F.y1 - 20), F.y0 + 20, F.y1 - 10);
-      B.hazard(b, { shape: 'circle', x, y, r: 21, delay: 1.1 + i * 0.16, mv: BOSS_MV.rock, force: 200, onLand(b, h) { b.fxBlast(h.x, h.y, 24, BOSS_MV.rock); b.decalAt(h.x, h.y, 12); b.addShake(3); } });
+      B.hazard(b, { shape: 'circle', x, y, r: 21, delay: 1.1 + i * 0.16, mv: BOSS_MV.rock, force: 200, fall: [-1, 1.1], onLand(b, h) { if (typeof FX_PIECES !== 'undefined' && FX_PIECES && FXS.earth1) b.fxRockSmash(h.x, h.y - 4, 26, null); else b.fxBlast(h.x, h.y, 24, BOSS_MV.rock); b.decalAt(h.x, h.y, 12); b.addShake(3); } });
     }
   } },
   // the stagger check: he curls up to sleep; hit him hard enough before he wakes, or the whole room shakes
@@ -466,6 +489,14 @@ mixInto(Battle, class {
         continue;
       }
       const k = clamp(h.t / Math.max(0.01, h.delay), 0, 1);
+      if (!outlines && typeof FX_PIECES !== 'undefined' && FX_PIECES) {   // r242: what's coming (BOSS-1's landing shadow; an icicle or EARTH-1's boulder dropping in)
+        if (h.shadow && FXS.boss1) { ctx.globalAlpha = 0.18 + 0.3 * k; drawSheet(ctx, 'boss1', 11, h.x, h.y + 2, { sc: h.r * 2.2 / sheetW('boss1', 11) * (0.4 + 0.6 * k) }); }
+        const left = h.delay - h.t;
+        if (h.fall && left < 0.4) {
+          const f = 1 - left / 0.4, [fr, sc] = h.fall, id = fr < 0 ? 'earth1' : 'boss1';
+          if (FXS[id]) { ctx.globalAlpha = 1; drawSheet(ctx, id, fr < 0 ? 3 : fr, h.x, h.y - 170 * (1 - f * f), { ay: 1, sc, rot: fr < 0 ? f * 3 : 0 }); }
+        }
+      }
       const col = h.echo ? ECHO_COL : h.pct ? '#ff4a3a' : h.mv ? fxOf(h.mv)[0] : '#ffffff';
       ctx.globalAlpha = 0.2 + k * 0.28; ctx.fillStyle = col;
       if (h.shape === 'ring') { path(h); if (!outlines) ctx.fill('evenodd'); }

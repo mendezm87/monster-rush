@@ -114,6 +114,26 @@ SHEETS = {
     # ELEC-1: bolt x3, spark star x3 + spark dots x2, lightning ball x4, static ball x3 + green sparks x2
     # ELEC-2a (Volt Cannon): section x4, core x4, muzzle x4, impact x4
     # STEEL-1a (Flash Cannon): section x4, core x4, muzzle x4, impact sparks x4
+    # FAIRY-1: crescent moon x4, moonlight burst x3, fairy wind ribbon x3, sparkles x3
+    # PSY-1a (Psybeam): section x4, core x4, muzzle x4, impact x4
+    # DRAGON-1a (Dragon Pulse): section x4, core x4, muzzle orb x4, dragon's head x4
+    # BOSS-1 (Slumbear): icicle + shattering x3, ice slab x3, bamboo spear + splinters x2 + leaf, landing shadow + dust ring (MANUAL boxes)
+    'boss1':         ('pk-boss-1.png', 38, [4, 3, 4, 2]),
+    'dragon1a':      ('pk-dragon-1a.png', 40, [4, 4, 4, 4]),
+    # DRAGON-1 (Dragon Claw): claw rake x3 + scale, stardust x2
+    'dragon1':       ('pk-dragon-1.png', 36, [4, 2]),
+    # DRAGON-2: falling star x3, starburst x4, stardust crater + star sparkles x3, nebula flame x3
+    'dragon2':       ('pk-dragon-2.png', 38, [3, 4, 4, 3]),
+    'psy1a':         ('pk-psy-1a.png', 40, [4, 4, 4, 4]),
+    # PSY-1 (Mind Orbs): orb x4, burst x3 + sparkles x3
+    'psy1':          ('pk-psy-1.png', 38, [4, 6]),
+    # PSY-2: eye sigil x3, light column x3, rune ring x2 + motes x2, sleepy ring + sleep bubble (Big Yawn)
+    'psy2':          ('pk-psy-2.png', 38, [3, 3, 4, 2]),
+    'fairy1':        ('pk-fairy-1.png', 36, [4, 3, 3, 3]),
+    # FAIRY-2a (Dazzle Beam): section x4, core x4, muzzle x4, impact x4
+    'fairy2a':       ('pk-fairy-2a.png', 40, [4, 4, 4, 4]),
+    # FAIRY-2 (Wish): star x3 + falling star, bursting into sparkles x3
+    'fairy2':        ('pk-fairy-2.png', 38, [4, 3]),
     'steel1a':       ('pk-steel-1a.png', 40, [4, 4, 4, 4]),
     # STEEL-1 (Drone Swarm): drone x2 + drone bursting x3, metal sparks x3 + bolts x2
     'steel1':        ('pk-steel-1.png', 40, [5, 5]),
@@ -345,7 +365,8 @@ FRAME_REPAIRS = {('thunderBolt', 3): lambda fr: ring_mirror(fr, 50, 82)}
 
 # Sheets whose pieces are found in hand-measured boxes (reference pixels), in sheet order, when Gemini's rows overlap
 # (BEAST-2's shout lines reach down into the shout bubbles' row). Each box is shrunk to what's drawn inside it.
-MANUAL = {'glitch1': [(186, 62, 447, 344), (722, 62, 998, 378), (1273, 62, 1534, 344), (1906, 117, 1995, 268), (2442, 117, 2525, 316), (206, 550, 461, 709), (743, 406, 1204, 750), (1404, 530, 1954, 729), (2147, 509, 2614, 722), (186, 839, 440, 1094), (681, 791, 1032, 1128), (1225, 819, 1576, 1128), (1844, 874, 2016, 1046), (2387, 888, 2525, 1039), (255, 1293, 365, 1397), (674, 1176, 1046, 1493), (1218, 1183, 1582, 1493), (1803, 1225, 2050, 1459), (2325, 1307, 2401, 1383), (2518, 1307, 2594, 1383)],
+MANUAL = {'boss1': [(410, 24, 556, 404), (876, 56, 1164, 412), (1456, 64, 1856, 404), (2104, 76, 2404, 392), (336, 564, 936, 924), (1066, 456, 1604, 884), (1806, 486, 2394, 884), (316, 992, 1296, 1108), (1512, 984, 1648, 1132), (1824, 996, 1964, 1124), (2112, 1004, 2356, 1104), (264, 1252, 1188, 1456), (1464, 1184, 2476, 1504)],
+          'glitch1': [(186, 62, 447, 344), (722, 62, 998, 378), (1273, 62, 1534, 344), (1906, 117, 1995, 268), (2442, 117, 2525, 316), (206, 550, 461, 709), (743, 406, 1204, 750), (1404, 530, 1954, 729), (2147, 509, 2614, 722), (186, 839, 440, 1094), (681, 791, 1032, 1128), (1225, 819, 1576, 1128), (1844, 874, 2016, 1046), (2387, 888, 2525, 1039), (255, 1293, 365, 1397), (674, 1176, 1046, 1493), (1218, 1183, 1582, 1493), (1803, 1225, 2050, 1459), (2325, 1307, 2401, 1383), (2518, 1307, 2594, 1383)],
           'fight1': [(138, 117, 502, 323), (633, 89, 1149, 337), (1383, 131, 1576, 303), (1768, 34, 2140, 413), (2312, 83, 2587, 351), (268, 509, 399, 757), (812, 440, 1011, 832), (1342, 406, 1617, 867), (165, 894, 502, 1245), (839, 888, 1211, 1252), (1541, 888, 1906, 1252), (2229, 894, 2587, 1245), (268, 1300, 399, 1479), (791, 1300, 915, 1479), (1314, 1335, 1431, 1431), (1768, 1369, 2002, 1404), (2325, 1362, 2511, 1404)],
           'ice2': [(162, 77, 577, 577), (810, 120, 1014, 493), (1225, 120, 1542, 528), (99, 655, 683, 943), (746, 641, 1331, 943), (1394, 641, 1795, 957), (1901, 472, 2225, 943), (2302, 486, 2717, 957), (246, 1169, 591, 1415), (753, 1056, 1485, 1429), (1584, 1077, 2246, 1429)],
           'ice1': [(451, 77, 986, 317), (1169, 77, 1612, 317), (1844, 77, 2344, 317), (176, 415, 662, 739), (866, 415, 1288, 739), (1507, 415, 1971, 739), (2119, 415, 2654, 739), (352, 788, 535, 1105), (901, 788, 1218, 1105), (1591, 788, 1837, 1105), (2260, 788, 2464, 1105), (359, 1148, 683, 1464), (1070, 1148, 1654, 1464), (1922, 1148, 2527, 1464)],
@@ -387,7 +408,7 @@ def build(only=None, sheet=False):
             for yy in range(im.size[1]):
                 for xx in range(im.size[0]):
                     if isbg(*px_[xx, yy], xx, yy): px_[xx, yy] = bgc
-        m = bg_mask(im, 40 if (sid in CLEAN_SHRINK and sid != 'thunder') or sid in ('eruptionParts', 'common1', 'common2', 'hits1', 'hits2', 'hits3', 'hits4', 'smug1', 'smug1b', 'smug1c', 'beast1', 'beast2', 'beast3', 'beast4', 'fire2a', 'fire2b', 'fire3', 'fire4', 'water1a', 'water1b', 'water2', 'water3', 'plant1', 'plant2a', 'plant2', 'plant3', 'bug1', 'ice1', 'ice2a', 'ice2', 'earth1', 'earth2', 'dark1', 'dark2', 'dark3', 'fight1', 'fight2a', 'fight2', 'wind1', 'wind2', 'wind2b', 'glitch1', 'glitch2a', 'glitch2', 'ghost1', 'ghost2', 'elec1', 'elec2a', 'elec2b', 'elec3', 'steel1a', 'steel1', 'steel2') else 400)   # electric arcs close round gaps of background: only tiny ones are part of it (Thunder's cloud undersides are near the background colour, so not there)
+        m = bg_mask(im, 40 if (sid in CLEAN_SHRINK and sid != 'thunder') or sid in ('eruptionParts', 'common1', 'common2', 'hits1', 'hits2', 'hits3', 'hits4', 'smug1', 'smug1b', 'smug1c', 'beast1', 'beast2', 'beast3', 'beast4', 'fire2a', 'fire2b', 'fire3', 'fire4', 'water1a', 'water1b', 'water2', 'water3', 'plant1', 'plant2a', 'plant2', 'plant3', 'bug1', 'ice1', 'ice2a', 'ice2', 'earth1', 'earth2', 'dark1', 'dark2', 'dark3', 'fight1', 'fight2a', 'fight2', 'wind1', 'wind2', 'wind2b', 'glitch1', 'glitch2a', 'glitch2', 'ghost1', 'ghost2', 'elec1', 'elec2a', 'elec2b', 'elec3', 'steel1a', 'steel1', 'steel2', 'fairy1', 'fairy2a', 'fairy2', 'psy1a', 'psy1', 'psy2', 'dragon1a', 'dragon1', 'dragon2', 'boss1') else 400)   # electric arcs close round gaps of background: only tiny ones are part of it (Thunder's cloud undersides are near the background colour, so not there)
         if sid in PANELS: drop_specks(im, m)
         if sid in MANUAL:
             boxes = []
