@@ -977,12 +977,14 @@ const PIECE_SHOTS = {
   bubbleBeam: { sheet: 'water2', fly: [8, 9, 8, 10], len: 21, spin: true },
   razorLeaf:  { sheet: 'plant1', fly: [0, 1, 2, 3, 4], len: 20, spin: true },
   pinMissile: { sheet: 'bug1', fly: [11, 12], len: 18, ax: 0.6 },
-  iceShard:   { sheet: 'ice1', fly: [0, 1, 2], len: 22, ax: 0.55 },   // ICE-1 (r218)   // BUG-1 (r217): a needle-missile   // PLANT-1 (r213): a spinning leaf
+  iceShard:   { sheet: 'ice1', fly: [0, 1, 2], len: 22, ax: 0.55 },
+  mudShot:    { sheet: 'earth2', fly: [3, 4, 5], len: 30, ax: 0.6 },   // EARTH-2 (r222): a clod of wet mud, dripping   // ICE-1 (r218)   // BUG-1 (r217): a needle-missile   // PLANT-1 (r213): a spinning leaf
 };
 const PIECE_SHOT_HITS = {
   spoutShot: ['water2', [4, 5, 6], 1], cuffCannon: ['water2', [4, 5, 6], 1.2], twinCannon: ['water2', [4, 5, 6], 1],
   bubbleBeam: ['water2', [11, 12, 13], 0.7],
   pinMissile: ['bug1', [16, 17, 18], 0.6],
+  mudShot: ['earth2', [8, 9, 9], 0.9],
   iceShard: ['ice1', [4, 5, 6], 0.9],
 };
 // a frame sequence played as a particle (an explosion, a geyser)
@@ -1066,6 +1068,10 @@ mixInto(Battle, class {
     if (PH) {   // a shot from pieces: its splash or pop where it hits, droplets flying (WATER-2)
       const [hs, hf, hsc] = PH, from = src ? Math.atan2(src.y - tgt.y, src.x - tgt.x) : 0, x = tgt.x + Math.cos(from) * tgt.r * 0.5, y = tgt.cy;
       this.addPiece(hs, null, { frames: hf, x, y, sc: hsc * tgt.r * 2.2 / sheetW(hs, hf[1]), life: 0.35 });
+      if (hs === 'earth2') {   // mud: drips flung off, a puddle left on the ground (EARTH-2)
+        this.addPiece(hs, null, { frames: [10], x: tgt.x, y: tgt.y + 1, ground: true, sc: tgt.r * 1.6 / sheetW(hs, 10), life: 1.2, delay: 0.15, shrink: 0.4 });
+        for (let i = 0; i < 3; i++) { const ang = from + Math.PI + rand(-1.2, 1.2), sp = rand(40, 80); this.addPiece(hs, null, { frames: [11], x, y, mx: Math.cos(ang) * sp, my: Math.sin(ang) * sp * 0.6, vz: rand(30, 70), g: 400, sc: 0.6, life: 0.45, shrink: 0.1 }); }
+      }
       if (hs === 'water2' && hf[0] === 4) for (let i = 0; i < 4; i++) {
         const ang = from + Math.PI + rand(-1.2, 1.2), sp = rand(50, 100);
         this.addPiece(hs, null, { frames: [14 + (i % 3)], x, y, mx: Math.cos(ang) * sp, my: Math.sin(ang) * sp * 0.6, vz: rand(40, 80), g: 400, sc: 0.6, life: 0.45, shrink: 0.1 });
@@ -1149,6 +1155,8 @@ mixInto(Battle, class {
     if (FX_PIECES && FXS.beast4 && mv.id === 'heavySigh') { this.fxSigh(x, y, r, user); return; }   // BEAST-4 (r201)
     if (FX_PIECES && FXS.beast2 && (mv.id === 'shibaScream' || mv.id === 'shibaRoar')) { this.fxShout(x, y, r, user, mv.id === 'shibaRoar'); return; }   // BEAST-2 (r195)
     if (FX_PIECES && FXS.earth1 && mv.id === 'rockSlide') { this.fxRockSmash(x, y - 4, r * 1.1, null); this.addPiece('earth1', null, { frames: [11], x, y: y + 1, ground: true, sc: r * 1.7 / sheetW('earth1', 11), shrink: 0.4, life: 1.6 }); return; }   // EARTH-1 (r221)
+    if (FX_PIECES && FXS.earth2 && mv.id === 'quicksand') { this.fxQuicksand(x, y, r / 1.2, mv.linger || 3); return; }   // EARTH-2 (r222)
+    if (FX_PIECES && FXS.earth2 && mv.id === 'magmaQuake') { this.fxMagmaQuake(x, y, r, user); return; }   // EARTH-2 (r222)
     if (FX_PIECES && FXS.earth1 && mv.id === 'quake') { this.fxQuake(x, y, r, user); return; }   // EARTH-1 (r221)
     if (FX_PIECES && FXS.common1 && (mv.id === 'heavyStomp' || mv.id === 'quake')) {   // COMMON-1 (r186), on cracked earth (EARTH-1)
       if (FXS.earth1) this.addPiece('earth1', null, { frames: [11], x, y: y + 1, ground: true, sc: r * 1.3 / sheetW('earth1', 11), grow: 0.06, shrink: 0.4, life: 1.3 });
@@ -1830,6 +1838,38 @@ mixInto(Battle, class {
     this.fxGroundSlam(x, y, r * 0.8, user, { big: true, light: true });
   }
 
+  // Quicksand (EARTH-2, r222): a splash of mud as it lands, then the sand swirling down for as long as it lingers,
+  // grains sliding in from the rim and sinking into the middle
+  fxQuicksand(x, y, r, linger) {
+    const id = 'earth2', P = o => this.addPiece(id, null, o);
+    P({ frames: [0, 1, 2], fps: 6, x, y, ground: true, sc: r * 2.2 / sheetW(id, 0), life: linger, shrink: 0.25 });
+    P({ frames: [8, 9], x, y: y - 2, sc: r * 1.3 / sheetW(id, 9), life: 0.3 });
+    for (let t = 0.2; t < linger - 0.4; t += 0.12) {
+      const ang = rand(0, TAU), rr = r * rand(0.8, 1);
+      P({ frames: [6 + ((Math.random() * 2) | 0)], x: x + Math.cos(ang) * rr, y: y + Math.sin(ang) * rr * 0.5, mx: -Math.cos(ang) * rr * 1.4, my: -Math.sin(ang) * rr * 0.7,
+        sc: rand(0.6, 0.9), shrink: 0.5, life: 0.6, delay: t });
+    }
+    this.addShake(2);
+  }
+  // Magma Quake (EARTH-2, r222): the ground round it splits into glowing lava cracks, magma spurts burst up in a ring
+  // (the far ones behind it, the near ones small in front), globs of lava fly, then COMMON-1's stamp, lightly
+  fxMagmaQuake(x, y, r, user) {
+    const id = 'earth2', P = q => this.addPiece(id, user, q), ry = 0.55;
+    if (user) user.piecesUntil = this.time + 1.6;
+    P({ frames: [12, 13], fps: 6, x, y: y + 1, ground: true, sc: r * 1.7 / sheetW(id, 12), grow: 0.1, shrink: 0.35, life: 1.6 });
+    for (let i = 0; i < 9; i++) {
+      const ang = i / 9 * TAU + rand(-0.2, 0.2), rr = r * rand(0.5, 0.85), near = Math.sin(ang) > 0.3;
+      P({ frames: [14, 15, 16], x: x + Math.cos(ang) * rr, y: y + Math.sin(ang) * rr * ry, near, ay: 0.9, flip: Math.random() < 0.5,
+        sc: rand(0.75, 0.95) * (near ? 0.65 : 1), grow: 0.06, life: 0.7, delay: 0.04 + rand(0, 0.25) });
+    }
+    if (FXS.fire4) for (let i = 0; i < 7; i++) {   // globs of lava thrown out (FIRE-4)
+      const ang = rand(0, TAU), sp = r * rand(1, 1.8);
+      this.addPiece('fire4', null, { frames: [12], x, y: y - 6, mx: Math.cos(ang) * sp, my: Math.sin(ang) * sp * ry, vz: rand(90, 160), g: 500, rot: rand(0, TAU), vr: rand(-8, 8), sc: rand(0.4, 0.6), life: 0.8, shrink: 0.15 });
+    }
+    if (FXS.common1) this.fxGroundSlam(x, y, r * 0.7, user, { light: true });
+    else this.addShake(8);
+  }
+
   // a star popping out of a hit (Zoomies)
   fxStarPop(tgt) {
     for (let i = 0; i < 3; i++) {
@@ -2306,6 +2346,9 @@ mixInto(Battle, class {
         const k = clamp(1 - left / z.delay, 0, 1), f = clamp((k - 0.4) / 0.6, 0, 1);
         drawSheet(c, 'plant1', 16, zx, zy, { sc: z.r * 1.6 / sheetW('plant1', 16) * (0.3 + 0.7 * k) });
         if (f > 0) drawSheet(c, 'plant1', f > 0.5 ? 11 : 10, zx, zy - 150 * (1 - f * f) - 6, { sc: 0.55, rot: f * 3 });
+      } else if (z.mv.id === 'quicksand' && FX_PIECES && FXS.earth2) {   // the sand starting to turn and sink (EARTH-2)
+        const k = clamp(1 - left / z.delay, 0, 1);
+        drawSheet(c, 'earth2', Math.floor(this.time * 6) % 3, zx, zy, { sc: z.r * 2.2 / sheetW('earth2', 0) * (0.3 + 0.7 * k) });
       } else if (z.mv.id === 'steamEruption' && FX_PIECES && FXS.fire4) {   // the vent bubbling, more and more (FIRE-4)
         const k = 1 - left / z.delay;
         drawSheet(c, 'fire4', k < 0.5 ? 0 : (Math.floor(this.time * 8) % 2), zx, zy, { sc: z.r * 2 / sheetW('fire4', 0) * (0.6 + 0.4 * k) });
