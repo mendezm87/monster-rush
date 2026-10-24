@@ -54,7 +54,7 @@ Build order: the bar and memory choices first (code only), then Glitch variants 
 The roguelikes people play for hundreds of hours are built on **builds**: items that combine in surprising, sometimes broken ways.
 
 - [x] **Relic choices:** treasure rooms and chests offer 1 of 3 (r159). A reroll now and then is still an idea.
-- [ ] **Many more relics: 14 -> 60 by Early Access, 150+ later.** Rarities (common, rare, legendary), every element, and relics that change *how moves behave* (shots split, beams bounce, dashes leave clones, zones follow you), not just stats.
+- [ ] **Many more relics: 30 of 60 by Early Access (r240 added 15 that change how moves behave), 150+ later.** Rarities (common, rare, legendary), every element, and relics that change *how moves behave* (shots split, beams bounce, dashes leave clones, zones follow you), not just stats.
 - [ ] **Synergies:** relic sets (two storm relics = a bonus), relic + Coreature-type combos, fused relics that mutate further.
 - [ ] **Active items** (like Isaac's space-bar items): a usable artifact that recharges by clearing rooms (a time-stop, a decoy, a heal pulse).
 - [ ] **Risk and reward:** a shrine per floor (trade HP or a relic for power), cursed relics, a gamble room.

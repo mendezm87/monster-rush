@@ -181,6 +181,84 @@ const GEAR_ART = {
   blastCore(g, a, v, big) {
     pendant(g, a, v, big, (x, y) => { g.ellipse(x + 0.5, y + 1.5, 2, 2, P('#ff6a1a', '#c02a0a', '#ffe070'), { edge: true }); g.px(x, y + 1, '#fff8c0'); });
   },
+  // ---- r240's relics ----
+  // (things worn on one side of the head go on its left ear in every view: the picture's right from the front, the
+  // picture's left from behind, and the back of the head side-on, where that ear is, so they never jump about)
+  // Ricochet Prism: a cyan crystal set in the middle of its forehead
+  ricochetPrism(g, a, v, big) {
+    if (!a.lenses.length) return;   // from behind it's hidden by the head
+    // just above the eyes, centred between them (from the side, above the near eye): the forehead in every view
+    const x = r0(a.lenses.reduce((t, l) => t + l.x, 0) / a.lenses.length), y = r0(Math.min(...a.lenses.map(l => l.y))) - (big ? 4 : 3);
+    g.poly([[x + 0.5, y - 2], [x + 2.5, y + 0.5], [x + 0.5, y + 3], [x - 1.5, y + 0.5]], P('#7af0ff', '#3a9ad0', '#e0fcff'), { edge: true });
+    g.px(x, y - 1, '#ffffff');
+  },
+  // Echo Chamber: a little brass ear horn stuck on the side of its head
+  echoChamber(g, a, v, big) {
+    const y = (a.neck ? a.headTop : Math.max(a.crown, 2)) + 3, row = (a.neck ? a.headRow : a.bodyRow)(y + 1);   // on the head's own edge, so it never floats
+    if (!row) return;
+    const d = v === 'front' ? 1 : -1, reach = big ? 6 : 5;   // its mouthpiece a pixel into the head, never out on a wing or horn beside it
+    const x = Math.max(r0(a.topX) - reach, Math.min(r0(a.topX) + reach, (v === 'front' ? row[1] : row[0]) - d));
+    g.poly([[x, y + 1], [x + d * 2, y], [x + d * 4, y - 2], [x + d * 4, y + 4], [x + d * 2, y + 2], [x, y + 2]], GP.gold, { edge: true });
+    g.px(x + d * 3, y + 1, '#6a4a10');
+  },
+  // Frost Rune: a snowflake hair clip
+  frostRune(g, a, v, big) {
+    const row = (a.neck ? a.headRow : a.bodyRow)(Math.max(a.crown, 3) + 2) || [a.left, a.right], x = Math.max(r0(a.topX) - 4, Math.min(r0(a.topX) + 4, v === 'front' ? row[1] - 2 : row[0] + 2)), y = Math.max(a.crown, 3) + 1;   // (kept near the middle: a wing beside the head isn't the head)
+    g.rect(x - 1, y, 3, 1, '#a8e8ff'); g.rect(x, y - 1, 1, 3, '#a8e8ff'); g.px(x, y, '#ffffff'); g.px(x - 1, y - 1, '#e0f8ff').px(x + 1, y + 1, '#e0f8ff').px(x + 1, y - 1, '#e0f8ff').px(x - 1, y + 1, '#e0f8ff');
+  },
+  // Seedling: a little sprout growing on top of its head
+  seedling(g, a, v, big) {
+    const x = r0(a.topX), y = Math.max(a.crown, 6);
+    g.rect(x, y - 3, 1, 3, '#2a7a30');
+    g.ellipse(x - 1, y - 4, 1.6, 1, GP.leaf, { edge: true }); g.ellipse(x + 2, y - 5, 1.6, 1, GP.leaf, { edge: true });
+  },
+  // Twin Fang: a band with two white fangs hanging from it, worn like a headband charm
+  twinFang(g, a, v, big) {
+    const x = r0(a.topX) + (isSide(v) ? -1 : 0), y = Math.max(a.crown, 4);
+    g.rect(x - 2, y, 5, 1, '#a82a40');
+    for (const dx of [-2, 1]) g.poly([[x + dx, y + 1], [x + dx + 2, y + 1], [x + dx + 1, y + 3.5]], GP.white, { edge: true });
+  },
+  // Second Wind: a white feather tucked behind its head, sticking up
+  secondWind(g, a, v, big) {
+    const y = (a.neck ? a.headTop : Math.max(a.crown, 2)) + 3, row = (a.neck ? a.headRow : a.bodyRow)(y);   // tucked in at the head's edge
+    if (!row) return;
+    const d = v === 'front' ? 1 : -1, x = Math.max(r0(a.topX) - (big ? 6 : 5), Math.min(r0(a.topX) + (big ? 6 : 5), v === 'front' ? row[1] - 1 : row[0] + 1));
+    g.poly([[x, y + 1], [x + d * 1, y - 2], [x + d * 3, y - 6], [x + d * 3, y - 4], [x + d * 1, y + 1]], GP.white, { edge: true });
+    g.px(x + d * 2, y - 4, '#8ab8e8');
+  },
+  // Overclock Chip: goggles with glowing cyan lenses and circuit frames
+  overclock(g, a, v, big) { glasses(g, a, v, big, '#7af0ff', P('#3a5a6a', '#2a3a4a', '#5a8a9a'), true); },
+  // Data Leech: a cracked magenta monocle over one eye
+  dataLeech(g, a, v, big) {
+    if (!a.lenses.length) return;
+    const l = a.lenses[a.lenses.length - 1], R = big ? 2.6 : 2.1;
+    g.ellipse(l.x + 0.5, l.y + 0.5, R, R, P('#ff3ad8', '#a01a8a', '#ffb0f0'), { edge: true }); g.ellipse(l.x + 0.5, l.y + 0.5, R - 1, R - 1, '#3ad8ff');
+    g.px(r0(l.x), r0(l.y), '#ff3ad8'); g.rect(r0(l.x + R), r0(l.y + 1), 1, 3, '#a01a8a');
+  },
+  // Magma Heart: a glowing ember on a chain
+  magmaHeart(g, a, v, big) {
+    pendant(g, a, v, big, (x, y) => { g.poly([[x + 0.5, y + 4], [x - 1.5, y + 1.5], [x - 1, y], [x + 0.5, y + 1], [x + 2, y], [x + 2.5, y + 1.5]], P('#ff6a1a', '#b82a0a', '#ffd06a'), { edge: true }); g.px(x, y + 2, '#ffe070'); });
+  },
+  // Undertow Charm: a spiral seashell on a chain
+  undertow(g, a, v, big) {
+    pendant(g, a, v, big, (x, y) => { g.ellipse(x + 0.5, y + 1.5, 2, 2, P('#e8d8c0', '#b8a080', '#fff8e8'), { edge: true }); g.px(x, y + 1, '#4a90e8').px(x + 1, y + 2, '#4a90e8'); });
+  },
+  // Thorn Collar: a leafy collar bristling with thorns
+  thornCollar(g, a, v, big) {
+    if (!a.neck) return;
+    const w = Math.max(5, Math.min(a.w - 2, big ? 12 : 9)), cx = r0(a.neckX), y = a.bottom + 1;   // round the neck, below the chin
+    g.rect(cx - (w >> 1), y, w, 2, '#2a7a30'); g.rect(cx - (w >> 1), y, w, 1, '#4ab04a');
+    for (let x = cx - (w >> 1); x < cx - (w >> 1) + w; x += 2) g.px(x, y - 1, '#e8dcc0');
+    if (v !== 'back') g.px(cx, y + 2, '#e8dcc0');
+  },
+  // Anvil Plate: a small iron chest plate hung on its front
+  anvilPlate(g, a, v, big) {
+    pendant(g, a, v, big, (x, y) => { g.poly([[x - 2, y], [x + 3, y], [x + 3, y + 2], [x + 1.5, y + 4], [x - 0.5, y + 4], [x - 2, y + 2]], GP.iron, { edge: true }); g.px(x - 1, y + 1, '#ffffff'); });
+  },
+  // Gambler's Die: a red-spotted die on a chain
+  gamblersDie(g, a, v, big) {
+    pendant(g, a, v, big, (x, y) => { g.poly([[x - 1.5, y], [x + 2.5, y], [x + 2.5, y + 4], [x - 1.5, y + 4]], GP.white, { edge: true }); g.px(x - 1, y + 1, '#c8303a').px(x + 1, y + 3, '#c8303a').px(x, y + 2, '#c8303a'); });
+  },
   // Swift Boots: a pair of blue sneakers with white soles
   swiftBoots(g, a, v, big) {
     for (const f of a.feet) {

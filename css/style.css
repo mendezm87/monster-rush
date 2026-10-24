@@ -381,6 +381,8 @@ kbd { background: #2b2540; border: 0.3cqh solid #555; border-bottom-width: 0.8cq
   -webkit-text-stroke: 0.6cqh var(--ink); paint-order: stroke fill; }
 .mbtn.up { box-shadow: 0 0 0 0.5cqh #5aff7a, 0 0 2cqh #5aff7a; }
 .mbtn.up .eff { color: #5aff7a; }
+.mbtn.lucky { outline: 0.5cqh dashed #ffd23f; outline-offset: 0.4cqh; }   /* Gambler's Die: the lucky move this fight */
+.mbtn.lucky::before { content: '84'; position: absolute; top: -0.2cqh; left: 0.8cqh; color: #ffd23f; font-size: 3cqh; text-shadow: 0 0 0.5cqh #000; }
 .mbtn.down { filter: saturate(.35) brightness(.8); }
 .mbtn.down .eff { color: #ff8a7a; }
 /* the party's Arc-cores: a ▲ on a Coreature with a move that hits this room's wild Coreatures hard */

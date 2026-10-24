@@ -220,6 +220,8 @@ const UI = {
         b.el.classList.toggle('up', eff > 1); b.el.classList.toggle('down', eff < 1);
         b.eff.textContent = eff > 1 ? '▲' : eff < 1 ? '▼' : '';
       }
+      const lucky = !calm && battle.run.dieSlot === i && battle.mod(m, 'dieMul') > 1;   // Gambler's Die: this fight's lucky move
+      if (b.lucky !== lucky) { b.lucky = lucky; b.el.classList.toggle('lucky', lucky); }
     });
   },
 

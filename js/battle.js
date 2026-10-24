@@ -148,6 +148,7 @@ class Battle {
       return m;
     });
     this.state = 'fight'; this.stateT = 0;
+    this.emit('fightStart', P);   // e.g. Gambler's Die picks this room's lucky move
     this.doorFx('close');
     if (this.boss) {
       if (typeof bossIntro === 'function') bossIntro(this, this.boss);   // bosses.js: its banner, by kind
@@ -409,6 +410,7 @@ class Battle {
     this.burst(m.x, m.cy, ['#ffffff', '#cfd6e6'], 26, 90);
     if (m.side === 'enemy') {
       this.run.stats.kos++;
+      this.emit('ko', this.P, m);   // e.g. Data Leech
       this.dropLoot(m);
       this.giveData(m.boss ? DATA_BOSS : m.scale > 1 ? DATA_TOUGH : DATA_WILD);
       if (m.champ === 'split') this.splitChampion(m);
@@ -525,9 +527,9 @@ class Battle {
         if (k.z <= 0) { k.z = 0; k.vz = k.vz < -60 ? -k.vz * 0.4 : 0; k.vx *= 0.6; k.vy *= 0.6; }
       } else { k.vx *= Math.exp(-dt * 6); k.vy *= Math.exp(-dt * 6); }
       // it drifts to you when you walk close
-      const d = Math.hypot(P.x - k.x, P.y - k.y);
-      if (P.alive && k.t > 0.5 && d < 56 && k.kind !== 'glitchShard') {   // a Corrupted Shard never comes to you: taking it is a choice
-        const pull = 260 * (1 - d / 70);
+      const d = Math.hypot(P.x - k.x, P.y - k.y), reach = 56 * this.mod(P, 'magnetMul');   // (Magnet Core pulls from across the room)
+      if (P.alive && k.t > 0.5 && d < reach && k.kind !== 'glitchShard') {   // a Corrupted Shard never comes to you: taking it is a choice
+        const pull = 260 * Math.max(0.25, 1 - d / (reach * 1.25));
         k.vx += (P.x - k.x) / (d || 1) * pull * dt * 8; k.vy += (P.y - k.y) / (d || 1) * pull * dt * 8;
       }
       k.x = clamp(k.x + k.vx * dt, F.x0 + 4, F.x1 - 4); k.y = clamp(k.y + k.vy * dt, F.y0 + 4, F.y1 - 2);
@@ -603,7 +605,13 @@ class Battle {
         if (this.state === 'fight') {
           const held = Input.moves(0);
           for (let i = 0; i < 4; i++) if (held[i]) this.tryMove(P, i);
+          this.emit('tick', P, dt);   // e.g. Thorn Collar
+          if (P.echoMove != null && P.alive && !P.action && P.gcd <= 0) {   // Echo Chamber: the move fires again
+            const i = P.echoMove, cd = P.cd[i]; P.echoMove = null;
+            if (P.moves[i]) { P.echoing = true; this.execute(P, i); P.echoing = false; P.cd[i] = cd; this.text(P.x, P.y - P.h - 14, 'ECHO!', '#c8e8ff', P.y); }
+          }
         }
+        if (this.relicFx && this.relicFx.length) this.relicFx = this.relicFx.filter(f => f.update(this, dt) !== false);   // relic effects that live a while (Phantom Step, Seedling)
         for (const m of this.e) {
           if (this.state === 'faint') break;
           if (m.spawnT > 0) { this.updateSpawn(m, dt); continue; }

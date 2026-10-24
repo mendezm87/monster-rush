@@ -125,6 +125,79 @@ const healBy = (b, m, k) => {
   m.hp += heal;
   if (m === b.P) b.number(m, heal, null, '#b6ff9a', '#4fae2e', '+');
 };
+
+// ---- r240: relics that change how moves behave ----
+// a copy of a move marked `chained`, so a hit it makes doesn't set off the on-hit relics again
+const _chained = {};
+const chainedMv = (mv, extra) => { const k = mv.id + (extra ? ':' + extra.id : ''); return _chained[k] || (_chained[k] = { ...mv, ...(extra || {}), chained: true, status: null }); };
+const nearestOther = (b, src, tgt, range) => b.foes(src).filter(f => f !== tgt && f.visible && !f.fainted && Math.hypot(f.x - tgt.x, f.y - tgt.y) < range)
+  .sort((p, q) => Math.hypot(p.x - tgt.x, p.y - tgt.y) - Math.hypot(q.x - tgt.x, q.y - tgt.y))[0];
+// Ricochet Prism: a beam's hit glances off to the next wild Coreature along
+function ricochet(b, src, tgt, mv, mult, k) {
+  if (mv.kind !== 'beam' || mv.chained) return;
+  const o = nearestOther(b, src, tgt, 170); if (!o) return;
+  if (Math.random() < 0.35) b.particles.push({ kind: 'line', x: tgt.x, y: tgt.cy, x2: o.x, y2: o.cy, k2: o.y - o.cy, life: 0.12, max: 0.12, color: fxOf(mv)[1] });
+  b.hit(src, o, chainedMv(mv), mult * k, { merge: 'rico' + (src.uid || (src.uid = _uid++)), kb: Math.atan2(o.y - tgt.y, o.x - tgt.x) });
+}
+const MAGMA_MV = { id: 'magmaHeart', name: 'Magma Heart', type: 'fire', style: 'fire', kind: 'burst', power: 90, chained: true };
+// Magma Heart: a shot bursts where it hits, scorching anything close by
+function magmaBurst(b, src, tgt, mv, mult, r, k) {
+  if (mv.kind !== 'projectile' || mv.chained || mult < 1) return;
+  if (typeof FX_PIECES !== 'undefined' && FX_PIECES && FXS.fire3 && b.fxFireBoom) b.fxFireBoom(tgt.x, tgt.cy, r * 1.6, null); else b.burst(tgt.x, tgt.cy, fxOf(MAGMA_MV), 10, 70);
+  for (const o of b.foes(src)) if (o !== tgt && o.visible && !o.fainted && Math.hypot(o.x - tgt.x, o.y - tgt.y) < r + o.r) b.hit(src, o, MAGMA_MV, k, { kb: Math.atan2(o.y - tgt.y, o.x - tgt.x) });
+}
+const THORN_MV = { id: 'thornCollar', name: 'Thorn Collar', type: 'plant', style: 'grass', kind: 'dash', power: 45, chained: true };
+// Thorn Collar: wild Coreatures touching yours get pricked (each at most every 0.8 s)
+function thorns(b, m, k) {
+  if (!m.alive) return;
+  for (const f of b.foes(m)) if (f.alive && f.visible && Math.hypot(f.x - m.x, f.y - m.y) < m.r + f.r + 3 && b.time - (f.thornAt || -9) > 0.8) { f.thornAt = b.time; b.hit(m, f, THORN_MV, k, { force: 140 }); }
+}
+// Undertow Charm: while a blast charges, wild Coreatures nearby are dragged in toward it
+function undertow(b, m, a, dt, pull) {
+  for (const f of b.foes(m)) {
+    if (!f.alive || f.boss) continue;
+    const dx = m.x - f.x, dy = m.y - f.y, d = Math.hypot(dx, dy);
+    if (d < a.r * 1.9 && d > m.r + f.r) {
+      f.x += dx / d * pull * dt; f.y += dy / d * pull * dt;
+      if (Math.random() < 0.3) b.particles.push({ kind: 'sq', x: f.x, y: f.y - 2, vx: dx / d * 40, vy: dy / d * 40, life: 0.3, max: 0.3, size: 2, color: '#8ad8ff' });
+    }
+  }
+}
+// Phantom Step: a ghost of the Coreature retraces its dash a moment later, hitting what it passes
+function phantomStep(b, m, a, k) {
+  if (!a.phantom) {
+    a.phantom = { path: [], t0: b.time };
+    const P = a.phantom, mv = chainedMv(a.mv, { id: 'phantom', name: 'Phantom Step' });
+    (b.relicFx || (b.relicFx = [])).push({ y: m.y, t: -0.28, hit: new Set(),
+      update(b, dt) {
+        this.t += dt; if (this.t < 0) return true;
+        const pts = P.path; if (!pts.length) return this.t < 0.5;
+        const at = P.t0 + this.t, p = pts.find(q => q.t >= at) || pts[pts.length - 1];
+        if ((this.gT = (this.gT || 0) - dt) <= 0) { this.gT = 0.045; m.ghosts.push({ x: p.x, y: p.y, face: p.face, view: p.view, t: 0.22, color: '#c8b0ff' }); }
+        for (const f of b.foes(m)) if (f.alive && !this.hit.has(f) && Math.hypot(f.x - p.x, f.y - p.y) < m.r + f.r + 4) { this.hit.add(f); b.hit(m, f, mv, k, { kb: Math.atan2(f.y - p.y, f.x - p.x) }); }
+        return this.t < pts[pts.length - 1].t - P.t0 + 0.05;
+      } });
+  }
+  a.phantom.path.push({ t: b.time, x: m.x, y: m.y, face: m.face, view: m.view });
+}
+// Seedling: a berry bush sprouts where you stand when a room is cleared, and drops a berry as it ripens
+function plantSeedling(b, x, y, n) {
+  (b.relicFx || (b.relicFx = [])).push({ y, t: 0,
+    update(b, dt) {
+      this.t += dt;
+      if (this.t >= 1.3 && !this.done) { this.done = true; for (let i = 0; i < n; i++) b.spawnPickup('berry', x, y - 4); b.burst(x, y - 6, ['#4ab04a', '#8ae07a', '#e83a5a'], 8, 50, -30); }
+      return this.t < 2.6;
+    },
+    draw(ctx, b) {
+      const g = clamp(this.t / 1.1, 0, 1), s = SPR_SCALE, X = Math.round(x / s), Y = Math.round(y / s);
+      ctx.globalAlpha = clamp((2.6 - this.t) / 0.5, 0, 1);
+      const h = Math.round(2 + g * 5), dot = (dx, dy, c, n = 1) => { ctx.fillStyle = c; ctx.fillRect((X + dx) * s, (Y + dy) * s, s * n, s * n); };
+      for (let i = 0; i < h; i++) dot(0, -i, '#2a7a30');
+      if (g > 0.4) for (const [dx, dy, c] of [[-2, -h + 1, '#2a7a30'], [1, -h, '#4ab04a'], [-1, -h - 1, '#8ae07a'], [1, -h + 2, '#4ab04a'], [-3, -h + 3, '#4ab04a'], [2, -h + 3, '#2a7a30']]) dot(dx, dy, c, 2);
+      if (g >= 1 && !this.done) { dot(-2, -h + 1, '#e83a5a', 2); dot(2, -h + 2, '#e83a5a', 2); }
+      ctx.globalAlpha = 1;
+    } });
+}
 const RELICS = {
   leechLens:   { name: 'LEECH LENS', desc: 'Beams also drain: your Coreature heals 15% of the damage its beams deal.', tag: 'plant', gear: 'eyes', mods: { beamDrain: 0.15 },
     fused: { name: 'LEECH SIGHT', desc: 'All its attacks drain 12% of their damage, and its beams 30%.', mods: { drainAll: 0.12, beamDrain: 0.3 } } },
@@ -165,7 +238,57 @@ const RELICS = {
     on: { hit(b, src, tgt, mv, mult) { if (mult >= 1 && !mv.chained && Math.random() < 0.15) chainBolt(b, src, tgt, 0.6); } },
     fused: { name: 'TESLA HEART', desc: 'Its hits arc lightning to another wild Coreature 35% of the time, harder.',
       on: { hit(b, src, tgt, mv, mult) { if (mult >= 1 && !mv.chained && Math.random() < 0.35) chainBolt(b, src, tgt, 1); } } } },
+  // ---- r240: fifteen relics that change how moves behave ----
+  ricochetPrism: { name: 'RICOCHET PRISM', desc: 'Beams glance off what they hit and strike the next wild Coreature too.', tag: 'electric', gear: 'head',
+    on: { hit(b, src, tgt, mv, mult) { ricochet(b, src, tgt, mv, mult, 0.6); } },
+    fused: { name: 'PRISM HEART', desc: 'Its beams glance off to the next wild Coreature at full strength.', on: { hit(b, src, tgt, mv, mult) { ricochet(b, src, tgt, mv, mult, 1); } } } },
+  echoChamber: { name: 'ECHO CHAMBER', desc: 'Every 4th move fires twice.', tag: 'wind', gear: 'head', mods: { echoEvery: 4 },
+    fused: { name: 'RESONANCE', desc: 'Every 3rd move it makes fires twice.', mods: { echoEvery: 3 } } },
+  phantomStep: { name: 'PHANTOM STEP', desc: 'A ghost of your Coreature retraces each dash a moment later, hitting what it passes for half damage.', tag: 'wind', aura: 'phantom',
+    on: { dash(b, m, a) { phantomStep(b, m, a, 0.5); } },
+    fused: { name: 'PHANTOM TWIN', desc: 'Its dash ghost hits as hard as it does.', on: { dash(b, m, a) { phantomStep(b, m, a, 1); } } } },
+  magmaHeart:  { name: 'MAGMA HEART', desc: 'Shots burst into flame where they hit, scorching wild Coreatures close by.', tag: 'fire', gear: 'neck',
+    on: { hit(b, src, tgt, mv, mult) { magmaBurst(b, src, tgt, mv, mult, 30, 0.5); } },
+    fused: { name: 'MAGMA CORE', desc: 'Its shots burst in bigger, hotter blasts.', on: { hit(b, src, tgt, mv, mult) { magmaBurst(b, src, tgt, mv, mult, 46, 1); } } } },
+  frostRune:   { name: 'FROST RUNE', desc: 'Hitting a slowed wild Coreature may freeze it solid (35%).', tag: 'water', gear: 'head',
+    on: { hit(b, src, tgt, mv, mult) { if (mult >= 1 && !mv.chained && tgt.slowT > 0 && Math.random() < 0.35) b.applyStatus(tgt, 'frz'); } },
+    fused: { name: 'RIME HEART', desc: 'Its hits slow, and freeze slowed wild Coreatures 50% of the time.',
+      on: { hit(b, src, tgt, mv, mult) { if (mult < 1 || mv.chained) return; if (tgt.slowT > 0 && Math.random() < 0.5) b.applyStatus(tgt, 'frz'); tgt.slowT = Math.max(tgt.slowT, 1.2); } } } },
+  undertow:    { name: 'UNDERTOW CHARM', desc: 'While a blast charges, it drags nearby wild Coreatures in toward it.', tag: 'water', gear: 'neck',
+    on: { burstCharge(b, m, a, dt) { undertow(b, m, a, dt, 70); } },
+    fused: { name: 'MAELSTROM HEART', desc: 'Its blasts drag wild Coreatures in hard while they charge.', on: { burstCharge(b, m, a, dt) { undertow(b, m, a, dt, 140); } } } },
+  overclock:   { name: 'OVERCLOCK CHIP', desc: 'A Coreature swapped in has all its moves ready at once.', tag: 'electric', gear: 'eyes',
+    on: { swapIn(b, m) { m.cd = m.cd.map(() => 0); b.text(m.x, m.y - m.h - 14, 'OVERCLOCK!', '#7af0ff', m.y); } },
+    fused: { name: 'HYPERCLOCK', desc: 'Sent in, it has every move ready and runs 30% faster for 4 s.',
+      on: { swapIn(b, m) { m.cd = m.cd.map(() => 0); m.buffs = m.buffs.filter(x => x.stat !== 'spd'); m.buffs.push({ stat: 'spd', mul: 1.3, t: 4 }); b.text(m.x, m.y - m.h - 14, 'HYPERCLOCK!', '#7af0ff', m.y); } } } },
+  thornCollar: { name: 'THORN COLLAR', desc: 'Wild Coreatures that touch yours get pricked.', tag: 'plant', gear: 'neck',
+    on: { tick(b, m) { thorns(b, m, 1); } },
+    fused: { name: 'BRAMBLE HIDE', desc: 'Wild Coreatures that touch it get torn up (double thorn damage).', on: { tick(b, m) { thorns(b, m, 2); } } } },
+  seedling:    { name: 'SEEDLING', desc: 'Clearing a room grows a berry bush where you stand, and it drops a berry.', tag: 'plant', gear: 'head',
+    on: { clear(b) { plantSeedling(b, b.P.x + 14, b.P.y + 4, 1); } },
+    fused: { name: 'BERRY GROVE', desc: 'After each room it grows a bush that drops two berries.', on: { clear(b, m) { plantSeedling(b, b.P.x - 14, b.P.y + 4, 2); } } } },
+  anvilPlate:  { name: 'ANVIL PLATE', desc: "Below half HP, your Coreature takes 25% less damage and can't be knocked back.", tag: 'metal', gear: 'neck', mods: { anvilMul: 0.75 },
+    fused: { name: 'ANVIL HEART', desc: "Below half HP it takes 45% less damage and can't be knocked back.", mods: { anvilMul: 0.55 } } },
+  magnetCore:  { name: 'MAGNET CORE', desc: 'Coins, shards and berries fly to you from across the room.', tag: 'metal', aura: 'magnet', mods: { magnetMul: 7 },
+    fused: { name: 'LODESTONE', desc: 'Pickups fly to it from anywhere, and it heals 5% after every room.', mods: { magnetMul: 9 }, on: { clear(b, m) { healBy(b, m, 0.05); } } } },
+  twinFang:    { name: 'TWIN FANG', desc: 'Hits have a 10% chance to strike twice.', tag: 'luck', gear: 'head',
+    on: { hit(b, src, tgt, mv, mult) { if (mult >= 1 && !mv.chained && Math.random() < 0.1) { b.hit(src, tgt, chainedMv(mv), 0.7); b.text(tgt.x, tgt.y - tgt.h - 22, 'TWIN!', '#fff3b0', tgt.y); } } },
+    fused: { name: 'TRIPLE FANG', desc: 'Its hits strike twice 25% of the time.',
+      on: { hit(b, src, tgt, mv, mult) { if (mult >= 1 && !mv.chained && Math.random() < 0.25) { b.hit(src, tgt, chainedMv(mv), 0.8); b.text(tgt.x, tgt.y - tgt.h - 22, 'TWIN!', '#fff3b0', tgt.y); } } } } },
+  gamblersDie: { name: "GAMBLER'S DIE", desc: 'Each fight, one of your moves is the lucky one (marked on its button) and hits 40% harder.', tag: 'luck', gear: 'neck', mods: { dieMul: 1.4 },
+    on: { fightStart(b, m) { luckyMove(b, m); } },
+    fused: { name: 'LOADED DIE', desc: 'Its lucky move each fight hits 80% harder.', mods: { dieMul: 1.8 }, on: { fightStart(b, m) { luckyMove(b, m); } } } },
+  secondWind:  { name: 'SECOND WIND', desc: 'Once a floor, each Coreature that would faint hangs on at 1 HP instead.', tag: 'wind', gear: 'head', mods: { secondWind: 1 },
+    fused: { name: 'NINE LIVES', desc: 'Twice a floor, it hangs on at 1 HP instead of fainting.', mods: { secondWind: 2 } } },
+  dataLeech:   { name: 'DATA LEECH', desc: "Defeating a wild Coreature heals the one that's out by 5%.", tag: 'luck', gear: 'eyes',
+    on: { ko(b, m) { healBy(b, m, 0.05); } },
+    fused: { name: 'DATA EATER', desc: 'Each wild Coreature it defeats heals it by 12%.', on: { ko(b, m) { healBy(b, m, 0.12); } } } },
 };
+// Gambler's Die: this fight's lucky move, one of its attacks
+function luckyMove(b, m) {
+  const ok = [0, 1, 2, 3].filter(i => m.moves[i] && !['buff', 'heal'].includes(m.moves[i].kind));
+  b.run.dieSlot = ok.length ? pickRand(ok) : null;
+}
 const RELIC_TAGS = ['fire', 'water', 'electric', 'metal', 'plant', 'wind', 'luck'];
 // Shop goods that are used up straight away.
 const GOODS = {

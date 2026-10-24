@@ -27,6 +27,7 @@ mixInto(Battle, class {
     const mv = m.moves[i], foe = this.foe(m), F = this.F;
     m.cd[i] = mv.cd * m.cdMul();
     m.gcd = 0.35;
+    if (m.side === 'player' && !m.echoing) { const e = this.mod(m, 'echoEvery'); if (e && (m.echoN = (m.echoN || 0) + 1) % e === 0) m.echoMove = i; }   // Echo Chamber: every so many moves, one fires twice
     if (m.side === 'enemy') {
       const alive = this.e.filter(e => e.alive).length;
       this.enemyAtkT = alive > 1 ? rand(0.5, 0.8) + 0.2 * (alive - 2) : 0;
@@ -140,9 +141,17 @@ mixInto(Battle, class {
     const crit = mult >= 1 && Math.random() < (mv.crit || 0.06);
     let dmg = DMG_SCALE * mv.power * mult * (src.atk() / tgt.defense()) * stab * eff * itemMul * (crit ? 1.5 : 1) * (mv.type === 'water' ? this.mod(src, 'waterMul') : 1) * rand(0.9, 1.05);
     if (tgt.exposedT > 0) dmg *= 1.5;   // a boss knocked dizzy or staggered takes more (bosses.js)
+    const anvil = tgt.side === 'player' && tgt.hp < tgt.maxHp / 2 ? this.mod(tgt, 'anvilMul') : 1;   // Anvil Plate: tougher below half HP
+    dmg *= anvil;
+    if (src.side === 'player' && this.run.dieSlot != null && src.moves[this.run.dieSlot] === mv) dmg *= this.mod(src, 'dieMul');   // Gambler's Die: this room's lucky move
     if (src.brain && !mv.boss) dmg *= BOSS_MOVE_MUL;   // a hand-made boss's own moves hit softer than its warned attacks
     dmg = Math.max(1, Math.round(dmg));
     tgt.hp = Math.max(0, tgt.hp - dmg);
+    if (tgt.hp <= 0 && tgt.side === 'player') {   // Second Wind: the first time each floor it would faint, it hangs on at 1 HP
+      const sw = this.mod(tgt, 'secondWind');
+      if (tgt.swFloor !== this.run.floorN) { tgt.swFloor = this.run.floorN; tgt.swUsed = 0; }
+      if (sw && tgt.swUsed < sw) { tgt.swUsed++; tgt.hp = 1; tgt.invuln = 1; this.text(tgt.x, tgt.y - tgt.h - 14, 'SECOND WIND!', '#e8f8ff', tgt.y); Sfx.play('drain'); }
+    }
     if (tgt.brain) tgt.brain.hurt(this, dmg, mult);          // a hand-made boss counts the damage (interrupts, stagger checks)
     if (src.brain && tgt === this.P) src.brain.landed(this, tgt, mv, mult);
     src.dmgDealt += dmg;
@@ -156,7 +165,7 @@ mixInto(Battle, class {
     const fresh = this.number(tgt, dmg, merge, look[0], look[1], '', look[2]);
     const kb = opts.kb ?? Math.atan2(tgt.cy - src.cy, tgt.x - src.x);
     // bosses barely budge
-    const force = (opts.force ?? (mult < 1 ? 22 : Math.min(260, 60 + dmg * 0.45))) * (tgt.boss ? 0.35 : tgt.champ === 'giant' ? 0.5 : 1);
+    const force = (opts.force ?? (mult < 1 ? 22 : Math.min(260, 60 + dmg * 0.45))) * (tgt.boss ? 0.35 : tgt.champ === 'giant' ? 0.5 : 1) * (anvil < 1 ? 0 : 1);
     tgt.kx += Math.cos(kb) * force; tgt.ky += Math.sin(kb) * force;
     if (mult >= 1) tgt.stagger = force > 150;   // a big knockback: it staggers, then steadies itself (monAnim)
 
@@ -315,6 +324,7 @@ mixInto(Battle, class {
 
       case 'burst': {
         const mv = a.mv;
+        if (!a.done) this.emit('burstCharge', m, a, dt);   // e.g. Undertow Charm pulls them in
         // a cone (Blizzard, Gust): aim again on release, then blow in front, hitting 3 times
         if (mv.cone) {
           if (!a.done && a.t >= mv.delay) {

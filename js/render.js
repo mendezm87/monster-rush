@@ -179,6 +179,22 @@ const ICON_ART = {
     for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2, r = i % 2 ? 3 : 6.5; pts.push([7 + Math.cos(a) * r, 7 + Math.sin(a) * r]); }
     g.poly(pts, P('#ff5a2a', '#c8301a', '#ffb06a')); g.ellipse(7, 7, 2.2, 2.2, '#ffe066');
   },
+  // r240's relics
+  ricochetPrism(g) { g.poly([[7, 0], [12, 6], [7, 13], [2, 6]], P('#7af0ff', '#3a9ad0', '#e0fcff')); g.poly([[7, 0], [12, 6], [7, 6]], '#c8f8ff'); g.px(5, 4, '#ffffff'); g.rect(0, 10, 3, 1, '#ffe066'); g.rect(11, 2, 3, 1, '#ffe066'); },
+  echoChamber(g) { g.poly([[1, 5], [5, 5], [12, 1], [12, 12], [5, 8], [1, 8]], P('#e0b040', '#a07a20', '#fff0a0')); g.rect(12, 1, 1, 12, '#6a4a10'); g.px(3, 6, '#fff8d0'); },
+  phantomStep(g) { g.poly([[2, 13], [2, 6], [5, 2], [9, 2], [12, 6], [12, 13], [10, 11], [8, 13], [6, 11], [4, 13]], P('#c8b0ff', '#8a6ad8', '#f0e8ff')); g.rect(5, 6, 1, 2, '#2a1a4a'); g.rect(9, 6, 1, 2, '#2a1a4a'); },
+  magmaHeart(g) { g.poly([[7, 13], [1, 6], [2, 2], [5, 1], [7, 3], [9, 1], [12, 2], [13, 6]], P('#ff6a1a', '#b82a0a', '#ffd06a')); g.poly([[5, 7], [7, 5], [9, 7], [7, 10]], '#ffe070'); },
+  frostRune(g) { g.rect(6, 0, 2, 14, '#a8e8ff'); g.rect(0, 6, 14, 2, '#a8e8ff'); for (let i = 1; i < 13; i++) { g.px(i, i, '#e0f8ff'); g.px(13 - i, i, '#e0f8ff'); } g.rect(5, 5, 4, 4, '#4a9ae8'); g.px(6, 6, '#ffffff'); },
+  undertow(g) { g.ellipse(7, 7, 6, 6, P('#4a90e8', '#2a5ab0', '#a8d8ff')); g.ellipse(7, 7, 3.5, 3.5, '#2a5ab0'); g.ellipse(7, 7, 1.5, 1.5, '#e6f6ff'); g.rect(1, 6, 3, 1, '#e6f6ff'); g.rect(10, 8, 3, 1, '#e6f6ff'); },
+  overclock(g) { g.rect(1, 2, 12, 10, '#2a3a4a'); g.rect(2, 3, 10, 8, '#3a5a6a'); g.rect(4, 5, 6, 4, '#7af0ff'); g.rect(5, 6, 4, 2, '#e0fcff'); for (const x of [3, 6, 9]) { g.rect(x, 0, 1, 2, '#c8a040'); g.rect(x, 12, 1, 2, '#c8a040'); } },
+  thornCollar(g) { g.poly([[1, 5], [13, 5], [12, 10], [2, 10]], P('#4ab04a', '#2a7a30', '#8ae07a')); g.rect(2, 7, 10, 1, '#2a7a30'); for (const x of [1, 4, 7, 10, 13]) { g.poly([[x - 1, 5], [x, 1], [x + 1, 5]], '#e8dcc0'); if (x > 1 && x < 13) g.poly([[x - 1, 10], [x, 13], [x + 1, 10]], '#e8dcc0'); } },
+  seedling(g) { g.ellipse(7, 11, 5, 2.5, P('#8a5a3a', '#5a3a22', '#b07a52')); g.rect(6, 4, 2, 7, '#2a7a30'); g.ellipse(4, 4, 3, 1.8, P('#4ab04a', '#2a7a30', '#8ae07a')); g.ellipse(10, 3, 3, 1.8, P('#4ab04a', '#2a7a30', '#8ae07a')); },
+  anvilPlate(g) { g.poly([[0, 2], [14, 2], [12, 6], [9, 7], [10, 12], [4, 12], [5, 7], [2, 6]], P('#9aa0aa', '#5a606c', '#d8dce4')); g.rect(3, 12, 8, 2, '#4a4e58'); g.px(3, 3, '#ffffff'); },
+  magnetCore(g) { g.poly([[1, 1], [6, 1], [6, 8], [8, 8], [8, 1], [13, 1], [13, 9], [10, 13], [4, 13], [1, 9]], P('#d83a3a', '#a02020', '#ff7a6a')); g.rect(1, 1, 5, 3, '#e8e8f0'); g.rect(8, 1, 5, 3, '#e8e8f0'); },
+  twinFang(g) { g.poly([[2, 1], [6, 1], [4, 12]], P('#f4f4f8', '#c8c8d4', '#ffffff')); g.poly([[8, 1], [12, 1], [10, 12]], P('#f4f4f8', '#c8c8d4', '#ffffff')); g.rect(1, 0, 12, 2, '#a82a40'); },
+  gamblersDie(g) { g.poly([[1, 3], [10, 3], [10, 13], [1, 13]], P('#f4f4f8', '#c8c8d4', '#ffffff')); g.poly([[1, 3], [4, 0], [13, 0], [10, 3]], '#e8e8f0'); g.poly([[10, 3], [13, 0], [13, 10], [10, 13]], '#b8b8c8'); for (const [x, y] of [[3, 5], [5, 7], [7, 9], [3, 9], [7, 5]]) g.px(x, y, '#c8303a'); },
+  secondWind(g) { g.poly([[13, 0], [9, 2], [5, 6], [2, 10], [1, 13], [4, 12], [8, 9], [11, 5]], P('#f4f4f8', '#c8c8d4', '#ffffff')); for (let k = 0; k < 10; k++) g.px(12 - k, 1 + k, '#8ab8e8'); },
+  dataLeech(g) { g.ellipse(6, 6, 5.5, 5.5, P('#ff3ad8', '#a01a8a', '#ffb0f0')); g.ellipse(6, 6, 3.5, 3.5, '#2a0a2a'); g.px(4, 4, '#3ad8ff').px(7, 7, '#ff3ad8').px(5, 7, '#3ad8ff'); g.poly([[10, 10], [13, 13], [12, 14], [9, 11]], '#a01a8a'); },
   bigBerry(g) { g.ellipse(7, 8, 5.5, 5, P('#e8435a', '#a82a40', '#ffb0c0')); g.poly([[6, 3], [9, 0], [11, 2], [8, 4]], '#4fae2e'); g.px(5, 6, '#ffffff'); },
   picnic(g) { g.poly([[1, 6], [13, 6], [12, 13], [2, 13]], P('#c89a5a', '#8a6a3a', '#e8c08a')); g.rect(1, 5, 12, 2, '#e8435a'); for (let x = 2; x < 13; x += 3) g.rect(x, 5, 1, 2, '#ffffff'); g.rect(4, 1, 1, 4, '#8a6a3a'); g.rect(9, 1, 1, 4, '#8a6a3a'); g.rect(4, 1, 6, 1, '#8a6a3a'); },
   revive(g) { g.ellipse(7, 10, 4.5, 3.5, P('#c89a5a', '#8a6a3a', '#e8c08a')); g.rect(7, 3, 1, 5, '#4fae2e'); g.ellipse(4.5, 4, 2.5, 1.5, '#8be04e'); g.ellipse(10, 3, 2.5, 1.5, '#8be04e'); },
@@ -231,6 +247,18 @@ const RELIC_AURA = {
       const a = b.time * 1.6 + i * TAU / 3, x = X + Math.cos(a) * Math.max(m.r + 6, m.h * 0.45), y = Y - m.h * 0.45 + Math.sin(a) * 5;
       auraPx(ctx, x, y, Math.sin(a) < 0 ? '#a01a3a' : '#e83a5a', 2); auraPx(ctx, x + SPR_SCALE, y - SPR_SCALE, '#4ab04a');
     }
+  },
+  // Phantom Step: a faint violet ghost of it flickering a step behind (r240)
+  phantom(ctx, b, m, X, Y) {
+    for (let i = 0; i < 6; i++) {
+      const ph = (b.time * 0.7 + i / 6) % 1, a = i * 2.4 + b.time;
+      auraPx(ctx, X - m.face * (m.r * 0.6 + ph * 6) + Math.cos(a) * 3, Y - m.h * (0.2 + 0.6 * ((i * 0.37) % 1)) - ph * 4, ph < 0.5 ? '#c8b0ff' : '#8a6ad8');
+    }
+  },
+  // Magnet Core: little arcs of magnetic field pulsing round it (r240)
+  magnet(ctx, b, m, X, Y) {
+    const ph = (b.time * 0.8) % 1, r = m.r + 4 + ph * 10, cy = Y - m.h * 0.45;
+    for (let i = 0; i < 10; i++) { const a = i / 10 * TAU + 0.3; if (i % 5 === 4) continue; auraPx(ctx, X + Math.cos(a) * r, cy + Math.sin(a) * r * 0.7, ph < 0.5 ? '#c8d8ff' : '#7a8ac8'); }
   },
   // Tide Charm: a ring of water swirling round its feet
   tide(ctx, b, m, X, Y) {
@@ -404,6 +432,7 @@ mixInto(Battle, class {
     const actors = [{ y: this.trainer.y, draw: () => this.drawTrainer(ctx) }];
     for (const m of this.mons) if (m.visible) actors.push({ y: m.y, draw: () => this.drawMon(ctx, m) });
     for (const ped of this.pedestals) actors.push({ y: ped.y, draw: () => this.drawPedestal(ctx, ped) });
+    for (const f of this.relicFx || []) if (f.draw) actors.push({ y: f.y, draw: () => f.draw(ctx, this) });   // e.g. Seedling's bush
     actors.sort((a, b) => a.y - b.y).forEach(a => a.draw());
     // the room and everyone in it get lit; attacks and effects below stay crisp and unlit
     Lighting.apply(ctx, this);
