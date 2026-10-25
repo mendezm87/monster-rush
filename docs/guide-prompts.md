@@ -69,11 +69,15 @@ Same idea as Smugshogun's Round 8 guide: each keeps its current design, and Clau
 
 ### GUIDE-GALEWING · Galewing
 
-> Pixel art game sprite sheet of a wind bird: a round sky-blue songbird with a white belly, a small orange beak, a
-> perky crest of feathers on its head, and big pale silver-white wings spread wide like a gust of wind. The same
-> creature shown four times in a row: from the front, three-quarter front, from the side facing right, and from
-> behind. 32 pixels tall, limited palette, dark outline, plain flat grey background, no text, no shadow, crisp
-> pixels, no blur
+Second try (r245): the first came out as the wrong kind of bird, so this one pins down the shape and says what to avoid.
+
+> Pixel art game sprite sheet of a small chubby round songbird, like a puffed-up ball with a tiny head and no neck:
+> sky blue back and head, a big round white belly, a short pointed orange beak, small round black eyes, a perky
+> three-feather crest sticking up on top of its head, short orange bird legs. Its two wings are large, pale
+> silver-white and spread wide out to the sides like it is about to take off, each wing made of four long pointed
+> feathers. A short fan-shaped blue tail. Cute and round, not a realistic bird, not an eagle or hawk. The same bird
+> shown four times in a row: from the front, three-quarter front, from the side facing right, and from behind. 32
+> pixels tall, limited palette, dark outline, plain flat grey background, no text, no shadow, crisp pixels, no blur
 
 ### GUIDE-PIXIBELLE · Pixibelle
 
@@ -85,11 +89,16 @@ Same idea as Smugshogun's Round 8 guide: each keeps its current design, and Clau
 
 ### GUIDE-VENOMIRE · Venomire
 
-> Pixel art game sprite sheet of a corrupted slime: a purple slime blob melting into a puddle at its base, flecked
-> with small magenta and cyan glitch pixels and yellow spots, two horn-like points on top, and a round grinding
-> mouth ringed with teeth pointing inward. The same creature shown four times in a row: from the front, three-
-> quarter front, from the side facing right, and from behind. 32 pixels tall, limited palette, dark outline, plain
-> flat grey background, no text, no shadow, crisp pixels, no blur
+Second try (r245): the first didn't come out as expected, so this one spells out the shape, the mouth and the specks.
+
+> Pixel art game sprite sheet of a slime monster: a rounded purple blob shaped like a gumdrop, wider at the bottom,
+> that melts into a flat glossy puddle around its base. Two short stubby horn-like points stick up from the top of its
+> head. Two small round eyes high on its body. Below the eyes, a perfectly round mouth like a garbage disposal: a dark
+> hole ringed with small white triangle teeth all pointing inward to the centre. Small yellow spots on its body and a
+> few tiny magenta and cyan square pixel specks, like glitched data. No arms, no legs, no nose. The same slime shown
+> four times in a row: from the front, three-quarter front, from the side facing right, and from behind (the back
+> shows no face). 32 pixels tall, limited palette, dark outline, plain flat grey background, no text, no shadow, crisp
+> pixels, no blur
 
 ### GUIDE-BRAWLIX · Brawlix
 

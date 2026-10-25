@@ -210,10 +210,9 @@ function shogunDraw(g, v) {
     const k = row[x]; if (k === '.') continue;
     if (k === 'k' && [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => ((map[y + dy] || '')[x + dx] || '.') === '.')) continue;   // the traced outer edge: the sprite builder draws its own outline there
     const inTail = tb && x >= tb[0] && x <= tb[2] && y >= tb[1] && y <= tb[3] && 'cosvlk'.includes(k);
-    const p = y < S.ear && !(S.headX && x < S.headX) ? (x < S.earX ? earA : earB)
-      : y < S.neck && !(S.headX && x < S.headX) && !inTail ? h
-      : inTail ? t : y >= S.leg ? (S.legA(x) ? legA : legB) : b;
-    p.px(ox + x + (p === h || p === earA || p === earB ? turn : 0), oy + y, SHOGUN_PAL[k]);
+    const onEar = y < S.ear && !(S.headX && x < S.headX), onHead = onEar || (y < S.neck && !(S.headX && x < S.headX) && !inTail);
+    const p = onEar ? (x < S.earX ? earA : earB) : onHead ? h : inTail ? t : y >= S.leg ? (S.legA(x) ? legA : legB) : b;
+    p.px(ox + x + (onHead ? turn : 0), oy + y, SHOGUN_PAL[k]);   // turn by zone: at rest every part is the same grid
   } });
   for (const [ex, ey, w] of S.eyes) rigEye(h, Q, ox + ex, oy + ey, () => {}, w);   // closed, hurt and fainting eyes over his smug ones
   if (S.mouth && Q.mouth) rigMouth(h, Q, ox + S.mouth[0], oy + S.mouth[1], 2);
