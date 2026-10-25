@@ -63,7 +63,43 @@ def start_comfy():
     sys.exit('ComfyUI did not start: see ' + os.path.join(COMFY, 'comfy.log'))
 
 
-def workflow(prompt, seed, w, h, steps, neg='', cfg=2.5, model='qwen_image_2512_fp8_e4m3fn.safetensors', lora=None, lora_k=1.0):
+def upload(path):
+    # send a reference picture to ComfyUI's input folder; returns the name it's stored under
+    name, b, nl = os.path.basename(path), '----deeparchive', chr(13) + chr(10)
+    head = nl.join(['--' + b, f'Content-Disposition: form-data; name="image"; filename="{name}"', 'Content-Type: image/png', '', ''])
+    tail = nl.join(['', '--' + b, 'Content-Disposition: form-data; name="overwrite"', '', 'true', '--' + b + '--', ''])
+    body = head.encode() + open(path, 'rb').read() + tail.encode()
+    req = urllib.request.Request(URL + '/upload/image', data=body, headers={'Content-Type': 'multipart/form-data; boundary=' + b})
+    return json.loads(urllib.request.urlopen(req, timeout=60).read())['name']
+
+
+def edit_workflow(prompt, seed, w, h, steps, neg, cfg, refs, model):
+    # Qwen-Image-Edit: the reference pictures (our Gemini sheets) go in with the prompt, so it draws in their style
+    wf = {
+        '1': {'class_type': 'UNETLoader', 'inputs': {'unet_name': model, 'weight_dtype': 'default'}},
+        '2': {'class_type': 'CLIPLoader', 'inputs': {'clip_name': 'qwen_2.5_vl_7b_fp8_scaled.safetensors', 'type': 'qwen_image'}},
+        '3': {'class_type': 'VAELoader', 'inputs': {'vae_name': 'qwen_image_vae.safetensors'}},
+        '4': {'class_type': 'ModelSamplingAuraFlow', 'inputs': {'model': ['1', 0], 'shift': 3.1}},
+        '12': {'class_type': 'CFGNorm', 'inputs': {'model': ['4', 0], 'strength': 1.0}},
+        '7': {'class_type': 'EmptySD3LatentImage', 'inputs': {'width': w, 'height': h, 'batch_size': 1}},
+        '9': {'class_type': 'VAEDecode', 'inputs': {'samples': ['8', 0], 'vae': ['3', 0]}},
+        '10': {'class_type': 'SaveImage', 'inputs': {'images': ['9', 0], 'filename_prefix': 'deeparchive'}},
+    }
+    imgs = {}
+    for i, r in enumerate(refs[:3]):
+        wf[f'r{i}'] = {'class_type': 'LoadImage', 'inputs': {'image': r}}
+        wf[f's{i}'] = {'class_type': 'ImageScaleToTotalPixels', 'inputs': {'image': [f'r{i}', 0], 'upscale_method': 'nearest-exact', 'megapixels': 1.0, 'resolution_steps': 1}}
+        imgs[f'image{i + 1}'] = [f's{i}', 0]
+    for k, text in (('5', prompt), ('6', NEG + (', ' + neg if neg else ''))):
+        wf['t' + k] = {'class_type': 'TextEncodeQwenImageEditPlus', 'inputs': {'clip': ['2', 0], 'vae': ['3', 0], 'prompt': text, **imgs}}
+        wf[k] = {'class_type': 'FluxKontextMultiReferenceLatentMethod', 'inputs': {'conditioning': ['t' + k, 0], 'reference_latents_method': 'index_timestep_zero'}}
+    wf['8'] = {'class_type': 'KSampler', 'inputs': {'model': ['12', 0], 'positive': ['5', 0], 'negative': ['6', 0], 'latent_image': ['7', 0],
+               'seed': seed, 'steps': steps, 'cfg': cfg, 'sampler_name': 'euler', 'scheduler': 'simple', 'denoise': 1.0}}
+    return wf
+
+
+def workflow(prompt, seed, w, h, steps, neg='', cfg=2.5, model='qwen_image_2512_fp8_e4m3fn.safetensors', lora=None, lora_k=1.0, refs=None):
+    if refs: return edit_workflow(prompt, seed, w, h, steps, neg, cfg, refs, model)
     wf = {
         '1': {'class_type': 'UNETLoader', 'inputs': {'unet_name': model, 'weight_dtype': 'fp8_e4m3fn'}},
         '2': {'class_type': 'CLIPLoader', 'inputs': {'clip_name': 'qwen_2.5_vl_7b_fp8_scaled.safetensors', 'type': 'qwen_image'}},
@@ -106,18 +142,22 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('codes', nargs='*')
     ap.add_argument('--text'); ap.add_argument('--neg', default=''); ap.add_argument('--cfg', type=float, default=4); ap.add_argument('--name'); ap.add_argument('--model', default='qwen_image_2512_fp8_e4m3fn.safetensors'); ap.add_argument('--lora', default='qwen2512_pixel_art.safetensors'); ap.add_argument('--lora-k', type=float, default=0.8); ap.add_argument('--takes', type=int, default=2); ap.add_argument('--seed', type=int)
-    ap.add_argument('--size', default='1664x928'); ap.add_argument('--steps', type=int, default=30)
+    ap.add_argument('--ref', action='append', default=[], help='a style reference picture (up to 3); switches to the edit model'); ap.add_argument('--size', default='1664x928'); ap.add_argument('--steps', type=int, default=30)
     a = ap.parse_args()
     w, h = map(int, a.size.split('x'))
     jobs = [(a.name or 'custom-' + str(int(time.time())), a.text)] if a.text else [(c, find_prompt(c)) for c in a.codes]
     for c, p in jobs:
         if not p: sys.exit(f'no prompt found for {c} (looked for "### {c}" in the prompt docs)')
     start_comfy()
+    refs = [upload(r) for r in a.ref]
+    if refs:   # the edit model draws from the references; the pixel-art add-on is for the other model
+        a.lora = None
+        if a.model.startswith('qwen_image_2512'): a.model = 'qwen_image_edit_2511_fp8mixed.safetensors'
     seed = a.seed if a.seed is not None else random.randrange(1 << 30)
     for code, prompt in jobs:
         if a.lora and not prompt.startswith('Pixel Art'): prompt = 'Pixel Art, ' + prompt   # the add-on's trigger words
         print(code)
-        for k in range(a.takes): generate(prompt, f'{code}-{k + 1}', seed + k, w, h, a.steps, a.neg, a.cfg, model=a.model, lora=a.lora, lora_k=a.lora_k)
+        for k in range(a.takes): generate(prompt, f'{code}-{k + 1}', seed + k, w, h, a.steps, a.neg, a.cfg, model=a.model, lora=a.lora, lora_k=a.lora_k, refs=refs)
 
 
 if __name__ == '__main__':
