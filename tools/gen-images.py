@@ -21,7 +21,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 COMFY = r'C:\Users\thecl\ComfyUI'
 URL = 'http://127.0.0.1:8188'
 OUT = os.path.join(ROOT, 'docs', 'refs', 'gen')
-DOCS = [os.path.join(ROOT, 'docs', 'attack-pieces.md'), os.path.join(ROOT, 'docs', 'concept-prompts.md')]
+DOCS = [os.path.join(ROOT, 'docs', 'attack-pieces.md'), os.path.join(ROOT, 'docs', 'concept-prompts.md'), os.path.join(ROOT, 'docs', 'guide-prompts.md')]
 NEG = ('blurry, smooth gradients, glow, bloom, lens flare, photo, 3d render, text, letters, numbers, watermark, signature, frame, border, '
        'panels, grid lines, arrows, arrowheads, face, eyes, mouth on effects')
 
