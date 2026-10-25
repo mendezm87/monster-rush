@@ -4,6 +4,12 @@
     python tools/gen-images.py ICE-2a --takes 4 --seed 7   # more takes, a fixed starting seed
     python tools/gen-images.py --text "a pixel art ..."    # any prompt, saved as custom-N.png
 
+Defaults (r244, tuned against Gemini): Qwen-Image-2512 with a pixel-art LoRA at 0.8, cfg 4, 30 steps. Prompts work best
+short, plain and positive (say what to draw, not what not to; put unwanted things in --neg), naming the style once:
+"16-bit SNES era pixel art sprite sheet, crisp chunky pixels, solid 1-pixel black outline, cel shading with three
+hard-edged tones, flat plain dark navy background, lots of empty space between sprites". It takes words literally
+("tower shield" drew a tower), so describe shapes ("a tall rectangular shield with a pointed bottom").
+
 It finds each code's prompt (the quoted '> ' lines under '### CODE ...' in docs/attack-pieces.md or
 docs/concept-prompts.md), sends it to ComfyUI running on this PC (C:\\Users\\thecl\\ComfyUI, started for you if it
 isn't running) with the Qwen-Image model, and saves the takes to docs/refs/gen/CODE-1.png, CODE-2.png... (ignored by
@@ -16,7 +22,8 @@ COMFY = r'C:\Users\thecl\ComfyUI'
 URL = 'http://127.0.0.1:8188'
 OUT = os.path.join(ROOT, 'docs', 'refs', 'gen')
 DOCS = [os.path.join(ROOT, 'docs', 'attack-pieces.md'), os.path.join(ROOT, 'docs', 'concept-prompts.md')]
-NEG = 'blurry, smooth gradients, photo, 3d render, text, letters, watermark, signature, frame, border, panels, arrows'
+NEG = ('blurry, smooth gradients, glow, bloom, lens flare, photo, 3d render, text, letters, numbers, watermark, signature, frame, border, '
+       'panels, grid lines, arrows, arrowheads, face, eyes, mouth on effects')
 
 
 def find_prompt(code):
@@ -56,9 +63,9 @@ def start_comfy():
     sys.exit('ComfyUI did not start: see ' + os.path.join(COMFY, 'comfy.log'))
 
 
-def workflow(prompt, seed, w, h, steps, neg=''):
-    return {
-        '1': {'class_type': 'UNETLoader', 'inputs': {'unet_name': 'qwen_image_fp8_e4m3fn.safetensors', 'weight_dtype': 'fp8_e4m3fn'}},
+def workflow(prompt, seed, w, h, steps, neg='', cfg=2.5, model='qwen_image_2512_fp8_e4m3fn.safetensors', lora=None, lora_k=1.0):
+    wf = {
+        '1': {'class_type': 'UNETLoader', 'inputs': {'unet_name': model, 'weight_dtype': 'fp8_e4m3fn'}},
         '2': {'class_type': 'CLIPLoader', 'inputs': {'clip_name': 'qwen_2.5_vl_7b_fp8_scaled.safetensors', 'type': 'qwen_image'}},
         '3': {'class_type': 'VAELoader', 'inputs': {'vae_name': 'qwen_image_vae.safetensors'}},
         '4': {'class_type': 'ModelSamplingAuraFlow', 'inputs': {'model': ['1', 0], 'shift': 3.1}},
@@ -66,14 +73,18 @@ def workflow(prompt, seed, w, h, steps, neg=''):
         '6': {'class_type': 'CLIPTextEncode', 'inputs': {'clip': ['2', 0], 'text': NEG + (', ' + neg if neg else '')}},
         '7': {'class_type': 'EmptySD3LatentImage', 'inputs': {'width': w, 'height': h, 'batch_size': 1}},
         '8': {'class_type': 'KSampler', 'inputs': {'model': ['4', 0], 'positive': ['5', 0], 'negative': ['6', 0], 'latent_image': ['7', 0],
-              'seed': seed, 'steps': steps, 'cfg': 2.5, 'sampler_name': 'euler', 'scheduler': 'simple', 'denoise': 1.0}},
+              'seed': seed, 'steps': steps, 'cfg': cfg, 'sampler_name': 'euler', 'scheduler': 'simple', 'denoise': 1.0}},
         '9': {'class_type': 'VAEDecode', 'inputs': {'samples': ['8', 0], 'vae': ['3', 0]}},
         '10': {'class_type': 'SaveImage', 'inputs': {'images': ['9', 0], 'filename_prefix': 'deeparchive'}},
     }
+    if lora:   # an add-on trained for a look (the pixel-art LoRA), between the model and the sampler
+        wf['11'] = {'class_type': 'LoraLoaderModelOnly', 'inputs': {'model': ['1', 0], 'lora_name': lora, 'strength_model': lora_k}}
+        wf['4']['inputs']['model'] = ['11', 0]
+    return wf
 
 
-def generate(prompt, name, seed, w, h, steps, neg=''):
-    pid = json.loads(api('/prompt', {'prompt': workflow(prompt, seed, w, h, steps, neg)}))['prompt_id']
+def generate(prompt, name, seed, w, h, steps, neg='', cfg=2.5, **kw):
+    pid = json.loads(api('/prompt', {'prompt': workflow(prompt, seed, w, h, steps, neg, cfg, **kw)}))['prompt_id']
     t0 = time.time()
     while True:
         time.sleep(1.5)
@@ -94,18 +105,19 @@ def generate(prompt, name, seed, w, h, steps, neg=''):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('codes', nargs='*')
-    ap.add_argument('--text'); ap.add_argument('--neg', default=''); ap.add_argument('--takes', type=int, default=2); ap.add_argument('--seed', type=int)
-    ap.add_argument('--size', default='1664x928'); ap.add_argument('--steps', type=int, default=24)
+    ap.add_argument('--text'); ap.add_argument('--neg', default=''); ap.add_argument('--cfg', type=float, default=4); ap.add_argument('--name'); ap.add_argument('--model', default='qwen_image_2512_fp8_e4m3fn.safetensors'); ap.add_argument('--lora', default='qwen2512_pixel_art.safetensors'); ap.add_argument('--lora-k', type=float, default=0.8); ap.add_argument('--takes', type=int, default=2); ap.add_argument('--seed', type=int)
+    ap.add_argument('--size', default='1664x928'); ap.add_argument('--steps', type=int, default=30)
     a = ap.parse_args()
     w, h = map(int, a.size.split('x'))
-    jobs = [('custom-' + str(int(time.time())), a.text)] if a.text else [(c, find_prompt(c)) for c in a.codes]
+    jobs = [(a.name or 'custom-' + str(int(time.time())), a.text)] if a.text else [(c, find_prompt(c)) for c in a.codes]
     for c, p in jobs:
         if not p: sys.exit(f'no prompt found for {c} (looked for "### {c}" in the prompt docs)')
     start_comfy()
     seed = a.seed if a.seed is not None else random.randrange(1 << 30)
     for code, prompt in jobs:
+        if a.lora and not prompt.startswith('Pixel Art'): prompt = 'Pixel Art, ' + prompt   # the add-on's trigger words
         print(code)
-        for k in range(a.takes): generate(prompt, f'{code}-{k + 1}', seed + k, w, h, a.steps, a.neg)
+        for k in range(a.takes): generate(prompt, f'{code}-{k + 1}', seed + k, w, h, a.steps, a.neg, a.cfg, model=a.model, lora=a.lora, lora_k=a.lora_k)
 
 
 if __name__ == '__main__':
