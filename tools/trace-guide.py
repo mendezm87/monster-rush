@@ -41,7 +41,7 @@ def figures(fg, views):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('path'); ap.add_argument('--height', type=int, default=31); ap.add_argument('--views', type=int, default=4)
-    ap.add_argument('--colors', type=int, default=12); ap.add_argument('--accents', type=int, default=4); ap.add_argument('--pal'); ap.add_argument('--band', default='0,1'); ap.add_argument('--tol', type=int, default=40)
+    ap.add_argument('--colors', type=int, default=12); ap.add_argument('--accents', type=int, default=4); ap.add_argument('--pal'); ap.add_argument('--band', default='0,1'); ap.add_argument('--tol', type=int, default=40); ap.add_argument('--smooth', type=int, default=0); ap.add_argument('--kshare', type=float, default=0.34); ap.add_argument('--xscale', type=float, default=1)
     ap.add_argument('--json')
     a = ap.parse_args()
     im = np.array(Image.open(a.path).convert('RGB')).astype(int)
@@ -50,7 +50,12 @@ def main():
     bg = np.median(np.concatenate([im[:4].reshape(-1, 3), im[-4:].reshape(-1, 3)]), axis=0)
     # the background is what's background-coloured AND connected to the picture's edge (flood-filled in), so grey
     # wool or fur inside an outline stays part of the creature even when it's close to the background's grey
-    cand = np.abs(im - bg).sum(2) <= a.tol   # --tol: lower it for fur close to the background's grey (Brawlix)
+    cand = np.abs(im - bg).sum(2) <= a.tol
+    if a.smooth:   # --smooth N: background is also flat over an N-pixel window, so a striped grey part (Coilizard's spring) isn't taken for it
+        from PIL import ImageFilter
+        gray = Image.fromarray(im.mean(2).astype('uint8'))
+        rng = np.array(gray.filter(ImageFilter.MaxFilter(a.smooth))).astype(int) - np.array(gray.filter(ImageFilter.MinFilter(a.smooth))).astype(int)
+        cand &= rng < 24   # --tol: lower it for fur close to the background's grey (Brawlix)
     reach = np.zeros_like(cand); reach[0, :] = cand[0, :]; reach[-1, :] = cand[-1, :]; reach[:, 0] = cand[:, 0]; reach[:, -1] = cand[:, -1]
     while True:
         grow = reach.copy()
@@ -65,6 +70,7 @@ def main():
     ys = np.where(fg[:, segs[0][0]:segs[-1][1]].any(1))[0]; y0, y1 = ys.min(), ys.max() + 1
     cell = (y1 - y0) / a.height
     if a.pal == 'smugshogun': PAL = SHOGUN
+    elif a.pal: PAL = json.load(open(a.pal))['pal']   # another trace's palette, so views traced at other sizes share keys
     else:   # the guide's own colours: the darkest is the outline
         px = im[fg].reshape(-1, 3)
         q = Image.fromarray(px.reshape(1, -1, 3).astype('uint8')).quantize(a.colors, method=Image.Quantize.MEDIANCUT)
@@ -82,16 +88,17 @@ def main():
     near = np.argmin(((im[:, :, None, :] - cols[None, None]) ** 2).sum(3), axis=2)
     maps = []
     for xa0, xb0 in segs:
-        wcells = int(np.ceil((xb0 - xa0) / cell))
+        cw = cell / a.xscale   # --xscale > 1: narrower cells across, so a lanky figure comes out stockier
+        wcells = int(np.ceil((xb0 - xa0) / cw))
         rows = []
         for r in range(a.height):
             row = ''
             for q in range(wcells):
-                ya, yb = int(y0 + r * cell), int(y0 + (r + 1) * cell); xa, xb = int(xa0 + q * cell), int(min(xb0, xa0 + (q + 1) * cell))
+                ya, yb = int(y0 + r * cell), int(y0 + (r + 1) * cell); xa, xb = int(xa0 + q * cw), int(min(xb0, xa0 + (q + 1) * cw))
                 f = fg[ya:yb, xa:xb]
                 if f.size == 0 or f.mean() < 0.45: row += '.'; continue
                 cnt = np.bincount(near[ya:yb, xa:xb][f], minlength=len(keys))
-                row += 'k' if cnt[0] > 0.34 * cnt.sum() else keys[int(np.argmax(cnt))]
+                row += 'k' if cnt[0] > a.kshare * cnt.sum() else keys[int(np.argmax(cnt))]
             rows.append(row)
         g = [list(r) for r in rows]; seen = set()   # drop loose specks (a few cells floating off the figure)
         for y0_ in range(len(g)):
@@ -105,6 +112,12 @@ def main():
                         if 0 <= w_ < len(g) and 0 <= u < len(g[0]) and g[w_][u] != '.' and (u, w_) not in seen: seen.add((u, w_)); st.append((u, w_))
                 if len(comp) < 6:
                     for x_, y_ in comp: g[y_][x_] = '.'
+        if a.smooth:   # --smooth leaves a ring of background round the figure: peel off background-coloured cells at the edge
+            bk = keys[int(np.argmin([np.abs(np.array(rgb(PAL[k])) - bg).sum() for k in keys]))]
+            for _ in range(2):
+                drop = [(x_, y_) for y_ in range(len(g)) for x_ in range(len(g[0])) if g[y_][x_] == bk and any(
+                    not (0 <= y_ + dy < len(g) and 0 <= x_ + dx < len(g[0])) or g[y_ + dy][x_ + dx] == '.' for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)))]
+                for x_, y_ in drop: g[y_][x_] = '.'
         maps.append([''.join(r) for r in g])
     Z = 8; W = sum(len(m[0]) + 2 for m in maps)
     out = Image.new('RGB', (W * Z, a.height * Z), (90, 138, 74)); x0 = 0
