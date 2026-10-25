@@ -1,0 +1,112 @@
+"""Make pictures from our prompts with a local image model, no copy-paste (r244).
+
+    python tools/gen-images.py STEEL-1 WIND-2b            # every prompt code you name, 2 takes each
+    python tools/gen-images.py ICE-2a --takes 4 --seed 7   # more takes, a fixed starting seed
+    python tools/gen-images.py --text "a pixel art ..."    # any prompt, saved as custom-N.png
+
+It finds each code's prompt (the quoted '> ' lines under '### CODE ...' in docs/attack-pieces.md or
+docs/concept-prompts.md), sends it to ComfyUI running on this PC (C:\\Users\\thecl\\ComfyUI, started for you if it
+isn't running) with the Qwen-Image model, and saves the takes to docs/refs/gen/CODE-1.png, CODE-2.png... (ignored by
+git: copy the one you pick to docs/refs/pk-code.png as usual). Runs on the graphics card; nothing goes online.
+"""
+import argparse, json, os, random, re, subprocess, sys, time, urllib.request, urllib.parse
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+COMFY = r'C:\Users\thecl\ComfyUI'
+URL = 'http://127.0.0.1:8188'
+OUT = os.path.join(ROOT, 'docs', 'refs', 'gen')
+DOCS = [os.path.join(ROOT, 'docs', 'attack-pieces.md'), os.path.join(ROOT, 'docs', 'concept-prompts.md')]
+NEG = 'blurry, smooth gradients, photo, 3d render, text, letters, watermark, signature, frame, border, panels, arrows'
+
+
+def find_prompt(code):
+    for path in DOCS:
+        lines = open(path, encoding='utf-8').read().split('\n')
+        for i, l in enumerate(lines):
+            if re.match(r'#{2,4} ' + re.escape(code) + r'\b', l):
+                out = []
+                for l2 in lines[i + 1:]:
+                    if l2.startswith('#'): break
+                    if l2.startswith('> '): out.append(l2[2:].strip())
+                    elif out and not l2.strip(): break
+                if out: return ' '.join(out)
+    return None
+
+
+def api(path, data=None):
+    req = urllib.request.Request(URL + path, data=json.dumps(data).encode() if data is not None else None, headers={'Content-Type': 'application/json'})
+    with urllib.request.urlopen(req, timeout=30) as r: return r.read()
+
+
+def running():
+    try: api('/system_stats'); return True
+    except Exception: return False
+
+
+def start_comfy():
+    if running(): return
+    print('starting ComfyUI...')
+    py = os.path.join(COMFY, 'venv', 'Scripts', 'python.exe')
+    log = open(os.path.join(COMFY, 'comfy.log'), 'a')
+    subprocess.Popen([py, 'main.py', '--listen', '127.0.0.1', '--port', '8188'], cwd=COMFY, stdout=log, stderr=log,
+                     creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+    for _ in range(180):
+        time.sleep(2)
+        if running(): print('ComfyUI is up'); return
+    sys.exit('ComfyUI did not start: see ' + os.path.join(COMFY, 'comfy.log'))
+
+
+def workflow(prompt, seed, w, h, steps, neg=''):
+    return {
+        '1': {'class_type': 'UNETLoader', 'inputs': {'unet_name': 'qwen_image_fp8_e4m3fn.safetensors', 'weight_dtype': 'fp8_e4m3fn'}},
+        '2': {'class_type': 'CLIPLoader', 'inputs': {'clip_name': 'qwen_2.5_vl_7b_fp8_scaled.safetensors', 'type': 'qwen_image'}},
+        '3': {'class_type': 'VAELoader', 'inputs': {'vae_name': 'qwen_image_vae.safetensors'}},
+        '4': {'class_type': 'ModelSamplingAuraFlow', 'inputs': {'model': ['1', 0], 'shift': 3.1}},
+        '5': {'class_type': 'CLIPTextEncode', 'inputs': {'clip': ['2', 0], 'text': prompt}},
+        '6': {'class_type': 'CLIPTextEncode', 'inputs': {'clip': ['2', 0], 'text': NEG + (', ' + neg if neg else '')}},
+        '7': {'class_type': 'EmptySD3LatentImage', 'inputs': {'width': w, 'height': h, 'batch_size': 1}},
+        '8': {'class_type': 'KSampler', 'inputs': {'model': ['4', 0], 'positive': ['5', 0], 'negative': ['6', 0], 'latent_image': ['7', 0],
+              'seed': seed, 'steps': steps, 'cfg': 2.5, 'sampler_name': 'euler', 'scheduler': 'simple', 'denoise': 1.0}},
+        '9': {'class_type': 'VAEDecode', 'inputs': {'samples': ['8', 0], 'vae': ['3', 0]}},
+        '10': {'class_type': 'SaveImage', 'inputs': {'images': ['9', 0], 'filename_prefix': 'deeparchive'}},
+    }
+
+
+def generate(prompt, name, seed, w, h, steps, neg=''):
+    pid = json.loads(api('/prompt', {'prompt': workflow(prompt, seed, w, h, steps, neg)}))['prompt_id']
+    t0 = time.time()
+    while True:
+        time.sleep(1.5)
+        hist = json.loads(api('/history/' + pid))
+        if pid in hist:
+            outs = hist[pid].get('outputs', {})
+            if not outs: sys.exit('ComfyUI reported no output: ' + json.dumps(hist[pid].get('status', {}))[:400])
+            img = next(iter(outs.values()))['images'][0]
+            q = urllib.parse.urlencode({'filename': img['filename'], 'subfolder': img['subfolder'], 'type': img['type']})
+            data = urllib.request.urlopen(URL + '/view?' + q, timeout=60).read()
+            os.makedirs(OUT, exist_ok=True)
+            path = os.path.join(OUT, name + '.png'); open(path, 'wb').write(data)
+            print(f'  {name}.png  ({time.time() - t0:.0f} s)')
+            return path
+        if time.time() - t0 > 900: sys.exit('timed out waiting for ' + name)
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument('codes', nargs='*')
+    ap.add_argument('--text'); ap.add_argument('--neg', default=''); ap.add_argument('--takes', type=int, default=2); ap.add_argument('--seed', type=int)
+    ap.add_argument('--size', default='1664x928'); ap.add_argument('--steps', type=int, default=24)
+    a = ap.parse_args()
+    w, h = map(int, a.size.split('x'))
+    jobs = [('custom-' + str(int(time.time())), a.text)] if a.text else [(c, find_prompt(c)) for c in a.codes]
+    for c, p in jobs:
+        if not p: sys.exit(f'no prompt found for {c} (looked for "### {c}" in the prompt docs)')
+    start_comfy()
+    seed = a.seed if a.seed is not None else random.randrange(1 << 30)
+    for code, prompt in jobs:
+        print(code)
+        for k in range(a.takes): generate(prompt, f'{code}-{k + 1}', seed + k, w, h, a.steps, a.neg)
+
+
+if __name__ == '__main__':
+    main()
