@@ -180,6 +180,8 @@ obstacles and hazards. The big props in these sheets (row 3) are drawn so they c
 *Reworded (r265): the first version kept coming out at odd angles. The game only uses the two corner pillars, so this
 asks for just those, standing straight.*
 
+*Done (r266): an older take had two straight-on pillars in its last row, and the game uses those.*
+
 ```
 16-bit SNES-era pixel art game assets for a top-down RPG, seen from slightly above (3/4 view), crisp chunky pixels, a solid 1-pixel dark outline on every asset, cel shading with three hard-edged tones and light from the top left, flat plain dark navy blue background, lots of empty space between assets, no text, no boxes or panels, no characters or creatures. Two square corner pillars made of smooth deep indigo stone blocks trimmed with gold, side by side in one row with lots of space between them. Both stand perfectly straight and upright, facing the viewer head on, not tilted, not rotated, not drawn at an angle: you see the flat square top of each pillar and its front face below it, like a short square column. The left one is plain with a thin gold cap; the right one is the same with a small glowing gold star on top.
 ```

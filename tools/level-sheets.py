@@ -176,6 +176,34 @@ def corners(path):
         t = tight(m, b); items.append(fxs.shrink(im, m, t, (t[2] - t[0] + 1) / PILLAR_W))
     return pack([('pillar', items)])
 
+# areas with no corner sheet borrow another area's pillars, recoloured (r266: written while Gemini kept drawing the Spire's
+# pillars at an angle; the Spire now has its own sheet, so this is only a fallback)
+BORROW_PILLARS = {'spire': 'ruins'}
+SPIRE_STONE = [(31, 27, 48), (40, 38, 80), (48, 48, 98), (56, 56, 112), (66, 68, 132), (84, 86, 152), (104, 108, 176)]
+SPIRE_GOLD = [(70, 46, 28), (119, 85, 50), (170, 124, 56), (210, 154, 67), (218, 185, 100), (240, 214, 140), (252, 236, 180)]
+SPIRE_GOLD_ROWS = {1, 2, 12, 13, 39, 40}   # the cap's rim and lip and the base's top band, in the Ruins pillars' rows
+
+def recolour_pillars(img):
+    """Each pixel by its brightness onto the Spire's stone ramp (gold on the trim rows); the dark outline stays dark."""
+    o = img.convert('RGBA').copy()
+    for y in range(o.height):
+        for x in range(o.width):
+            r, g, b, al = o.getpixel((x, y))
+            if al == 0: continue
+            l = r + g + b
+            if l < 150: o.putpixel((x, y), (24, 20, 40, 255)); continue
+            ramp = SPIRE_GOLD if y in SPIRE_GOLD_ROWS else SPIRE_STONE
+            o.putpixel((x, y), ramp[min(6, max(0, (l - 150) * 7 // 550))] + (255,))
+    return o
+
+def borrow_pillars(data):
+    for area, src in BORROW_PILLARS.items():
+        if area not in data or 'corners' in data[area] or 'corners' not in data.get(src, {}): continue
+        c = data[src]['corners']; img = Image.open(io.BytesIO(base64.b64decode(c['src'].split(',')[1])))
+        buf = io.BytesIO(); recolour_pillars(img).save(buf, 'PNG', optimize=True)
+        data[area]['corners'] = {**c, 'src': 'data:image/png;base64,' + base64.b64encode(buf.getvalue()).decode()}
+        print(f'{area} corners: {src} pillars recoloured')
+
 def build():
     data, review = {}, []
     for area in AREAS:
@@ -187,6 +215,7 @@ def build():
             data.setdefault(area, {})[kind] = {'src': 'data:image/png;base64,' + base64.b64encode(buf.getvalue()).decode(), **meta}
             review.append(q)
             print(f'{area} {kind}: ' + ', '.join(f'{r} {len(v)}' for r, v in meta.items()) + f', {len(buf.getvalue())} bytes')
+    borrow_pillars(data)
     js = ('// Room pieces cut from the owner\'s level sheets (docs/refs/LV-*) by tools/level-sheets.py. Do not edit by hand.\n'
           '// One pixel here is one sprite pixel. Pieces by role, each [x, y, w, h] in its sheet (a doorway seen from above\n'
           '// may be a [left, right] pair). Rush only.\n'

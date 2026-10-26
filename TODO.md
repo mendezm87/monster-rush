@@ -2,7 +2,7 @@
 
 ## Where we left off (keep this current at the end of every session)
 
-**2026-10-26 (r264-r265):** corner pillars in five areas (the pillars from the LV-<AREA>-3 sheets, one over each corner joint). **Waiting on the owner:** the reworded LV-SPIRE-3 (just two upright pillars).
+**2026-10-26 (r264-r265):** corner pillars in every area (the pillars from the LV-<AREA>-3 sheets, one over each corner joint; the Spire's from an older take of the owner's whose pillars came out straight, r266). Meadow wall tiles now line up by their stone edge.
 
 **2026-10-26 (r263):** walls that didn't match up fixed: each wall run is one continuous pattern, doorways are just posts and an opening in it, the corners join cleanly.
 
