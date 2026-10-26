@@ -20,13 +20,24 @@ function hareLeg(p, x, foot, dir, C, side = false) {
   } else p.poly([[x - 1.8, 22.5], [x + 1.8, 22.5], [x + 1.4, 25.5], [foot + 1, 28.8], [foot - 1, 28.8], [x - 1.4, 25.5]], C, { edge: true });
   p.ellipse(foot + dir, 29.5, side ? 3.4 : 2.4, 1.2, C, { edge: true });
 }
+// The ears facing us (r251, the owner: they looked cut off at the top): long, but spread out in a V so their rounded tips
+// stop two rows below the top of the picture and stay whole when the head bobs up; the right one notched from old fights. dx shifts them for the
+// three-quarter views; pink = the inner ear colour (null from behind).
+function hareEars(earA, earB, dx, C, pink) {
+  const sh = pts => pts.map(([x, y]) => [x + dx, y]);
+  earA.poly(sh([[11.8, 7.4], [8.8, 4], [8.2, 2.7], [9, 2], [10.4, 2.5], [14.6, 6.6]]), C, { edge: true });
+  earB.poly(sh([[20.2, 7.4], [23.2, 4], [23.8, 2.7], [23, 2], [21.6, 2.5], [21.9, 3.3], [21.2, 3.5], [17.4, 6.6]]), C, { edge: true });
+  if (!pink) return;
+  earA.poly(sh([[12, 6.4], [9.6, 3.6], [9.4, 2.9], [10.1, 3], [13.4, 6.2]]), pink);
+  earB.poly(sh([[20, 6.4], [22.4, 3.6], [22.4, 3.2], [21.4, 3.9], [18.6, 6.2]]), pink);
+}
 Object.assign(MONSTER_ART, {
   brawlix(g, v = 'front') {
     const { FUR, CREAM, PINK, NOSE, TAPE, EYE, SCAR, BAND } = HARE;
     const { Q, b, h, t, earA, earB, legA, legB, armA, armB } = rigParts(g, v), Fd = P(FUR.s, '#5a4430', FUR.b);
     const fist = (p, x, y, r = 2.4) => { p.ellipse(x, y, r, r * 0.9, TAPE, { edge: true }); p.px(Math.round(x) - 1, Math.round(y), TAPE.s).px(Math.round(x), Math.round(y) - 1, TAPE.s); };
     if (v === 'side') {
-      earB.poly([[15, 7.0], [11.5, 1.9], [13.5, 1.5], [17, 6.2]], Fd);                                  // far ear, swept back
+      earB.poly([[15, 7], [10, 4.2], [9.4, 3.4], [10, 2.9], [17, 6.2]], Fd);                       // far ear, swept back
       hareLeg(legB, 12.5, 12.5, 1.5, Fd, true);
       armB.poly([[16.5, 15.5], [19, 15.5], [19.6, 18.6], [21, 15.6], [22.4, 16.6], [20.2, 20.4], [18, 20]], Fd, { edge: true });   // far arm, bent up in its guard
       armB.ellipse(21.8, 15, 2, 1.8, P(TAPE.s, '#a29a88', TAPE.m), { edge: true });                  // its far fist, in shadow
@@ -37,7 +48,7 @@ Object.assign(MONSTER_ART, {
       h.ellipse(19, 10, 4.6, 4, FUR, { edge: true });                                             // head
       h.ellipse(22.5, 11.5, 2.2, 1.8, CREAM);                                                     // muzzle
       h.px(24, 10, NOSE);
-      earA.poly([[17, 7.0], [13, 1.9], [15.5, 1.1], [19.5, 6.2]], FUR, { edge: true }); earA.poly([[17, 6.2], [14.5, 2.3], [15.5, 2.2], [18.5, 5.8]], PINK);   // near ear
+      earA.poly([[17, 7], [12.5, 3.6], [11.4, 2.8], [11.8, 2.1], [13.2, 2.2], [19.5, 6.2]], FUR, { edge: true }); earA.poly([[17.2, 6.2], [13.2, 3.4], [12.6, 2.9], [13.4, 2.9], [18.4, 5.8]], PINK);   // near ear, long and swept back
       h.rect(15, 6, 8, 2, BAND.b); h.rect(15, 7, 8, 1, BAND.s); h.poly([[15, 6], [10, 5], [11, 9]], BAND, { edge: true });   // headband, tails flying back
       rigEye(h, Q, 20, 9, () => { h.rect(20, 9, 2, 2, EYE); h.px(21, 9, OUTLINE).px(21, 10, OUTLINE); h.rect(19, 8, 4, 1, OUTLINE); }, 2);   // fierce eye, heavy brow
       h.px(19, 10, SCAR).px(20, 11, SCAR);
@@ -55,8 +66,7 @@ Object.assign(MONSTER_ART, {
       fist(armA, 9, 14.5); fist(armB, 23, 14.5);
       h.ellipse(16, 10, 5, 4.2, FUR, { edge: true });
       h.rect(11, 6, 10, 2, BAND.b); h.rect(11, 7, 10, 1, BAND.s); h.ellipse(16, 7, 1.4, 1.2, BAND); h.poly([[15, 8], [13, 13], [15, 12.5]], BAND, { edge: true }); h.poly([[17, 8], [19, 13], [17, 12.5]], BAND, { edge: true });   // headband knot and tails
-      earA.poly([[12.5, 7.0], [10.5, 1.9], [13, 1.1], [14.5, 6.2]], FUR, { edge: true });
-      earB.poly([[19.5, 7.0], [21.5, 1.9], [19.4, 1.1], [19.4, 3.4], [20.2, 3.9], [18.8, 4.3], [17.5, 6.2]], FUR, { edge: true });   // the notched ear
+      hareEars(earA, earB, 0, FUR, null);
       return;
     }
     hareLeg(legA, 12.5, 11, 0, FUR); hareLeg(legB, 19.5, 21, 0, FUR);                            // long legs, big hind feet
@@ -64,9 +74,7 @@ Object.assign(MONSTER_ART, {
     b.ellipse(16, 19.5, 5.6, 5.2, FUR, { edge: true });                                           // lean, wiry body
     b.ellipse(16, 17.5, 7.5, 2.8, FUR, { edge: true });                                          // broad fighter's shoulders
     b.ellipse(16, 20.5, 3.1, 3.6, CREAM);                                                        // cream belly
-    earA.poly([[12.5, 7.0], [10.5, 1.9], [13, 1.1], [14.5, 6.2]], FUR, { edge: true }); earA.poly([[12.8, 6.2], [11.5, 2.3], [12.7, 2.2], [13.8, 5.8]], PINK);   // tall ears
-    earB.poly([[19.5, 7.0], [21.5, 1.9], [19.4, 1.1], [19.4, 3.4], [20.2, 3.9], [18.8, 4.3], [17.5, 6.2]], FUR, { edge: true });   // the right one notched from old fights
-    earB.poly([[19.2, 6.2], [20.5, 2.3], [19.6, 2.3], [18.2, 5.8]], PINK);
+    hareEars(earA, earB, 0, FUR, PINK);                                                          // tall ears, the right one notched from old fights
     h.ellipse(16, 10, 5, 4.2, FUR, { edge: true });                                              // head
     h.ellipse(16, 12, 2.7, 1.8, CREAM);                                                          // muzzle
     h.rect(15, 11, 2, 1, NOSE);                                                                  // nose
@@ -93,14 +101,12 @@ Object.assign(MONSTER_ART_DIAG, {
       h.ellipse(17.5, 10, 5, 4.2, FUR, { edge: true });
       h.rect(13, 6, 10, 2, BAND.b); h.rect(13, 7, 10, 1, BAND.s); h.ellipse(16.5, 7, 1.4, 1.2, BAND); h.poly([[15.5, 8], [13.5, 13], [15.5, 12.5]], BAND, { edge: true });
       h.ellipse(21.5, 11.5, 1.4, 1.3, CREAM);                                                     // a sliver of muzzle
-      earA.poly([[14, 7.0], [12, 1.9], [14.5, 1.1], [16, 6.2]], FUR, { edge: true });
-      earB.poly([[21, 7.0], [23, 1.9], [20.9, 1.1], [20.9, 3.4], [21.7, 3.9], [20.3, 4.3], [19, 6.2]], FUR, { edge: true });
+      hareEars(earA, earB, 1.5, FUR, null);
       return;
     }
     b.ellipse(15.5, 19.5, 5.8, 5.2, FUR, { edge: true }); b.ellipse(16, 17.5, 7.2, 2.8, FUR, { edge: true });
     b.ellipse(17, 20.5, 3, 3.6, CREAM);
-    earA.poly([[14, 7.0], [12, 1.9], [14.5, 1.1], [16, 6.2]], FUR, { edge: true }); earA.poly([[14.3, 6.2], [13, 2.3], [14.2, 2.2], [15.3, 5.8]], PINK);
-    earB.poly([[21, 7.0], [23, 1.9], [20.9, 1.1], [20.9, 3.4], [21.7, 3.9], [20.3, 4.3], [19, 6.2]], FUR, { edge: true });
+    hareEars(earA, earB, 1.5, FUR, PINK);
     h.ellipse(17.5, 10, 5, 4.2, FUR, { edge: true });
     h.ellipse(19, 12, 2.6, 1.8, CREAM);
     h.rect(19, 11, 2, 1, NOSE);
