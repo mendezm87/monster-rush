@@ -23,13 +23,14 @@ function levelSheet(area, kind) {
 if (typeof LEVEL_SHEET_DATA !== 'undefined') for (const a of Object.keys(LEVEL_SHEET_DATA)) for (const k of Object.keys(LEVEL_SHEET_DATA[a])) levelSheet(a, k);
 
 // draw piece p ([x, y, w, h] in the sheet) with its top-left at (x, y); rot = quarter turns clockwise
-function decorPiece(ctx, img, p, x, y, rot = 0) {
-  const [sx, sy, w, h] = p;
-  if (!rot) { ctx.drawImage(img, sx, sy, w, h, Math.round(x), Math.round(y), w, h); return; }
+// th = the height to draw it at (a wall strip stretched by a pixel or two to fill its wall exactly, r262)
+function decorPiece(ctx, img, p, x, y, rot = 0, th = 0) {
+  const [sx, sy, w, h0] = p, h = th || h0;
+  if (!rot) { ctx.drawImage(img, sx, sy, w, h0, Math.round(x), Math.round(y), w, h); return; }
   ctx.save(); ctx.translate(Math.round(x), Math.round(y));
   if (rot === 1) { ctx.translate(h, 0); ctx.rotate(Math.PI / 2); }
   else if (rot === 3) { ctx.translate(0, w); ctx.rotate(-Math.PI / 2); }
-  ctx.drawImage(img, sx, sy, w, h, 0, 0, w, h); ctx.restore();
+  ctx.drawImage(img, sx, sy, w, h0, 0, 0, w, h); ctx.restore();
 }
 
 // the decoration layer for a room (null until the area's sheets have loaded, or if the area has none).
@@ -63,8 +64,11 @@ function roomDecor(room, stageKey) {
     const len = (p, along) => ({ p, len: along === 'x' ? p[2] : p[2] });   // a wall top turned upright runs along its width too
     // the old brick walls covered in the area's dark backdrop colour, so no sliver of them shows where a piece is a
     // little thinner than its wall (the doorways' passages are cleared back out below)
-    ctx.fillStyle = STAGES[stageKey].bg;
-    ctx.fillRect(0, 0, dw, fy0); ctx.fillRect(0, 0, fx0, dh); ctx.fillRect(fx1, 0, dw - fx1, dh); ctx.fillRect(0, fy1, dw, dh - fy1);
+    // (r262, the owner: gaps in the walls) the side and bottom walls in the wall's own main colour (worked out by the
+    // cutting tool), so where a piece is a little thinner than its wall, or at the corners, it reads as more wall
+    ctx.fillStyle = STAGES[stageKey].bg; ctx.fillRect(0, 0, dw, fy0);
+    ctx.fillStyle = d.fill || STAGES[stageKey].bg;
+    ctx.fillRect(0, 0, fx0, dh); ctx.fillRect(fx1, 0, dw - fx1, dh); ctx.fillRect(0, fy1, dw, dh - fy1);
     const flat = p => (Array.isArray(p[0]) ? p : [p]);   // a doorway seen from above: one piece, or [left, right]
     const topPick = () => len(pick(tops)), faceDeco = d.faceDeco && !d.deco;
     // where things will hang on the top wall (where the torches are; lighting.js lights them, same spacing as its
@@ -104,17 +108,17 @@ function roomDecor(room, stageKey) {
       const p = doorTops[0]; return { a: c - Math.round(p[2] / 2), b: c - Math.round(p[2] / 2) + p[2], parts: [[p, c - Math.round(p[2] / 2)]] };
     };
     // the bottom wall: wall tops lying flat, between the side walls
-    const bottomRow = (a, b) => clip(a, fy1, b, dh, () => run(a - ((rand() * 12) | 0), b, topPick, (q, t) => decorPiece(ctx, img, q.p, t, fy1)));
+    const bottomRow = (a, b) => clip(a, fy1, b, dh, () => run(a - ((rand() * 12) | 0), b, topPick, (q, t) => decorPiece(ctx, img, q.p, t, fy1, 0, dh - fy1)));
     if (room.doors.s) {
       const s = doorSpan(mx); bottomRow(fx0, s.a); bottomRow(s.b, fx1);
       ctx.clearRect(mx - gap / 2, fy1, gap, dh - fy1);
-      for (const [p, x] of s.parts) decorPiece(ctx, img, p, x, fy1);
+      for (const [p, x] of s.parts) decorPiece(ctx, img, p, x, fy1, 0, dh - fy1);
     } else bottomRow(fx0, fx1);
     // the side walls: wall tops turned upright, the whole height of the room, against the floor's edges (left: turned
     // so the piece's left end is at the bottom; right: the other way)
     for (const dir of ['w', 'e']) {
       const x0 = dir === 'w' ? 0 : fx1, x1 = dir === 'w' ? fx0 : dw, rot = dir === 'w' ? 3 : 1;
-      const put = (p, y) => decorPiece(ctx, img, p, dir === 'w' ? fx0 - p[3] : fx1, y, rot);
+      const put = (p, y) => decorPiece(ctx, img, p, dir === 'w' ? 0 : fx1, y, rot, dir === 'w' ? fx0 : dw - fx1);   // filling the wall's thickness
       const col = (a, b) => clip(x0, a, x1, b, () => run(a - ((rand() * 12) | 0), b, topPick, (q, t) => put(q.p, t)));
       if (room.doors[dir]) {
         const s = doorSpan(my); col(0, s.a); col(s.b, dh);

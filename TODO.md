@@ -2,6 +2,8 @@
 
 ## Where we left off (keep this current at the end of every session)
 
+**2026-10-26 (r262):** the gaps in the walls fixed (tiles join without seams, side and bottom walls fill their thickness). Optional later: corner and end-cap pieces per area (a small Gemini round).
+
 **2026-10-26 (r261):** the overlapping pieces fixed (walls edge to edge, doorways in their own slots, decorations on plain wall, every floor piece in its own space, no repeated props).
 
 **2026-10-26 (r260): every area has its own walls and decorations,** from the owner's 12 level sheets (hedges and a pond in the Meadow, basalt and lava pools in the Crater, snowy stone in the Summit, crystal caves in the Grotto, sandstone columns in the Ruins, gold-trimmed indigo in the Spire). **Waiting on the owner:** a look in play; then step 2 (obstacles, hazards and room shapes).

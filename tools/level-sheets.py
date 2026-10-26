@@ -92,6 +92,25 @@ def props(path):
         groups.append((role, [fxs.shrink(im, m, b, k) for b in rb]))
     return pack(groups)
 
+def trim_ends(im, frac=0.8):
+    """A wall piece cut down to where it's solid top to bottom, one more pixel in (its outline): laid end to end, the
+    pieces then join without the dark notch their own outlines and rounded ends made (r262, the owner: gaps in the walls)"""
+    a = np.array(im)[:, :, 3] > 0; h, w = a.shape
+    cov = a.sum(0) / h
+    solid = [x for x in range(w) if cov[x] >= frac]
+    if len(solid) < 6: return im
+    x0, x1 = solid[0] + 1, solid[-1] - 1
+    return im.crop((x0, 0, x1 + 1, h))
+
+def main_colour(ims):
+    """the most common colour of a group of pieces (the wall's own colour, to fill what the pieces don't cover)"""
+    cnt = {}
+    for im in ims:
+        for r, g, b, al in im.getdata():
+            if al: cnt[(r // 8, g // 8, b // 8)] = cnt.get((r // 8, g // 8, b // 8), 0) + 1
+    r, g, b = max(cnt, key=cnt.get)
+    return '#%02x%02x%02x' % (r * 8 + 4, g * 8 + 4, b * 8 + 4)
+
 def walls(path, roles):
     im = Image.open(path).convert('RGB'); m = fxs.bg_mask(im, 40); bl = blobs(im)
     def box(ref):   # a blob, or several blobs as one piece
@@ -110,8 +129,12 @@ def walls(path, roles):
             k = k_top if role in ('top', 'doorTop') else k_face
             if isinstance(ref, tuple): items.append([fxs.shrink(im, m, box(r), k) for r in ref])   # left and right halves
             else: items.append(fxs.shrink(im, m, box(ref), k))
+        if role in ('face', 'top', 'faceDeco'): items = [trim_ends(p) for p in items]   # tiled end to end
         groups.append((role, items))
-    return pack(groups)
+    q, meta = pack(groups)
+    meta['fill'] = main_colour([p for r, ps in groups if r == 'top' for p in ps])         # the side and bottom walls' colour
+    meta['faceFill'] = main_colour([p for r, ps in groups if r == 'face' for p in ps])    # the top wall's
+    return q, meta
 
 def build():
     data, review = {}, []
