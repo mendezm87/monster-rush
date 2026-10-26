@@ -165,13 +165,24 @@ def walls(path, roles):
     meta['faceFill'] = main_colour([p for r, ps in groups if r == 'face' for p in ps])    # the top wall's
     return q, meta
 
+PILLAR_W = 22   # a corner pillar's width in sprite pixels (the side walls are about 17 thick)
+
+def corners(path):
+    """LV-<AREA>-3 (r265): the two corner pillars, plain and decorated. The sheets' wall corners came in different
+    layouts and some facing the wrong way, but every sheet ends with its two pillars, so they're the last two pieces."""
+    im = Image.open(path).convert('RGB'); m = fxs.bg_mask(im, 40); bl = blobs(im)
+    items = []
+    for b in bl[-2:]:
+        t = tight(m, b); items.append(fxs.shrink(im, m, t, (t[2] - t[0] + 1) / PILLAR_W))
+    return pack([('pillar', items)])
+
 def build():
     data, review = {}, []
     for area in AREAS:
-        for kind, fn in (('props', 'LV-{}-1.jpg'), ('walls', 'LV-{}-2.jpg')):
+        for kind, fn in (('props', 'LV-{}-1.jpg'), ('walls', 'LV-{}-2.jpg'), ('corners', 'LV-{}-3.jpg')):
             path = os.path.join(REFS, fn.format(area.upper()))
             if not os.path.exists(path): print(f'{area} {kind}: no sheet yet'); continue
-            q, meta = props(path) if kind == 'props' else walls(path, WALL_ROLES[area])
+            q, meta = props(path) if kind == 'props' else corners(path) if kind == 'corners' else walls(path, WALL_ROLES[area])
             buf = io.BytesIO(); q.save(buf, 'PNG', optimize=True)
             data.setdefault(area, {})[kind] = {'src': 'data:image/png;base64,' + base64.b64encode(buf.getvalue()).decode(), **meta}
             review.append(q)

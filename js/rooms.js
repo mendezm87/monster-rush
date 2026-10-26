@@ -43,10 +43,10 @@ function decorPiece(ctx, img, p, x, y, rot = 0, th = 0, flip = false) {
 // never uses the same prop twice.
 function roomDecor(room, stageKey) {
   if (room.decor !== undefined) return room.decor;
-  const walls = levelSheet(stageKey, 'walls'), props = levelSheet(stageKey, 'props');
+  const walls = levelSheet(stageKey, 'walls'), props = levelSheet(stageKey, 'props'), corners = levelSheet(stageKey, 'corners');
   const has = typeof LEVEL_SHEET_DATA !== 'undefined' && LEVEL_SHEET_DATA[stageKey];
   if (!has) return (room.decor = null);
-  if ((has.walls && !walls) || (has.props && !props)) return null;   // still loading: try again next frame
+  if ((has.walls && !walls) || (has.props && !props) || (has.corners && !corners)) return null;   // still loading: try again next frame
   const S = DECOR_PX, dw = Math.ceil(room.w / S), dh = Math.ceil(room.h / S);
   const cv = document.createElement('canvas'); cv.width = dw; cv.height = dh;
   const ctx = cv.getContext('2d'); ctx.imageSmoothingEnabled = false;
@@ -99,7 +99,10 @@ function roomDecor(room, stageKey) {
     };
     // the top wall: faces bottom-aligned on the floor's edge, the full width of the room (the side walls start below it),
     // with a slot for its doorway
-    const faceRow = (a, b) => clip(a, 0, b, fy0, () => run(a - ((rand() * 12) | 0), b, facePick, (q, t) => decorPiece(ctx, img, q.p, t, fy0 - q.p[3], 0, 0, q.flip)));
+    // faces line up by the wall's base (the shortest face's height), so a face with rocks spilling below its base
+    // doesn't sit higher than the rest (r265, the owner: the meadow's corner looked lifted); the spill goes onto the floor
+    const baseH = Math.min(...faces.map(p => p[3]));
+    const faceRow = (a, b) => clip(a, 0, b, fy0 + 4, () => run(a - ((rand() * 12) | 0), b, facePick, (q, t) => decorPiece(ctx, img, q.p, t, fy0 - Math.min(q.p[3], baseH), 0, 0, q.flip)));
     const front = room.doors.n && d.doorFront ? d.doorFront[0] : null;
     if (front) {
       const a = mx - Math.round(front[2] / 2), b = a + front[2];
@@ -139,6 +142,16 @@ function roomDecor(room, stageKey) {
           put(up, my - gap / 2 - up[2]); put(down, my + gap / 2);
         } else for (const [p, y] of s.parts) put(p, y);
       } else col(fy0, dh);
+    }
+    // a pillar at each corner of the room, over the joint where two walls meet (r265, the owner: "maybe we should have
+    // corners"): the decorated one at the top corners, standing at the foot of the back wall where the side walls
+    // start, the plain one at the bottom corners
+    if (corners && corners.d.pillar) {
+      const [plain, fancy] = corners.d.pillar, top = fancy && fancy[3] <= fy0 + 4 ? fancy : plain;   // the decorated one only where it fits under the top of the room
+      for (const [p, cx, by] of [[top, fx0 / 2, fy0 + 4], [top, fx1 + (dw - fx1) / 2, fy0 + 4], [plain, fx0 / 2, dh], [plain, fx1 + (dw - fx1) / 2, dh]]) {
+        const x = Math.round(cx - p[2] / 2), y = Math.round(by - p[3]);
+        decorPiece(ctx, corners.img, p, x, y); claim(x, y, x + p[2], y + p[3]);
+      }
     }
     for (const h of hung) { decorPiece(ctx, img, h.p, h.x, h.y); claim(h.x, h.y, h.x + h.p[2], h.y + h.p[3]); }   // the things hung on the top wall
   }
