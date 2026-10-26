@@ -2,6 +2,8 @@
 
 ## Where we left off (keep this current at the end of every session)
 
+**2026-10-25 (r252): the other seven.** Thornback, Smouldox and Wispurr back on their old designs with the guide's detail; Pixibelle, Bellpaca, Lumawool and Frostling traced with touch-ups. **Waiting on the owner:** a look in play (https://mendezm87.github.io/monster-rush/stress.html?party=thornback,smouldox,wispurr,pixibelle,bellpaca,lumawool&foes=frostling,thornback,smouldox,wispurr,pixibelle,bellpaca), then fixes; Galewing and Venomire still wait on the reworded prompts.
+
 **2026-10-25 (r250-r251):** stress.html takes `?party=` and `?foes=` so the owner can try Coreatures in play on the phone. After playing: Shadefang's back view redone (collar, mane, tail swept out) and Brawlix's ears long again in a V so they're not cut off. The owner approved all three ("this looks fine"). **Next:** the other seven the same way (Thornback, Smouldox, Wispurr, Pixibelle, Bellpaca, Lumawool, Frostling), each from whichever side suits it (traced guide plus old features, or old art plus the guide's detail), shown in play with the stress.html link before moving on.
 
 **2026-10-25 (r248):** the owner: "very very close"; Coilizard is good to go. Fixed Shadefang's legs (slim and tapered with gaps, paws in the leg colour, hind legs bent at the hock side-on) and Brawlix's ears (shortened so they fit the picture) and legs (slim columns over long feet instead of round thighs), and his headband shows in the three-quarter views again. r249: his side view arm redrawn so it reads (a bent arm a shade lighter than the body, fist clear of the muzzle). **Next:** the other seven, once the owner OKs these two.

@@ -10,17 +10,22 @@ Object.assign(MONSTER_ART, {
     const { Q, b, h, t, earA, earB, legA, legB } = rigParts(g, v);
     const coals = pts => { for (const [x, y] of pts) { b.ellipse(x, y, 2, 1.6, CO, { edge: true }); b.px(x, y, EMB); b.px(x - 1, y + 1, HOT); } };
     const smoke = pts => { for (const [x, y] of pts) t.px(x, y, SMOKE); };
-    const leg = (p, x) => { p.ellipse(x, 27.5, 2.4, 2.6, K, { edge: true }); p.ellipse(x, 30, 2.4, 1, HOOF); };
+    const leg = (p, x) => {   // r252: sturdy legs tapering to split hooves (they were round stubs)
+      p.poly([[x - 2.3, 24.5], [x + 2.3, 24.5], [x + 1.9, 29.2], [x - 1.9, 29.2]], K, { edge: true });
+      p.rect(Math.round(x) - 2, 29, 4, 1, HOOF); p.px(Math.round(x), 29, K.s);
+    };
+    const seam = pts => { for (const [x, y, hot] of pts) b.px(x, y, hot ? HOT : EMB); };   // glowing cracks in its hide, from the guide
     if (v === 'side') {
       t.rect(4, 18, 1, 4, K.s); t.ellipse(4, 23, 1.5, 1.5, K, { edge: true });                  // thin tail with a tuft
       leg(legA, 8); leg(legB, 18);
       b.ellipse(14, 21, 10, 6, K, { edge: true });
       b.ellipse(15, 26, 6, 1.4, EMB);                                                            // ember glow underneath
+      seam([[7, 19], [8, 20, 1], [9, 21], [10, 21], [15, 19], [16, 20, 1], [16, 21], [17, 22]]);
       coals([[8, 15], [12, 14], [16, 14.5], [19, 16]]);
       leg(legB, 10.5); leg(legA, 20.5);
       earA.ellipse(21, 16, 2, 1.2, K, { edge: true });
       h.ellipse(24, 19, 4.5, 4, K, { edge: true });                                              // head held low
-      h.poly([[22, 15], [23, 12], [24, 15]], HN);                                                // horn
+      h.poly([[21.5, 15], [22, 11.5], [24, 10.4], [23.6, 12.6], [24, 15]], HN, { edge: true });   // a bigger curved horn
       h.ellipse(27.5, 21, 2.4, 1.8, MZ, { edge: true });
       rigEye(h, Q, 24, 18, () => h.rect(24, 18, 2, 1, EYE));
       h.px(23, 17, OUTLINE).px(24, 17, OUTLINE);
@@ -33,18 +38,20 @@ Object.assign(MONSTER_ART, {
       leg(legA, 10.5); leg(legB, 21.5);
       b.ellipse(16, 21, 10, 6.5, K, { edge: true });
       coals([[10, 16], [14, 15], [18, 15], [22, 16], [12, 19], [20, 19], [16, 18]]);
+      seam([[8, 21], [9, 22, 1], [10, 23], [23, 21], [22, 22, 1], [22, 23]]);
       earA.ellipse(9.5, 13, 2, 1.2, K, { edge: true }); earB.ellipse(22.5, 13, 2, 1.2, K, { edge: true });
       h.ellipse(16, 13, 4, 2.5, K, { edge: true });
-      h.poly([[12, 12], [11, 9], [13, 11]], HN); h.poly([[20, 12], [21, 9], [19, 11]], HN);
+      h.poly([[12, 12], [9.5, 9.5], [10, 7.5], [11.5, 9.5], [13.5, 11]], HN, { edge: true }); h.poly([[20, 12], [22.5, 9.5], [22, 7.5], [20.5, 9.5], [18.5, 11]], HN, { edge: true });
       t.rect(16, 23, 1, 4, K.s); t.ellipse(16.5, 27.5, 1.5, 1.5, K, { edge: true });
       return;
     }
     leg(legA, 10.5); leg(legB, 21.5);                                                            // sturdy legs, dark hooves
     b.ellipse(16, 21, 10, 6.5, K, { edge: true });                                               // hulking body
     b.ellipse(16, 25.5, 6, 1.6, EMB);                                                            // ember glow from the belly
+    seam([[8, 19], [9, 20, 1], [9, 21], [10, 22], [24, 19], [23, 20, 1], [23, 21], [22, 22]]);
     coals([[9, 15], [12.5, 13.5], [19.5, 13.5], [23, 15]]);                                      // the heap of coals on its back
     earA.ellipse(9.5, 14, 2, 1.2, K, { edge: true }); earB.ellipse(22.5, 14, 2, 1.2, K, { edge: true });
-    h.poly([[11, 12], [10, 9], [12, 11]], HN); h.poly([[21, 12], [22, 9], [20, 11]], HN);       // small horns
+    h.poly([[11.5, 12.5], [9, 10], [9.5, 8], [11, 10], [13, 11.5]], HN, { edge: true }); h.poly([[20.5, 12.5], [23, 10], [22.5, 8], [21, 10], [19, 11.5]], HN, { edge: true });   // curved horns
     h.ellipse(16, 15.5, 5, 4.5, K, { edge: true });                                              // head held low
     h.ellipse(16, 19, 3, 2, MZ, { edge: true });                                                 // muzzle
     h.px(15, 19, OUTLINE).px(17, 19, OUTLINE);                                                   // nostrils
@@ -59,14 +66,19 @@ Object.assign(MONSTER_ART_DIAG, {
     const EMB = '#ff7a1c', HOT = '#ffd34a', EYE = '#ff9a3a', HOOF = '#141012', SMOKE = '#8a8088';
     const { Q, b, h, t, earA, earB, legA, legB } = rigParts(g, v);
     const coals = pts => { for (const [x, y] of pts) { b.ellipse(x, y, 2, 1.6, CO, { edge: true }); b.px(x, y, EMB); b.px(x - 1, y + 1, HOT); } };
-    const leg = (p, x) => { p.ellipse(x, 27.5, 2.4, 2.6, K, { edge: true }); p.ellipse(x, 30, 2.4, 1, HOOF); };
+    const leg = (p, x) => {   // r252: sturdy legs tapering to split hooves (they were round stubs)
+      p.poly([[x - 2.3, 24.5], [x + 2.3, 24.5], [x + 1.9, 29.2], [x - 1.9, 29.2]], K, { edge: true });
+      p.rect(Math.round(x) - 2, 29, 4, 1, HOOF); p.px(Math.round(x), 29, K.s);
+    };
+    const seam = pts => { for (const [x, y, hot] of pts) b.px(x, y, hot ? HOT : EMB); };   // glowing cracks in its hide, from the guide
     if (v === 'bside') {
       leg(legB, 10); leg(legA, 21);
       b.ellipse(15.5, 21, 10, 6.5, K, { edge: true });
       coals([[9, 16], [13, 15], [17, 15], [21, 16], [11, 19], [19, 19], [15, 18]]);
+      seam([[7, 21], [8, 22, 1], [9, 23], [22, 21], [21, 22, 1], [21, 23]]);
       earB.ellipse(11, 13, 2, 1.2, K, { edge: true }); earA.ellipse(23.5, 13, 2, 1.2, K, { edge: true });
       h.ellipse(18, 13, 4, 2.5, K, { edge: true });
-      h.poly([[14, 12], [13, 9], [15, 11]], HN); h.poly([[22, 12], [23, 9], [21, 11]], HN);
+      h.poly([[14, 12], [11.5, 9.5], [12, 7.5], [13.5, 9.5], [15.5, 11]], HN, { edge: true }); h.poly([[22, 12], [24.5, 9.5], [24, 7.5], [22.5, 9.5], [20.5, 11]], HN, { edge: true });
       t.rect(11, 23, 1, 4, K.s); t.ellipse(11.5, 27.5, 1.5, 1.5, K, { edge: true });
       t.px(8, 11, SMOKE).px(9, 9, SMOKE).px(8, 7, SMOKE);
       return;
@@ -75,9 +87,10 @@ Object.assign(MONSTER_ART_DIAG, {
     leg(legB, 10); leg(legA, 21);
     b.ellipse(15, 21, 10, 6.5, K, { edge: true });
     b.ellipse(16, 25.5, 6, 1.6, EMB);
+    seam([[7, 19], [8, 20, 1], [8, 21], [9, 22], [21, 20], [22, 21, 1], [22, 22]]);
     coals([[8, 15], [11.5, 13.5], [16, 13], [20, 14.5]]);
     earB.ellipse(11.5, 14, 2, 1.2, K, { edge: true }); earA.ellipse(24.5, 14, 2, 1.2, K, { edge: true });
-    h.poly([[13, 12], [12, 9], [14, 11]], HN); h.poly([[23, 12], [24, 9], [22, 11]], HN);
+    h.poly([[13.5, 12.5], [11, 10], [11.5, 8], [13, 10], [15, 11.5]], HN, { edge: true }); h.poly([[22.5, 12.5], [25, 10], [24.5, 8], [23, 10], [21, 11.5]], HN, { edge: true });
     h.ellipse(18, 15.5, 5, 4.5, K, { edge: true });
     h.ellipse(19.5, 19, 3, 2, MZ, { edge: true });
     h.px(18, 19, OUTLINE).px(21, 19, OUTLINE);

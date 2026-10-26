@@ -25,6 +25,17 @@ function cactusDome(p, cx, cy, rx, ry, ribs) {
     p.px(x, y, SPINE); p.px(x + (k < 0 ? -1 : 1), y - 1, SPINE);
   }
 }
+// r252, the in-between pass (the owner: keep the old design, add the guide's detail): splayed lizard legs with toes
+// instead of round stubs. thornLeg = seen from the front (dir: -1 left, 1 right), thornLegSide = side-on.
+function thornLeg(p, x, y, dir, C) {
+  p.poly([[x, y - 1.2], [x + dir * 3.2, y - 0.4], [x + dir * 3.8, y + 2.4], [x + dir * 2.4, y + 2.6], [x + dir * 1.6, y + 0.8], [x, y + 1]], C, { edge: true });
+  p.ellipse(x + dir * 3.4, y + 3, 1.9, 0.9, C, { edge: true });
+  p.px(Math.round(x + dir * 4.8), Math.round(y + 3), THORN.HORN.s).px(Math.round(x + dir * 2.2), Math.round(y + 3.4), THORN.HORN.s);   // claws
+}
+function thornLegSide(p, x, C) {
+  p.poly([[x - 1.2, 24.5], [x + 1.4, 24.5], [x + 1.2, 27], [x + 2.8, 28], [x + 2.6, 28.9], [x - 1.4, 28.9]], C, { edge: true });
+  p.px(Math.round(x + 3), 28, THORN.HORN.s);
+}
 function cactusFlower(p, x, y) { const { FLOWER, MID } = THORN; p.ellipse(x, y, 2.6, 1.7, FLOWER, { edge: true }); p.px(Math.round(x) - 1, Math.round(y) - 1, FLOWER.l); p.px(Math.round(x), Math.round(y), MID).px(Math.round(x) - 1, Math.round(y), MID); }
 
 Object.assign(MONSTER_ART, {
@@ -33,12 +44,13 @@ Object.assign(MONSTER_ART, {
     const { Q, b, h, t, earA, earB, legA, legB } = rigParts(g, v), side = v === 'side';
     if (side) {
       t.poly([[8, 22], [9, 25], [2, 25], [0, 23.5], [3, 23]], SAND, { edge: true }); t.px(0, 23, HORN.s);   // long thin lizard tail
-      legB.ellipse(10, 27, 2, 1.8, SAND.s, { edge: true }); legB.ellipse(21, 27, 2, 1.8, SAND.s, { edge: true });
+      t.px(3, 24, SAND.s).px(5, 24, SAND.s).px(7, 23, SAND.s);                                   // bands on its tail
+      thornLegSide(legB, 9, SAND.s); thornLegSide(legB, 20, SAND.s);                                // far legs
       b.ellipse(16, 23, 10, 3.6, SAND, { edge: true });                                          // its long sandy lizard body
       for (const x of [9, 13, 20]) b.px(x, 24, SAND.s);                                         // scales
-      cactusDome(b, 15, 17.5, 6.5, 5.5, [-0.6, 0, 0.6]);                                         // the barrel cactus growing on its back
-      cactusFlower(b, 15, 11.5);
-      legA.ellipse(11, 27.5, 2.3, 1.8, SAND, { edge: true }); legA.ellipse(22, 27.5, 2.3, 1.8, SAND, { edge: true });
+      cactusDome(b, 15, 17.8, 6, 5.2, [-0.6, 0, 0.6]);                                         // the barrel cactus growing on its back
+      cactusFlower(b, 15, 12.2);
+      thornLegSide(legA, 11, SAND); thornLegSide(legA, 22, SAND);                                    // near legs, bent, with claws
       h.poly([[22, 19.5], [27, 19.5], [31, 22], [27, 24.5], [22, 24.5]], SAND, { edge: true });    // pointed lizard head
       earA.poly([[23, 20], [22, 16], [25, 19]], HORN, { edge: true });                            // a little horn over its eye
       rigEye(h, Q, 25, 21, () => { h.rect(25, 21, 2, 2, EYE); h.px(25, 21, '#ffffff'); h.rect(24, 20, 3, 1, SAND.s); }, 2);
@@ -46,21 +58,21 @@ Object.assign(MONSTER_ART, {
       return;
     }
     if (v === 'back') {
-      legA.ellipse(8, 26, 2.4, 2, SAND, { edge: true }); legB.ellipse(24, 26, 2.4, 2, SAND, { edge: true });
+      thornLeg(legA, 8, 23.5, -1, SAND); thornLeg(legB, 24, 23.5, 1, SAND);
       earA.poly([[12, 16], [10.5, 12], [14, 15]], HORN, { edge: true }); earB.poly([[20, 16], [21.5, 12], [18, 15]], HORN, { edge: true });
       h.ellipse(16, 16.5, 4.5, 2.8, SAND, { edge: true });
       b.ellipse(16, 22, 10.5, 4.2, SAND, { edge: true });
-      cactusDome(b, 16, 17, 7, 5.8, [-0.6, 0, 0.6]);
-      cactusFlower(b, 16, 10.5);
-      t.poly([[14, 24], [18, 24], [17, 31], [15, 31]], SAND, { edge: true }); t.px(16, 31, HORN.s);   // its tail, toward you
+      cactusDome(b, 16, 17.3, 6.4, 5.4, [-0.6, 0, 0.6]);
+      cactusFlower(b, 16, 11.3);
+      t.poly([[14, 24], [18, 24], [17, 31], [15, 31]], SAND, { edge: true }); t.px(16, 31, HORN.s); t.px(16, 26, SAND.s).px(16, 28, SAND.s);   // its tail, toward you, banded
       return;
     }
     t.poly([[22, 22], [27, 20], [31, 16], [30, 21], [24, 24.5]], SAND, { edge: true });            // long tail curving out behind
-    legA.ellipse(6.5, 25.5, 2.8, 2.2, SAND, { edge: true }); legB.ellipse(25.5, 25.5, 2.8, 2.2, SAND, { edge: true });   // legs splayed wide
-    legA.px(4, 26, SAND.s).px(6, 27, SAND.s); legB.px(27, 26, SAND.s).px(25, 27, SAND.s);
+    t.px(27, 21, SAND.s).px(29, 19, SAND.s);
+    thornLeg(legA, 8, 23.5, -1, SAND); thornLeg(legB, 24, 23.5, 1, SAND);                         // legs splayed wide, with claws
     b.ellipse(16, 22, 10.5, 4.2, SAND, { edge: true });                                            // wide flat lizard body
-    cactusDome(b, 16, 16, 7, 5.8, [-0.6, 0, 0.6]);                                                 // the barrel cactus growing on its back
-    cactusFlower(b, 16, 9.5);                                                                      // and the flower blooming on top
+    cactusDome(b, 16, 16.3, 6.4, 5.4, [-0.6, 0, 0.6]);                                             // the barrel cactus growing on its back
+    cactusFlower(b, 16, 10.3);                                                                      // and the flower blooming on top
     h.ellipse(16, 24, 6, 3.8, SAND, { edge: true });                                               // sandy lizard head, low in front
     earA.poly([[11.5, 22], [9.5, 18], [13.5, 21]], HORN, { edge: true }); earB.poly([[20.5, 22], [22.5, 18], [18.5, 21]], HORN, { edge: true });   // two little horns
     rigEyes(h, Q, 32, 12, 23, 2, () => { h.rectM(12, 23, 2, 2, EYE); h.pxM(12, 23, '#ffffff'); h.rectM(11, 22, 3, 1, SAND.s); });
@@ -72,20 +84,20 @@ Object.assign(MONSTER_ART_DIAG, {
     const { SAND, HORN, EYE } = THORN;
     const { Q, b, h, t, earA, earB, legA, legB } = rigParts(g, v);
     if (v === 'bside') {
-      legA.ellipse(8, 26, 2.4, 2, SAND, { edge: true }); legB.ellipse(23, 26.5, 2.2, 1.8, SAND, { edge: true });
+      thornLeg(legA, 8, 23.5, -1, SAND); thornLeg(legB, 23, 24, 1, SAND);
       earA.poly([[15, 16], [13.5, 12], [17, 15]], HORN, { edge: true }); earB.poly([[23, 16], [24.5, 12], [21, 15]], HORN, { edge: true });
       h.ellipse(19, 16.5, 4.5, 2.8, SAND, { edge: true });
       b.ellipse(15, 22, 10.5, 4.2, SAND, { edge: true });
-      cactusDome(b, 15, 17, 7, 5.8, [-0.6, 0, 0.6]);
-      cactusFlower(b, 15, 10.5);
+      cactusDome(b, 15, 17.3, 6.4, 5.4, [-0.6, 0, 0.6]);
+      cactusFlower(b, 15, 11.3);
       t.poly([[10, 24], [14, 25], [9, 30], [6, 29]], SAND, { edge: true });
       return;
     }
     t.poly([[8, 22], [10, 25], [2, 24], [0, 20], [4, 21.5]], SAND, { edge: true });
-    legA.ellipse(7.5, 25.5, 2.8, 2.2, SAND, { edge: true }); legB.ellipse(26, 25.5, 2.6, 2, SAND, { edge: true });
+    thornLeg(legA, 9, 23.5, -1, SAND); thornLeg(legB, 24.5, 23.5, 1, SAND);
     b.ellipse(15.5, 22, 10.5, 4.2, SAND, { edge: true });
-    cactusDome(b, 14.5, 16, 7, 5.8, [-0.6, 0, 0.6]);
-    cactusFlower(b, 14.5, 9.5);
+    cactusDome(b, 14.5, 16.3, 6.4, 5.4, [-0.6, 0, 0.6]);
+    cactusFlower(b, 14.5, 10.3);
     h.ellipse(19, 24, 6, 3.8, SAND, { edge: true });
     earA.poly([[14.5, 22], [12.5, 18], [16.5, 21]], HORN, { edge: true }); earB.poly([[23.5, 22], [25.5, 18.5], [21.5, 21]], HORN, { edge: true });
     rigEye(h, Q, 16, 23, () => { h.rect(16, 23, 2, 2, EYE); h.px(16, 23, '#ffffff'); h.rect(15, 22, 3, 1, SAND.s); }, 2);

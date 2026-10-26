@@ -58,15 +58,22 @@ def brawl_post(m, view):
     return [''.join(r) for r in g], []
 
 
+def pixi_blush(m, view):
+    """Pixibelle's rosy cheek spots, like the old design (r252): the pink under her eyes made a stronger rose."""
+    if view == 'back': return m, []
+    g = [list(r) for r in m]; W = len(m[0]); x0, x1 = round(W * 0.28), round(W * 0.78)
+    for y in range(12, 15):
+        for x in range(x0, x1):
+            if g[y][x] == 'd': g[y][x] = 'r'
+    return [''.join(r) for r in g], []
+
+
 CFG = {   # neck/ear: head and ear rows; hb: the head's columns per view (shares); leg: where legs start; eyeKeys: eye colours
-  'lumawool':  dict(neck=0.55, ear=0.3, hb={'front': [0.2, 0.8], 'back': [0.15, 0.85], 'fside': [0.45, 1], 'side': [0.62, 1]}, tail={'side': [0, 0.3, 0.12, 0.65], 'fside': [0, 0.35, 0.1, 0.7]}, leg=0.82, eyeKeys=None),
-  'smouldox':  dict(neck=0.5, ear=0.22, hb={'fside': [0.55, 1], 'side': [0.7, 1]}, tail={'side': [0, 0.2, 0.12, 0.7], 'fside': [0, 0.2, 0.12, 0.7]}, leg=0.75, eyeKeys=None),
+  'lumawool':  dict(neck=0.55, ear=0.3, hb={'front': [0.2, 0.8], 'back': [0.15, 0.85], 'fside': [0.45, 1], 'side': [0.62, 1]}, tail={'side': [0, 0.3, 0.12, 0.65], 'fside': [0, 0.35, 0.1, 0.7]}, leg=0.82, eyeKeys=None, palx={'j': '#ffe14a', 'm': '#fff27a'}),
   'coilizard': dict(neck=0.5, ear=0.0, hb={'front': [0.2, 0.8], 'back': [0, 0.6], 'fside': [0.55, 1], 'side': [0.6, 1]}, tail={}, leg=0.72, eyeKeys=None, eyes={'front': [[5, 6, 3], [14, 6, 3]], 'fside': [[16, 9, 3]], 'side': [[23, 6, 3]]}, src={'front': 'coil-27.json', 'fside': 'coil-27.json', 'side': 'coil-22.json', 'back': 'coil-27.json'}, post=coil_spring, palx={'y': '#eef8d4'}),
-  'thornback': dict(neck=0.6, ear=0.0, hb={'front': [0.2, 0.8], 'fside': [0.7, 1], 'side': [0.75, 1], 'back': [0.2, 0.8]}, tail={'side': [0, 0.5, 0.35, 1], 'fside': [0, 0.5, 0.35, 1], 'back': [0.4, 0.75, 1, 1]}, leg=0.8, eyeKeys='kab'),
   'frostling': dict(neck=0.55, ear=0.25, hb={'front': [0.15, 0.85], 'fside': [0.45, 1], 'side': [0.55, 1]}, tail={'side': [0, 0.1, 0.4, 0.8], 'fside': [0, 0.1, 0.4, 0.8]}, leg=0.85, eyeKeys='kab'),
-  'bellpaca':  dict(neck=0.33, ear=0.1, hb={'fside': [0.5, 1], 'side': [0.55, 1]}, tail={'side': [0, 0.3, 0.15, 0.6], 'fside': [0, 0.3, 0.15, 0.6]}, leg=0.75, eyeKeys='k'),
-  'wispurr':   dict(neck=0.45, ear=0.15, hb={'front': [0, 0.7], 'fside': [0, 0.75], 'side': [0.3, 1], 'back': [0.3, 1]}, tail={'side': [0, 0.5, 0.45, 1], 'fside': [0.6, 0.5, 1, 1], 'front': [0.65, 0.4, 1, 1], 'back': [0, 0.4, 0.35, 1]}, leg=2, eyeKeys='c'),
-  'pixibelle': dict(neck=0.52, ear=0.24, hb={'front': [0.3, 0.7], 'fside': [0.3, 0.75], 'side': [0.35, 0.95], 'back': [0.3, 0.7]}, tail={}, leg=0.94, wings='eghi', eyeKeys='ka'),
+  'bellpaca':  dict(neck=0.33, ear=0.1, hb={'fside': [0.5, 1], 'side': [0.55, 1]}, tail={'side': [0, 0.3, 0.15, 0.6], 'fside': [0, 0.3, 0.15, 0.6]}, leg=0.75, eyeKeys='k', palx={'e': '#ffe23a', 'd': '#f0a010'}),
+  'pixibelle': dict(neck=0.52, ear=0.24, hb={'front': [0.3, 0.7], 'fside': [0.3, 0.75], 'side': [0.35, 0.95], 'back': [0.3, 0.7]}, tail={}, leg=0.94, wings='eghi', eyeKeys='ka', palx={'r': '#ff5c86'}, post=pixi_blush, eyes={'front': [[12, 11, 2], [17, 11, 2]], 'fside': [[14, 11, 2], [19, 11, 1]], 'side': [[19, 11, 1]]}),
 }
 
 
