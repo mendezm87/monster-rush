@@ -2,7 +2,7 @@
 
 ## Where we left off (keep this current at the end of every session)
 
-**2026-10-25 (r254):** Frostling's side-view nose and its feet fixed; Pixibelle less chibi, no bow.
+**2026-10-25 (r254):** Frostling's side-view nose and its feet fixed; Pixibelle less chibi, no bow. r255: her dress comes up to her neck (it looked like it was falling off).
 
 **2026-10-25 (r253):** Frostling back to the squirrel-fox with the horn (plus detail), Pixibelle and Bellpaca made chibi. **Waiting on the owner:** a look in play (https://mendezm87.github.io/monster-rush/stress.html?party=frostling,pixibelle,bellpaca,thornback,smouldox,wispurr&foes=frostling,pixibelle,bellpaca).
 

@@ -18,12 +18,18 @@ function pixiWings(b, dx, mirror, far) {   // dx shifts them; mirror = both side
   }
 }
 const pixiAntenna = (p, x, dir) => { p.rect(x, 2, 1, 4, OUTLINE); p.px(x + dir, 1, OUTLINE); p.px(x + dir * 2, 1, PIXI_TIP).px(x + dir * 2, 0, PIXI_TIP).px(x + dir * 3, 1, PIXI_TIP); };
+// her dress (r255, the owner: it "looks like it's falling off" when it started below her chest): a fitted bodice up to her
+// neck, a darker sash at the waist, then the bell skirt flaring out to the hem
+const pixiDress = (b, Pk) => {
+  b.poly([[10, 29], [22, 29], [19.6, 21.5], [18.6, 17], [13.4, 17], [12.4, 21.5]], P(Pk, '#c83a7a', '#ff9ac4'), { edge: true });
+  b.rect(13, 21, 6, 1, '#c83a7a');
+};
 const pixiFolds = b => { b.px(14, 25, '#c83a7a').px(14, 27, '#c83a7a').px(18, 25, '#c83a7a').px(18, 27, '#c83a7a'); };
 Object.assign(MONSTER_ART, {
   pixibelle(g, v = 'front') {
     const B = P('#ffc4dc', '#e88ab4', '#fff0f6'), Wn = P('#d8f4ff', '#a4d4f0', '#ffffff'), Pk = '#ff5a9e';
     const { Q, b, h, earA, earB } = rigParts(g, v);
-    const skirt = () => b.poly([[10, 29], [22, 29], [19, 20], [13, 20]], P(Pk, '#c83a7a', '#ff9ac4'), { edge: true });
+    const skirt = () => pixiDress(b, Pk);
     if (v === 'side') {
       pixiWings(b, 2, false, 0);
       pixiAntenna(earA, 19, 1);
@@ -62,7 +68,7 @@ Object.assign(MONSTER_ART_DIAG, {
     };
     const body = () => {
       b.ellipse(16, 21, 4, 4, B, { edge: true });
-      b.poly([[10, 29], [22, 29], [19, 20], [13, 20]], P(Pk, '#c83a7a', '#ff9ac4'), { edge: true }); pixiFolds(b);   // skirt
+      pixiDress(b, Pk); pixiFolds(b);   // her dress
       h.ellipse(17, 11.5, 5.8, 5.4, B, { edge: true });
     };
     if (v === 'bside') {
