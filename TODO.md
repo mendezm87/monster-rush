@@ -2,6 +2,8 @@
 
 ## Where we left off (keep this current at the end of every session)
 
+**2026-10-26 (r271):** the Grotto and Spire use the owner's second-take fill pictures (a dark chasm, a starfield): they match the other areas' painted fills.
+
 **2026-10-26 (r270):** the owner's fill pictures are in: thicket, lava lake, deep snow and rubble fill the walled-off corners; the Grotto (a dark chasm with crystal glints) and the Spire (the night sky) are drawn in code, since their pictures didn't tile. **Waiting on the owner:** a look in play.
 
 **2026-10-26 (r269):** beams stop at obstacles, wild Coreatures steer out of hazards, and the walled-off corners are dark (out of bounds) instead of striped. **Waiting on the owner:** the six fill pictures, LV-MEADOW-4 to LV-SPIRE-4 (round 3 in docs/level-prompts.md, on the prompts page): a thicket, a lava lake, deep snow, a dark chasm, rubble and the night sky; save as docs/refs/LV-<AREA>-4.jpg, then run `python tools/level-sheets.py` (a few minutes).

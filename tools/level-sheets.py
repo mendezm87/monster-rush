@@ -64,7 +64,7 @@ def tight(m, box):
     xs, ys = [p[0] for p in pts], [p[1] for p in pts]
     return (min(xs), min(ys), max(xs), max(ys))
 
-def pack(groups):
+def pack(groups, colors=24):
     """groups: [(role, [piece images or [left, right] pairs])] -> one strip (a palette per role) and the meta by role"""
     flat = [(role, j, k, p) for role, items in groups for j, it in enumerate(items) for k, p in enumerate(it if isinstance(it, list) else [it])]
     strip_w = sum(p.size[0] + 1 for *_, p in flat); strip_h = max(p.size[1] for *_, p in flat)
@@ -76,9 +76,10 @@ def pack(groups):
         else: lst[-1] = [lst[-1], box] if k == 1 else lst[-1] + [box]
         a, b = spans.get(role, (x, x)); spans[role] = (min(a, x), max(b, x + p.size[0])); x += p.size[0] + 1
     q = Image.new('RGBA', strip.size, (0, 0, 0, 0))
+    if not colors: return strip, meta   # (a fill tile keeps every colour: cutting it down greyed its few bright stars)
     for role, (a, b) in spans.items():   # one palette per role, like the attack sheets' rows
         part = strip.crop((a, 0, b, strip_h))
-        pq = part.convert('RGB').quantize(colors=24, method=Image.Quantize.MEDIANCUT).convert('RGB').convert('RGBA')
+        pq = part.convert('RGB').quantize(colors=colors, method=Image.Quantize.MEDIANCUT).convert('RGB').convert('RGBA')
         pq.putalpha(part.getchannel('A')); q.paste(pq, (a, 0))
     return q, meta
 
@@ -181,12 +182,32 @@ FILL_SRC = 16   # sheet pixels per tile pixel: Gemini's pixel art comes about 8 
 FILL_CROP = {'spire': 0.22}   # how much of the middle to use: the spire's sky sits inside broken grey stone that isn't
                               # the spire's colours (the game draws the spire's sky itself now, rooms.js FILL_SKY)
 
+def repeat_of(sq):
+    """If Gemini drew the texture as a repeating pattern (LV-GROTTO-4b and LV-SPIRE-4b came as 2 x 2 copies of one
+    tile), the size of one repeat (w, h) in sheet pixels, else None: the shift at which the picture best matches itself,
+    if it matches closely."""
+    a = np.array(sq.convert('L')).astype(float); h, w = a.shape; out = []
+    for axis, n in ((1, w), (0, h)):
+        best = min((np.abs((a[:, :n - p] - a[:, p:]) if axis == 1 else (a[:h - p, :] - a[p:, :])).mean(), p) for p in range(60, int(n * 0.6)))
+        if best[0] > 7: return None
+        out.append(best[1])
+    return tuple(out)
+
 def fill(path, area):
     """LV-<AREA>-4 (r269): the ground that fills a room's blocked-off corners, one square texture seen from straight
-    above. The biggest piece on the sheet, its middle square (inside its border, if Gemini drew one), shrunk to a tile;
-    the game tiles it mirrored, so it joins up whatever its edges look like."""
+    above. The biggest piece on the sheet; if it's a repeating pattern, exactly one repeat (it then tiles seamlessly,
+    'seamless' in the meta), else its middle square, which the game tiles mirrored so it joins up whatever its edges
+    look like. Shrunk to keep about the props' scale."""
     im = Image.open(path).convert('RGB')
     b = max(blobs(im), key=lambda b: (b[2] - b[0]) * (b[3] - b[1]))
+    inner = im.crop((b[0] + 4, b[1] + 4, b[2] - 4, b[3] - 4))
+    rep = repeat_of(inner)
+    if rep:
+        sq = inner.crop((0, 0, rep[0], rep[1]))
+        n, m = round(rep[0] / 8), round(rep[1] / 8)
+        tile = sq.resize((n, m), Image.NEAREST, reducing_gap=None).convert('RGBA')   # at its own pixel size: a repeat is small enough, and its glints and stars are single pixels
+        q, meta = pack([('tile', [tile])], colors=None); meta['seamless'] = True
+        return q, meta
     side = int(min(b[2] - b[0], b[3] - b[1]) * FILL_CROP.get(area, 0.86)); cx, cy = (b[0] + b[2]) // 2, (b[1] + b[3]) // 2
     sq = im.crop((cx - side // 2, cy - side // 2, cx - side // 2 + side, cy - side // 2 + side))
     n = max(24, round(side / FILL_SRC))
@@ -226,6 +247,7 @@ def build():
     for area in AREAS:
         for kind, fn in (('props', 'LV-{}-1.jpg'), ('walls', 'LV-{}-2.jpg'), ('corners', 'LV-{}-3.jpg'), ('fill', 'LV-{}-4.jpg')):
             path = os.path.join(REFS, fn.format(area.upper()))
+            if kind == 'fill' and os.path.exists(path.replace('-4.jpg', '-4b.jpg')): path = path.replace('-4.jpg', '-4b.jpg')   # a second take wins
             if not os.path.exists(path): print(f'{area} {kind}: no sheet yet'); continue
             q, meta = props(path) if kind == 'props' else corners(path) if kind == 'corners' else fill(path, area) if kind == 'fill' else walls(path, WALL_ROLES[area])
             buf = io.BytesIO(); q.save(buf, 'PNG', optimize=True)

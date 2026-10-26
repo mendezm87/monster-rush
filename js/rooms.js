@@ -56,12 +56,9 @@ function decorPiece(ctx, img, p, x, y, rot = 0, th = 0, flip = false) {
 // the Starlit Spire's (and Crystal Grotto's) walled-off corners look down on the open night sky, drawn here rather than tiled from a picture
 // (the owner's LV-SPIRE-4 sky sat inside grey stone and was too small to tile without a pattern showing): deep
 // indigo, a few faint nebula clouds stippled every other pixel, and stars scattered by the room's seed (r270)
-const FILL_SKY = {
-  spire: { base: '#14102c', cloud: ['#2a2058', '#3a2a6e'], stars: ['#ffffff', '#fff2b0', '#c8b8ff', '#9ab8ff'], every: 60 },
-  // the Crystal Grotto's look down into a dark chasm: violet mist and faint cyan crystal glints far below (its picture,
-  // a cave scene, made odd mirrored shapes when tiled)
-  grotto: { base: '#0c0818', cloud: ['#241a40', '#30224e'], stars: ['#7af0ff', '#3ab8d8', '#c8f8ff', '#5a8ac8'], every: 110 },
-};
+// (r271: the owner's second takes, LV-GROTTO-4b and LV-SPIRE-4b, came as even repeating textures and are used instead;
+// this stays for an area whose picture doesn't tile: { base, cloud: [colours], stars: [colours], every: pixels per star })
+const FILL_SKY = {};
 function drawSky(ctx, k, x0, y0, x1, y1, rand) {
   ctx.fillStyle = k.base; ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
   const w = x1 - x0, h = y1 - y0;
@@ -226,7 +223,8 @@ function roomDecor(room, stageKey) {
       else if (ft) clip(ex0, ey0, ex1, faceTop, () => {
         const [fx, fy, fw, fh] = ft;
         for (let y = top ? faceTop - fh : by0, j = 0; top ? y > ey0 - fh : y < dh; y += top ? -fh : fh, j++) for (let x = ex0, i = 0; x < ex1; x += fw, i++) {
-          ctx.save(); ctx.translate(x + (i % 2 ? fw : 0), y + (j % 2 ? fh : 0)); ctx.scale(i % 2 ? -1 : 1, j % 2 ? -1 : 1);
+          const mi = !fill.d.seamless && i % 2, mj = !fill.d.seamless && j % 2;   // a seamless tile (one repeat of a pattern) goes straight
+          ctx.save(); ctx.translate(x + (mi ? fw : 0), y + (mj ? fh : 0)); ctx.scale(mi ? -1 : 1, mj ? -1 : 1);
           ctx.drawImage(fill.img, fx, fy, fw, fh, 0, 0, fw, fh); ctx.restore();
         }
       });
