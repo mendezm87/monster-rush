@@ -111,6 +111,33 @@ def main_colour(ims):
     r, g, b = max(cnt, key=cnt.get)
     return '#%02x%02x%02x' % (r * 8 + 4, g * 8 + 4, b * 8 + 4)
 
+def door_core(im, rows='low', keep=None):
+    """A doorway cut down to its opening and the posts either side (r263, the owner: walls that "don't match up"):
+    the wall the picture drew round it came at its own height and pattern, so the room's own wall tiles run up to the
+    posts instead. The opening: the widest run of columns that are empty or near black (in the lower part, for a
+    doorway seen from the front, whose lintel spans the top). keep = how much to keep beyond it on each side."""
+    a = np.array(im).astype(int); h, w = a.shape[:2]
+    band = a[int(h * 0.55):] if rows == 'low' else a
+    open_ = (band[:, :, 3] == 0) | (band[:, :, :3].sum(2) < 90)
+    cols = open_.mean(0) >= 0.7
+    best, cur, start = (0, 0, 0), 0, 0
+    for x in range(w + 1):
+        if x < w and cols[x]:
+            if cur == 0: start = x
+            cur += 1
+        else:
+            if cur > best[0]: best = (cur, start, x - 1)
+            cur = 0
+    n, g0, g1 = best
+    if n < 3: return im
+    m = keep if keep is not None else max(4, round(n * 0.35))
+    return im.crop((max(0, g0 - m), 0, min(w, g1 + m + 1), h))
+
+def post_end(im, side, keep=7):
+    """one half of a doorway seen from above, cut down to its post (the end next to the opening)"""
+    w, h = im.size
+    return im.crop((w - keep, 0, w, h)) if side == 'right' else im.crop((0, 0, keep, h))
+
 def walls(path, roles):
     im = Image.open(path).convert('RGB'); m = fxs.bg_mask(im, 40); bl = blobs(im)
     def box(ref):   # a blob, or several blobs as one piece
@@ -130,6 +157,8 @@ def walls(path, roles):
             if isinstance(ref, tuple): items.append([fxs.shrink(im, m, box(r), k) for r in ref])   # left and right halves
             else: items.append(fxs.shrink(im, m, box(ref), k))
         if role in ('face', 'top', 'faceDeco'): items = [trim_ends(p) for p in items]   # tiled end to end
+        if role == 'doorFront': items = [door_core(p, 'low') for p in items]
+        if role == 'doorTop': items = [[post_end(it[0], 'right'), post_end(it[1], 'left')] if isinstance(it, list) else door_core(it, 'all') for it in items]
         groups.append((role, items))
     q, meta = pack(groups)
     meta['fill'] = main_colour([p for r, ps in groups if r == 'top' for p in ps])         # the side and bottom walls' colour

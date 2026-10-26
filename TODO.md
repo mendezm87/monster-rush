@@ -2,6 +2,8 @@
 
 ## Where we left off (keep this current at the end of every session)
 
+**2026-10-26 (r263):** walls that didn't match up fixed: each wall run is one continuous pattern, doorways are just posts and an opening in it, the corners join cleanly.
+
 **2026-10-26 (r262):** the gaps in the walls fixed (tiles join without seams, side and bottom walls fill their thickness). Optional later: corner and end-cap pieces per area (a small Gemini round).
 
 **2026-10-26 (r261):** the overlapping pieces fixed (walls edge to edge, doorways in their own slots, decorations on plain wall, every floor piece in its own space, no repeated props).

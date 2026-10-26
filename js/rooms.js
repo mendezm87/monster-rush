@@ -23,13 +23,15 @@ function levelSheet(area, kind) {
 if (typeof LEVEL_SHEET_DATA !== 'undefined') for (const a of Object.keys(LEVEL_SHEET_DATA)) for (const k of Object.keys(LEVEL_SHEET_DATA[a])) levelSheet(a, k);
 
 // draw piece p ([x, y, w, h] in the sheet) with its top-left at (x, y); rot = quarter turns clockwise
-// th = the height to draw it at (a wall strip stretched by a pixel or two to fill its wall exactly, r262)
-function decorPiece(ctx, img, p, x, y, rot = 0, th = 0) {
+// th = the height to draw it at (a wall strip stretched by a pixel or two to fill its wall exactly, r262); flip = mirrored
+// along its length (r263: a wall run alternates a tile and its mirror image, so it never shows a seam in its pattern)
+function decorPiece(ctx, img, p, x, y, rot = 0, th = 0, flip = false) {
   const [sx, sy, w, h0] = p, h = th || h0;
-  if (!rot) { ctx.drawImage(img, sx, sy, w, h0, Math.round(x), Math.round(y), w, h); return; }
+  if (!rot && !flip) { ctx.drawImage(img, sx, sy, w, h0, Math.round(x), Math.round(y), w, h); return; }
   ctx.save(); ctx.translate(Math.round(x), Math.round(y));
   if (rot === 1) { ctx.translate(h, 0); ctx.rotate(Math.PI / 2); }
   else if (rot === 3) { ctx.translate(0, w); ctx.rotate(-Math.PI / 2); }
+  if (flip) { ctx.translate(w, 0); ctx.scale(-1, 1); }
   ctx.drawImage(img, sx, sy, w, h0, 0, 0, w, h); ctx.restore();
 }
 
@@ -61,16 +63,21 @@ function roomDecor(room, stageKey) {
 
   if (walls) {
     const { img, d } = walls, tops = d.top || [], faces = d.face || [];
-    const len = (p, along) => ({ p, len: along === 'x' ? p[2] : p[2] });   // a wall top turned upright runs along its width too
+    const len = (p, flip = false) => ({ p, len: p[2], flip });   // a wall top turned upright runs along its width too
     // the old brick walls covered in the area's dark backdrop colour, so no sliver of them shows where a piece is a
     // little thinner than its wall (the doorways' passages are cleared back out below)
     // (r262, the owner: gaps in the walls) the side and bottom walls in the wall's own main colour (worked out by the
     // cutting tool), so where a piece is a little thinner than its wall, or at the corners, it reads as more wall
     ctx.fillStyle = STAGES[stageKey].bg; ctx.fillRect(0, 0, dw, fy0);
     ctx.fillStyle = d.fill || STAGES[stageKey].bg;
-    ctx.fillRect(0, 0, fx0, dh); ctx.fillRect(fx1, 0, dw - fx1, dh); ctx.fillRect(0, fy1, dw, dh - fy1);
+    ctx.fillRect(0, fy0, fx0, dh - fy0); ctx.fillRect(fx1, fy0, dw - fx1, dh - fy0); ctx.fillRect(0, fy1, dw, dh - fy1);
     const flat = p => (Array.isArray(p[0]) ? p : [p]);   // a doorway seen from above: one piece, or [left, right]
-    const topPick = () => len(pick(tops)), faceDeco = d.faceDeco && !d.deco;
+    // (r263, the owner: walls that "don't match up") a wall run is one plain tile alternating with its mirror image, so
+    // its pattern (bricks, rocks, hedge) carries on unbroken; the matching variants (a window, a crack, a carving) come
+    // now and then, never twice running; the tiles with a decoration built in (faceDeco) came at their own scale, so
+    // they aren't used; the side and bottom walls use only the plain wall top
+    let flipTop = false;
+    const topPick = () => len(tops[0], (flipTop = !flipTop));
     // where things will hang on the top wall (where the torches are; lighting.js lights them, same spacing as its
     // torches()), only for areas whose wall faces don't carry decorations of their own; the faces behind them are plain
     const hung = [];
@@ -83,22 +90,24 @@ function roomDecor(room, stageKey) {
         hung.push({ p, x: px, y: Math.max(1, fy0 - 3 - p[3]) });
       }
     }
-    let lastDeco = false;
-    const facePick = t => {   // a wall face: plain behind a hung decoration; now and then (never twice running) one with a decoration in it
-      if (hung.some(h => h.x + h.p[2] + 3 > t && h.x - 3 < t + faces[0][2])) { lastDeco = false; return len(faces[0]); }
-      const deco = faceDeco && !lastDeco && rand() < 0.3; lastDeco = deco;
-      return len(deco ? pick(d.faceDeco) : pick(faces));
+    let lastAccent = true, flipFace = false;
+    const facePick = t => {   // plain behind a hung decoration
+      flipFace = !flipFace;
+      const behind = hung.some(h => h.x + h.p[2] + 3 > t && h.x - 3 < t + faces[0][2]);
+      const accent = !behind && !lastAccent && faces.length > 1 && rand() < 0.3; lastAccent = accent;
+      return accent ? len(faces[1 + ((rand() * (faces.length - 1)) | 0)], rand() < 0.5) : len(faces[0], flipFace);
     };
-    // the top wall: faces bottom-aligned on the floor's edge, between the side walls, with a slot for its doorway
-    const faceRow = (a, b) => clip(a, 0, b, fy0, () => run(a - ((rand() * 12) | 0), b, facePick, (q, t) => decorPiece(ctx, img, q.p, t, fy0 - q.p[3])));
+    // the top wall: faces bottom-aligned on the floor's edge, the full width of the room (the side walls start below it),
+    // with a slot for its doorway
+    const faceRow = (a, b) => clip(a, 0, b, fy0, () => run(a - ((rand() * 12) | 0), b, facePick, (q, t) => decorPiece(ctx, img, q.p, t, fy0 - q.p[3], 0, 0, q.flip)));
     const front = room.doors.n && d.doorFront ? d.doorFront[0] : null;
     if (front) {
       const a = mx - Math.round(front[2] / 2), b = a + front[2];
-      faceRow(fx0, a); faceRow(b, fx1);
+      faceRow(0, a); faceRow(b, dw);
       ctx.clearRect(mx - gap / 2, 0, gap, fy0);   // the passage, back to the room's own dark doorway
       decorPiece(ctx, img, front, a, fy0 - front[3]);
       claim(a, fy0 - front[3], b, fy0 + 14);   // and its front step kept clear
-    } else faceRow(fx0, fx1);
+    } else faceRow(0, dw);
     // a doorway seen from above in a wall run along `along` ('x' bottom wall, 'y' side walls): its pieces and where
     // they go along the wall, so the wall pieces either side stop at them
     const doorTops = d.doorTop && d.doorTop.length ? flat(pick(d.doorTop)) : null;
@@ -108,7 +117,7 @@ function roomDecor(room, stageKey) {
       const p = doorTops[0]; return { a: c - Math.round(p[2] / 2), b: c - Math.round(p[2] / 2) + p[2], parts: [[p, c - Math.round(p[2] / 2)]] };
     };
     // the bottom wall: wall tops lying flat, between the side walls
-    const bottomRow = (a, b) => clip(a, fy1, b, dh, () => run(a - ((rand() * 12) | 0), b, topPick, (q, t) => decorPiece(ctx, img, q.p, t, fy1, 0, dh - fy1)));
+    const bottomRow = (a, b) => clip(a, fy1, b, dh, () => run(a - ((rand() * 12) | 0), b, topPick, (q, t) => decorPiece(ctx, img, q.p, t, fy1, 0, dh - fy1, q.flip)));
     if (room.doors.s) {
       const s = doorSpan(mx); bottomRow(fx0, s.a); bottomRow(s.b, fx1);
       ctx.clearRect(mx - gap / 2, fy1, gap, dh - fy1);
@@ -118,10 +127,10 @@ function roomDecor(room, stageKey) {
     // so the piece's left end is at the bottom; right: the other way)
     for (const dir of ['w', 'e']) {
       const x0 = dir === 'w' ? 0 : fx1, x1 = dir === 'w' ? fx0 : dw, rot = dir === 'w' ? 3 : 1;
-      const put = (p, y) => decorPiece(ctx, img, p, dir === 'w' ? 0 : fx1, y, rot, dir === 'w' ? fx0 : dw - fx1);   // filling the wall's thickness
-      const col = (a, b) => clip(x0, a, x1, b, () => run(a - ((rand() * 12) | 0), b, topPick, (q, t) => put(q.p, t)));
+      const put = (p, y, flip = false) => decorPiece(ctx, img, p, dir === 'w' ? 0 : fx1, y, rot, dir === 'w' ? fx0 : dw - fx1, flip);   // filling the wall's thickness
+      const col = (a, b) => clip(x0, a, x1, b, () => run(a - ((rand() * 12) | 0), b, topPick, (q, t) => put(q.p, t, q.flip)));
       if (room.doors[dir]) {
-        const s = doorSpan(my); col(0, s.a); col(s.b, dh);
+        const s = doorSpan(my); col(fy0, s.a); col(s.b, dh);
         ctx.clearRect(x0, my - gap / 2, x1 - x0, gap);
         // turned upright, a [left, right] pair swaps ends: on the left wall the right half (post at its left end, which
         // turns to the bottom) goes above the gap; on the right wall the left half does
@@ -129,7 +138,7 @@ function roomDecor(room, stageKey) {
           const [L, R] = doorTops, up = dir === 'w' ? R : L, down = dir === 'w' ? L : R;
           put(up, my - gap / 2 - up[2]); put(down, my + gap / 2);
         } else for (const [p, y] of s.parts) put(p, y);
-      } else col(0, dh);
+      } else col(fy0, dh);
     }
     for (const h of hung) { decorPiece(ctx, img, h.p, h.x, h.y); claim(h.x, h.y, h.x + h.p[2], h.y + h.p[3]); }   // the things hung on the top wall
   }
