@@ -435,6 +435,7 @@ mixInto(Battle, class {
     for (const m of this.mons) if (m.visible) actors.push({ y: m.y, draw: () => this.drawMon(ctx, m) });
     for (const ped of this.pedestals) actors.push({ y: ped.y, draw: () => this.drawPedestal(ctx, ped) });
     for (const f of this.relicFx || []) if (f.draw) actors.push({ y: f.y, draw: () => f.draw(ctx, this) });   // e.g. Seedling's bush
+    for (const q of this.obstacles || []) actors.push({ y: q.y, draw: () => this.drawObstacle(ctx, q) });   // obstacles.js
     actors.sort((a, b) => a.y - b.y).forEach(a => a.draw());
     // the room and everyone in it get lit; attacks and effects below stay crisp and unlit
     Lighting.apply(ctx, this);
@@ -503,22 +504,30 @@ mixInto(Battle, class {
     }
   }
 
-  // A little sign inside each doorway showing what the room behind it holds (crisp, after the lighting).
+  // A plaque on the wall beside each doorway showing what the room behind it holds (crisp, after the lighting).
+  // r268 (the owner: "people think they are items they can pick up"): they used to bob over the floor just inside the
+  // doorway, like the pickups; now they're fixed to the wall (beside the opening on the top and bottom walls, above it on
+  // the side walls), framed like a sign, and they don't move.
   drawDoorSigns(ctx) {
     if (this.state !== 'explore' && this.state !== 'fight') return;
-    const F = this.F;
+    const F = this.F, hw = DOOR_W / 2;
     for (const [dir, next] of Object.entries(this.room.doors)) {
       const sign = doorSign(next);
       if (!sign || !sign.img) continue;
-      const d = doorPos(this.room, dir), bob = Math.round(Math.sin(this.time * 3 + d.x) * 1.5);
-      const x = Math.round(dir === 'w' ? F.x0 + 24 : dir === 'e' ? F.x1 - 24 : d.x);
-      const y = Math.round(dir === 'n' ? F.y0 + 22 : dir === 's' ? F.y1 - 26 : d.y - 22) + bob;
-      const w = sign.img.width * 3, h = sign.img.height * 3, bw = Math.max(w, h) + 8;
-      ctx.globalAlpha = this.state === 'fight' ? 0.45 : 0.95;
-      ctx.fillStyle = OUTLINE; ctx.fillRect(x - bw / 2 - 1, y - bw / 2 - 1, bw + 2, bw + 2);
-      ctx.fillStyle = sign.c; ctx.fillRect(x - bw / 2, y - bw / 2, bw, bw);
-      ctx.fillStyle = '#2a2438'; ctx.fillRect(x - bw / 2 + 1, y - bw / 2 + 1, bw - 2, bw - 2);
-      ctx.drawImage(sign.img, Math.round(x - w / 2), Math.round(y - h / 2), w, h);
+      const d = doorPos(this.room, dir), img = sign.img;
+      const sc = Math.max(img.width, img.height) * 3 <= 20 ? 3 : 1.5;   // whole sprite pixels, at most 20 units
+      const w = img.width * sc, h = img.height * sc, bw = Math.round(Math.max(w, 15) + 7), bh = Math.round(Math.max(h, 15) + 7);
+      const x = Math.round(dir === 'w' ? F.x0 - WALL.side / 2 : dir === 'e' ? F.x1 + WALL.side / 2 : d.x + hw + bw / 2 + 4);
+      const y = Math.round(dir === 'n' ? F.y0 - WALL.top / 2 : dir === 's' ? F.y1 + WALL.bottom / 2 : d.y - hw - bh / 2 - 4);
+      const x0 = Math.round(x - bw / 2), y0 = Math.round(y - bh / 2);
+      ctx.globalAlpha = this.state === 'fight' ? 0.5 : 1;
+      ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(x0 + 2, y0 + 2, bw, bh);   // its shadow on the wall
+      ctx.fillStyle = OUTLINE; ctx.fillRect(x0 - 1, y0 - 1, bw + 2, bh + 2);
+      ctx.fillStyle = sign.c; ctx.fillRect(x0, y0, bw, bh);
+      ctx.fillStyle = '#2a2438'; ctx.fillRect(x0 + 2, y0 + 2, bw - 4, bh - 4);
+      ctx.fillStyle = OUTLINE;   // the two bolts holding it up
+      ctx.fillRect(x0 + 1, y0 + 1, 2, 2); ctx.fillRect(x0 + bw - 3, y0 + 1, 2, 2);
+      ctx.drawImage(img, Math.round(x - w / 2), Math.round(y - h / 2), w, h);
       ctx.globalAlpha = 1;
     }
   }

@@ -268,7 +268,7 @@ mixInto(Battle, class {
         if (a.phase === 'combo') {
           const foe = a.tgt;
           const d = Math.hypot(foe.x - m.x, foe.y - m.y) || 1;
-          if (d > m.r + foe.r) { m.x += (foe.x - m.x) / d * 90 * dt; m.y += (foe.y - m.y) / d * 90 * dt; }
+          if (d > m.r + foe.r) { m.x += (foe.x - m.x) / d * 90 * dt; m.y += (foe.y - m.y) / d * 90 * dt; this.unblock(m, m.r); }
           a.tick -= dt;
           if (a.tick <= 0) {
             if (a.left <= 0 || d > m.r + foe.r + 16 || !foe.alive) { m.action = null; break; }
@@ -397,6 +397,7 @@ mixInto(Battle, class {
             const B = this.bounds(foe), pull = mv.pull * (foe.boss ? 0.4 : 1);
             foe.x = clamp(foe.x + dx / d * pull * dt, B.x0, B.x1);
             foe.y = clamp(foe.y + dy / d * pull * dt, B.y0, B.y1);
+            this.unblock(foe, foe.r);
           }
           if (tick) {
             this.hit(m, foe, mv, 0.25 / mv.dur, { merge: a.id, kb: Math.atan2(dy, dx), force: 0 });
@@ -475,8 +476,9 @@ mixInto(Battle, class {
         this.hit(p.owner, foe, p.mv, 1, { kb: Math.atan2(p.vy, p.vx) });
         if (this.state === 'faint') return;
       }
-      // the walls stop shots (the top wall a bit higher up, since shots fly at body height)
+      // the walls stop shots (the top wall a bit higher up, since shots fly at body height), and so do obstacles
       if (p.x < F.x0 - 6 || p.x > F.x1 + 6 || p.y < F.y0 - 34 || p.y > F.y1 + 4) p.life = -1;
+      if (p.life > 0 && this.obstacles.length && shotBlocked(this.obstacles, p.x, p.y)) p.life = -1;
       if (p.life <= 0 && !p.dead) { p.dead = true; this.burst(p.x, p.y, fx, 4, 40); }
     }
     this.projectiles = this.projectiles.filter(p => p.life > 0);
@@ -513,7 +515,7 @@ mixInto(Battle, class {
           const dx = z.x - foe.x, dy = z.y - foe.y, d = Math.hypot(dx, dy);
           if (d > 2 && d < z.r * 2.2 + foe.r) {
             const B = this.bounds(foe), pull = z.mv.pull * (foe.boss ? 0.4 : 1) * dt;
-            foe.x = clamp(foe.x + dx / d * pull, B.x0, B.x1); foe.y = clamp(foe.y + dy / d * pull, B.y0, B.y1);
+            foe.x = clamp(foe.x + dx / d * pull, B.x0, B.x1); foe.y = clamp(foe.y + dy / d * pull, B.y0, B.y1); this.unblock(foe, foe.r);
           }
         }
         z.tick -= dt;

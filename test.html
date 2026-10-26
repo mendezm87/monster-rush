@@ -328,6 +328,32 @@ $('#game').addEventListener('load', async () => {
     const at = lined ? outside : inside;
     return { x: at[0], y: at[1] };
   }
+  // the way from the bot to t round the room's obstacles (r268): a search over a 6-unit grid of the spots its feet can
+  // stand on; the goal is any spot close enough to t (a pickup can rest against a rock where the feet can't go)
+  function findPath(b, P, t) {
+    const G = 6, Bd = b.bounds(P), obs = b.obstacles;
+    const nx = Math.ceil(b.room.w / G), ny = Math.ceil(b.room.h / G), from = new Int32Array(nx * ny).fill(-1);
+    const free = (i, j) => { const x = i * G, y = j * G; return x >= Bd.x0 && x <= Bd.x1 && y >= Bd.y0 && y <= Bd.y1 && !w.pushOutOfObstacles(obs, { x, y }, P.r); };
+    const si = Math.round(P.x / G), sj = Math.round(P.y / G), start = sj * nx + si, reach = 10 + P.r * 0.4;
+    from[start] = start;
+    const q = [start];
+    for (let h = 0; h < q.length; h++) {
+      const c = q[h], i = c % nx, j = (c - i) / nx;
+      if (Math.hypot(i * G - t.x, j * G - t.y) < reach) {
+        const out = [];
+        for (let k = c; k !== start; k = from[k]) out.push({ x: (k % nx) * G, y: Math.floor(k / nx) * G });
+        out.reverse(); out.push({ x: t.x, y: t.y });
+        return out;
+      }
+      for (const [di, dj] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]]) {
+        const I = i + di, J = j + dj, n = J * nx + I;
+        if (I < 0 || J < 0 || I >= nx || J >= ny || from[n] !== -1 || !free(I, J)) continue;
+        if (di && dj && (!free(i + di, j) || !free(i, j + dj))) continue;   // no cutting corners
+        from[n] = c; q.push(n);
+      }
+    }
+    return null;
+  }
   // first step towards the nearest unvisited room (ignoring the boss until everything else is seen)
   function nextDoor(from, floor) {
     const boss = floor.rooms.find(r => r.type === 'boss');
@@ -365,7 +391,11 @@ $('#game').addEventListener('load', async () => {
         const who = b.e.filter(m => m.alive).map(m => `${m.id} ${Math.round(m.hp)}/${Math.round(m.maxHp)} HP`).join(', ');
         const msg = `a ${b.room.type} room on floor ${App.run.floorN} (${b.P.id} ${Math.round(b.P.hp)} HP${who ? ' vs ' + who : ''})`;
         // a fight nobody can win is a balance note; getting stuck while exploring is a bug
-        if (b.state === 'fight') note = 'fight lasted 4+ minutes in ' + msg; else problem = `stuck (${b.state}) in ` + msg;
+        if (b.state === 'fight') note = 'fight lasted 4+ minutes in ' + msg; else {
+          const t = exploreTarget(b, bot), r = n => Math.round(n);
+          problem = `stuck (${b.state}) in ` + msg + ` at ${r(b.P.x)},${r(b.P.y)} going to ${t ? r(t.x) + ',' + r(t.y) : 'nothing'} (room ${b.room.w}x${b.room.h}, ${b.obstacles.map(q => q.block || `${r(q.x)},${r(q.y)} ${q.fw}x${q.fd}`).join('; ')}; pickups ${b.pickups.map(k => k.kind + ' ' + r(k.x) + ',' + r(k.y)).join('; ')})`;
+          window.stuckRoom = b.room;
+        }
         break;
       }
       if (b.state === 'fight') {
@@ -386,6 +416,18 @@ $('#game').addEventListener('load', async () => {
           for (const p of b.pedestals) {
             const px = P.x - p.x, py = P.y - p.y, pd = Math.hypot(px, py);
             if (pd < 34 && pd > 0 && Math.hypot(t.x - p.x, t.y - p.y) > 8) { dir.x += -py / pd * 0.9; dir.y += px / pd * 0.9; }
+          }
+          // round obstacles and wall blocks (r268): with any in the room, a grid search finds the way to the target
+          // (a few times a second) and the bot walks to a point a few steps along it
+          if (b.obstacles.length && t.x > b.F.x0 && t.x < b.F.x1 && t.y > b.F.y0 && t.y < b.F.y1) {
+            if (!bot.path || bot.pathT <= 0 || bot.pathFor !== t.x + ',' + t.y) { bot.path = findPath(b, P, t); bot.pathT = 0.25; bot.pathFor = t.x + ',' + t.y; }
+            bot.pathT -= DT;
+            const way = bot.path;
+            if (way && way.length) {
+              while (way.length > 1 && Math.hypot(way[0].x - P.x, way[0].y - P.y) < 8) way.shift();
+              const wpt = way[Math.min(2, way.length - 1)], ex = wpt.x - P.x, ey = wpt.y - P.y, ed = Math.hypot(ex, ey);
+              if (ed > 1) dir = { x: ex / ed, y: ey / ed };
+            }
           }
           // nudged sideways if it hasn't moved for a while
           const moved = bot.lastPos ? Math.hypot(P.x - bot.lastPos.x, P.y - bot.lastPos.y) : 1;

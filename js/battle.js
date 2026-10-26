@@ -138,7 +138,7 @@ class Battle {
       do {
         x = rand(F.x0 + 50, F.x1 - 50); y = rand(F.y0 + 40, F.y1 - 30);
         if (spec.boss) { x = (F.x0 + F.x1) / 2 + rand(-40, 40); y = P.y > (F.y0 + F.y1) / 2 ? F.y0 + 90 : F.y1 - 70; }
-      } while (tries++ < 40 && (Math.hypot(x - P.x, y - P.y) < 170 || this.e.some(o => Math.hypot(o.x - x, o.y - y) < 60)));
+      } while (tries++ < 40 && (Math.hypot(x - P.x, y - P.y) < 170 || this.e.some(o => Math.hypot(o.x - x, o.y - y) < 60) || this.unblock({ x, y }, 18)));
       if (spec.champ === 'glitch') { m.glitched = true; m.setDef(m.def); m.hp = m.maxHp; m.gear = ['glitch']; }   // already corrupted
       m.baseId = spec.id; m.gate = !!spec.gate;   // what it was when the fight started (a boss may change form); a gatekeeper
       if (spec.glitch && typeof bossGlitch === 'function') bossGlitch(m);   // a Glitched boss (bosses.js)
@@ -349,6 +349,7 @@ class Battle {
     const t = this.trainer, F = this.F;
     const pos = at || { x: t.x + (t.x < (F.x0 + F.x1) / 2 ? 24 : -24), y: t.y + (t.y < (F.y0 + F.y1) / 2 ? 18 : -18) };
     m.x = clamp(pos.x, F.x0 + m.r, F.x1 - m.r); m.y = clamp(pos.y, F.y0 + m.r, F.y1 - 2);
+    this.unblock(m, m.r);
     m.face = 1;
     // a deploy: the beam reaches the ground (`beam` s), then the Coreature assembles pixel by pixel (see updateDeploys)
     this.deploys.push({ from: { x: t.x, y: t.y - 24 }, to: { x: m.x, y: m.y - 2 }, t: 0, beam: 0.16, color: TYPES[m.def.types[0]].color });
@@ -533,6 +534,7 @@ class Battle {
         k.vx += (P.x - k.x) / (d || 1) * pull * dt * 8; k.vy += (P.y - k.y) / (d || 1) * pull * dt * 8;
       }
       k.x = clamp(k.x + k.vx * dt, F.x0 + 4, F.x1 - 4); k.y = clamp(k.y + k.vy * dt, F.y0 + 4, F.y1 - 2);
+      this.unblock(k, 5);
       if (P.alive && k.t > 0.5 && d < 12 + P.r * 0.4) this.collect(k);
     }
     this.pickups.splice(0, this.pickups.length, ...this.pickups.filter(k => !k.got));
@@ -750,6 +752,7 @@ class Battle {
       if (isSideView(t.view)) t.face = Math.sign(dx) || t.face;
     }
     t.x = clamp(t.x, F.x0 - 30, F.x1 + 30); t.y = clamp(t.y, F.y0 - 20, F.y1 + 30);
+    if (d < 130) this.unblock(t, 8);   // round obstacles; far behind, it catches up straight through
     if (t.moving) { t.stillT = 0; if (t.act === 'look') t.act = null; }
     else if ((t.stillT = (t.stillT || 0) + dt) > 4 && !t.act && this.state === 'explore' && Math.random() < dt * 0.25) this.trainerAct('look');
     if (t.act && !trainerActFrame(t.act, this.time - t.actT)) t.act = null;
@@ -771,9 +774,15 @@ class Battle {
       m.kx *= Math.exp(-dt * 7); m.ky *= Math.exp(-dt * 7);
       m.x = clamp(m.x + (m.vx + m.kx) * dt, B.x0, B.x1);
       m.y = clamp(m.y + (m.vy + m.ky) * dt, B.y0, B.y1);
+      this.unblock(m, m.r);
       m.flash = Math.max(0, m.flash - dt);
     }
   }
+
+  // obstacles: none unless obstacles.js is loaded (it replaces these)
+  get obstacles() { return []; }
+  unblock() { return false; }
+  floorHazard() { return null; }
 
   // Where a Coreature's feet may go: the room floor, plus open doorways for the player.
   bounds(m) {
@@ -838,20 +847,23 @@ class Battle {
     if (m.action) this.updateAction(m, dt);
     if (m.fainted || (this.state !== 'fight' && this.state !== 'explore')) return;
 
+    const hz = this.floorHazard(m, dt);   // the floor under it (obstacles.js): mud, ice, lava...
+    if (m.fainted) return;
     const lock = (m.action && m.action.lock) || m.stunT > 0 || m.status === 'frz';
     const a = m.action;
     if (a && a.kind === 'dash' && a.t > 0.1 + (a.mv.windup || 0) && a.phase !== 'combo') {
       m.vx = Math.cos(a.dir) * a.mv.speed; m.vy = Math.sin(a.dir) * a.mv.speed;
     } else {
-      const spd = m.speed();
+      const spd = m.speed() * (hz && hz.slow ? 1 - hz.slow : 1);
       const tx = lock ? 0 : ctrl.x * spd, ty = lock ? 0 : ctrl.y * spd;
-      const k = Math.min(1, dt * 14);
+      const k = Math.min(1, dt * (hz && hz.slip ? 2.2 : 14));   // on ice it barely grips
       m.vx += (tx - m.vx) * k; m.vy += (ty - m.vy) * k;
     }
     m.kx *= Math.exp(-dt * 7); m.ky *= Math.exp(-dt * 7);
     const B = this.bounds(m);
     m.x = clamp(m.x + (m.vx + m.kx) * dt, B.x0, B.x1);
     m.y = clamp(m.y + (m.vy + m.ky) * dt, B.y0, B.y1);
+    this.unblock(m, m.r);   // obstacles (obstacles.js)
     const sp = Math.hypot(m.vx, m.vy);
     m.walkT += sp * dt;
     if (a && a.dir !== undefined && a.kind !== 'cast') m.look(Math.cos(a.dir), Math.sin(a.dir));

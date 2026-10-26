@@ -2,6 +2,8 @@
 
 ## Where we left off (keep this current at the end of every session)
 
+**2026-10-26 (r268): level design step 2, first try.** Fight rooms now have **obstacles** (clusters of the area's large props, mirrored left and right, blocking walking and shots for both sides), **floor hazards** (the area's dangerous-looking patches: mud, lava, ice, snowdrifts, crystal beds, quicksand, rune circles; in fights only, to both sides, fliers float over), and **room shapes** (a block of wall filling one corner for an L, or both top or both bottom corners for a T). The middle and the lanes to every door always stay open. The door signs are now plaques on the wall beside each doorway (people took the floating ones for pickups). **Waiting on the owner:** trying them in play (how many obstacles, hazard strength, how often rooms get a shape). Next ideas: obstacles that break, pits, hand-made layouts, hazards the AI avoids.
+
 **2026-10-26 (r264-r265):** corner pillars in every area (the pillars from the LV-<AREA>-3 sheets, one over each corner joint; the Spire's from an older take of the owner's whose pillars came out straight, r266). Meadow wall tiles now line up by their stone edge. r267: the pillars fit their corners (as wide as the walls, standing in the top corners, a cap block joining the walls at the bottom).
 
 **2026-10-26 (r263):** walls that didn't match up fixed: each wall run is one continuous pattern, doorways are just posts and an opening in it, the corners join cleanly.

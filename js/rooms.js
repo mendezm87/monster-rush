@@ -180,6 +180,34 @@ function roomDecor(room, stageKey) {
       }
     }
     for (const h of hung) { decorPiece(ctx, img, h.p, h.x, h.y); claim(h.x, h.y, h.x + h.p[2], h.y + h.p[3]); }   // the things hung on the top wall
+    // room shapes (r268, obstacles.js): a block of solid wall filling a corner of the room, built from the area's own
+    // wall pieces so it reads as the walls stepping in. A block along the top shows a wall face along its front edge
+    // (like the back wall) with wall tops above it; one along the bottom shows only its top, like the bottom wall. Its
+    // open side gets a side wall's strip, with the corner pillar (or its cap) where the edges meet.
+    if (tops.length) for (const q of typeof roomObstacles === 'function' ? roomObstacles(room, stageKey) : []) {
+      if (!q.block) continue;
+      const top = q.block[0] === 't', L = q.block[1] === 'l', wt = fx0, th = tops[0][3];
+      const bx0 = Math.round((q.x - q.fw / 2) / S), bx1 = Math.round((q.x + q.fw / 2) / S), by0 = Math.round((q.y - q.fd) / S), by1 = Math.round(q.y / S);
+      const ex0 = L ? 0 : bx0, ex1 = L ? bx1 : dw, ey0 = top ? 0 : by0, ey1 = top ? by1 : dh;   // reaching into the walls it's against
+      const faceTop = top && faces.length ? by1 - baseH : ey1;
+      ctx.fillStyle = d.fill || STAGES[stageKey].bg; ctx.fillRect(ex0, ey0, ex1 - ex0, faceTop - ey0);
+      // its top: rows of wall tops, from the open edge back into the wall
+      if (top) for (let y = faceTop - th; y > ey0 - th; y -= th) clip(ex0, Math.max(ey0, y), ex1, faceTop, () => run(ex0 - ((rand() * 12) | 0), ex1, topPick, (r, t) => decorPiece(ctx, img, r.p, t, y, 0, 0, r.flip)));
+      else for (let y = by0; y < dh; y += th) clip(ex0, y, ex1, Math.min(dh, y + th), () => run(ex0 - ((rand() * 12) | 0), ex1, topPick, (r, t) => decorPiece(ctx, img, r.p, t, y, 0, 0, r.flip)));
+      // the open side: a strip like a side wall's (its top turned upright, filling the wall's thickness)
+      const sx = L ? bx1 - wt : bx0, rot = L ? 3 : 1;
+      clip(sx, ey0, sx + wt, faceTop, () => run(ey0 - ((rand() * 12) | 0), faceTop, topPick, (r, t) => decorPiece(ctx, img, r.p, sx, t, rot, wt, r.flip)));
+      if (top && faces.length) {   // its wall face, the same tiles as the back wall's, lined up by their base
+        let flipF = false;
+        clip(ex0, faceTop - 2, ex1, by1 + 4, () => run(ex0 - ((rand() * 12) | 0), ex1, () => len(faces[0], (flipF = !flipF)), (r, t) => decorPiece(ctx, img, r.p, t, by1 - Math.min(r.p[3], baseH), 0, 0, r.flip)));
+      } else clip(ex0, by0, ex1, by0 + th, () => run(ex0 - ((rand() * 12) | 0), ex1, topPick, (r, t) => decorPiece(ctx, img, r.p, t, by0, 0, 0, r.flip)));   // a bottom block's front edge
+      if (pillars) {   // where its edges meet
+        const [plain, fancy] = pillars, cimg = corners.img;
+        if (top) { const pp = fancy || plain, ph = Math.min(baseH + 4, Math.round(pp[3] * wt / pp[2])); ctx.drawImage(cimg, pp[0], pp[1], pp[2], pp[3], sx, by1 - ph, wt, ph); }
+        else { const [cy0, ch] = pillarCap(cimg, plain), bh = dh - fy1; ctx.fillRect(sx, by0, wt, bh); ctx.drawImage(cimg, plain[0], plain[1] + cy0, plain[2], ch, sx, by0, wt, bh); }
+      }
+      claim(ex0, ey0, ex1, ey1);
+    }
   }
   // the doorways' approaches on the floor stay clear
   if (room.doors.n) claim(mx - gap / 2 - 4, fy0, mx + gap / 2 + 4, fy0 + 22);
@@ -187,8 +215,16 @@ function roomDecor(room, stageKey) {
   if (room.doors.w) claim(fx0, my - gap / 2 - 4, fx0 + 22, my + gap / 2 + 4);
   if (room.doors.e) claim(fx1 - 22, my - gap / 2 - 4, fx1, my + gap / 2 + 4);
 
+  // the room's obstacles (obstacles.js) stand where nothing else goes
+  if (typeof roomObstacles === 'function') for (const q of roomObstacles(room, stageKey)) if (!q.block) claim(Math.round((q.x - q.w / 2) / S), Math.round((q.y - q.h) / S), Math.round((q.x + q.w / 2) / S), Math.round((q.y + 4) / S));
+
   if (props) {   // after the walls: the props along the top wall stand in front of it
     const { img, d } = props;
+    // the floor hazards (obstacles.js) are the area's dangerous-looking patches; only the harmless ones are scattered
+    if (typeof roomFloorHazards === 'function') for (const q of roomFloorHazards(room, stageKey)) {
+      const x = Math.round(q.x / S - q.p[2] / 2), y = Math.round(q.y / S - q.p[3] / 2);
+      decorPiece(ctx, img, q.p, x, y); claim(x, y, x + q.p[2], y + q.p[3]);
+    }
     const bag = list => { const b = (list || []).slice(); return () => (b.length ? b.splice((rand() * b.length) | 0, 1)[0] : null); };   // each piece once per room
     // medium and large props stand along the top wall and in its corners, so Coreatures always pass in front of them
     const stand = [], large = bag(d.large), medium = bag(d.medium);
@@ -218,7 +254,8 @@ function roomDecor(room, stageKey) {
       }
       return false;
     };
-    const patch = bag(d.patch), area = (fx1 - fx0) * (fy1 - fy0);
+    const danger = typeof hazardPatchSet === 'function' ? hazardPatchSet(stageKey) : new Set();
+    const patch = bag((d.patch || []).filter((p, i) => !danger.has(i))), area = (fx1 - fx0) * (fy1 - fy0);
     for (let i = 0, n = area > 30000 ? 2 : rand() < 0.6 ? 1 : 0; i < n; i++) { const p = patch(); if (p) flatIn(p, 10, 20); }
     if (d.small) for (let i = 0, n = Math.round(area / 2000); i < n; i++) flatIn(pick(d.small), 5, 6);
     stand.sort((a, b) => (a.y + a.p[3]) - (b.y + b.p[3]));
