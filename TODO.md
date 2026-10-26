@@ -2,6 +2,8 @@
 
 ## Where we left off (keep this current at the end of every session)
 
+**2026-10-26 (r260): every area has its own walls and decorations,** from the owner's 12 level sheets (hedges and a pond in the Meadow, basalt and lava pools in the Crater, snowy stone in the Summit, crystal caves in the Grotto, sandstone columns in the Ruins, gold-trimmed indigo in the Spire). **Waiting on the owner:** a look in play; then step 2 (obstacles, hazards and room shapes).
+
 **2026-10-26 (r258): level design.** Looked at the levels with the owner: every area is the same empty box in a new colour. The owner picked: first each area's own walls and decorations. **Waiting on the owner:** the 12 Gemini prompts in `docs/level-prompts.md` (with Copy buttons at https://mendezm87.github.io/monster-rush/prompts.html, r259) (LV-MEADOW-1 and -2 through LV-SPIRE-1 and -2); one area's pair is enough to build and show it. Room shapes come with obstacles in step 2. Also waiting: the desktop build card (Windows build for Steam), Galewing and Venomire prompts.
 
 **2026-10-25 (r257):** the phone joystick slides back to its home spot when you let go (it used to stay where the last touch was). The owner OK'd Frostling and Thornback ("looks good").

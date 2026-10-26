@@ -600,7 +600,7 @@ class RunState {
   get reveal() { return !!this.T.reveal; }
   newFloor(n) {
     // the old floor's room pictures and scorch marks: freed now (phones cap canvas memory)
-    if (this.floor) for (const r of this.floor.rooms) { freeCanvas(r.canvas); freeCanvas(r.decal); delete r.canvas; delete r.decal; }
+    if (this.floor) for (const r of this.floor.rooms) { freeCanvas(r.canvas); freeCanvas(r.decal); freeCanvas(r.decor); delete r.canvas; delete r.decal; delete r.decor; }
     this.floorN = n;
     this.floor = genFloor(n, this.party.map(m => m.def.from || m.id), this.relics, !this.endless && n === RUN_FLOORS, this.T.offers || 3);
     this.warm();
@@ -614,7 +614,7 @@ class RunState {
   // every room's state; rooms point to each other by index. Room pictures are redrawn from their seed.
   toSave() {
     const rooms = this.floor.rooms, at = r => rooms.indexOf(r);
-    const SKIP = new Set(['doors', 'canvas', 'torches', 'decal']);
+    const SKIP = new Set(['doors', 'canvas', 'torches', 'decal', 'decor']);
     return {
       v: RUN_SAVE_VERSION, endless: this.endless, trainer: this.trainer, look: this.look, pi: this.pi, coins: this.coins, relics: this.relics, stats: this.stats, floorN: this.floorN,
       room: at(this.room),

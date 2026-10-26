@@ -421,6 +421,8 @@ mixInto(Battle, class {
     ctx.fillStyle = this.stage.bg; ctx.fillRect(0, 0, W, H);
     ctx.translate(-Math.round(this.cam.x) + shx, -Math.round(this.cam.y) + shy);
     ctx.drawImage(this.ground, 0, 0);
+    const decor = typeof roomDecor === 'function' && roomDecor(this.room, this.run.stageKey);   // the area's walls and decorations (rooms.js)
+    if (decor) ctx.drawImage(decor, 0, 0, decor.width * DECOR_PX, decor.height * DECOR_PX);
     ctx.drawImage(this.decal, 0, 0);
     Lighting.drawTorches(ctx, this.room, this.time);
     this.drawDoors(ctx);
