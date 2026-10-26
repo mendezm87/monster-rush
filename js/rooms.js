@@ -53,6 +53,33 @@ function decorPiece(ctx, img, p, x, y, rot = 0, th = 0, flip = false) {
   ctx.drawImage(img, sx, sy, w, h0, 0, 0, w, h); ctx.restore();
 }
 
+// the Starlit Spire's (and Crystal Grotto's) walled-off corners look down on the open night sky, drawn here rather than tiled from a picture
+// (the owner's LV-SPIRE-4 sky sat inside grey stone and was too small to tile without a pattern showing): deep
+// indigo, a few faint nebula clouds stippled every other pixel, and stars scattered by the room's seed (r270)
+const FILL_SKY = {
+  spire: { base: '#14102c', cloud: ['#2a2058', '#3a2a6e'], stars: ['#ffffff', '#fff2b0', '#c8b8ff', '#9ab8ff'], every: 60 },
+  // the Crystal Grotto's look down into a dark chasm: violet mist and faint cyan crystal glints far below (its picture,
+  // a cave scene, made odd mirrored shapes when tiled)
+  grotto: { base: '#0c0818', cloud: ['#241a40', '#30224e'], stars: ['#7af0ff', '#3ab8d8', '#c8f8ff', '#5a8ac8'], every: 110 },
+};
+function drawSky(ctx, k, x0, y0, x1, y1, rand) {
+  ctx.fillStyle = k.base; ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
+  const w = x1 - x0, h = y1 - y0;
+  for (let i = 0, n = Math.max(1, Math.round(w * h / 2500)); i < n; i++) {   // nebula clouds, stippled
+    const cx = x0 + rand() * w, cy = y0 + rand() * h, rx = 10 + rand() * 22, ry = 5 + rand() * 9, col = k.cloud[(rand() * k.cloud.length) | 0];
+    ctx.fillStyle = col;
+    for (let y = Math.floor(cy - ry); y <= cy + ry; y++) for (let x = Math.floor(cx - rx); x <= cx + rx; x++) {
+      const e = ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2;
+      if (e < 1 && (x + y) % 2 === 0 && (e < 0.5 || (x * 7 + y * 3) % 5 < 3)) ctx.fillRect(x, y, 1, 1);
+    }
+  }
+  for (let i = 0, n = Math.round(w * h / (k.every || 60)); i < n; i++) {   // stars (glints): mostly single pixels, now and then a little cross
+    const x = Math.floor(x0 + rand() * w), y = Math.floor(y0 + rand() * h), c = k.stars[(rand() * k.stars.length) | 0];
+    ctx.fillStyle = c; ctx.fillRect(x, y, 1, 1);
+    if (rand() < 0.08) { ctx.globalAlpha = 0.6; ctx.fillRect(x - 1, y, 3, 1); ctx.fillRect(x, y - 1, 1, 3); ctx.globalAlpha = 1; }
+  }
+}
+
 // the decoration layer for a room (null until the area's sheets have loaded, or if the area has none).
 // r261 (the owner: "there are things overlapping that shouldn't be and it makes it look like slop"): nothing overlaps.
 // Wall pieces butt up edge to edge and each doorway gets its own slot in its wall; the side walls meet the top and bottom
@@ -195,7 +222,8 @@ function roomDecor(room, stageKey) {
       // until there is one, the dark beyond the walls, so it reads as out of bounds
       ctx.fillStyle = STAGES[stageKey].bg; ctx.fillRect(ex0, ey0, ex1 - ex0, faceTop - ey0);
       const fill = levelSheet(stageKey, 'fill'), ft = fill && fill.d.tile && fill.d.tile[0];
-      if (ft) clip(ex0, ey0, ex1, faceTop, () => {
+      if (FILL_SKY[stageKey]) clip(ex0, ey0, ex1, faceTop, () => drawSky(ctx, FILL_SKY[stageKey], ex0, ey0, ex1, faceTop, rand));
+      else if (ft) clip(ex0, ey0, ex1, faceTop, () => {
         const [fx, fy, fw, fh] = ft;
         for (let y = top ? faceTop - fh : by0, j = 0; top ? y > ey0 - fh : y < dh; y += top ? -fh : fh, j++) for (let x = ex0, i = 0; x < ex1; x += fw, i++) {
           ctx.save(); ctx.translate(x + (i % 2 ? fw : 0), y + (j % 2 ? fh : 0)); ctx.scale(i % 2 ? -1 : 1, j % 2 ? -1 : 1);

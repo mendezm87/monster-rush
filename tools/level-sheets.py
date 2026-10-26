@@ -176,17 +176,21 @@ def corners(path):
         t = tight(m, b); items.append(fxs.shrink(im, m, t, (t[2] - t[0] + 1) / PILLAR_W))
     return pack([('pillar', items)])
 
-FILL_PX = 48   # a fill tile's size in sprite pixels
+FILL_SRC = 16   # sheet pixels per tile pixel: Gemini's pixel art comes about 8 sheet pixels to one of its pixels, so
+                # a tile keeps it at about half size, close to the props' scale
+FILL_CROP = {'spire': 0.22}   # how much of the middle to use: the spire's sky sits inside broken grey stone that isn't
+                              # the spire's colours (the game draws the spire's sky itself now, rooms.js FILL_SKY)
 
-def fill(path):
+def fill(path, area):
     """LV-<AREA>-4 (r269): the ground that fills a room's blocked-off corners, one square texture seen from straight
-    above. The biggest piece on the sheet, its middle square (inside its border, if Gemini drew one), shrunk to a
-    FILL_PX tile; the game tiles it mirrored, so it joins up whatever its edges look like."""
-    im = Image.open(path).convert('RGB'); m = fxs.bg_mask(im, 40)
+    above. The biggest piece on the sheet, its middle square (inside its border, if Gemini drew one), shrunk to a tile;
+    the game tiles it mirrored, so it joins up whatever its edges look like."""
+    im = Image.open(path).convert('RGB')
     b = max(blobs(im), key=lambda b: (b[2] - b[0]) * (b[3] - b[1]))
-    side = int(min(b[2] - b[0], b[3] - b[1]) * 0.86); cx, cy = (b[0] + b[2]) // 2, (b[1] + b[3]) // 2
+    side = int(min(b[2] - b[0], b[3] - b[1]) * FILL_CROP.get(area, 0.86)); cx, cy = (b[0] + b[2]) // 2, (b[1] + b[3]) // 2
     sq = im.crop((cx - side // 2, cy - side // 2, cx - side // 2 + side, cy - side // 2 + side))
-    tile = sq.resize((FILL_PX, FILL_PX), Image.BOX).convert('RGBA')
+    n = max(24, round(side / FILL_SRC))
+    tile = sq.resize((n + 4, n + 4), Image.BOX).crop((2, 2, n + 2, n + 2)).convert('RGBA')   # trimmed: its edge can catch the sheet's margin
     return pack([('tile', [tile])])
 
 # areas with no corner sheet borrow another area's pillars, recoloured (r266: written while Gemini kept drawing the Spire's
@@ -223,7 +227,7 @@ def build():
         for kind, fn in (('props', 'LV-{}-1.jpg'), ('walls', 'LV-{}-2.jpg'), ('corners', 'LV-{}-3.jpg'), ('fill', 'LV-{}-4.jpg')):
             path = os.path.join(REFS, fn.format(area.upper()))
             if not os.path.exists(path): print(f'{area} {kind}: no sheet yet'); continue
-            q, meta = props(path) if kind == 'props' else corners(path) if kind == 'corners' else fill(path) if kind == 'fill' else walls(path, WALL_ROLES[area])
+            q, meta = props(path) if kind == 'props' else corners(path) if kind == 'corners' else fill(path, area) if kind == 'fill' else walls(path, WALL_ROLES[area])
             buf = io.BytesIO(); q.save(buf, 'PNG', optimize=True)
             data.setdefault(area, {})[kind] = {'src': 'data:image/png;base64,' + base64.b64encode(buf.getvalue()).decode(), **meta}
             review.append(q)

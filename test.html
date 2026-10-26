@@ -311,7 +311,7 @@ $('#game').addEventListener('load', async () => {
   // the next unvisited room (the boss last).
   function exploreTarget(b, bot) {
     const P = b.P, room = b.room;
-    const near = b.pickups.filter(k => k.t > 0.5).sort((a, c) => Math.hypot(a.x - P.x, a.y - P.y) - Math.hypot(c.x - P.x, c.y - P.y))[0];
+    const near = b.pickups.filter(k => k.t > 0.5 && !(bot.skip && bot.skip.has(k))).sort((a, c) => Math.hypot(a.x - P.x, a.y - P.y) - Math.hypot(c.x - P.x, c.y - P.y))[0];
     if (near) return { x: near.x, y: near.y };
     const ped = b.pedestals.find(p => !bot.peds.has(p));
     if (ped) {
@@ -385,7 +385,7 @@ $('#game').addEventListener('load', async () => {
       if (!b || b.state === 'over') break;
       if (endless && App.run.floorN > MAX_FLOOR) break;
       if (++steps > LIMIT) { problem = 'took too long'; break; }
-      if (b.room !== bot.room) { bot.room = b.room; bot.roomT = 0; bot.peds = new Set(); bot.swaps = 0; }
+      if (b.room !== bot.room) { bot.room = b.room; bot.roomT = 0; bot.peds = new Set(); bot.swaps = 0; bot.skip = new Set(); }
       bot.roomT += DT;
       if (bot.roomT > 240) {
         const who = b.e.filter(m => m.alive).map(m => `${m.id} ${Math.round(m.hp)}/${Math.round(m.maxHp)} HP`).join(', ');
@@ -433,6 +433,10 @@ $('#game').addEventListener('load', async () => {
           const moved = bot.lastPos ? Math.hypot(P.x - bot.lastPos.x, P.y - bot.lastPos.y) : 1;
           bot.lastPos = { x: P.x, y: P.y };
           bot.stuckT = moved < 0.2 ? bot.stuckT + DT : 0;
+          // a pickup it can't get to for a while (wedged by a rock, r270): leave it, like a player would
+          const k = b.pickups.find(p => p.x === t.x && p.y === t.y);
+          bot.pickT = k && k === bot.pickK ? (bot.pickT || 0) + DT : 0; bot.pickK = k;
+          if (k && bot.pickT > 6) { (bot.skip = bot.skip || new Set()).add(k); bot.pickT = 0; }
           if (bot.stuckT > 0.6) bot.wiggle = 0.5;
           if (bot.wiggle > 0) { bot.wiggle -= DT; dir = { x: -dir.y, y: dir.x }; }
         }

@@ -534,7 +534,7 @@ class Battle {
         k.vx += (P.x - k.x) / (d || 1) * pull * dt * 8; k.vy += (P.y - k.y) / (d || 1) * pull * dt * 8;
       }
       k.x = clamp(k.x + k.vx * dt, F.x0 + 4, F.x1 - 4); k.y = clamp(k.y + k.vy * dt, F.y0 + 4, F.y1 - 2);
-      this.unblock(k, 5);
+      this.unblock(k, 12);   // pickups settle a little way off obstacles, never tucked into a corner
       if (P.alive && k.t > 0.5 && d < 12 + P.r * 0.4) this.collect(k);
     }
     this.pickups.splice(0, this.pickups.length, ...this.pickups.filter(k => !k.got));

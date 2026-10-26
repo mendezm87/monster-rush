@@ -233,7 +233,7 @@ mixInto(Battle, class {
         // obstacles stop a beam (obstacles.js): it's given a copy of its move cut to where its line first meets one
         if (!a.base) a.base = a.mv;
         const reach = this.beamReach(m, a.dir, a.base);
-        if (reach !== a.mv.len) a.mv = reach < a.base.len ? Object.assign(Object.create(a.base), { len: reach }) : a.base;
+        if (reach !== a.mv.len) a.mv = reach < a.base.len ? { ...a.base, len: reach } : a.base;   // a full copy: relics copy moves too
         const mv = a.mv;
         if (a.phase === 'charge') {
           const foe = this.foe(m);
