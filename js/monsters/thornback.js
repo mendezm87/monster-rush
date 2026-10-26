@@ -27,10 +27,10 @@ function cactusDome(p, cx, cy, rx, ry, ribs) {
 }
 // r252, the in-between pass (the owner: keep the old design, add the guide's detail): splayed lizard legs with toes
 // instead of round stubs. thornLeg = seen from the front (dir: -1 left, 1 right), thornLegSide = side-on.
-function thornLeg(p, x, y, dir, C) {
-  p.poly([[x, y - 1.2], [x + dir * 3.2, y - 0.4], [x + dir * 3.8, y + 2.4], [x + dir * 2.4, y + 2.6], [x + dir * 1.6, y + 0.8], [x, y + 1]], C, { edge: true });
-  p.ellipse(x + dir * 3.4, y + 3, 1.9, 0.9, C, { edge: true });
-  p.px(Math.round(x + dir * 4.8), Math.round(y + 3), THORN.HORN.s).px(Math.round(x + dir * 2.2), Math.round(y + 3.4), THORN.HORN.s);   // claws
+function thornLeg(p, x, y, dir, C) {   // r256 (the owner: too wide front and back, legs too short): out a little, then down
+  p.poly([[x, y - 1.2], [x + dir * 2.4, y - 0.6], [x + dir * 3, y + 4.2], [x + dir * 1.6, y + 4.6], [x + dir * 1, y + 1.4], [x, y + 1]], C, { edge: true });
+  p.ellipse(x + dir * 2.6, y + 5, 1.9, 0.9, C, { edge: true });
+  p.px(Math.round(x + dir * 4), Math.round(y + 5), THORN.HORN.s).px(Math.round(x + dir * 1.4), Math.round(y + 5.4), THORN.HORN.s);   // claws
 }
 function thornLegSide(p, x, C) {
   p.poly([[x - 1.2, 24.5], [x + 1.4, 24.5], [x + 1.2, 27], [x + 2.8, 28], [x + 2.6, 28.9], [x - 1.4, 28.9]], C, { edge: true });
@@ -58,10 +58,10 @@ Object.assign(MONSTER_ART, {
       return;
     }
     if (v === 'back') {
-      thornLeg(legA, 8, 23.5, -1, SAND); thornLeg(legB, 24, 23.5, 1, SAND);
+      thornLeg(legA, 9.5, 22.8, -1, SAND); thornLeg(legB, 22.5, 22.8, 1, SAND);
       earA.poly([[12, 16], [10.5, 12], [14, 15]], HORN, { edge: true }); earB.poly([[20, 16], [21.5, 12], [18, 15]], HORN, { edge: true });
       h.ellipse(16, 16.5, 4.5, 2.8, SAND, { edge: true });
-      b.ellipse(16, 22, 10.5, 4.2, SAND, { edge: true });
+      b.ellipse(16, 22, 8.5, 4, SAND, { edge: true });
       cactusDome(b, 16, 17.3, 6.4, 5.4, [-0.6, 0, 0.6]);
       cactusFlower(b, 16, 11.3);
       t.poly([[14, 24], [18, 24], [17, 31], [15, 31]], SAND, { edge: true }); t.px(16, 31, HORN.s); t.px(16, 26, SAND.s).px(16, 28, SAND.s);   // its tail, toward you, banded
@@ -69,8 +69,8 @@ Object.assign(MONSTER_ART, {
     }
     t.poly([[22, 22], [27, 20], [31, 16], [30, 21], [24, 24.5]], SAND, { edge: true });            // long tail curving out behind
     t.px(27, 21, SAND.s).px(29, 19, SAND.s);
-    thornLeg(legA, 8, 23.5, -1, SAND); thornLeg(legB, 24, 23.5, 1, SAND);                         // legs splayed wide, with claws
-    b.ellipse(16, 22, 10.5, 4.2, SAND, { edge: true });                                            // wide flat lizard body
+    thornLeg(legA, 9.5, 22.8, -1, SAND); thornLeg(legB, 22.5, 22.8, 1, SAND);                     // legs out to the sides and down, with claws
+    b.ellipse(16, 22, 8.5, 4, SAND, { edge: true });                                               // lizard body (r256: narrower)
     cactusDome(b, 16, 16.3, 6.4, 5.4, [-0.6, 0, 0.6]);                                             // the barrel cactus growing on its back
     cactusFlower(b, 16, 10.3);                                                                      // and the flower blooming on top
     h.ellipse(16, 24, 6, 3.8, SAND, { edge: true });                                               // sandy lizard head, low in front
@@ -84,18 +84,18 @@ Object.assign(MONSTER_ART_DIAG, {
     const { SAND, HORN, EYE } = THORN;
     const { Q, b, h, t, earA, earB, legA, legB } = rigParts(g, v);
     if (v === 'bside') {
-      thornLeg(legA, 8, 23.5, -1, SAND); thornLeg(legB, 23, 24, 1, SAND);
+      thornLeg(legA, 9, 22.8, -1, SAND); thornLeg(legB, 21.5, 23, 1, SAND);
       earA.poly([[15, 16], [13.5, 12], [17, 15]], HORN, { edge: true }); earB.poly([[23, 16], [24.5, 12], [21, 15]], HORN, { edge: true });
       h.ellipse(19, 16.5, 4.5, 2.8, SAND, { edge: true });
-      b.ellipse(15, 22, 10.5, 4.2, SAND, { edge: true });
+      b.ellipse(15, 22, 8.8, 4, SAND, { edge: true });
       cactusDome(b, 15, 17.3, 6.4, 5.4, [-0.6, 0, 0.6]);
       cactusFlower(b, 15, 11.3);
       t.poly([[10, 24], [14, 25], [9, 30], [6, 29]], SAND, { edge: true });
       return;
     }
     t.poly([[8, 22], [10, 25], [2, 24], [0, 20], [4, 21.5]], SAND, { edge: true });
-    thornLeg(legA, 9, 23.5, -1, SAND); thornLeg(legB, 24.5, 23.5, 1, SAND);
-    b.ellipse(15.5, 22, 10.5, 4.2, SAND, { edge: true });
+    thornLeg(legA, 9.5, 22.8, -1, SAND); thornLeg(legB, 23, 22.8, 1, SAND);
+    b.ellipse(15.5, 22, 8.8, 4, SAND, { edge: true });
     cactusDome(b, 14.5, 16.3, 6.4, 5.4, [-0.6, 0, 0.6]);
     cactusFlower(b, 14.5, 10.3);
     h.ellipse(19, 24, 6, 3.8, SAND, { edge: true });
