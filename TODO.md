@@ -2,6 +2,8 @@
 
 ## Where we left off (keep this current at the end of every session)
 
+**2026-10-25 (r248):** the owner: "very very close"; Coilizard is good to go. Fixed Shadefang's legs (slim and tapered with gaps, paws in the leg colour, hind legs bent at the hock side-on) and Brawlix's ears (shortened so they fit the picture) and legs (slim columns over long feet instead of round thighs), and his headband shows in the three-quarter views again. **Next:** the other seven, once the owner OKs these two.
+
 **2026-10-25 (r247):** Coilizard's eyes are bigger; Shadefang and Brawlix are back to their old designs with the guide's detail added (drawn in code again). **Waiting on the owner:** a look at these three, then which way (traced or old-plus-detail) for the other seven.
 
 **2026-10-25 (r246): in-between samples.** After the old-vs-new comparison the owner asked for an in-between; Coilizard (silver spring and blue bulb back, bigger from the front), Shadefang (dark grey, brighter red) and Brawlix (stockier, big taped fists, cream belly) are done as samples. **Waiting on the owner:** say if the direction is right; then the other seven get the same treatment (Thornback and Smouldox bigger with their flower/spines and horns/coals back, Wispurr's bigger lantern, Pixibelle's cheek spots, Bellpaca's bell, Lumawool's sparks).
