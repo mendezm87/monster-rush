@@ -64,7 +64,7 @@ function roomDecor(room, stageKey) {
   const walls = levelSheet(stageKey, 'walls'), props = levelSheet(stageKey, 'props'), corners = levelSheet(stageKey, 'corners');
   const has = typeof LEVEL_SHEET_DATA !== 'undefined' && LEVEL_SHEET_DATA[stageKey];
   if (!has) return (room.decor = null);
-  if ((has.walls && !walls) || (has.props && !props) || (has.corners && !corners)) return null;   // still loading: try again next frame
+  if ((has.walls && !walls) || (has.props && !props) || (has.corners && !corners) || (has.fill && !levelSheet(stageKey, 'fill'))) return null;   // still loading: try again next frame
   const S = DECOR_PX, dw = Math.ceil(room.w / S), dh = Math.ceil(room.h / S);
   const cv = document.createElement('canvas'); cv.width = dw; cv.height = dh;
   const ctx = cv.getContext('2d'); ctx.imageSmoothingEnabled = false;
@@ -190,10 +190,18 @@ function roomDecor(room, stageKey) {
       const bx0 = Math.round((q.x - q.fw / 2) / S), bx1 = Math.round((q.x + q.fw / 2) / S), by0 = Math.round((q.y - q.fd) / S), by1 = Math.round(q.y / S);
       const ex0 = L ? 0 : bx0, ex1 = L ? bx1 : dw, ey0 = top ? 0 : by0, ey1 = top ? by1 : dh;   // reaching into the walls it's against
       const faceTop = top && faces.length ? by1 - baseH : ey1;
-      ctx.fillStyle = d.fill || STAGES[stageKey].bg; ctx.fillRect(ex0, ey0, ex1 - ex0, faceTop - ey0);
-      // its top: rows of wall tops, from the open edge back into the wall
-      if (top) for (let y = faceTop - th; y > ey0 - th; y -= th) clip(ex0, Math.max(ey0, y), ex1, faceTop, () => run(ex0 - ((rand() * 12) | 0), ex1, topPick, (r, t) => decorPiece(ctx, img, r.p, t, y, 0, 0, r.flip)));
-      else for (let y = by0; y < dh; y += th) clip(ex0, y, ex1, Math.min(dh, y + th), () => run(ex0 - ((rand() * 12) | 0), ex1, topPick, (r, t) => decorPiece(ctx, img, r.p, t, y, 0, 0, r.flip)));
+      // its top (r269, the owner: "something better to fill in the inaccessible parts"; rows of wall tops read as
+      // stripes): the area's own fill picture tiled across it (LV-<AREA>-4, mirrored tile by tile so it joins up), or
+      // until there is one, the dark beyond the walls, so it reads as out of bounds
+      ctx.fillStyle = STAGES[stageKey].bg; ctx.fillRect(ex0, ey0, ex1 - ex0, faceTop - ey0);
+      const fill = levelSheet(stageKey, 'fill'), ft = fill && fill.d.tile && fill.d.tile[0];
+      if (ft) clip(ex0, ey0, ex1, faceTop, () => {
+        const [fx, fy, fw, fh] = ft;
+        for (let y = top ? faceTop - fh : by0, j = 0; top ? y > ey0 - fh : y < dh; y += top ? -fh : fh, j++) for (let x = ex0, i = 0; x < ex1; x += fw, i++) {
+          ctx.save(); ctx.translate(x + (i % 2 ? fw : 0), y + (j % 2 ? fh : 0)); ctx.scale(i % 2 ? -1 : 1, j % 2 ? -1 : 1);
+          ctx.drawImage(fill.img, fx, fy, fw, fh, 0, 0, fw, fh); ctx.restore();
+        }
+      });
       // the open side: a strip like a side wall's (its top turned upright, filling the wall's thickness)
       const sx = L ? bx1 - wt : bx0, rot = L ? 3 : 1;
       clip(sx, ey0, sx + wt, faceTop, () => run(ey0 - ((rand() * 12) | 0), faceTop, topPick, (r, t) => decorPiece(ctx, img, r.p, sx, t, rot, wt, r.flip)));

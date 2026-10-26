@@ -174,6 +174,14 @@ mixInto(Battle, class {
     }
     return f;
   }
+  // how far a beam fired from m along dir gets before an obstacle stops it
+  beamReach(m, dir, mv) {
+    const obs = this.obstacles;
+    if (!obs.length) return mv.len;
+    const cs = Math.cos(dir), sn = Math.sin(dir);
+    for (let d = m.r; d < mv.len; d += 4) if (shotBlocked(obs, m.x + cs * d, m.cy + sn * d)) return Math.max(m.r, d);
+    return mv.len;
+  }
   get obstacles() { return this._obs || (this._obs = roomObstacles(this.room, this.run.stageKey)); }
   // keep a Coreature (or anything with x, y) out of the obstacles
   unblock(o, r) { const obs = this.obstacles; return obs.length ? pushOutOfObstacles(obs, o, r) : false; }

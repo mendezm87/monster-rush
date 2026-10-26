@@ -2,6 +2,8 @@
 
 ## Where we left off (keep this current at the end of every session)
 
+**2026-10-26 (r269):** beams stop at obstacles, wild Coreatures steer out of hazards, and the walled-off corners are dark (out of bounds) instead of striped. **Waiting on the owner:** the six fill pictures, LV-MEADOW-4 to LV-SPIRE-4 (round 3 in docs/level-prompts.md, on the prompts page): a thicket, a lava lake, deep snow, a dark chasm, rubble and the night sky; save as docs/refs/LV-<AREA>-4.jpg, then run `python tools/level-sheets.py` (a few minutes).
+
 **2026-10-26 (r268): level design step 2, first try.** Fight rooms now have **obstacles** (clusters of the area's large props, mirrored left and right, blocking walking and shots for both sides), **floor hazards** (the area's dangerous-looking patches: mud, lava, ice, snowdrifts, crystal beds, quicksand, rune circles; in fights only, to both sides, fliers float over), and **room shapes** (a block of wall filling one corner for an L, or both top or both bottom corners for a T). The middle and the lanes to every door always stay open. The door signs are now plaques on the wall beside each doorway (people took the floating ones for pickups). **Waiting on the owner:** trying them in play (how many obstacles, hazard strength, how often rooms get a shape). Next ideas: obstacles that break, pits, hand-made layouts, hazards the AI avoids.
 
 **2026-10-26 (r264-r265):** corner pillars in every area (the pillars from the LV-<AREA>-3 sheets, one over each corner joint; the Spire's from an older take of the owner's whose pillars came out straight, r266). Meadow wall tiles now line up by their stone edge. r267: the pillars fit their corners (as wide as the walls, standing in the top corners, a cap block joining the walls at the bottom).

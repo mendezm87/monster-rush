@@ -41,6 +41,11 @@ class AI {
       const ox = me.x - o.x, oy = me.y - o.y, od = Math.hypot(ox, oy);
       if (od < 60 && od > 0.1) { mx += ox / od * 0.7; my += oy / od * 0.7; }
     }
+    // keep out of the floor hazards (obstacles.js: mud, lava, ice...), unless it floats over them
+    if (b.floorHazards && b.floorHazards.length && !FLYERS[me.id]) for (const h of b.floorHazards) {
+      const hx = me.x - h.x, hy = me.y - h.y, e = Math.hypot(hx / (h.rx + 24), hy / (h.ry + 16));
+      if (e < 1) { const hd = Math.hypot(hx, hy) || 1, k = 0.5 + (1 - e) * 1.6; mx += hx / hd * k; my += hy / hd * k; }
+    }
     // keep away from walls
     const m = 30, F = b.F;
     if (me.x < F.x0 + m) mx += 0.8; if (me.x > F.x1 - m) mx -= 0.8;

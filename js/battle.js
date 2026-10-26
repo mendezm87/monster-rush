@@ -783,6 +783,7 @@ class Battle {
   get obstacles() { return []; }
   unblock() { return false; }
   floorHazard() { return null; }
+  beamReach(m, dir, mv) { return mv.len; }
 
   // Where a Coreature's feet may go: the room floor, plus open doorways for the player.
   bounds(m) {

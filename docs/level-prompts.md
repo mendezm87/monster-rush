@@ -185,3 +185,50 @@ asks for just those, standing straight.*
 ```
 16-bit SNES-era pixel art game assets for a top-down RPG, seen from slightly above (3/4 view), crisp chunky pixels, a solid 1-pixel dark outline on every asset, cel shading with three hard-edged tones and light from the top left, flat plain dark navy blue background, lots of empty space between assets, no text, no boxes or panels, no characters or creatures. Two square corner pillars made of smooth deep indigo stone blocks trimmed with gold, side by side in one row with lots of space between them. Both stand perfectly straight and upright, facing the viewer head on, not tilted, not rotated, not drawn at an angle: you see the flat square top of each pillar and its front face below it, like a short square column. The left one is plain with a thin gold cap; the right one is the same with a small glowing gold star on top.
 ```
+
+## Fill for blocked-off corners (round 3, r269)
+
+Rooms can now have a corner (or two) walled off, making L- and T-shaped rooms. Those parts can't be reached, and the
+owner wanted something better there than rows of wall tops. Each prompt asks for **one square texture seen from
+straight above**. The game cuts the middle of the square, shrinks it to a 48-pixel tile and lays it across the
+blocked area, mirroring every other tile so the edges always join up. What matters: the texture fills the square edge
+to edge, its detail is spread evenly (no big single feature in the middle), and nothing stands up out of it. Until a
+picture arrives, those parts are left dark, like the darkness beyond the walls.
+
+Save each as docs/refs/LV-<AREA>-4.jpg (for example LV-MEADOW-4.jpg).
+
+### LV-MEADOW-4 · fill (Verdant Meadow)
+
+```
+16-bit SNES-era pixel art texture for a top-down RPG, crisp chunky pixels, cel shading with three hard-edged tones and light from the top left, no text, no characters or creatures. One large square tile seen from directly above, filling the square completely from edge to edge with no border and no frame, on a flat plain light grey background. Inside the square: a dense thicket seen from above, the round leafy tops of thick dark green bushes packed tightly together, a few tiny red berries and small leaves, deep dark green shadows in the gaps between the bushes. The detail is spread evenly across the whole square with no single large feature, so it repeats well.
+```
+
+### LV-CRATER-4 · fill (Ember Crater)
+
+```
+16-bit SNES-era pixel art texture for a top-down RPG, crisp chunky pixels, cel shading with three hard-edged tones and light from the top left, no text, no characters or creatures. One large square tile seen from directly above, filling the square completely from edge to edge with no border and no frame, on a flat plain light grey background. Inside the square: a lake of molten lava seen from above, glowing orange and yellow lava with many small dark crusted plates of cooling black rock floating in it, thin bright cracks of yellow light between the plates. The detail is spread evenly across the whole square with no single large feature, so it repeats well.
+```
+
+### LV-SUMMIT-4 · fill (Snowy Summit)
+
+```
+16-bit SNES-era pixel art texture for a top-down RPG, crisp chunky pixels, cel shading with three hard-edged tones and light from the top left, no text, no characters or creatures. One large square tile seen from directly above, filling the square completely from edge to edge with no border and no frame, on a flat plain light grey background. Inside the square: deep untouched snow seen from above, soft white drifts with pale blue shadows, a few small half-buried grey stones and small pale blue icy patches scattered around. The detail is spread evenly across the whole square with no single large feature, so it repeats well.
+```
+
+### LV-GROTTO-4 · fill (Crystal Grotto)
+
+```
+16-bit SNES-era pixel art texture for a top-down RPG, crisp chunky pixels, cel shading with three hard-edged tones and light from the top left, no text, no characters or creatures. One large square tile seen from directly above, filling the square completely from edge to edge with no border and no frame, on a flat plain light grey background. Inside the square: a deep dark chasm seen from above, near-black deep purple depths with small faintly glowing cyan crystal shards scattered far below and thin wisps of violet mist drifting over them. The detail is spread evenly across the whole square with no single large feature, so it repeats well.
+```
+
+### LV-RUINS-4 · fill (Sunken Ruins)
+
+```
+16-bit SNES-era pixel art texture for a top-down RPG, crisp chunky pixels, cel shading with three hard-edged tones and light from the top left, no text, no characters or creatures. One large square tile seen from directly above, filling the square completely from edge to edge with no border and no frame, on a flat plain light grey background. Inside the square: collapsed rubble seen from above, broken sandstone blocks and slabs of different sizes jumbled tightly together, golden sand filling the gaps between them, a few cracks and chips in the stone. The detail is spread evenly across the whole square with no single large feature, so it repeats well.
+```
+
+### LV-SPIRE-4 · fill (Starlit Spire)
+
+```
+16-bit SNES-era pixel art texture for a top-down RPG, crisp chunky pixels, cel shading with three hard-edged tones and light from the top left, no text, no characters or creatures. One large square tile seen from directly above, filling the square completely from edge to edge with no border and no frame, on a flat plain light grey background. Inside the square: the open night sky far below a broken tower floor, a deep indigo void with many small white and gold stars and faint soft purple and blue nebula clouds. The detail is spread evenly across the whole square with no single large feature, so it repeats well.
+```
