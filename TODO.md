@@ -2,7 +2,7 @@
 
 ## Where we left off (keep this current at the end of every session)
 
-**2026-10-25 (r248):** the owner: "very very close"; Coilizard is good to go. Fixed Shadefang's legs (slim and tapered with gaps, paws in the leg colour, hind legs bent at the hock side-on) and Brawlix's ears (shortened so they fit the picture) and legs (slim columns over long feet instead of round thighs), and his headband shows in the three-quarter views again. **Next:** the other seven, once the owner OKs these two.
+**2026-10-25 (r248):** the owner: "very very close"; Coilizard is good to go. Fixed Shadefang's legs (slim and tapered with gaps, paws in the leg colour, hind legs bent at the hock side-on) and Brawlix's ears (shortened so they fit the picture) and legs (slim columns over long feet instead of round thighs), and his headband shows in the three-quarter views again. r249: his side view arm redrawn so it reads (a bent arm a shade lighter than the body, fist clear of the muzzle). **Next:** the other seven, once the owner OKs these two.
 
 **2026-10-25 (r247):** Coilizard's eyes are bigger; Shadefang and Brawlix are back to their old designs with the guide's detail added (drawn in code again). **Waiting on the owner:** a look at these three, then which way (traced or old-plus-detail) for the other seven.
 

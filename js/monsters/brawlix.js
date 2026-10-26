@@ -28,11 +28,11 @@ Object.assign(MONSTER_ART, {
     if (v === 'side') {
       earB.poly([[15, 7.0], [11.5, 1.9], [13.5, 1.5], [17, 6.2]], Fd);                                  // far ear, swept back
       hareLeg(legB, 12.5, 12.5, 1.5, Fd, true);
-      armB.ellipse(19, 18, 1.4, 2.6, Fd); fist(armB, 21, 14.5, 2.1);                               // its guard: far fist up
+      armB.poly([[16.5, 15.5], [19, 15.5], [19.6, 18.6], [21, 15.6], [22.4, 16.6], [20.2, 20.4], [18, 20]], Fd, { edge: true });   // far arm, bent up in its guard
+      armB.ellipse(21.8, 15, 2, 1.8, P(TAPE.s, '#a29a88', TAPE.m), { edge: true });                  // its far fist, in shadow
       t.ellipse(9.5, 21.5, 2, 2, CREAM, { edge: true });                                              // cotton tail
       hareLeg(legA, 14.5, 16, 1.8, FUR, true); legA.px(19, 29, CREAM.s);                                // long leg, big hind foot
       b.ellipse(15, 19.5, 5.2, 5.3, FUR, { edge: true });                                         // lean body
-      b.ellipse(16, 17.5, 5, 2.8, FUR, { edge: true });                                           // its shoulders
       b.ellipse(17.5, 20.5, 2.4, 3.6, CREAM);                                                     // cream belly
       h.ellipse(19, 10, 4.6, 4, FUR, { edge: true });                                             // head
       h.ellipse(22.5, 11.5, 2.2, 1.8, CREAM);                                                     // muzzle
@@ -42,7 +42,9 @@ Object.assign(MONSTER_ART, {
       rigEye(h, Q, 20, 9, () => { h.rect(20, 9, 2, 2, EYE); h.px(21, 9, OUTLINE).px(21, 10, OUTLINE); h.rect(19, 8, 4, 1, OUTLINE); }, 2);   // fierce eye, heavy brow
       h.px(19, 10, SCAR).px(20, 11, SCAR);
       rigMouth(h, Q, 22, 13, 2, () => h.px(22, 13, OUTLINE).px(23, 13, OUTLINE));
-      armA.ellipse(18, 19, 1.7, 2.8, FUR, { edge: true }); fist(armA, 23.5, 15, 2.8);              // near fist, jabbing forward
+      const ARM = P(FUR.b, FUR.m, '#d8c2a6');                                                     // a shade lighter than the body, so the arm reads against it
+      armA.poly([[14.5, 15.6], [17.6, 15.4], [18.4, 19.4], [21.6, 16.6], [23.2, 18.4], [19, 22.8], [15.8, 21.6]], ARM, { edge: true });   // near arm: upper arm down, forearm up (r249)
+      fist(armA, 23.6, 17.4, 2.5);                                                                // near fist up in its guard, below the chin
       return;
     }
     if (v === 'back') {
