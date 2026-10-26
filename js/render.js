@@ -424,7 +424,7 @@ mixInto(Battle, class {
     const decor = typeof roomDecor === 'function' && roomDecor(this.room, this.run.stageKey);   // the area's walls and decorations (rooms.js)
     if (decor) ctx.drawImage(decor, 0, 0, decor.width * DECOR_PX, decor.height * DECOR_PX);
     ctx.drawImage(this.decal, 0, 0);
-    Lighting.drawTorches(ctx, this.room, this.time);
+    if (!decor) Lighting.drawTorches(ctx, this.room, this.time);   // the area's own walls carry their lights (their glow stays)
     this.drawDoors(ctx);
     if (this.stairs) this.drawStairs(ctx);
     this.drawPickups(ctx);
