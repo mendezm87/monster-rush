@@ -294,7 +294,7 @@ ComfyUI is installed at `C:\Users\thecl\ComfyUI` (its own venv, torch with CUDA,
 - **Beam sound:** Normal is the base sound; every other type adds a flavour layer (`BEAM_LAYERS`, levels balanced via `LAYER_GAIN`). Not every monster needs a beam.
 - **Move kinds** (comment above `MOVES` in `js/data.js`): projectile, beam, dash, burst, zone, buff, heal, vortex, plus modifiers `drain`, `boomerang`, `hits` (combo dash), `linger` (pools). A new kind needs battle code, drawing, CPU use and dodging (`AI.pick` / `AI.threat`), and a sound level-checked against the others.
 - **Balance lesson:** a beam roots its user while it charges and fires, so a fast monster without one gets much stronger against bots. When changing a monster's moves, re-check its stats too.
-- **PC controls:** move with WASD/arrows; left click = move 1, right click = move 2, Shift + left = move 3, Shift + right = move 4 (J K L ; also work); Q swaps; Esc/P pauses; M mutes. On PC the move buttons sit in a 2×2 block shaped like the mouse. Touch has a floating stick and move buttons; gamepads use A/B/X/Y, bumpers swap, Start pauses.
+- **PC controls:** move with WASD/arrows; left click = move 1, right click = move 2, Shift + left = move 3, Shift + right = move 4 (J K L ; also work); Q swaps; Esc/P pauses; M mutes. On PC the move buttons sit in a 2×2 block shaped like the mouse. Touch has a floating stick (it jumps to where the thumb lands and slides back to its home spot when the thumb lifts, r257) and move buttons; gamepads use A/B/X/Y, bumpers swap, Start pauses.
 - **Floating numbers are rounded** (the pixel font has no decimal point; 245.6 would read "2456").
 
 ## Code map

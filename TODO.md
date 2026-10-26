@@ -2,6 +2,8 @@
 
 ## Where we left off (keep this current at the end of every session)
 
+**2026-10-25 (r257):** the phone joystick slides back to its home spot when you let go (it used to stay where the last touch was). The owner OK'd Frostling and Thornback ("looks good").
+
 **2026-10-25 (r256):** Frostling stands on two legs with its round face in every view; Thornback narrower with longer legs.
 
 **2026-10-25 (r254):** Frostling's side-view nose and its feet fixed; Pixibelle less chibi, no bow. r255: her dress comes up to her neck (it looked like it was falling off).

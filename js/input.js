@@ -149,6 +149,12 @@ const Input = (() => {
       if (e.pointerId !== stick.id) return;
       stick.id = null; stick.x = stick.y = 0;
       knob.style.transform = '';
+      // back to its home spot when the thumb lifts (the owner, r257: it stayed wherever the last touch was), sliding there
+      const from = base.getBoundingClientRect();
+      base.style.left = base.style.top = base.style.bottom = '';
+      const to = base.getBoundingClientRect();
+      if (base.animate && (from.left !== to.left || from.top !== to.top))
+        base.animate([{ transform: `translate(${from.left - to.left}px, ${from.top - to.top}px)` }, { transform: 'none' }], { duration: 140, easing: 'ease-out' });
     };
     zone.addEventListener('pointerup', end);
     zone.addEventListener('pointercancel', end);
