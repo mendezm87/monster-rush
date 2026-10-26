@@ -3,10 +3,11 @@
 // r253 (the owner liked it "better when he looked more like a squirrel mixed with a fox with the horn on its head"): the
 // old design again, with the guide's detail: its big tail curling over at the top like a squirrel's, a fluffy white chest
 // ruff, icy inner ears, small legs with paws instead of foot blobs, and a glint on its horn.
-function frostLeg(p, x, B) {
-  p.poly([[x - 1.4, 25.5], [x + 1.4, 25.5], [x + 1.2, 28.8], [x - 1.2, 28.8]], B, { edge: true });
-  p.ellipse(x, 29.2, 1.8, 0.9, B, { edge: true }); p.px(Math.round(x), 29, B.s);
+function frostLeg(p, x, B) {   // r254 (the owner: the blocky feet "look terrible"): a short leg and a round white paw, like an arctic fox's socks
+  p.poly([[x - 1.2, 25.5], [x + 1.2, 25.5], [x + 1, 28], [x - 1, 28]], B);
+  p.ellipse(x, 28.6, 1.9, 1.4, FROST_SOCK, { edge: true });
 }
+const FROST_SOCK = P('#f2fcff', '#bfe4f4', '#ffffff');
 const frostRuff = (b, cx, Cr) => b.poly([[cx - 4, 19], [cx - 3, 22], [cx - 1.5, 20.5], [cx, 23], [cx + 1.5, 20.5], [cx + 3, 22], [cx + 4, 19]], Cr);
 Object.assign(MONSTER_ART, {
   frostling(g, v = 'front') {
@@ -19,12 +20,13 @@ Object.assign(MONSTER_ART, {
       frostLeg(legB, 12, B); frostLeg(legA, 18, B);
       earA.poly([[17, 10], [18, 1], [22, 9]], B, { edge: true }); earA.poly([[18, 9], [18.4, 3.5], [20.6, 8.4]], Cr.s);   // icy inner ear
       h.ellipse(18, 14, 7.5, 6, B, { edge: true });
-      h.poly([[22, 13], [28, 16], [22, 18]], B, { edge: true });
+      h.poly([[22, 12.6], [27, 14.6], [27.6, 15.6], [26.6, 16.6], [22, 18]], B);                 // snout, blending into the head (r254)
       h.poly([[16, 9], [19, 2], [20, 9]], Cr, { edge: true });
       h.poly([[19, 17], [15, 21], [21, 20]], Cr);
       h.px(18, 4, '#ffffff');                                                                    // a glint on its horn
-      rigEye(h, Q, 21, 13, () => { h.rect(21, 13, 2, 3, '#1a3a5a'); h.px(21, 13, '#ffffff'); });
-      rigMouth(h, Q, 25, 16, 2, () => h.px(27, 15, OUTLINE));
+      h.px(27, 15, OUTLINE).px(28, 15, OUTLINE);                                                 // nose tip
+      rigEye(h, Q, 19, 12, () => { h.rect(19, 12, 2, 3, '#1a3a5a'); h.px(19, 12, '#ffffff'); });  // eye set back from the snout
+      rigMouth(h, Q, 24, 17, 2, () => h.px(24, 17, OUTLINE).px(25, 17, OUTLINE));
       return;
     }
     if (v === 'back') {

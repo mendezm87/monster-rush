@@ -2,6 +2,8 @@
 
 ## Where we left off (keep this current at the end of every session)
 
+**2026-10-25 (r254):** Frostling's side-view nose and its feet fixed; Pixibelle less chibi, no bow.
+
 **2026-10-25 (r253):** Frostling back to the squirrel-fox with the horn (plus detail), Pixibelle and Bellpaca made chibi. **Waiting on the owner:** a look in play (https://mendezm87.github.io/monster-rush/stress.html?party=frostling,pixibelle,bellpaca,thornback,smouldox,wispurr&foes=frostling,pixibelle,bellpaca).
 
 **2026-10-25 (r252): the other seven.** Thornback, Smouldox and Wispurr back on their old designs with the guide's detail; Pixibelle, Bellpaca, Lumawool and Frostling traced with touch-ups. **Waiting on the owner:** a look in play (https://mendezm87.github.io/monster-rush/stress.html?party=thornback,smouldox,wispurr,pixibelle,bellpaca,lumawool&foes=frostling,thornback,smouldox,wispurr,pixibelle,bellpaca), then fixes; Galewing and Venomire still wait on the reworded prompts.
