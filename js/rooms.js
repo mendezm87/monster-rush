@@ -19,6 +19,24 @@ function levelSheet(area, kind) {
   const img = LEVEL_IMG[key];
   return img.complete && img.naturalWidth ? { img, d } : null;
 }
+// a pillar picture's cap, as [first row, rows]: from where it reaches its full width (below any ornament on top) down
+// to where the shaft below gets narrower (r267), else 40% of it
+const PILLAR_CAPS = new Map();
+function pillarCap(img, p) {
+  const key = img.src.length + ':' + p.join(',');
+  if (PILLAR_CAPS.has(key)) return PILLAR_CAPS.get(key);
+  const [sx, sy, w, h] = p, c = document.createElement('canvas'); c.width = w; c.height = h;
+  const g = c.getContext('2d'); g.drawImage(img, sx, sy, w, h, 0, 0, w, h);
+  const a = g.getImageData(0, 0, w, h).data, width = y => { let n = 0; for (let x = 0; x < w; x++) if (a[(y * w + x) * 4 + 3] > 0) n++; return n; };
+  // once the cap has reached its full width (its top edge may be ragged, like the Grotto's crystals), the first row
+  // that's clearly narrower is where the shaft starts
+  const rows = Array.from({ length: h }, (_, y) => width(y)), full = Math.max(...rows);
+  const top = rows.findIndex(n => n >= full - 1), y0 = top > 3 ? top : 0;   // a rounded rim of a row or two stays
+  let cap = [y0, Math.round(h * 0.4)];
+  for (let y = Math.max(0, top); y < h * 0.7; y++) if (rows[y] <= full - 3) { cap = [y0, Math.max(4, y - y0)]; break; }
+  freeCanvas(c); PILLAR_CAPS.set(key, cap); return cap;
+}
+
 // start decoding every area's sheets at load, so the first room doesn't wait
 if (typeof LEVEL_SHEET_DATA !== 'undefined') for (const a of Object.keys(LEVEL_SHEET_DATA)) for (const k of Object.keys(LEVEL_SHEET_DATA[a])) levelSheet(a, k);
 
@@ -128,12 +146,13 @@ function roomDecor(room, stageKey) {
     } else bottomRow(fx0, fx1);
     // the side walls: wall tops turned upright, the whole height of the room, against the floor's edges (left: turned
     // so the piece's left end is at the bottom; right: the other way)
+    const pillars = corners && corners.d.pillar, wallEnd = pillars ? fy1 : dh;   // with corner pillars the side walls stop where the bottom wall starts
     for (const dir of ['w', 'e']) {
       const x0 = dir === 'w' ? 0 : fx1, x1 = dir === 'w' ? fx0 : dw, rot = dir === 'w' ? 3 : 1;
       const put = (p, y, flip = false) => decorPiece(ctx, img, p, dir === 'w' ? 0 : fx1, y, rot, dir === 'w' ? fx0 : dw - fx1, flip);   // filling the wall's thickness
       const col = (a, b) => clip(x0, a, x1, b, () => run(a - ((rand() * 12) | 0), b, topPick, (q, t) => put(q.p, t, q.flip)));
       if (room.doors[dir]) {
-        const s = doorSpan(my); col(fy0, s.a); col(s.b, dh);
+        const s = doorSpan(my); col(fy0, s.a); col(s.b, wallEnd);
         ctx.clearRect(x0, my - gap / 2, x1 - x0, gap);
         // turned upright, a [left, right] pair swaps ends: on the left wall the right half (post at its left end, which
         // turns to the bottom) goes above the gap; on the right wall the left half does
@@ -141,16 +160,23 @@ function roomDecor(room, stageKey) {
           const [L, R] = doorTops, up = dir === 'w' ? R : L, down = dir === 'w' ? L : R;
           put(up, my - gap / 2 - up[2]); put(down, my + gap / 2);
         } else for (const [p, y] of s.parts) put(p, y);
-      } else col(fy0, dh);
+      } else col(fy0, wallEnd);
     }
-    // a pillar at each corner of the room, over the joint where two walls meet (r265, the owner: "maybe we should have
-    // corners"): the decorated one at the top corners, standing at the foot of the back wall where the side walls
-    // start, the plain one at the bottom corners
-    if (corners && corners.d.pillar) {
-      const [plain, fancy] = corners.d.pillar, top = fancy && fancy[3] <= fy0 + 4 ? fancy : plain;   // the decorated one only where it fits under the top of the room
-      for (const [p, cx, by] of [[top, fx0 / 2, fy0 + 4], [top, fx1 + (dw - fx1) / 2, fy0 + 4], [plain, fx0 / 2, dh], [plain, fx1 + (dw - fx1) / 2, dh]]) {
-        const x = Math.round(cx - p[2] / 2), y = Math.round(by - p[3]);
-        decorPiece(ctx, corners.img, p, x, y); claim(x, y, x + p[2], y + p[3]);
+    // a pillar at each corner of the room (r265, the owner: "maybe we should have corners"); r267 (the owner: "make them
+    // look like they actually fit there instead of just pasting a pillar on top"): each is drawn exactly as wide as its
+    // wall. At the top corners the decorated one stands beside the back wall, its foot on the floor line like the wall
+    // faces', the side wall running down from under it. At the bottom corners this camera only sees a pillar's top, so
+    // the square where the side and bottom walls meet gets the plain one's cap, and the side walls stop there.
+    if (pillars) {
+      const [plain, fancy] = pillars, cimg = corners.img;
+      for (const [x0, x1] of [[0, fx0], [fx1, dw]]) {
+        const w = x1 - x0, top = fancy || plain;
+        const th = Math.min(fy0, Math.round(top[3] * w / top[2]));   // squeezed a little if it's taller than the back wall
+        ctx.drawImage(cimg, top[0], top[1], top[2], top[3], x0, fy0 - th, w, th);
+        const [cy, ch] = pillarCap(cimg, plain), bh = dh - fy1;
+        ctx.fillStyle = d.fill || STAGES[stageKey].bg; ctx.fillRect(x0, fy1, w, bh);   // nothing of the floor shows round the cap's rounded corners
+        ctx.drawImage(cimg, plain[0], plain[1] + cy, plain[2], ch, x0, fy1, w, bh);
+        claim(x0, 0, x1, fy0); claim(x0, fy1, x1, dh);
       }
     }
     for (const h of hung) { decorPiece(ctx, img, h.p, h.x, h.y); claim(h.x, h.y, h.x + h.p[2], h.y + h.p[3]); }   // the things hung on the top wall
