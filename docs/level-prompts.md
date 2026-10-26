@@ -1,5 +1,7 @@
 # Level art: the prompts for each area's props and walls
 
+**On a phone:** open https://mendezm87.github.io/monster-rush/prompts.html?f=level for these prompts with a Copy button each.
+
 *Written 2026-10-26 (r258), after the owner looked at the levels and picked "give each area its own look" to start.*
 
 ## Why

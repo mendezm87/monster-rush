@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deep Archive Prompts</title>
+<!-- Not linked from the game. The owner's Gemini prompts with a Copy button each (r259, the owner: "the text is on one
+     line and it's difficult to select in the GitHub app"). Reads the prompt files in docs/ (fenced ``` blocks and
+     "> " quoted blocks are prompts; the nearest heading above names each one), so it never goes stale.
+     Open it through the Pages link (fetch doesn't work from file://). -->
+<style>
+  :root { --bg: #14121c; --card: #201d2c; --ink: #ece8f6; --dim: #a29cb8; --acc: #7af0e0; --ok: #7ad07a; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.45 system-ui, -apple-system, Segoe UI, sans-serif; }
+  header { position: sticky; top: 0; background: var(--bg); padding: 12px 16px 8px; border-bottom: 1px solid #2e2a40; z-index: 2; }
+  h1 { font-size: 18px; margin: 0 0 8px; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tabs button { background: var(--card); color: var(--ink); border: 1px solid #3a3550; border-radius: 16px; padding: 6px 12px; font: inherit; font-size: 14px; }
+  .tabs button.on { border-color: var(--acc); color: var(--acc); }
+  input { width: 100%; margin-top: 8px; padding: 8px 10px; border-radius: 8px; border: 1px solid #3a3550; background: var(--card); color: var(--ink); font: inherit; }
+  main { padding: 12px 16px 40px; max-width: 900px; margin: 0 auto; }
+  .p { background: var(--card); border-radius: 10px; padding: 12px; margin: 0 0 12px; }
+  .p .top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .p .name { font-weight: 700; flex: 1; }
+  .p .sec { color: var(--dim); font-size: 13px; }
+  .p pre { margin: 0; white-space: pre-wrap; word-break: break-word; font: 13px/1.45 ui-monospace, Consolas, monospace; color: #d8d2ea; max-height: 9.5em; overflow: hidden; }
+  .p.open pre { max-height: none; }
+  .p .more { background: none; border: 0; color: var(--acc); font: inherit; font-size: 13px; padding: 6px 0 0; }
+  .copy { background: var(--acc); color: #10202a; border: 0; border-radius: 8px; padding: 9px 16px; font: inherit; font-weight: 700; min-width: 84px; }
+  .copy.done { background: var(--ok); }
+  .msg { color: var(--dim); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Gemini prompts</h1>
+  <div class="tabs" id="tabs"></div>
+  <input id="find" type="search" placeholder="Find a code or word (e.g. LV-MEADOW, Galewing)">
+</header>
+<main id="list"><p class="msg">Loading…</p></main>
+<script>
+const FILES = [
+  { key: 'level', name: 'Level art', path: 'docs/level-prompts.md' },
+  { key: 'guide', name: 'Coreature guides', path: 'docs/guide-prompts.md' },
+  { key: 'concept', name: 'Concept art', path: 'docs/concept-prompts.md' },
+  { key: 'attack', name: 'Attack pieces', path: 'docs/attack-pieces.md' },
+];
+const $ = s => document.querySelector(s);
+let prompts = [];
+
+// Every prompt in a markdown file: a fenced ``` block, or a run of "> " lines (joined into one paragraph).
+// Each is named by the nearest ### heading above it (and the ## heading above that, as its section).
+function parse(md) {
+  const out = [], lines = md.split(/\r?\n/);
+  let sec = '', head = '';
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i];
+    if (/^## /.test(l)) { sec = l.slice(3).trim(); head = ''; continue; }
+    if (/^### /.test(l)) { head = l.slice(4).trim(); continue; }
+    if (/^```/.test(l)) {
+      const body = []; i++;
+      while (i < lines.length && !/^```/.test(lines[i])) body.push(lines[i++]);
+      const text = body.join('\n').trim();
+      if (text.length > 60) out.push({ sec, head: head || sec || 'Shared style', text });
+      continue;
+    }
+    if (/^> ?/.test(l)) {
+      const body = [];
+      while (i < lines.length && /^> ?/.test(lines[i])) body.push(lines[i++].replace(/^> ?/, ''));
+      i--;
+      const text = body.join(' ').replace(/\s+/g, ' ').trim();
+      if (text.length > 60) out.push({ sec, head: head || sec || 'Shared style', text });
+    }
+  }
+  return out;
+}
+
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); return true; } catch (e) {}
+  const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+  document.body.appendChild(ta); ta.focus(); ta.select();
+  let ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
+  ta.remove(); return ok;
+}
+
+function show() {
+  const q = $('#find').value.trim().toLowerCase(), list = $('#list');
+  const shown = prompts.filter(p => !q || (p.head + ' ' + p.sec + ' ' + p.text).toLowerCase().includes(q));
+  list.innerHTML = shown.length ? '' : '<p class="msg">No prompts match.</p>';
+  for (const p of shown) {
+    const el = document.createElement('div'); el.className = 'p';
+    el.innerHTML = '<div class="top"><div><div class="name"></div><div class="sec"></div></div><span style="flex:1"></span><button class="copy">Copy</button></div><pre></pre>';
+    el.querySelector('.name').textContent = p.head;
+    el.querySelector('.sec').textContent = p.sec !== p.head ? p.sec : '';
+    el.querySelector('pre').textContent = p.text;
+    const btn = el.querySelector('.copy');
+    btn.onclick = async () => {
+      const ok = await copyText(p.text);
+      btn.textContent = ok ? 'Copied!' : 'Select it'; btn.classList.toggle('done', ok);
+      if (!ok) { el.classList.add('open'); const r = document.createRange(); r.selectNodeContents(el.querySelector('pre')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); }
+      setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('done'); }, 1800);
+    };
+    if (p.text.length > 420) {
+      const more = document.createElement('button'); more.className = 'more'; more.textContent = 'Show all';
+      more.onclick = () => { el.classList.toggle('open'); more.textContent = el.classList.contains('open') ? 'Show less' : 'Show all'; };
+      el.appendChild(more);
+    }
+    list.appendChild(el);
+  }
+}
+
+async function load(key) {
+  const f = FILES.find(f => f.key === key) || FILES[0];
+  for (const b of document.querySelectorAll('.tabs button')) b.classList.toggle('on', b.dataset.key === f.key);
+  $('#list').innerHTML = '<p class="msg">Loading…</p>';
+  try {
+    const r = await fetch(f.path + '?v=' + Date.now());
+    if (!r.ok) throw new Error(r.status);
+    prompts = parse(await r.text());
+  } catch (e) { prompts = []; $('#list').innerHTML = '<p class="msg">Could not load ' + f.path + ' (open this page through the GitHub Pages link).</p>'; return; }
+  try { history.replaceState(null, '', '?f=' + f.key); } catch (e) {}
+  show();
+}
+
+for (const f of FILES) {
+  const b = document.createElement('button'); b.textContent = f.name; b.dataset.key = f.key;
+  b.onclick = () => load(f.key); $('#tabs').appendChild(b);
+}
+$('#find').oninput = show;
+load(new URLSearchParams(location.search).get('f') || 'level');
+</script>
+</body>
+</html>

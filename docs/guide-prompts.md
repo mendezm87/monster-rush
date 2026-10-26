@@ -1,5 +1,7 @@
 # Coreature guide prompts
 
+**On a phone:** open https://mendezm87.github.io/monster-rush/prompts.html?f=guide for these prompts with a Copy button each.
+
 Pixel-art guide pictures for redrawing Coreatures. Each picture shows one Coreature from the front, three-quarter front,
 side and back; Claude traces it into the game's sprite with `tools/trace-guide.py` (the way Smugshogun was redrawn in
 r243). Every Coreature keeps its current design: the guide only gives proportions and detail.

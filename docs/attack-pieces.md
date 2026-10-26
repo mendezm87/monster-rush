@@ -1,5 +1,7 @@
 # Attack pieces: the prompts for every attack
 
+**On a phone:** open https://mendezm87.github.io/monster-rush/prompts.html?f=attack for these prompts with a Copy button each.
+
 *Written 2026-10-23 (r185) after the Eruption test. The owner: "That looks so much better. Let's do that with all
 the attacks... make sure we get everything we need for all of the attacks."*
 

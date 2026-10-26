@@ -1,5 +1,7 @@
 # Concept art prompts (90s / early-2000s cel anime)
 
+**On a phone:** open https://mendezm87.github.io/monster-rush/prompts.html?f=concept for these prompts with a Copy button each.
+
 For picking the redesigns of Sparkit, Cinderox and Lumawool. Paste a prompt into an image generator
 (ChatGPT, Midjourney, Gemini...), keep the ones you like, and send them back: the chosen design then
 becomes the monster's pixel sprite in the game.
