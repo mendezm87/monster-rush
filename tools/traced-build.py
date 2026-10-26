@@ -27,7 +27,16 @@ def coil_spring(m, view):
         if g[y][x] in 'kqsw':
             horiz = run(x, y, 1, 0) >= run(x, y, 0, 1)
             g[y][x] = 'w' if (x if horiz else y) % 2 == 0 else 'q'
+    # bigger eyes (r247, the owner: "the eyes could be bigger"): a 5x5 bulging eye, pale with a dark pupil, like the guide's
+    EYE = ['.kkk.', 'kyykk', 'kyykk', 'kyyyy', '.kkk.']
+    for ex, ey in COIL_EYES[view]:
+        for j, row in enumerate(EYE):
+            for i, k in enumerate(row):
+                if k != '.' and 0 <= ey + j < H and 0 <= ex + i < W: g[ey + j][ex + i] = k
     return [''.join(r) for r in g], sorted(y * 64 + x for x, y in seen)
+
+
+COIL_EYES = {'front': [(4, 5), (13, 5)], 'fside': [(15, 8)], 'side': [(22, 5)], 'back': []}   # top-left of each 5x5 eye
 
 
 def brawl_post(m, view):
@@ -52,12 +61,10 @@ def brawl_post(m, view):
 CFG = {   # neck/ear: head and ear rows; hb: the head's columns per view (shares); leg: where legs start; eyeKeys: eye colours
   'lumawool':  dict(neck=0.55, ear=0.3, hb={'front': [0.2, 0.8], 'back': [0.15, 0.85], 'fside': [0.45, 1], 'side': [0.62, 1]}, tail={'side': [0, 0.3, 0.12, 0.65], 'fside': [0, 0.35, 0.1, 0.7]}, leg=0.82, eyeKeys=None),
   'smouldox':  dict(neck=0.5, ear=0.22, hb={'fside': [0.55, 1], 'side': [0.7, 1]}, tail={'side': [0, 0.2, 0.12, 0.7], 'fside': [0, 0.2, 0.12, 0.7]}, leg=0.75, eyeKeys=None),
-  'coilizard': dict(neck=0.5, ear=0.0, hb={'front': [0.2, 0.8], 'back': [0, 0.6], 'fside': [0.55, 1], 'side': [0.6, 1]}, tail={}, leg=0.72, eyeKeys='d', src={'front': 'coil-27.json', 'fside': 'coil-27.json', 'side': 'coil-22.json', 'back': 'coil-27.json'}, post=coil_spring),
+  'coilizard': dict(neck=0.5, ear=0.0, hb={'front': [0.2, 0.8], 'back': [0, 0.6], 'fside': [0.55, 1], 'side': [0.6, 1]}, tail={}, leg=0.72, eyeKeys=None, eyes={'front': [[5, 6, 3], [14, 6, 3]], 'fside': [[16, 9, 3]], 'side': [[23, 6, 3]]}, src={'front': 'coil-27.json', 'fside': 'coil-27.json', 'side': 'coil-22.json', 'back': 'coil-27.json'}, post=coil_spring, palx={'y': '#eef8d4'}),
   'thornback': dict(neck=0.6, ear=0.0, hb={'front': [0.2, 0.8], 'fside': [0.7, 1], 'side': [0.75, 1], 'back': [0.2, 0.8]}, tail={'side': [0, 0.5, 0.35, 1], 'fside': [0, 0.5, 0.35, 1], 'back': [0.4, 0.75, 1, 1]}, leg=0.8, eyeKeys='kab'),
-  'shadefang': dict(neck=0.42, ear=0.15, hb={'fside': [0.55, 1], 'side': [0.65, 1]}, tail={'side': [0, 0.3, 0.22, 0.85], 'fside': [0, 0.3, 0.2, 0.85]}, leg=0.68, eyeKeys='j', palx={'a': '#1c1a24', 'b': '#24222c', 'c': '#2a2832', 'd': '#2e2c36', 'f': '#383640', 'g': '#44434e', 'h': '#52505c', 'i': '#62626e', 'e': '#7a1c28', 'j': '#ff3a40'}),
   'frostling': dict(neck=0.55, ear=0.25, hb={'front': [0.15, 0.85], 'fside': [0.45, 1], 'side': [0.55, 1]}, tail={'side': [0, 0.1, 0.4, 0.8], 'fside': [0, 0.1, 0.4, 0.8]}, leg=0.85, eyeKeys='kab'),
   'bellpaca':  dict(neck=0.33, ear=0.1, hb={'fside': [0.5, 1], 'side': [0.55, 1]}, tail={'side': [0, 0.3, 0.15, 0.6], 'fside': [0, 0.3, 0.15, 0.6]}, leg=0.75, eyeKeys='k'),
-  'brawlix':   dict(neck=0.38, ear=0.2, hb={}, tail={'side': [0, 0.5, 0.25, 0.7], 'fside': [0, 0.5, 0.25, 0.7]}, leg=0.66, eyeKeys='o', src={v: 'brawl-x.json' for v in VIEWS}, post=brawl_post),
   'wispurr':   dict(neck=0.45, ear=0.15, hb={'front': [0, 0.7], 'fside': [0, 0.75], 'side': [0.3, 1], 'back': [0.3, 1]}, tail={'side': [0, 0.5, 0.45, 1], 'fside': [0.6, 0.5, 1, 1], 'front': [0.65, 0.4, 1, 1], 'back': [0, 0.4, 0.35, 1]}, leg=2, eyeKeys='c'),
   'pixibelle': dict(neck=0.52, ear=0.24, hb={'front': [0.3, 0.7], 'fside': [0.3, 0.75], 'side': [0.35, 0.95], 'back': [0.3, 0.7]}, tail={}, leg=0.94, wings='eghi', eyeKeys='ka'),
 }
@@ -172,7 +179,7 @@ for id_, c in CFG.items():
         tail = [round(tb[0] * W), round(tb[1] * H), round(tb[2] * W) - 1, round(tb[3] * H) - 1] if tb else None
         top, A = legs(m, c['leg'])
         ne = 0 if view == 'back' else (1 if view == 'side' else 2)
-        ey = eyes(m, pal, view, neck, hb, ne, c['eyeKeys']) if ne and c['eyeKeys'] else []
+        ey = c['eyes'].get(view, []) if 'eyes' in c else eyes(m, pal, view, neck, hb, ne, c['eyeKeys']) if ne and c['eyeKeys'] else []
         maps[view] = m
         parts[view] = dict(tailPx=tailpx.get(view, []), neck=neck, ear=ear, hb=hb, tail=tail, leg=top, legA=[f'{x},{y}' for x, y in A], eyes=ey)
     out[id_] = dict(pal=pal, maps=maps, parts=parts, wings=c.get('wings', ''))

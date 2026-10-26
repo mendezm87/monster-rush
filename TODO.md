@@ -2,6 +2,8 @@
 
 ## Where we left off (keep this current at the end of every session)
 
+**2026-10-25 (r247):** Coilizard's eyes are bigger; Shadefang and Brawlix are back to their old designs with the guide's detail added (drawn in code again). **Waiting on the owner:** a look at these three, then which way (traced or old-plus-detail) for the other seven.
+
 **2026-10-25 (r246): in-between samples.** After the old-vs-new comparison the owner asked for an in-between; Coilizard (silver spring and blue bulb back, bigger from the front), Shadefang (dark grey, brighter red) and Brawlix (stockier, big taped fists, cream belly) are done as samples. **Waiting on the owner:** say if the direction is right; then the other seven get the same treatment (Thornback and Smouldox bigger with their flower/spines and horns/coals back, Wispurr's bigger lantern, Pixibelle's cheek spots, Bellpaca's bell, Lumawool's sparks).
 
 **2026-10-25 (r245): ten Coreatures redrawn from the owner's guides.** Lumawool, Smouldox, Shadefang, Frostling, Coilizard, Bellpaca, Wispurr, Brawlix, Thornback and Pixibelle are traced from GUIDE-*.jpg into `js/monsters/traced.js` (shared with the Stadium; the old hand-drawn art stays in each family's file, overridden). `tools/trace-guide.py` got `--tol` (fur close to the background's grey) and drops loose specks; Pixibelle's antennae were rebuilt (the ghosted row in her guide left bits floating). Long Coreatures (Coilizard, Thornback, Smouldox) are traced small enough that their side view fits the 32px picture, so they look small from the front. **Waiting on the owner:** look at the ten in the gallery; run the reworded GUIDE-GALEWING and GUIDE-VENOMIRE prompts (docs/guide-prompts.md).
