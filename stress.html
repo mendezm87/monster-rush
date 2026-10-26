@@ -71,13 +71,17 @@ frame.addEventListener('load', async () => {
   w.addEventListener('error', e => log('ERROR: ' + (e.message || e.error), 'bad'));
 
   // a full party of six with very different shapes (fliers, big ones, a floater)
+  // ?party=a,b,c picks the party (the first leads), ?foes=x,y what the Fight buttons bring in (r250: to try Coreatures in play)
+  const q = new URLSearchParams(location.search), ROSTER = G('ROSTER_BY_ID');
+  const pick = k => (q.get(k) || '').split(',').map(s => s.trim().toLowerCase()).filter(id => ROSTER[id]);
+  const party = pick('party'), foes = pick('foes');
   App.trainer = 'scarf'; App.look = 'm'; App.endless = false;
-  w.startRun('smugshi');
+  w.startRun(party[0] || 'smugshi');
   const run = App.run;
-  for (const id of ['garrishell', 'galewing', 'slumbear', 'sparkit', 'voltergeist']) run.recruit(id);
+  for (const id of party.length ? party.slice(1) : ['garrishell', 'galewing', 'slumbear', 'sparkit', 'voltergeist']) run.recruit(id);
   G('UI').drawRelics(run);
   const version = G('VERSION');
-  log(`Build ${version}. Full party of 6. Tap a button, then play as normal. Each relic logs the worst frame in the 3 s after it.`);
+  log(`Build ${version}. Party: ${run.party.map(m => m.def.name).join(', ')}${foes.length ? '. Fights bring in ' + foes.join(', ') : ''}. Tap a button, then play as normal. Each relic logs the worst frame in the 3 s after it.`);
 
   // ---- the meter: frames timed inside the game's own window
   const times = [], graph = $('#graph').getContext('2d');
@@ -146,7 +150,7 @@ frame.addEventListener('load', async () => {
     const b = App.battle;
     if (!b || b.state !== 'explore') { log('Finish the fight you are in first.'); return; }
     const ids = [];
-    for (let i = 0; i < n; i++) ids.push(...G('wildIds')(run.stageKey, 1, ids));
+    for (let i = 0; i < n; i++) ids.push(...(foes.length ? [foes[i % foes.length]] : G('wildIds')(run.stageKey, 1, ids)));
     b.room.cleared = false;
     b.room.enemies = ids.map(id => G('wildSpec')(id, run.floorN, 'wild'));
     b.startFight();
