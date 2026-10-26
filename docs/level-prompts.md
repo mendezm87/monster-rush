@@ -232,3 +232,19 @@ Save each as docs/refs/LV-<AREA>-4.jpg (for example LV-MEADOW-4.jpg).
 ```
 16-bit SNES-era pixel art texture for a top-down RPG, crisp chunky pixels, cel shading with three hard-edged tones and light from the top left, no text, no characters or creatures. One large square tile seen from directly above, filling the square completely from edge to edge with no border and no frame, on a flat plain light grey background. Inside the square: the open night sky far below a broken tower floor, a deep indigo void with many small white and gold stars and faint soft purple and blue nebula clouds. The detail is spread evenly across the whole square with no single large feature, so it repeats well.
 ```
+
+### LV-GROTTO-4b · fill, second try (Crystal Grotto)
+
+*r271: the first take was a cave scene (cliffs on the sides, crystals in clumps), which made odd mirrored shapes when tiled. This asks for an even texture with nothing large in it. Save as docs/refs/LV-GROTTO-4b.jpg so the two can be compared with the code-drawn chasm.*
+
+```
+16-bit SNES-era pixel art texture for a top-down RPG, crisp chunky pixels, cel shading with three hard-edged tones, no text, no characters or creatures. One large square tile seen from directly above, filling the square completely from edge to edge with no border and no frame, on a flat plain light grey background. Inside the square: looking straight down into a deep dark chasm, an even near-black deep purple darkness covering the whole square, with many tiny faintly glowing cyan crystal glints scattered evenly all over it and thin soft streaks of violet mist drifting across it. No cliffs, no rock walls, no ledges, no big crystals, no light source, no single feature larger than the rest. The pattern is the same density everywhere so it repeats seamlessly.
+```
+
+### LV-SPIRE-4b · fill, second try (Starlit Spire)
+
+*r271: the first take put the sky inside broken grey stone tiles, and only a small patch of sky could be used. This asks for sky only. Save as docs/refs/LV-SPIRE-4b.jpg.*
+
+```
+16-bit SNES-era pixel art texture for a top-down RPG, crisp chunky pixels, cel shading with three hard-edged tones, no text, no characters or creatures. One large square tile filling the square completely from edge to edge with no border and no frame, on a flat plain light grey background. Inside the square: only the open night sky, a deep indigo and dark violet starfield covering the whole square, with many small white, pale gold and pale blue stars of a few different sizes scattered evenly, and faint soft purple and blue nebula clouds spread evenly across it. No stone, no tiles, no floor, no tower, no moon, no planets, no single bright feature. The pattern is the same density everywhere so it repeats seamlessly.
+```
