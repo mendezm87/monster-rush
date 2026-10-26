@@ -71,9 +71,6 @@ def pixi_blush(m, view):
 CFG = {   # neck/ear: head and ear rows; hb: the head's columns per view (shares); leg: where legs start; eyeKeys: eye colours
   'lumawool':  dict(neck=0.55, ear=0.3, hb={'front': [0.2, 0.8], 'back': [0.15, 0.85], 'fside': [0.45, 1], 'side': [0.62, 1]}, tail={'side': [0, 0.3, 0.12, 0.65], 'fside': [0, 0.35, 0.1, 0.7]}, leg=0.82, eyeKeys=None, palx={'j': '#ffe14a', 'm': '#fff27a'}),
   'coilizard': dict(neck=0.5, ear=0.0, hb={'front': [0.2, 0.8], 'back': [0, 0.6], 'fside': [0.55, 1], 'side': [0.6, 1]}, tail={}, leg=0.72, eyeKeys=None, eyes={'front': [[5, 6, 3], [14, 6, 3]], 'fside': [[16, 9, 3]], 'side': [[23, 6, 3]]}, src={'front': 'coil-27.json', 'fside': 'coil-27.json', 'side': 'coil-22.json', 'back': 'coil-27.json'}, post=coil_spring, palx={'y': '#eef8d4'}),
-  'frostling': dict(neck=0.55, ear=0.25, hb={'front': [0.15, 0.85], 'fside': [0.45, 1], 'side': [0.55, 1]}, tail={'side': [0, 0.1, 0.4, 0.8], 'fside': [0, 0.1, 0.4, 0.8]}, leg=0.85, eyeKeys='kab'),
-  'bellpaca':  dict(neck=0.33, ear=0.1, hb={'fside': [0.5, 1], 'side': [0.55, 1]}, tail={'side': [0, 0.3, 0.15, 0.6], 'fside': [0, 0.3, 0.15, 0.6]}, leg=0.75, eyeKeys='k', palx={'e': '#ffe23a', 'd': '#f0a010'}),
-  'pixibelle': dict(neck=0.52, ear=0.24, hb={'front': [0.3, 0.7], 'fside': [0.3, 0.75], 'side': [0.35, 0.95], 'back': [0.3, 0.7]}, tail={}, leg=0.94, wings='eghi', eyeKeys='ka', palx={'r': '#ff5c86'}, post=pixi_blush, eyes={'front': [[12, 11, 2], [17, 11, 2]], 'fside': [[14, 11, 2], [19, 11, 1]], 'side': [[19, 11, 1]]}),
 }
 
 

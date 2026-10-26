@@ -1,48 +1,59 @@
 // Pixibelle: pixibelle. Drawn with the helpers in js/sprites.js (PixGrid shapes, rigParts, rigEye...).
 // Each monster: MONSTER_ART (front, side, back), MONSTER_ART_DIAG (fside, bside) and its body type in RIGGED.
+// r253 (the owner: "make pixibelle ... more chibi"): the old big-headed design again, with the guide's detail: pointed
+// butterfly wings with veins (wingPoly, so they still flap), curled antennae with pink tips, folds in her bell dress,
+// and a smile. A left-side wing as points; PIXI_WING_R is the root they swing from.
+const PIXI_WN = P('#c8eefa', '#94c8ec', '#ffffff'), PIXI_VEIN = '#6aa8dc', PIXI_TIP = '#ff6f9e';
+const PIXI_UP = [[12, 16], [6, 8], [3, 6.6], [1.6, 9.4], [3.4, 15.2], [9, 19]], PIXI_LOW = [[12, 19], [6.5, 19.4], [4.2, 23], [5.8, 26.4], [10, 24.4]];
+const PIXI_VEINS = [[[11.4, 16.2], [5, 9.4], [5.8, 9], [11.8, 15.6]], [[11.4, 17], [3.6, 13.2], [3.8, 12.4], [11.8, 16.4]], [[11.6, 19.6], [6, 23], [6.6, 23.4], [11.8, 20.2]]];
+function pixiWings(b, dx, mirror, far) {   // dx shifts them; mirror = both sides (front, back); far = a smaller one on the right too
+  const sh = pts => pts.map(([x, y]) => [x + dx, y]), w = { root: [12 + dx, 17] };
+  const draw = mirror ? wingPolyM : wingPoly;
+  draw(b, sh(PIXI_UP), PIXI_WN, { edge: true }, w); draw(b, sh(PIXI_LOW), PIXI_WN, { edge: true }, w);
+  for (const v of PIXI_VEINS) draw(b, sh(v), PIXI_VEIN, undefined, w);
+  if (far) {   // the far wings, peeking out on the right
+    const fw = { root: [20 + dx, 17] }, fx = pts => pts.map(([x, y]) => [32 - x + dx + far, y]);
+    wingPoly(b, fx(PIXI_UP).map(([x, y]) => [x - 1, y + 1]), PIXI_WN, { edge: true }, fw); wingPoly(b, fx(PIXI_LOW), PIXI_WN, { edge: true }, fw);
+  }
+}
+const pixiAntenna = (p, x, dir) => { p.rect(x, 2, 1, 4, OUTLINE); p.px(x + dir, 1, OUTLINE); p.px(x + dir * 2, 1, PIXI_TIP).px(x + dir * 2, 0, PIXI_TIP).px(x + dir * 3, 1, PIXI_TIP); };
+const pixiFolds = b => { b.px(14, 25, '#c83a7a').px(14, 27, '#c83a7a').px(18, 25, '#c83a7a').px(18, 27, '#c83a7a'); };
 Object.assign(MONSTER_ART, {
   pixibelle(g, v = 'front') {
     const B = P('#ffc4dc', '#e88ab4', '#fff0f6'), Wn = P('#d8f4ff', '#a4d4f0', '#ffffff'), Pk = '#ff5a9e';
     const { Q, b, h, earA, earB } = rigParts(g, v);
     const skirt = () => b.poly([[10, 29], [22, 29], [19, 22], [13, 22]], P(Pk, '#c83a7a', '#ff9ac4'), { edge: true });
     if (v === 'side') {
-      wingEllipse(b, 9, 13, 5.5, 5, Wn, { edge: true }); wingEllipse(b, 10, 22, 4, 3.5, Wn, { edge: true });
-      wingEllipse(b, 8, 12, 1.8, 1.5, '#ffb4dc');
-      earA.rect(19, 2, 1, 4, OUTLINE); earA.px(19, 1, '#ffe066'); earA.px(20, 1, '#ffe066'); earA.px(19, 0, '#ffe066');
+      pixiWings(b, 2, false, 0);
+      pixiAntenna(earA, 19, 1);
       b.ellipse(16, 23, 5, 5.5, B, { edge: true });
-      skirt();
+      skirt(); pixiFolds(b);
       h.ellipse(17, 12.5, 7, 6.5, B, { edge: true });
       h.poly([[9, 6], [13, 9], [9, 12]], Pk); h.px(12, 9, '#c83a7a');
       rigEye(h, Q, 20, 12, () => { h.rect(20, 12, 2, 3, '#6a2a5a'); h.px(20, 12, '#ffffff'); });
       h.ellipse(22, 16, 1.5, 1, '#ff8ab8');
-      rigMouth(h, Q, 22, 17, 2, () => h.px(23, 17, OUTLINE));
+      rigMouth(h, Q, 22, 17, 2, () => h.px(22, 17, OUTLINE).px(23, 18, OUTLINE));   // a smile
       return;
     }
     if (v === 'back') {
-      earA.rect(12, 2, 1, 4, OUTLINE); earB.rect(19, 2, 1, 4, OUTLINE);
-      earA.px(12, 1, '#ffe066').px(11, 1, '#ffe066').px(12, 0, '#ffe066'); earB.px(19, 1, '#ffe066').px(20, 1, '#ffe066').px(19, 0, '#ffe066');
+      pixiAntenna(earA, 12, -1); pixiAntenna(earB, 19, 1);
       b.ellipse(16, 23, 5, 5.5, B, { edge: true });
-      skirt();
+      skirt(); pixiFolds(b);
       h.ellipse(16, 12.5, 7, 6.5, B, { edge: true });
       h.poly([[11, 5], [16, 8], [11, 10]], Pk); h.poly([[21, 5], [16, 8], [21, 10]], Pk); h.px(16, 8, '#c83a7a');
-      wingEllipseM(b, 7.5, 14, 5.5, 5, Wn, { edge: true });
-      wingEllipseM(b, 9, 22, 4, 3.5, Wn, { edge: true });
-      wingEllipseM(b, 6.5, 13, 1.8, 1.5, '#ffb4dc');
+      pixiWings(b, 0, true);
       return;
     }
-    wingEllipseM(b, 6.5, 13, 5.5, 5, Wn, { edge: true });                                       // upper wings
-    wingEllipseM(b, 8, 22, 4, 3.5, Wn, { edge: true });                                         // lower wings
-    wingEllipseM(b, 5.5, 12, 1.8, 1.5, '#ffb4dc');                                              // wing spots
-    earA.rect(12, 2, 1, 4, OUTLINE); earB.rect(19, 2, 1, 4, OUTLINE);                           // antennae
-    earA.px(12, 1, '#ffe066').px(11, 1, '#ffe066').px(12, 0, '#ffe066'); earB.px(19, 1, '#ffe066').px(20, 1, '#ffe066').px(19, 0, '#ffe066');
+    pixiWings(b, 0, true);                                                                       // pointed butterfly wings with veins
+    pixiAntenna(earA, 12, -1); pixiAntenna(earB, 19, 1);                                         // curled antennae, pink tips
     b.ellipse(16, 23, 5, 5.5, B, { edge: true });                                               // body
-    skirt();                                                                                    // skirt
+    skirt(); pixiFolds(b);                                                                      // her bell dress, with folds
     h.ellipse(16, 12.5, 7, 6.5, B, { edge: true });                                             // head
     h.poly([[11, 5], [16, 8], [11, 10]], Pk); h.poly([[21, 5], [16, 8], [21, 10]], Pk);         // bow
     h.px(16, 8, '#c83a7a');
     rigEyes(h, Q, 32, 12, 12, 2, () => h.eyes(12, 12, '#6a2a5a'));
     h.ellipseM(10, 16, 1.5, 1, '#ff8ab8');                                                      // cheeks
-    rigMouth(h, Q, 15, 17, 2, () => h.px(16, 17, OUTLINE));
+    rigMouth(h, Q, 15, 17, 2, () => h.px(15, 17, OUTLINE).px(16, 18, OUTLINE).px(17, 17, OUTLINE));   // a smile
   },
 });
 Object.assign(MONSTER_ART_DIAG, {
@@ -50,33 +61,28 @@ Object.assign(MONSTER_ART_DIAG, {
     const B = P('#ffc4dc', '#e88ab4', '#fff0f6'), Wn = P('#d8f4ff', '#a4d4f0', '#ffffff'), Pk = '#ff5a9e';
     const { Q, b, h, earA, earB } = rigParts(g, v);
     const antennae = () => {
-      earB.rect(13, 2, 1, 4, OUTLINE); earB.px(13, 1, '#ffe066'); earB.px(12, 1, '#ffe066'); earB.px(13, 0, '#ffe066');
-      earA.rect(20, 2, 1, 4, OUTLINE); earA.px(20, 1, '#ffe066'); earA.px(21, 1, '#ffe066'); earA.px(20, 0, '#ffe066');
+      pixiAntenna(earB, 13, -1); pixiAntenna(earA, 20, 1);
     };
     const body = () => {
       b.ellipse(16, 23, 5, 5.5, B, { edge: true });
-      b.poly([[10, 29], [22, 29], [19, 22], [13, 22]], P(Pk, '#c83a7a', '#ff9ac4'), { edge: true }); // skirt
+      b.poly([[10, 29], [22, 29], [19, 22], [13, 22]], P(Pk, '#c83a7a', '#ff9ac4'), { edge: true }); pixiFolds(b);   // skirt
       h.ellipse(17, 12.5, 7, 6.5, B, { edge: true });
     };
     if (v === 'bside') {
       antennae();
       body();
       h.poly([[12, 5], [17, 8], [12, 10]], Pk); h.poly([[22, 5], [17, 8], [22, 10]], Pk); h.px(17, 8, '#c83a7a');   // bow
-      wingEllipse(b, 7.5, 14, 5.5, 5, Wn, { edge: true }); wingEllipse(b, 9, 22, 4, 3.5, Wn, { edge: true });   // wings
-      wingEllipse(b, 25.5, 13, 4.5, 4.5, Wn, { edge: true }); wingEllipse(b, 23.5, 21, 3.2, 3, Wn, { edge: true });
-      wingEllipse(b, 6.5, 13, 1.8, 1.5, '#ffb4dc');
+      pixiWings(b, 1, false, 1);
       return;
     }
-    wingEllipse(b, 6.5, 13, 5.5, 5, Wn, { edge: true }); wingEllipse(b, 8, 22, 4, 3.5, Wn, { edge: true }); // wings
-    wingEllipse(b, 25, 12, 4, 4.5, Wn, { edge: true }); wingEllipse(b, 24, 21, 3, 3, Wn, { edge: true });
-    wingEllipse(b, 5.5, 12, 1.8, 1.5, '#ffb4dc');
+    pixiWings(b, 0, false, 2);
     antennae();
     body();
     h.poly([[12, 5], [17, 8], [12, 10]], Pk); h.poly([[21, 6], [17, 8], [21, 10]], Pk); h.px(17, 8, '#c83a7a');   // bow
     rigEye(h, Q, 13, 12, () => { h.rect(13, 12, 2, 3, '#6a2a5a'); h.px(13, 12, '#ffffff'); });
     rigEye(h, Q, 20, 12, () => { h.rect(20, 12, 2, 3, '#6a2a5a'); h.px(20, 12, '#ffffff'); });
     h.ellipse(11.5, 16, 1.5, 1, '#ff8ab8'); h.ellipse(23, 16, 1.2, 1, '#ff8ab8');               // cheeks
-    rigMouth(h, Q, 17, 17, 2, () => h.px(18, 17, OUTLINE));
+    rigMouth(h, Q, 17, 17, 2, () => h.px(17, 17, OUTLINE).px(18, 18, OUTLINE).px(19, 17, OUTLINE));
   },
 });
 Object.assign(RIGGED, { pixibelle: 'flier' });
