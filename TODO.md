@@ -2,6 +2,8 @@
 
 ## Where we left off (keep this current at the end of every session)
 
+**2026-10-26 (r258): level design.** Looked at the levels with the owner: every area is the same empty box in a new colour. The owner picked: first each area's own walls and decorations. **Waiting on the owner:** the 12 Gemini prompts in `docs/level-prompts.md` (LV-MEADOW-1 and -2 through LV-SPIRE-1 and -2); one area's pair is enough to build and show it. Room shapes come with obstacles in step 2. Also waiting: the desktop build card (Windows build for Steam), Galewing and Venomire prompts.
+
 **2026-10-25 (r257):** the phone joystick slides back to its home spot when you let go (it used to stay where the last touch was). The owner OK'd Frostling and Thornback ("looks good").
 
 **2026-10-25 (r256):** Frostling stands on two legs with its round face in every view; Thornback narrower with longer legs.
