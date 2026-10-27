@@ -254,7 +254,7 @@ Research behind it: `docs/boss-research.md` (loved MMO raid bosses, what players
 
 ### Relic choices (r159)
 
-Treasure rooms offer **1 of 3 relics** on three pedestals, and a **chest** opens into the same pick of three, laid out a little way from where it was opened (`room.relicChoice = { ids, x, y, taken }`, built in `makePedestals`; taking one sets `taken` and the others vanish, `offerDone`). The offer screen says "Pick one relic". With every relic owned, treasure is still a picnic and a chest still gives one relic when only one is left. The shop's relics are the next two in the shuffle, so the shop never repeats the treasure's. Runs saved before r159 keep their single treasure relic (`room.relic`).
+Treasure rooms offer **1 of 3 relics** on three pedestals, and a **chest** opens into the same pick of three, laid out a little way from where it was opened (`room.relicChoice = { ids, x, y, taken }`, built in `makePedestals`; taking one sets `taken` and the others vanish, `offerDone`). The offer screen says "Pick one relic". With every relic owned, treasure is still a picnic and a chest still gives one relic when only one is left. The shop's relics are the next two in the shuffle, so the shop never repeats the treasure's. No relic can be owned twice (`addRelic` ignores one you have, and every offer is drawn from those you don't), but a chest's offer is drawn when it's opened and could include one the floor's shop sells, so the shop hides relics you already own (r273: buying it again took the coins for nothing). A relic fused at the altar leaves the party's list, so it can turn up again. Runs saved before r159 keep their single treasure relic (`room.relic`).
 
 ### Not decided yet (ask the owner when it matters)
 

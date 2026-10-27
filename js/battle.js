@@ -192,7 +192,8 @@ class Battle {
     if (room.type === 'recruit' && !room.recruited)
       this.pedestals = room.offer.map((id, i) => ({ kind: 'mon', id, x: cx + (i - (room.offer.length - 1) / 2) * (room.offer.length > 3 ? 100 : 120), y: cy - 6, cool: 0 }));
     if (room.type === 'shop')
-      room.stock.forEach((it, i) => { if (!it.sold) this.pedestals.push({ kind: 'shop', item: it, id: it.id, x: cx + (i - 1.5) * 100, y: cy - 6, cool: 0 }); });
+      // (r273) not a relic you already have: a chest on the floor can offer one the shop sells too, and buying it again took your coins for nothing
+      room.stock.forEach((it, i) => { if (!it.sold && !(RELICS[it.id] && this.run.relics.includes(it.id))) this.pedestals.push({ kind: 'shop', item: it, id: it.id, x: cx + (i - 1.5) * 100, y: cy - 6, cool: 0 }); });
     if (room.type === 'altar' && !room.used)
       this.pedestals = [{ kind: 'altar', id: 'altar', x: cx, y: cy - 6, cool: 0 }];
     if (room.type === 'treasure' && !room.taken && room.relic && !room.relicChoice)   // a picnic (every relic owned), or a run saved before r159
