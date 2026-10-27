@@ -73,8 +73,71 @@ const Lighting = (() => {
     return (room.torches = list);
   }
 
+  // Rim light (r276, toward HD-2D): Coreatures and the trainer catch a light edge on the side facing the room's
+  // lights. For a picture and a direction (8 steps), the edge is every pixel just inside the outline on that side
+  // (the pixel and the outline beyond it are solid, the next one out is empty), painted in the light's colour.
+  // Made once per picture, direction and colour and kept (a few hundred at most, the oldest freed), never per frame.
+  const RIM_DIRS = Array.from({ length: 8 }, (_, i) => [Math.round(Math.cos(i * Math.PI / 4)), Math.round(Math.sin(i * Math.PI / 4))]);
+  const rims = new Map(), RIM_MAX = 700;
+  let rimIds = new WeakMap(), rimNext = 1;
+  function rimMask(src, dir, col) {
+    let id = rimIds.get(src);
+    if (!id) rimIds.set(src, id = rimNext++);
+    const key = id + ':' + dir + ':' + col;
+    let c = rims.get(key);
+    if (c !== undefined) { rims.delete(key); rims.set(key, c); return c; }   // most recently used last
+    const w = src.width, h = src.height;
+    let data;
+    try { data = src.getContext('2d').getImageData(0, 0, w, h).data; } catch (e) { data = null; }
+    c = null;
+    if (data) {
+      const [dx, dy] = RIM_DIRS[dir], solid = (x, y) => x >= 0 && y >= 0 && x < w && y < h && data[(y * w + x) * 4 + 3] > 128;
+      const out = mk(w, h), oc = out.getContext('2d'), img = oc.createImageData(w, h), o = img.data;
+      const [R, G, B] = col.split(',').map(Number);
+      let n = 0;
+      for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+        if (!solid(x, y) || !solid(x + dx, y + dy) || solid(x + 2 * dx, y + 2 * dy)) continue;
+        const p = (y * w + x) * 4; o[p] = R; o[p + 1] = G; o[p + 2] = B; o[p + 3] = 255; n++;
+      }
+      if (n) { oc.putImageData(img, 0, 0); c = out; } else freeCanvas(out);
+    }
+    rims.set(key, c);
+    if (rims.size > RIM_MAX) { const [k0, c0] = rims.entries().next().value; rims.delete(k0); if (c0) freeCanvas(c0); }
+    return c;
+  }
+  // Where the light on something at (x, y) comes from: the nearby torches, plus a soft key light from the top left
+  // (like the art's own shading). Returns the direction step and how strong it is (0-1).
+  function rimLight(b, x, y) {
+    let vx = -0.45, vy = -0.45, s = 0.4;
+    for (const tc of torches(b.room)) {
+      const ex = tc.x - x, ey = tc.y + 14 - y, d = Math.hypot(ex, ey);
+      if (d > 230 || d < 1) continue;
+      const k = (1 - d / 230) ** 2 * 1.6;
+      vx += ex / d * k; vy += ey / d * k; s += k * 0.6;
+    }
+    const dir = ((Math.round(Math.atan2(vy, vx) / (Math.PI / 4)) % 8) + 8) % 8;
+    return { dir, s: Math.min(1, s) };
+  }
+
   return {
     on: true,
+    // the rim light's strength (0 turns it off)
+    rimAlpha: 0.6,
+    // Draw a picture's rim light over it: the same place and size it was just drawn at (dx, dy, pw, ph in the
+    // current transform); `flip` when it was drawn mirrored; (x, y) where it stands in the room.
+    rim(ctx, b, pic, x, y, dx, dy, pw, ph, flip, alpha = 1) {
+      if (!this.on || !this.rimAlpha || !b.room || !b.stage) return;
+      const L = rimLight(b, x, y);
+      let dir = L.dir;
+      if (flip) dir = (12 - dir) % 8;   // mirrored: left and right swap
+      const t = b.stage.light.torch, col = Math.min(255, t[0] + 40) + ',' + Math.min(255, t[1] + 40) + ',' + Math.min(255, t[2] + 40);
+      const m = rimMask(pic, dir, col);
+      if (!m) return;
+      const a = ctx.globalAlpha, op = ctx.globalCompositeOperation;
+      ctx.globalAlpha = a * alpha * this.rimAlpha * L.s; ctx.globalCompositeOperation = 'lighter';   // added light, so the colour under it shows through
+      ctx.drawImage(m, dx, dy, pw, ph);
+      ctx.globalAlpha = a; ctx.globalCompositeOperation = op;
+    },
     // soft: how strongly the light map soft-lights the scene (0.5 washed the colours out; r43);
     // pop: the lit scene overlaid on itself, which brings back its contrast and colour
     tune: { soft: 0.25, pop: 0.4 },

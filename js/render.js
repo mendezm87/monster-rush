@@ -672,6 +672,7 @@ mixInto(Battle, class {
     const w = pic.width * SPR_SCALE, h = pic.height * SPR_SCALE;
     ctx.save(); ctx.translate(px, 0); if (isSideView(t.view) && t.face < 0) ctx.scale(-1, 1);
     ctx.drawImage(pic, Math.round(-w / 2), Math.round(py - h + 1 + bob), w, h);
+    Lighting.rim(ctx, this, pic, px, py - 14, Math.round(-w / 2), Math.round(py - h + 1 + bob), w, h, isSideView(t.view) && t.face < 0);
     ctx.restore();
   }
 
@@ -741,7 +742,10 @@ mixInto(Battle, class {
     const skip = m.glitched && (this.time * 0.7 + (m.side === 'enemy' ? 0.5 : 0)) % 1 < 0.05 ? (Math.sin(this.time * 70) > 0 ? 2 : -2) * k : 0;
     const dx = -pw / 2 + skip, dy = 3 - ph;
     if (m.assembleT !== undefined && m.assembleT < 1) drawAssembling(ctx, pic, dx, dy, pw, ph, m.assembleT, TYPES[m.def.types[0]].color);   // beamed in from the Arcbracer
-    else ctx.drawImage(pic, dx, dy, pw, ph);
+    else {
+      ctx.drawImage(pic, dx, dy, pw, ph);
+      if (!roll && !(m.lift > 0.01)) Lighting.rim(ctx, this, pic, X, Y - m.h / 2, dx, dy, pw, ph, isSideView(m.view) && m.face < 0, alpha);   // the room's light on its edge (r276)
+    }
     let tint = null, ta = 0;
     if (m.flash > 0) { tint = '#ffffff'; ta = Math.min(0.45, m.flash * 3.5); }   // a hit flash you can still see the Coreature through (r147)
     else if (m.fainted) { tint = '#ffffff'; ta = Math.min(0.8, m.fadeT); }
