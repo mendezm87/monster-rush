@@ -17,6 +17,7 @@ TOX = 6               # body coordinates (the pose rig's) are picture x minus TO
 SHOULDER, HAND = 0.42, 0.80   # where the arms run, as a share of the figure's height from the top of its head
 ARM_W = 4             # how many columns an arm takes at the side
 NAMES = {'scarf': 'Relay Runner', 'researcher': 'Archive Scholar', 'diver': 'Salvager', 'shiba': 'Shrine Keeper'}
+FACE_LEFT = {'researcher', 'diver'}   # Gemini drew these looks' side and three-quarter views facing left; the game's face right (r278)
 ARM_FIX = {           # (look, sex, view, arm): (x0, y0, x1, y1) in picture pixels, where the guess is off
     ('scarf', 'm', 'back', 'L'): (4, 24, 7, 33), ('scarf', 'm', 'back', 'R'): (19, 24, 22, 33),   # the scarf hangs down his right side
     ('scarf', 'f', 'back', 'L'): (6, 24, 9, 33), ('scarf', 'f', 'back', 'R'): (18, 24, 21, 33),
@@ -97,6 +98,7 @@ def main():
         for sex in 'mf':
             for view, rows in t[sex].items():
                 rows = fill_holes(rows)
+                if look in FACE_LEFT and view in ('side', 'fside'): rows = [r[::-1] for r in rows]
                 L[sex][view] = {'map': rows, 'arms': find_arms(rows, look, sex, view) if view != 'side' else {}}
             L[sex]['bside'] = L[sex]['back']   # three-quarter back: the back view for now
         out[look] = L

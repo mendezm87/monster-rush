@@ -734,9 +734,41 @@ function trainerCanvas(look = TRAINER_DEFAULT_LOOK, view = 'front') {
   const key = 'c' + look + view;
   return _trainer[key] || (_trainer[key] = gridFromMap(trainerMap(look, view), trainerPal(look)).toCanvas());
 }
+// A traced look's walk (r278, the owner: they didn't seem to walk; one boot up a pixel couldn't be seen at this size):
+// the legs are the bottom quarter of the figure, split where the feet part. Facing you or away, one leg lifts two
+// pixels on each step (left, both down, right, both down); side-on, the feet stride apart, come together, the near
+// foot lifts, come together.
+function trTracedStep(map, view, i) {
+  const side = view === 'side', g = map.map(r => [...r]), h = g.length, w = g[0].length;
+  let top = h, bot = 0, x0 = w, x1 = 0;
+  g.forEach((r, y) => r.forEach((c, x) => { if (c !== '.') { top = Math.min(top, y); bot = Math.max(bot, y); x0 = Math.min(x0, x); x1 = Math.max(x1, x); } }));
+  const hip = bot - Math.round((bot - top + 1) * 0.24);
+  // where the feet part: the emptiest column near the middle of the bottom rows
+  const mid = Math.round((x0 + x1) / 2);
+  let split = mid, best = 99;
+  for (let x = mid - 3; x <= mid + 3; x++) { let n = 0; for (let y = bot - 3; y <= bot; y++) if (g[y][x] !== '.') n++; if (n < best || (n === best && Math.abs(x - mid) < Math.abs(split - mid))) { best = n; split = x; } }
+  if (i % 2 === 0 && !side) return map;
+  const out = map.map(r => [...r]);
+  const move = (inLeg, dx, dy, from = hip) => {   // the leg's pixels from `from` down, moved
+    for (let y = from; y <= bot; y++) for (let x = 0; x < w; x++) if (inLeg(x)) out[y][x] = '.';
+    for (let y = from; y <= bot; y++) for (let x = 0; x < w; x++) {
+      if (!inLeg(x) || g[y][x] === '.') continue;
+      const nx = x + dx, ny = y + dy;
+      if (nx >= 0 && nx < w && ny >= 0) out[ny][nx] = g[y][x];
+    }
+  };
+  if (!side) move(i === 1 ? x => x < split : x => x >= split, 0, -2);
+  else if (i === 0) return map;
+  else if (i === 1) { const low = bot - Math.round((bot - hip) * 0.6); move(x => x < split, -1, 0, low); move(x => x >= split, 1, 0, low); }
+  else if (i === 2) return map;
+  else move(x => x >= split, 1, -2);
+  return out.map(r => r.join(''));
+}
 function trainerWalk(look = TRAINER_DEFAULT_LOOK, view = 'front') {
   const key = 'w' + look + view;
   if (_trainer[key]) return _trainer[key];
   const map = trainerMap(look, view), pal = trainerPal(look), still = trainerCanvas(look, view);
+  const { T, f } = trSplit(look);
+  if (trTraced(T, f, view)) return (_trainer[key] = [0, 1, 2, 3].map(i => gridFromMap(trTracedStep(map, view, i), pal).toCanvas()));
   return (_trainer[key] = [still, gridFromMap(trainerStep(map, 0), pal).toCanvas(), still, gridFromMap(trainerStep(map, 1), pal).toCanvas()]);
 }
