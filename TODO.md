@@ -2,6 +2,8 @@
 
 ## Where we left off (keep this current at the end of every session)
 
+**2026-10-27 (r277):** the owner's look at r276 in the Sunken Ruins: the middle of rooms was a muddy brown pool (only the wall torches lit the room; now a soft light covers the floor), and the trainer was see-through in spots (the Salvager's grey outfit had been read as background; filled). **Waiting on the owner:** another look in play, other areas too.
+
 **2026-10-27 (r276): the lighting step:** trainers and Coreatures catch a light edge from the room's lights (the top-left key light and the nearest torches, in the area's torch colour: warm in the meadow, teal in the Grotto). **Waiting on the owner:** a look in play (Settings > Lighting off turns it off too). Next ideas: proper three-quarter back views for the trainers; a camera pulled back a little like Resonance.
 
 **2026-10-27 (r275): the new trainers are in:** Relay Runner, Archive Scholar, Salvager, Shrine Keeper (the owner's picks 1A, 2A, 3B, 4B, redrawn chibi by Gemini so faces read at 40 rows, traced into the game with their poses). **Waiting on the owner:** a look in play. Next: the lighting step (a light edge on trainers and Coreatures from the room's lights); maybe proper three-quarter back views.

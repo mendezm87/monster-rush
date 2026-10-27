@@ -639,6 +639,32 @@ function trainerArmsAt(look, view) {
   for (const [k, a] of Object.entries(V.arms)) out[k] = { sx: a.sx, sy: a.sy, side: a.side };
   return out;
 }
+// Fill gaps closed in by a figure (rows of keys as arrays, '.' empty) from the colours round each, working in from its
+// edge (the same as fill_holes in tools/traced-trainers.py).
+function trFillHoles(g) {
+  const h = g.length, w = g[0].length, out = new Set(), st = [];
+  for (let x = 0; x < w; x++) st.push([x, 0], [x, h - 1]);
+  for (let y = 0; y < h; y++) st.push([0, y], [w - 1, y]);
+  while (st.length) {
+    const [x, y] = st.pop(), k = x + ',' + y;
+    if (x < 0 || y < 0 || x >= w || y >= h || out.has(k) || g[y][x] !== '.') continue;
+    out.add(k); st.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+  }
+  let holes = [];
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (g[y][x] === '.' && !out.has(x + ',' + y)) holes.push([x, y]);
+  while (holes.length) {
+    const done = [];
+    for (const [x, y] of holes) {
+      let near = [];
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, 1], [1, -1], [-1, -1]]) { const c = (g[y + dy] || [])[x + dx]; if (c && c !== '.') near.push(c); }
+      if (near.some(c => c !== 'k')) near = near.filter(c => c !== 'k');
+      if (near.length >= 2) done.push([x, y, near.sort((a, b) => near.filter(c => c === b).length - near.filter(c => c === a).length)[0]]);
+    }
+    if (!done.length) { for (const [x, y] of holes) g[y][x] = 'k'; break; }
+    for (const [x, y, c] of done) g[y][x] = c;
+    holes = holes.filter(([x, y]) => g[y][x] === '.');
+  }
+}
 // A look in a view as rows of keys (cached). noArm: 'L', 'R' or 'LR' leaves those arms off (for posing).
 const _trmaps = {};
 function trainerMap(look, view, noArm = '') {
@@ -675,6 +701,7 @@ function trainerMap(look, view, noArm = '') {
       const big = Math.max(...parts.map(p => p.length));
       for (const part of parts) if (part.length < big && part.length < 30) for (const [x, y] of part) g[y][x] = '.';
     }
+    if (noArm) trFillHoles(g);   // gaps the lifted arm left closed in by the body take the outfit's colours round them (r277)
     return (_trmaps[key] = g.map(r => r.join('')));
   }
   T.body(P, v, f);

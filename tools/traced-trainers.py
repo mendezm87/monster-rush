@@ -25,6 +25,29 @@ ARM_FIX = {           # (look, sex, view, arm): (x0, y0, x1, y1) in picture pixe
 }
 
 
+def fill_holes(rows):
+    """Gaps inside a figure are bits of its outfit the trace took for background (the Salvager's grey jumpsuit is close
+    to the sheet's grey, r277): fill each from the colours round it, working in from its edge."""
+    h, w = len(rows), len(rows[0]); g = [list(r) for r in rows]
+    out, st = set(), [(x, y) for x in range(w) for y in (0, h - 1)] + [(x, y) for y in range(h) for x in (0, w - 1)]
+    while st:
+        x, y = st.pop()
+        if (x, y) in out or not (0 <= x < w and 0 <= y < h) or g[y][x] != '.': continue
+        out.add((x, y)); st += [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)]
+    holes = {(x, y) for y in range(h) for x in range(w) if g[y][x] == '.' and (x, y) not in out}
+    while holes:
+        done = {}
+        for x, y in holes:
+            near = [g[y + dy][x + dx] for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, 1), (1, -1), (-1, -1))
+                    if 0 <= x + dx < w and 0 <= y + dy < h and g[y + dy][x + dx] != '.']
+            near = [c for c in near if c != 'k'] or near   # the outline only where nothing else is next to it
+            if len(near) >= 2: done[(x, y)] = max(set(near), key=near.count)
+        if not done: done = {p: 'k' for p in holes}
+        for (x, y), c in done.items(): g[y][x] = c
+        holes -= set(done)
+    return [''.join(r) for r in g]
+
+
 def find_arms(rows, look, sex, view):
     filled = [(x, y) for y, r in enumerate(rows) for x, c in enumerate(r) if c != '.']
     y_top = min(y for _, y in filled); y_bot = max(y for _, y in filled); h = y_bot - y_top + 1
@@ -73,6 +96,7 @@ def main():
         L = {'name': NAMES.get(look, look), 'pal': t['pal'], 'm': {}, 'f': {}}
         for sex in 'mf':
             for view, rows in t[sex].items():
+                rows = fill_holes(rows)
                 L[sex][view] = {'map': rows, 'arms': find_arms(rows, look, sex, view) if view != 'side' else {}}
             L[sex]['bside'] = L[sex]['back']   # three-quarter back: the back view for now
         out[look] = L

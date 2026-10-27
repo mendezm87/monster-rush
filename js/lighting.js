@@ -177,7 +177,11 @@ const Lighting = (() => {
         if (sx < -sr || sy < -sr || sx > LW + sr || sy > LH + sr) return;
         lc.globalAlpha = a; lc.drawImage(glowSprite(rgb), sx - sr, sy - sr, sr * 2, sr * 2);
       };
-      for (const tc of torches(b.room)) glow(tc.x, tc.y + 14, 200 + Math.sin(t * 9 + tc.x) * 10, mood.torch, 0.85);
+      // a soft light over the whole floor, brightest in the middle (r277: with only the wall torches the middle of a
+      // big room was left in the dim base light, a muddy pool, worst in the Sunken Ruins' orange-brown)
+      const F = roomField(b.room);
+      glow((F.x0 + F.x1) / 2, (F.y0 + F.y1) / 2, Math.max(F.x1 - F.x0, F.y1 - F.y0) * 0.9, [255, 248, 235], 0.7);
+      for (const tc of torches(b.room)) glow(tc.x, tc.y + 14, 200 + Math.sin(t * 9 + tc.x) * 10, mood.torch, 0.6);
       const P = b.P;
       if (P.visible) glow(P.x, P.y - 10, 110, [255, 235, 210], 0.35);   // a soft light that follows your Coreature
       for (const m of b.e) if (m.alive) glow(m.x, m.y - 10, 70, [255, 235, 210], 0.18);

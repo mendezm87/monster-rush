@@ -80,6 +80,8 @@ frame.addEventListener('load', async () => {
   const run = App.run;
   for (const id of party.length ? party.slice(1) : ['garrishell', 'galewing', 'slumbear', 'sparkit', 'voltergeist']) run.recruit(id);
   G('UI').drawRelics(run);
+  const fl = +q.get('floor');   // ?floor=5 starts on that floor (to try an area)
+  if (fl > 1) { run.newFloor(fl); w.enterRoom(run.room, null); }
   const version = G('VERSION');
   log(`Build ${version}. Party: ${run.party.map(m => m.def.name).join(', ')}${foes.length ? '. Fights bring in ' + foes.join(', ') : ''}. Tap a button, then play as normal. Each relic logs the worst frame in the 3 s after it.`);
 
