@@ -2,6 +2,8 @@
 
 ## Where we left off (keep this current at the end of every session)
 
+**2026-10-26 (r274): new trainers in an HD-2D look** (the owner, after seeing Final Fantasy Resonance: "new designs"). Round 10 in docs/concept-prompts.md: two designs for each of the four trainer roles (TR-1A to TR-4B), each a pixel-art sheet of him and her in four views. **Waiting on the owner:** the pictures and a pick per role; then trace one look first, then the rest, then lighting that touches the sprites (a light edge from the room's lights).
+
 **2026-10-26 (r273):** the shop hides relics you already own (a chest could offer one it sold too). Relic levelling (duplicates stacking) waits for difficulty tuning (ROADMAP).
 
 **2026-10-26 (r272):** the owner's phone test: lava in walled-off Crater corners ran under the walls (the block's fill now stays inside the room's walls), and on floor 3 the game lagged and every picture went blank (graphics memory: phones now use a smaller canvas, rooms free their pictures when you leave, and a wipe makes the game save, reload and continue). **Waiting on the owner:** another run on the phone to see if it holds up.
