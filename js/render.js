@@ -660,19 +660,19 @@ mixInto(Battle, class {
   }
 
   drawTrainer(ctx) {
-    const t = this.trainer, img = this.trainerImg[t.view];
+    const t = this.trainer, F = trainerFacing(this.look, t.view, t.face), img = trainerCanvas(this.look, F.v);
     const px = Math.round(t.x), py = Math.round(t.y);
     Lighting.shadow(ctx, px, py, 11, 4, 0.9);
-    // walking: a 4-frame step (pixel.js trainerWalk), a frame every 10 world units, up a pixel as a leg lifts
-    const f = Math.floor(t.walkT / 10) % 4;
+    // walking: the look's walk cycle (trainers.js trainerWalk: 6 traced frames, or 4 made frames that bob a pixel)
+    const walk = trainerWalk(this.look, F.v), f = Math.floor(t.walkT / (40 / walk.length)) % walk.length;   // a step about every 20 world units
     // standing: acting something out (trainer.js) or just standing
     const act = !t.moving && t.act ? trainerActFrame(t.act, this.time - t.actT) : null;
-    const pic = t.moving ? this.trainerWalk[t.view][f] : act ? trainerPose(this.look, t.view, act.pose) : img;
-    const bob = t.moving && f % 2 ? -1 : act && act.hop ? -act.hop : 0;
+    const pic = t.moving ? walk[f] : act ? trainerPose(this.look, F.v, act.pose) : img;
+    const bob = t.moving && !walk.real && f % 2 ? -1 : act && act.hop ? -act.hop : 0;
     const w = pic.width * SPR_SCALE, h = pic.height * SPR_SCALE;
-    ctx.save(); ctx.translate(px, 0); if (isSideView(t.view) && t.face < 0) ctx.scale(-1, 1);
+    ctx.save(); ctx.translate(px, 0); if (F.flip) ctx.scale(-1, 1);
     ctx.drawImage(pic, Math.round(-w / 2), Math.round(py - h + 1 + bob), w, h);
-    Lighting.rim(ctx, this, pic, px, py - 14, Math.round(-w / 2), Math.round(py - h + 1 + bob), w, h, isSideView(t.view) && t.face < 0);
+    Lighting.rim(ctx, this, pic, px, py - 14, Math.round(-w / 2), Math.round(py - h + 1 + bob), w, h, F.flip);
     ctx.restore();
   }
 

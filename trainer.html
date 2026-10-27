@@ -78,7 +78,7 @@
         paint(cv, trainerPose(LOOK, 'fside', f.pose), f.hop);
       }
       const dirs = ['front', 'fside', 'side', 'bside', 'back', 'bside', 'side', 'fside'], d = Math.floor(t / 1.2) % 8;
-      for (const { key, cv } of walkers) paint4(cv, trainerWalk(key, dirs[d])[Math.floor(t * 6) % 4], d > 4);
+      for (const { key, cv } of walkers) paint4(cv, (w => w[Math.floor(t * 1.5 * w.length) % w.length])(trainerWalk(key, dirs[d])), d > 4);
       requestAnimationFrame(tick);
     })();
     // the sheet

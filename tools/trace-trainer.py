@@ -50,6 +50,8 @@ def main():
     ap.add_argument('--colors', type=int, default=24); ap.add_argument('--rows', type=int, default=40)
     ap.add_argument('--order', default='m0,m1,m2,m3,f0,f1,f2,f3'); ap.add_argument('--tol', type=int, default=36)
     ap.add_argument('--preview')
+    ap.add_argument('--walk', help='a walk sheet: one --band per row, these views in order (e.g. fside,side,back); writes <id>-walk.json')
+    ap.add_argument('--per', type=int, default=6, help='frames in each row of a walk sheet')
     a = ap.parse_args()
     src = Image.open(a.path).convert('RGB'); full = np.array(src).astype(int)
     found = []   # (crop box in sheet pixels)
@@ -59,9 +61,11 @@ def main():
         im = full[y0b:y1b]
         bg = np.median(np.concatenate([im[:3].reshape(-1, 3), im[-3:].reshape(-1, 3)]), axis=0)
         fg = np.abs(im - bg).sum(2) > a.tol
-        for x0, x1 in figures(fg, len(a.order.split(',')) // len(a.band.split(';'))):
+        for x0, x1 in figures(fg, a.per if a.walk else len(a.order.split(',')) // len(a.band.split(';'))):
             ys = np.where(fg[:, x0:x1].any(1))[0]
             found.append((x0, y0b + ys[0], x1, y0b + ys[-1] + 1, bg))
+    if a.walk:   # a walk sheet: every frame is a figure, named by its row's view and its place in the row
+        a.order = ','.join(f'{v}:{i}' for v in a.walk.split(',') for i in range(a.per))
     order = a.order.split(',')
     assert len(found) >= len([o for o in order]), f'found {len(found)} figures'
     cell = max(f[3] - f[1] for f in found) / a.rows   # sheet pixels per game pixel
@@ -95,9 +99,21 @@ def main():
         rows = rows[-TH:]
         ox = (TW - w) // 2
         pic = ['.' * TW] * (TH - len(rows)) + [('.' * ox + r + '.' * TW)[:TW] if ox >= 0 else r[-ox:-ox + TW] for r in rows]
-        out[tag[0]][VIEWS[int(tag[1])]] = pic
+        if a.walk: v, i = tag.split(':'); out.setdefault('walk', {}).setdefault(v, []).append(pic)
+        else: out[tag[0]][VIEWS[int(tag[1])]] = pic
     os.makedirs(os.path.join(ROOT, 'tools', 'traced-trainers'), exist_ok=True)
-    json.dump(out, open(os.path.join(ROOT, 'tools', 'traced-trainers', a.id + '.json'), 'w'), indent=0)
+    if a.walk: del out['m'], out['f']
+    json.dump(out, open(os.path.join(ROOT, 'tools', 'traced-trainers', a.id + ('-walk' if a.walk else '') + '.json'), 'w'), indent=0)
+    if a.preview and a.walk:
+        S = 8; frames = [(v, p) for v, ps in out['walk'].items() for p in ps]
+        prev = Image.new('RGB', ((TW * S + 6) * a.per, (TH * S + 6) * len(out['walk'])), (40, 40, 40)); d = ImageDraw.Draw(prev)
+        for r, (v, ps) in enumerate(out['walk'].items()):
+            for c, rows in enumerate(ps):
+                ox, oy = c * (TW * S + 6), r * (TH * S + 6); d.rectangle([ox, oy, ox + TW * S - 1, oy + TH * S - 1], fill=(120, 150, 110))
+                for y, row in enumerate(rows):
+                    for x, ch in enumerate(row):
+                        if ch != '.': d.rectangle([ox + x * S, oy + y * S, ox + x * S + S - 1, oy + y * S + S - 1], fill=out['pal'][ch])
+        prev.save(a.preview); a.preview = None
     if a.preview:
         S = 10; ims = []
         for sex in 'mf':
@@ -114,7 +130,7 @@ def main():
         W = sum(i.width + 10 for i in ims); prev = Image.new('RGB', (W, TH * S), (40, 40, 40)); x = 0
         for im in ims: prev.paste(im, (x, 0)); x += im.width + 10
         prev.save(a.preview)
-    print(a.id, 'cell %.2f' % cell, {s: {v: max(len(r.strip('.')) for r in out[s][v]) for v in out[s]} for s in 'mf'})
+    print(a.id, 'cell %.2f' % cell, {k: len(v) for k, v in out.get('walk', {}).items()} if a.walk else {s: {v: max(len(r.strip('.')) for r in out[s][v]) for v in out[s]} for s in 'mf'})
 
 
 if __name__ == '__main__':

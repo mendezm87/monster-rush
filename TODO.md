@@ -2,6 +2,8 @@
 
 ## Where we left off (keep this current at the end of every session)
 
+**2026-10-27 (r279):** the trainers walk with Gemini walk cycles (three-quarter, side, back; facing left mirrored where Gemini wouldn't draw it, checked for swapped details), and they use their own facing-left pictures so the scarf and bracelet don't jump sides. **Still to do:** the Shrine Keeper (her) walk sheet (Gemini's daily image limit ran out; it resets at 6:30 PM). **Waiting on the owner:** a look in play. **Next (the owner):** the Coreatures' visual update.
+
 **2026-10-27 (r278):** the traced trainers walk (a leg lifts on each step, side-on a stride) and the Archive Scholar and Salvager face the way they go (Gemini drew their side views facing left). **Next (the owner):** the Coreatures' visual update, once the trainers are good.
 
 **2026-10-27 (r277):** the owner's look at r276 in the Sunken Ruins: the middle of rooms was a muddy brown pool (only the wall torches lit the room; now a soft light covers the floor), and the trainer was see-through in spots (the Salvager's grey outfit had been read as background; filled). **Waiting on the owner:** another look in play, other areas too.

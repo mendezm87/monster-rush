@@ -624,7 +624,19 @@ const TRAINER_LOOKS = {
 // pictures come straight from the trace, with Gemini's own outline, and its arms (found by tools/traced-trainers.py)
 // give the pose rig their shoulders and colours. The hand-shaped looks above stay as a fallback.
 if (typeof TRAINER_TRACED !== 'undefined') for (const [id, t] of Object.entries(TRAINER_TRACED)) TRAINER_LOOKS[id] = { name: t.name, pal: t.pal, traced: t, heads: {} };
-const trTraced = (T, f, v) => T.traced && (T.traced[f ? 'f' : 'm'][v] || T.traced[f ? 'f' : 'm'].front);
+const trTraced = (T, f, v) => { const S = T.traced && T.traced[f ? 'f' : 'm']; return S && (S[v] || (v === 'bside' && S.back) || S.front); };
+// Which picture to draw for a view and facing, and whether to mirror it (r279, the owner: asymmetric characters must
+// not look off when they turn). Side-on views are mirrored for facing left, which swaps one-sided things (the Relay
+// Runner's scarf, the Arcbracer on the right wrist); a traced look with its own facing-left pictures ('sideL',
+// 'fsideL') uses those instead, and its three-quarter back view (the back picture for now) is never mirrored.
+function trainerFacing(look, view, face) {
+  const { T, f } = trSplit(look), S = T.traced && T.traced[f ? 'f' : 'm'];
+  const side = view === 'side' || view === 'fside' || view === 'bside';
+  if (!side || face >= 0) return { v: view, flip: false };
+  if (S && S[view + 'L']) return { v: view + 'L', flip: false };
+  if (S && view === 'bside' && !S.bside) return { v: view, flip: false };
+  return { v: view, flip: true };
+}
 
 // ---------------------------------------------------------------- building
 const trainerLook = (id, look) => (TRAINER_LOOKS[id] ? id : 'scarf') + '-' + (look === 'f' ? 'f' : 'm');
@@ -670,7 +682,7 @@ const _trmaps = {};
 function trainerMap(look, view, noArm = '') {
   const key = look + view + noArm;
   if (_trmaps[key]) return _trmaps[key];
-  const { T, f } = trSplit(look), v = TRAINER_VIEWS.includes(view) ? view : 'front', P = trPainter();
+  const { T, f } = trSplit(look), v = TRAINER_VIEWS.includes(view) || trTraced(T, f, view) ? view : 'front', P = trPainter();
   const V = trTraced(T, f, v);
   if (V) {   // a traced look: the picture as traced; an arm being posed is left off, and the gap it leaves is inked
     const g = V.map.map(r => [...r]), gone = new Set();
@@ -769,6 +781,8 @@ function trainerWalk(look = TRAINER_DEFAULT_LOOK, view = 'front') {
   if (_trainer[key]) return _trainer[key];
   const map = trainerMap(look, view), pal = trainerPal(look), still = trainerCanvas(look, view);
   const { T, f } = trSplit(look);
+  const W = T.traced && T.traced[f ? 'f' : 'm'].walk;   // a walk cycle traced from Gemini's walk sheet (r279)
+  if (W && W.frames[view]) { const pics = W.frames[view].map(m => gridFromMap(m, W.pal).toCanvas()); pics.real = true; return (_trainer[key] = pics); }
   if (trTraced(T, f, view)) return (_trainer[key] = [0, 1, 2, 3].map(i => gridFromMap(trTracedStep(map, view, i), pal).toCanvas()));
   return (_trainer[key] = [still, gridFromMap(trainerStep(map, 0), pal).toCanvas(), still, gridFromMap(trainerStep(map, 1), pal).toCanvas()]);
 }
