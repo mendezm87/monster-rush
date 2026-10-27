@@ -40,7 +40,7 @@ const _tposes = {};
 function trainerPose(look, view, poseName) {
   const key = look + view + poseName;
   if (_tposes[key]) return _tposes[key];
-  const P = TRAINER_POSES[poseName] || {}, arms = TRAINER_ARMS[view] || TRAINER_ARMS.front;
+  const P = TRAINER_POSES[poseName] || {}, arms = trainerArmsAt(look, view);
   const moving = k => arms[k] && P['arm' + k] !== undefined;
   const map = trainerMap(look, view, ['L', 'R'].filter(moving).join(''));   // the moving arms left off
   const grid = Array.from({ length: TP_H }, () => Array(TP_W).fill('.'));
@@ -58,7 +58,7 @@ function trainerPose(look, view, poseName) {
   const armPx = [];
   for (const k of ['L', 'R']) {
     if (!moving(k)) continue;
-    for (const [x, y, ch, far] of trainerArmPx(arms[k], P['arm' + k], trainerArmCols(look, k), TP_X + TOX, TP_Y + c)) { put(x, y, ch); armPx.push([x, y, far]); }
+    for (const [x, y, ch, far] of trainerArmPx(arms[k], P['arm' + k], trainerArmCols(look, k, view), TP_X + TOX, TP_Y + c)) { put(x, y, ch); armPx.push([x, y, far]); }
   }
   // ink round the arms: on empty pixels, and past the shoulder also where it crosses the body or face
   const own = new Set(armPx.map(([x, y]) => x + ',' + y));

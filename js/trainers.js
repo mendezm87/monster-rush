@@ -619,17 +619,64 @@ const TRAINER_LOOKS = {
   },
 };
 
+// (r275, the owner: "the trainers need a facelift"; new designs drawn by Gemini in an HD-2D style, docs/refs/TR-*-chibi.jpg)
+// A traced look replaces the hand-shaped one with the same id (trainers-traced.js, loaded before this file): its
+// pictures come straight from the trace, with Gemini's own outline, and its arms (found by tools/traced-trainers.py)
+// give the pose rig their shoulders and colours. The hand-shaped looks above stay as a fallback.
+if (typeof TRAINER_TRACED !== 'undefined') for (const [id, t] of Object.entries(TRAINER_TRACED)) TRAINER_LOOKS[id] = { name: t.name, pal: t.pal, traced: t, heads: {} };
+const trTraced = (T, f, v) => T.traced && (T.traced[f ? 'f' : 'm'][v] || T.traced[f ? 'f' : 'm'].front);
+
 // ---------------------------------------------------------------- building
 const trainerLook = (id, look) => (TRAINER_LOOKS[id] ? id : 'scarf') + '-' + (look === 'f' ? 'f' : 'm');
 const trSplit = look => { const [id, sex] = String(look).split('-'); return { T: TRAINER_LOOKS[id] || TRAINER_LOOKS.scarf, f: sex === 'f' }; };
 function trainerPal(look) { return { ...TRAINER_SKIN, ...trSplit(look).T.pal }; }
-function trainerArmCols(look, k) { return trSplit(look).T.arm(k); }
+function trainerArmCols(look, k, view) { const { T, f } = trSplit(look), V = trTraced(T, f, view); return V ? V.arms[k] : T.arm(k); }
+// where a look's arms hang in a view, for the pose rig (a traced look's own, else everyone's)
+function trainerArmsAt(look, view) {
+  const { T, f } = trSplit(look), V = trTraced(T, f, view);
+  if (!V) return TRAINER_ARMS[view] || TRAINER_ARMS.front;
+  const out = {};
+  for (const [k, a] of Object.entries(V.arms)) out[k] = { sx: a.sx, sy: a.sy, side: a.side };
+  return out;
+}
 // A look in a view as rows of keys (cached). noArm: 'L', 'R' or 'LR' leaves those arms off (for posing).
 const _trmaps = {};
 function trainerMap(look, view, noArm = '') {
   const key = look + view + noArm;
   if (_trmaps[key]) return _trmaps[key];
   const { T, f } = trSplit(look), v = TRAINER_VIEWS.includes(view) ? view : 'front', P = trPainter();
+  const V = trTraced(T, f, v);
+  if (V) {   // a traced look: the picture as traced; an arm being posed is left off, and the gap it leaves is inked
+    const g = V.map.map(r => [...r]), gone = new Set();
+    for (const k of noArm) {
+      const A = V.arms[k];
+      if (!A) continue;
+      for (const [x, y] of A.px) { g[y][x] = '.'; gone.add(x + ',' + y); }
+      for (const [x, y, c] of A.fill) { g[y][x] = c; gone.delete(x + ',' + y); }   // the outfit behind the arm
+    }
+    for (const s of gone) {
+      const [x, y] = s.split(',').map(Number);
+      if ([[1, 0], [-1, 0], [0, 1], [0, -1]].some(([ox, oy]) => { const c = (g[y + oy] || [])[x + ox]; return c && c !== '.' && !gone.has((x + ox) + ',' + (y + oy)); })) g[y][x] = 'k';
+    }
+    if (noArm) {   // bits left cut off from the body once an arm is lifted (a scarf end that hung over it) go too
+      const seen = new Set(), parts = [];
+      for (let y = 0; y < g.length; y++) for (let x = 0; x < g[0].length; x++) {
+        if (g[y][x] === '.' || seen.has(x + ',' + y)) continue;
+        const part = [], st = [[x, y]]; seen.add(x + ',' + y);
+        while (st.length) {
+          const [cx, cy] = st.pop(); part.push([cx, cy]);
+          for (const [ox, oy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+            const nx = cx + ox, ny = cy + oy, k2 = nx + ',' + ny;
+            if (ny >= 0 && ny < g.length && nx >= 0 && nx < g[0].length && g[ny][nx] !== '.' && !seen.has(k2)) { seen.add(k2); st.push([nx, ny]); }
+          }
+        }
+        parts.push(part);
+      }
+      const big = Math.max(...parts.map(p => p.length));
+      for (const part of parts) if (part.length < big && part.length < 30) for (const [x, y] of part) g[y][x] = '.';
+    }
+    return (_trmaps[key] = g.map(r => r.join('')));
+  }
   T.body(P, v, f);
   const arms = TRAINER_ARMS[v];
   for (const k of ['L', 'R']) if (arms[k] && !noArm.includes(k)) trArm(P, arms[k], T.arm(k));

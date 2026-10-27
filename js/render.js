@@ -900,7 +900,7 @@ mixInto(Battle, class {
   // Top-right: the rooms you've seen on this floor, and your coins.
   drawMinimap(ctx) {
     const rooms = this.run.floor.rooms;
-    const seen = r => this.run.reveal || r.visited || Object.values(r.doors).some(o => o.visited);   // the Dungeon Diver's lantern shows it all
+    const seen = r => this.run.reveal || r.visited || Object.values(r.doors).some(o => o.visited);   // the Salvager's scanner shows it all
     const shown = rooms.filter(seen);
     const cw = 13, ch = 9, gap = 2;
     const gxs = shown.map(r => r.gx), gys = shown.map(r => r.gy);

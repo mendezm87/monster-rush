@@ -378,7 +378,7 @@ class Battle {
     const inc = this.P;
     this.ui.callout('player', `Go, ${inc.def.name}`, inc.def.types[0]);
     this.sendOut(at);
-    this.emit('swapIn', inc);   // e.g. the Scarf Tamer's Tag Team
+    this.emit('swapIn', inc);   // e.g. the Relay Runner's Tag Team
     return true;
   }
 
