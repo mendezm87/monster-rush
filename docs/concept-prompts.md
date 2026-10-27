@@ -970,3 +970,62 @@ needs a proper guide for its side and back, which were drawn from words alone. R
 > outline, plain flat grey background, no text, no shadow, crisp pixels, no blur
 
 Round 9 (guide pictures for redrawing Coreatures) moved to `docs/guide-prompts.md`.
+
+## Round 10: new trainers in an HD-2D look (r274, the owner: "the trainers need a facelift", after seeing Final Fantasy Resonance; "new designs")
+
+The four trainer roles stay (their powers are gameplay: swaps, research, delving, the Shiba), but each gets a new look,
+and their names can change to fit. Two designs per role; pick one per role (or mix). Each prompt makes the guide
+directly: a pixel-art sprite sheet of him and her in four views, which Claude traces into the game's trainer pictures,
+like Smugshogun in r243. Every design wears the Arcbracer (a slim bracelet on the right wrist with a glowing crystal)
+and keeps clear of the famous cap-wearing trainer (no red cap with a white front, no blue-and-white jacket). Arms hang
+at their sides so the game can pose them.
+
+Save the pictures as docs/refs/TR-1A.jpg and so on.
+
+### TR-1A · the swapper (Scarf Tamer's role): Relay Runner
+
+```
+HD-2D style pixel art character sprite sheet for a top-down action RPG: detailed 16-bit pixel art with rich shading in four tones per colour, soft light from the top left, a crisp dark outline, about 48 pixels tall, crisp pixels, no blur, no anti-aliasing. Two characters side by side, a young man and a young woman in the same outfit: a nimble courier who runs messages between ruined cities, a short fitted teal jacket with orange piping, a long trailing orange scarf, light fingerless gloves, dark running trousers with knee guards, sturdy trail shoes, a small courier bag on the hip, a slim bracelet on the right wrist holding a glowing cyan crystal. He has short swept-back dark hair, she has a high ponytail. Confident friendly faces with clear eyes. Each character shown four times in a row: from the front, three-quarter front, from the side facing right, and from behind. Standing relaxed with arms hanging at their sides. Plain flat grey background, no text, no shadow.
+```
+
+### TR-1B · the swapper: Arc Duelist
+
+```
+HD-2D style pixel art character sprite sheet for a top-down action RPG: detailed 16-bit pixel art with rich shading in four tones per colour, soft light from the top left, a crisp dark outline, about 48 pixels tall, crisp pixels, no blur, no anti-aliasing. Two characters side by side, a young man and a young woman in the same outfit: a sharp competitive battler, a cropped white and crimson high-collared coat with gold buttons, a black fitted shirt, a crimson sash at the waist, dark slim trousers tucked into tall black boots, one short half-cape over the left shoulder, a slim bracelet on the right wrist holding a glowing crimson crystal. He has spiky silver hair, she has a sleek silver bob. Confident faces with a slight smirk. Each character shown four times in a row: from the front, three-quarter front, from the side facing right, and from behind. Standing relaxed with arms hanging at their sides. Plain flat grey background, no text, no shadow.
+```
+
+### TR-2A · the researcher (Field Researcher's role): Archive Scholar
+
+```
+HD-2D style pixel art character sprite sheet for a top-down action RPG: detailed 16-bit pixel art with rich shading in four tones per colour, soft light from the top left, a crisp dark outline, about 48 pixels tall, crisp pixels, no blur, no anti-aliasing. Two characters side by side, a young man and a young woman in the same outfit: a scholar who studies an ancient lost civilisation, a long sand-coloured coat with many pockets and rolled sleeves, a dark green waistcoat, a satchel full of scrolls and a small glowing stone tablet, a brass monocle-lens over one eye, brown trousers and lace-up boots, a slim bracelet on the right wrist holding a glowing green crystal. He has messy auburn hair, she has long auburn hair in a loose braid with a pencil tucked in it. Curious bright faces. Each character shown four times in a row: from the front, three-quarter front, from the side facing right, and from behind. Standing relaxed with arms hanging at their sides. Plain flat grey background, no text, no shadow.
+```
+
+### TR-2B · the researcher: Wild Ranger
+
+```
+HD-2D style pixel art character sprite sheet for a top-down action RPG: detailed 16-bit pixel art with rich shading in four tones per colour, soft light from the top left, a crisp dark outline, about 48 pixels tall, crisp pixels, no blur, no anti-aliasing. Two characters side by side, a young man and a young woman in the same outfit: a field naturalist who tracks creatures in the wild, an olive green hooded poncho over a cream shirt, a wide-brimmed tan hat with a feather, a sketchbook strapped to the belt, a pair of binoculars on a cord around the neck, brown shorts over dark leggings, tall laced boots, a slim bracelet on the right wrist holding a glowing amber crystal. He has short curly black hair, she has two short dark braids. Warm calm faces. Each character shown four times in a row: from the front, three-quarter front, from the side facing right, and from behind. Standing relaxed with arms hanging at their sides. Plain flat grey background, no text, no shadow.
+```
+
+### TR-3A · the delver (Dungeon Diver's role): Ruin Delver
+
+```
+HD-2D style pixel art character sprite sheet for a top-down action RPG: detailed 16-bit pixel art with rich shading in four tones per colour, soft light from the top left, a crisp dark outline, about 48 pixels tall, crisp pixels, no blur, no anti-aliasing. Two characters side by side, a young man and a young woman in the same outfit: a tough explorer of deep ruins, a dented brass miner's helmet with a glowing headlamp, a heavy rust-red canvas jacket with leather shoulder patches, a climbing harness with a coiled rope and a small pickaxe on the back, thick gloves, dark cargo trousers, heavy boots, a slim bracelet on the right wrist holding a glowing blue crystal. He has a short dark beard shadow, she has a short messy undercut. Determined faces with a smudge of dirt on one cheek. Each character shown four times in a row: from the front, three-quarter front, from the side facing right, and from behind. Standing relaxed with arms hanging at their sides. Plain flat grey background, no text, no shadow.
+```
+
+### TR-3B · the delver: Salvager
+
+```
+HD-2D style pixel art character sprite sheet for a top-down action RPG: detailed 16-bit pixel art with rich shading in four tones per colour, soft light from the top left, a crisp dark outline, about 48 pixels tall, crisp pixels, no blur, no anti-aliasing. Two characters side by side, a young man and a young woman in the same outfit: a scavenger who salvages lost technology from ruins, round tinted goggles pushed up on the forehead, a patched grey and mustard yellow work jumpsuit with the top tied at the waist, a dark tank top, a tool belt with wrenches and a small glowing device, a breathing mask hanging around the neck, heavy work boots, a slim bracelet on the right wrist holding a glowing violet crystal. He has a shaggy brown mop of hair, she has a short choppy pink bob. Scrappy cheerful faces. Each character shown four times in a row: from the front, three-quarter front, from the side facing right, and from behind. Standing relaxed with arms hanging at their sides. Plain flat grey background, no text, no shadow.
+```
+
+### TR-4A · the Shiba handler (Shiba Trainer's role): Dog Handler
+
+```
+HD-2D style pixel art character sprite sheet for a top-down action RPG: detailed 16-bit pixel art with rich shading in four tones per colour, soft light from the top left, a crisp dark outline, about 48 pixels tall, crisp pixels, no blur, no anti-aliasing. Two characters side by side, a young man and a young woman in the same outfit: an easygoing dog lover who travels with a Shiba Inu, a cosy ginger and cream knitted sweater with a paw print on the chest, a red bandana around the neck, a treat pouch and a coiled leash on the belt, a small silver whistle on a cord, dark jeans, comfy brown boots, a slim bracelet on the right wrist holding a glowing orange crystal. He has fluffy ginger hair, she has ginger hair in two low buns. Happy relaxed faces. Each character shown four times in a row: from the front, three-quarter front, from the side facing right, and from behind. Standing relaxed with arms hanging at their sides. Plain flat grey background, no text, no shadow.
+```
+
+### TR-4B · the Shiba handler: Shrine Keeper
+
+```
+HD-2D style pixel art character sprite sheet for a top-down action RPG: detailed 16-bit pixel art with rich shading in four tones per colour, soft light from the top left, a crisp dark outline, about 48 pixels tall, crisp pixels, no blur, no anti-aliasing. Two characters side by side, a young man and a young woman in the same outfit: a young keeper of a hilltop shrine guarded by Shiba Inu dogs, a modern take on shrine clothes, a white wide-sleeved jacket with red trim tied with a red cord, loose red trousers, a short ginger fur-trimmed cape like a Shiba's coat, a wooden charm on a cord, sandals with white socks, a slim bracelet on the right wrist holding a glowing gold crystal. He has neat black hair with a red hair tie, she has long black hair tied low with a red ribbon. Calm kind faces. Each character shown four times in a row: from the front, three-quarter front, from the side facing right, and from behind. Standing relaxed with arms hanging at their sides. Plain flat grey background, no text, no shadow.
+```
