@@ -77,6 +77,7 @@ The roguelikes people play for hundreds of hours are built on **builds**: items 
 - [ ] **An unlock tree:** permanent upgrades and new options bought with something earned in runs (Hades' Mirror, Dead Cells' cells), balanced so skill still matters.
 - [ ] **Achievements** (100+ by release; Steam achievements later) that unlock new relics, Coreatures and trainers, the way Isaac's do.
 - [ ] **More trainers (4 -> 8):** each changes how a run plays, not just a stat (one with two Coreatures out at once, one who can't recruit but levels faster, one who fuses relics at any time...).
+- [ ] **Difficulty tuning** (bots win most runs now): then decide on **levelling up relics** (the owner, r273: "can wait until we play with difficulty tuning"). The idea if wanted: a duplicate raises a relic to level 2 or 3 for about half its bonus again, duplicates offered now and then (about 1 offer in 6), and some never level (Second Wind, Echo Chamber), since multipliers and "every so often" effects compound and duplicates cut a run's variety.
 - [ ] **A difficulty ladder** (like Hades' Heat or Slay the Spire's Ascension): stackable challenges for a reward, for players who've beaten the game.
 - [ ] **Daily seeded runs** with a shared leaderboard (needs an online service: decide later, **owner**).
 - [ ] **Content scale for 1.0:** about 100-150 Coreatures with evolution lines and branches, 150+ moves, 150+ relics.
