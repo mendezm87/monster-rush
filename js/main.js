@@ -2,7 +2,7 @@
 
 // Shown on the title screen so players can tell whether their browser has the latest
 // build (GitHub Pages lets browsers cache files for up to 10 minutes). Bump on every release.
-const VERSION = '2026.10.26-r271';
+const VERSION = '2026.10.26-r272';
 
 const App = {
   endless: false,   // the mode picked on the title screen
@@ -19,9 +19,12 @@ const ctx = canvas.getContext('2d');
 // pixels (2 = 1152 wide, 4 = 2304 for 1080p), and let the browser smoothly shrink it to fit.
 // Whole-pixel sprites, no uneven columns. Capped at 6 (3456 wide) so 4K stays fast; there it's
 // stretched about 10%, which is barely softer.
+// r272 (the owner's Pixel phone: lag on floor 3, then every picture went blank): phones stop at 4 canvas pixels per world
+// unit. Their sharp screens asked for 6 (a 3456 x 1944 canvas), far more graphics memory than a phone-sized picture needs
+const PHONE = !!(window.matchMedia && matchMedia('(pointer: coarse)').matches);
 function fitScreen() {
   const px = $('#game').getBoundingClientRect().width * (window.devicePixelRatio || 1);
-  const res = Math.min(6, Math.max(2, Math.ceil(px / W / 2 - 0.02) * 2));
+  const res = Math.min(PHONE ? 4 : 6, Math.max(2, Math.ceil(px / W / 2 - 0.02) * 2));
   if (res !== RES) { RES = res; canvas.width = W * RES; canvas.height = H * RES; }
 }
 fitScreen();
@@ -285,6 +288,10 @@ const roomHooks = {
 };
 
 function enterRoom(room, entry) {
+  // (r272) the room we're leaving gives back its pictures (floor, scorch marks, decorations); they're redrawn from its
+  // seed if we come back, so only one room's are held at a time instead of the whole floor's
+  const prev = App.battle && App.battle.room;
+  if (prev && prev !== room) { freeCanvas(prev.canvas); freeCanvas(prev.decal); freeCanvas(prev.decor); delete prev.canvas; delete prev.decal; delete prev.decor; }
   App.run.room = room;
   Sfx.music.play(roomSong(App.run, room));
   App.battle = new Battle({ run: App.run, room, entry, ui: UI, hooks: roomHooks });
@@ -728,6 +735,21 @@ requestAnimationFrame(frame);
 $('#version').textContent = 'version ' + VERSION;
 titleStats(); updateContinue();
 UI.show('title');
+
+// (r272) if the browser wipes the game's pictures anyway (a phone that runs out of graphics memory loses every canvas,
+// and the game would carry on with blank ones), save, reload and carry on with the run: a fight starts over from the
+// start of its room, like after a refresh
+let picturesLost = false;
+function reloadAndResume() {
+  if (picturesLost) return;
+  picturesLost = true;
+  if (App.battle && App.battle.state === 'explore') saveRun();
+  if (App.run && !App.run.over) { Save.data.resume = true; Save.write(); }
+  location.reload();
+}
+canvas.addEventListener('contextlost', () => setTimeout(reloadAndResume, 300));
+canvas.addEventListener('contextrestored', reloadAndResume);
+if (Save.data.resume) { delete Save.data.resume; Save.write(); if (Save.loadRun()) continueRun(); }
 
 // Debug / testing hook
 window.__MBS = App;

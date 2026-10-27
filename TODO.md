@@ -2,6 +2,8 @@
 
 ## Where we left off (keep this current at the end of every session)
 
+**2026-10-26 (r272):** the owner's phone test: lava in walled-off Crater corners ran under the walls (the block's fill now stays inside the room's walls), and on floor 3 the game lagged and every picture went blank (graphics memory: phones now use a smaller canvas, rooms free their pictures when you leave, and a wipe makes the game save, reload and continue). **Waiting on the owner:** another run on the phone to see if it holds up.
+
 **2026-10-26 (r271):** the Grotto and Spire use the owner's second-take fill pictures (a dark chasm, a starfield): they match the other areas' painted fills.
 
 **2026-10-26 (r270):** the owner's fill pictures are in: thicket, lava lake, deep snow and rubble fill the walled-off corners; the Grotto (a dark chasm with crystal glints) and the Spire (the night sky) are drawn in code, since their pictures didn't tile. **Waiting on the owner:** a look in play.

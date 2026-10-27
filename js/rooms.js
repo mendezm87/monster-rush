@@ -212,7 +212,7 @@ function roomDecor(room, stageKey) {
       if (!q.block) continue;
       const top = q.block[0] === 't', L = q.block[1] === 'l', wt = fx0, th = tops[0][3];
       const bx0 = Math.round((q.x - q.fw / 2) / S), bx1 = Math.round((q.x + q.fw / 2) / S), by0 = Math.round((q.y - q.fd) / S), by1 = Math.round(q.y / S);
-      const ex0 = L ? 0 : bx0, ex1 = L ? bx1 : dw, ey0 = top ? 0 : by0, ey1 = top ? by1 : dh;   // reaching into the walls it's against
+      const ex0 = L ? fx0 : bx0, ex1 = L ? bx1 : fx1, ey0 = top ? fy0 : by0, ey1 = top ? by1 : fy1;   // inside the room's walls, which stay drawn round it (r272: its fill ran under them, the owner: lava "leaking through the walls")
       const faceTop = top && faces.length ? by1 - baseH : ey1;
       // its top (r269, the owner: "something better to fill in the inaccessible parts"; rows of wall tops read as
       // stripes): the area's own fill picture tiled across it (LV-<AREA>-4, mirrored tile by tile so it joins up), or
@@ -222,7 +222,7 @@ function roomDecor(room, stageKey) {
       if (FILL_SKY[stageKey]) clip(ex0, ey0, ex1, faceTop, () => drawSky(ctx, FILL_SKY[stageKey], ex0, ey0, ex1, faceTop, rand));
       else if (ft) clip(ex0, ey0, ex1, faceTop, () => {
         const [fx, fy, fw, fh] = ft;
-        for (let y = top ? faceTop - fh : by0, j = 0; top ? y > ey0 - fh : y < dh; y += top ? -fh : fh, j++) for (let x = ex0, i = 0; x < ex1; x += fw, i++) {
+        for (let y = top ? faceTop - fh : by0, j = 0; top ? y > ey0 - fh : y < ey1; y += top ? -fh : fh, j++) for (let x = ex0, i = 0; x < ex1; x += fw, i++) {
           const mi = !fill.d.seamless && i % 2, mj = !fill.d.seamless && j % 2;   // a seamless tile (one repeat of a pattern) goes straight
           ctx.save(); ctx.translate(x + (mi ? fw : 0), y + (mj ? fh : 0)); ctx.scale(mi ? -1 : 1, mj ? -1 : 1);
           ctx.drawImage(fill.img, fx, fy, fw, fh, 0, 0, fw, fh); ctx.restore();
