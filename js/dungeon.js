@@ -440,13 +440,13 @@ function tryFloor(floorN, partyIds, relics, last, offers = 3) {
       const areaPick = () => (Math.random() < 0.8 ? pickRand(AREA_MONS[stage].bosses) : pickRand(ids));
       r.enemies = [wildSpec(areaPick(), floorN, 'gate')];
       if (bossKind === 'act') {   // a hand-made boss for this act (bosses.js); endless past them: any of them, or an area boss
-        const all = typeof BOSSES !== 'undefined' ? Object.keys(BOSSES) : [];
+        const all = typeof BOSSES !== 'undefined' ? Object.keys(BOSSES).filter(id => BOSSES[id].act) : [];   // (the Warden is the final boss only)
         const pool = all.filter(id => BOSSES[id].act === actOf(floorN)), any = pool.length ? pool : floorN > RUN_FLOORS ? all : [];
         r.enemies = [any.length ? wildSpec(pickRand(any), floorN, 'act') : { ...wildSpec(areaPick(), floorN, 'boss'), act: true }];
       }
       // the final boss is an evolved starter you didn't start with
       const mains = EVOLVED.filter(e => !e.needs && STARTERS.includes(e.from)), rivals = mains.filter(e => !partyIds.includes(e.from));   // only the starters' main forms are final bosses
-      if (last) r.enemies = [wildSpec(pickRand(rivals.length ? rivals : mains).id, floorN, 'final')];
+      if (last) r.enemies = [{ ...wildSpec(pickRand(rivals.length ? rivals : mains).id, floorN, 'final'), ...(typeof BOSSES !== 'undefined' && BOSSES.warden ? { script: 'warden' } : {}) }];   // the Archive's Warden (bosses.js, r280)
       if (bossKind !== 'gate' && Math.random() < bossGlitchOdds(floorN)) r.enemies[0].glitch = true;
     }
     if (r.type === 'recruit') {   // two of the area's Coreatures and one from anywhere

@@ -61,6 +61,7 @@ def main():
         im = full[y0b:y1b]
         bg = np.median(np.concatenate([im[:3].reshape(-1, 3), im[-3:].reshape(-1, 3)]), axis=0)
         fg = np.abs(im - bg).sum(2) > a.tol
+        fg[fg.mean(1) > 0.5] = False   # a ground line drawn under the feet (the local generator's sheets) isn't a figure
         for x0, x1 in figures(fg, a.per if a.walk else len(a.order.split(',')) // len(a.band.split(';'))):
             ys = np.where(fg[:, x0:x1].any(1))[0]
             found.append((x0, y0b + ys[0], x1, y0b + ys[-1] + 1, bg))

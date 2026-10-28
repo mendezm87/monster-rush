@@ -39,6 +39,13 @@ const BOSS_MV = {   // (each gets boss: true below, so BOSS_MOVE_MUL leaves them
   rock:    { id: 'bossRock', name: 'Rockfall', type: 'earth', style: 'rock', kind: 'zone', power: 120 },
   tear:    { id: 'bossTear', name: 'Data Tear', type: 'glitch', style: 'poison', kind: 'zone', power: 26 },
   crash:   { id: 'bossCrash', name: 'Hibernation Crash', type: 'beast', style: 'normal', kind: 'zone', power: 0 },
+  iaido:   { id: 'bossIaido', name: 'Iaido Dash', type: 'beast', style: 'fighting', kind: 'zone', power: 200 },
+  kiln:    { id: 'bossKiln', name: 'Kiln Vents', type: 'fire', style: 'fire', kind: 'zone', power: 150, status: ['brn', 0.3] },
+  embers:  { id: 'bossEmbers', name: 'Burning Ground', type: 'fire', style: 'fire', kind: 'zone', power: 20, status: ['brn', 0.15] },
+  tide:    { id: 'bossTide', name: 'Tidal Rings', type: 'water', style: 'water', kind: 'zone', power: 140 },
+  rain:    { id: 'bossRain', name: 'Data Rain', type: 'arcane', style: 'psychic', kind: 'zone', power: 115 },
+  storm:   { id: 'bossStorm', name: 'Data Storm', type: 'arcane', style: 'psychic', kind: 'zone', power: 0 },
+  purge:   { id: 'bossPurge', name: 'Archive Purge', type: 'glitch', style: 'poison', kind: 'zone', power: 0 },
 };
 for (const mv of Object.values(BOSS_MV)) mv.boss = true;
 
@@ -70,7 +77,35 @@ const BOSSES = {
         } },
     ],
   },
+  // THE ARCHIVE'S WARDEN (the final boss, floor 6, r280). The Deep Archive's core takes the form of a starter you
+  // didn't pick (Smugshogun, Infernox or Maelstrisk) and fights with that form's signature. Phase 2, ARCHIVE
+  // OVERRIDE: it cycles through all three starters' forms every 8 s, opening with each one's signature (its types
+  // change with it, so the best counter changes too). Phase 3, CORE EXPOSED: back in its own form, a Data Storm
+  // hits the whole room except a few safe circles, and near the end the Archive Purge: hit it hard enough before
+  // the purge runs or it hits the whole room.
+  warden: {
+    final: true, title: 'WARDEN OF THE ARCHIVE', forms: ['smugshogun', 'infernox', 'maelstrisk'],
+    phases: [
+      { at: 1, patterns: B => [WARDEN_SIG[B.m.id] || 'dataRain', 'dataRain'] },
+      { at: 0.66, form: B => pickRand(WARDEN_FORMS.filter(f => f !== B.m.id)),
+        banner: ['ARCHIVE OVERRIDE', "Its data cycles through every starter's form"],
+        patterns: B => [WARDEN_SIG[B.m.id] || 'dataRain', 'dataRain'],
+        update(B, b, dt) {
+          if ((B.cycleT -= dt) > 0 || B.busy > 0 || B.special) return;
+          B.cycleT = 8;
+          B.shiftTo(b, pickRand(WARDEN_FORMS.filter(f => f !== B.m.id)));
+        } },
+      { at: 0.33, form: B => B.m.baseId, banner: ['CORE EXPOSED', 'Find the safe spots when the Data Storm hits'],
+        patterns: B => [WARDEN_SIG[B.m.id] || 'dataRain', 'dataStorm', 'dataRain'],
+        update(B, b, dt) {
+          const m = B.m;
+          if (!B.purged && m.hp / m.maxHp <= 0.15 && B.busy <= 0) { B.purged = true; BOSS_PATTERNS.archivePurge.run(B, b, m); }
+        } },
+    ],
+  },
 };
+const WARDEN_FORMS = ['smugshogun', 'infernox', 'maelstrisk'];
+const WARDEN_SIG = { smugshogun: 'iaidoDash', infernox: 'kilnVents', maelstrisk: 'tidalRings' };
 
 // The hand-made attacks. B is the brain, b the battle, m the boss.
 // BOSS-1 pieces (r242): the owner's icicle, ice slab, bamboo spear, landing shadow and dust ring
@@ -175,6 +210,81 @@ const BOSS_PATTERNS = {
       B.hazard(b, { shape: 'circle', x, y, r: 21, delay: 1.1 + i * 0.16, mv: BOSS_MV.rock, force: 200, fall: [-1, 1.1], onLand(b, h) { if (typeof FX_PIECES !== 'undefined' && FX_PIECES && FXS.earth1) b.fxRockSmash(h.x, h.y - 4, 26, null); else b.fxBlast(h.x, h.y, 24, BOSS_MV.rock); b.decalAt(h.x, h.y, 12); b.addShake(3); } });
     }
   } },
+  // the Warden: strikes of data rain down across the room, a couple where you're heading
+  dataRain: { cd: 7, w: 2, run(B, b, m) {
+    B.act(m, 0.8, 'roar'); b.ui.callout('enemy', 'Data Rain', 'arcane');
+    const F = b.F, P = b.P;
+    for (let i = 0; i < 7; i++) {
+      const near = i < 2;
+      const x = clamp(near ? P.x + P.vx * 0.6 + rand(-24, 24) : rand(F.x0 + 30, F.x1 - 30), F.x0 + 20, F.x1 - 20);
+      const y = clamp(near ? P.y + P.vy * 0.6 + rand(-16, 16) : rand(F.y0 + 30, F.y1 - 20), F.y0 + 20, F.y1 - 10);
+      B.hazard(b, { shape: 'circle', x, y, r: 22, delay: 1.0 + i * 0.14, mv: BOSS_MV.rain, force: 150,
+        onLand(b, h) { b.fxBlast(h.x, h.y, 24, BOSS_MV.rain); b.burst(h.x, h.y - 6, ['#ffffff', '#3af0ff', '#c8b8ff'], 8, 70, -40, 2); b.addShake(2.5); } });
+    }
+  } },
+  // Smugshogun: a warned line through where you stand, then he cuts along it (from phase 2, a second cut back at you)
+  iaidoDash: { cd: 6, w: 3, run(B, b, m) {
+    b.ui.callout('enemy', 'Iaido Dash', 'beast');
+    BOSS_PATTERNS.iaidoDash.cut(B, b, m, 1.1);
+    if (B.phase > 0) B.after(1.6, () => { if (m.alive && !B.trans) BOSS_PATTERNS.iaidoDash.cut(B, b, m, 0.85); });
+  }, cut(B, b, m, delay) {
+    const P = b.P, a = Math.atan2(P.y - m.y, P.x - m.x), len = Math.max(30, rayLen(b.F, m.x, m.y, a) - 16), sx = m.x, sy = m.y;
+    const ex = sx + Math.cos(a) * len, ey = sy + Math.sin(a) * len;
+    B.act(m, delay + 0.4, 'windup');
+    B.hazard(b, { shape: 'line', x: sx, y: sy, a, len, w: 28, delay, mv: BOSS_MV.iaido, force: 260,
+      onLand(b, h) {
+        if (h.echo) return;
+        const to = b.unblock({ x: ex, y: ey }, m.r) ? { x: sx, y: sy } : { x: ex, y: ey };
+        m.x = to.x; m.y = to.y; m.face = Math.cos(a) < 0 ? -1 : 1;
+        for (let k = 0; k < 8; k++) { const d = len * k / 8; b.particles.push({ kind: 'streak', x: sx + Math.cos(a) * d, y: sy - 10 + Math.sin(a) * d, sx: Math.cos(a) * 700, sy: Math.sin(a) * 700, color: k % 2 ? '#ffffff' : '#ffd23f', life: 0.2, max: 0.2 }); }
+        b.sparks(m.x, m.y - 12, 14, '#ffd23f'); b.addShake(8); Sfx.play('bigHit'); } });
+  } },
+  // Infernox: a grid of kiln vents erupts in two waves (a checkerboard), and each leaves the ground burning
+  kilnVents: { cd: 8, w: 3, run(B, b, m) {
+    B.act(m, 1.4, 'windup'); b.ui.callout('enemy', 'Kiln Vents', 'fire');
+    const F = b.F, cols = 5, rows = 3, gx = (F.x1 - F.x0) / cols, gy = (F.y1 - F.y0) / rows, flip = Math.random() < 0.5;
+    for (let i = 0; i < cols; i++) for (let j = 0; j < rows; j++) {
+      const wave = ((i + j) % 2 === 0) !== flip ? 0 : 1, x = F.x0 + gx * (i + 0.5), y = F.y0 + gy * (j + 0.5);
+      B.hazard(b, { shape: 'circle', x, y, r: Math.min(gx, gy / SQUASH) * 0.46, delay: 1.1 + wave * 1.1, mv: BOSS_MV.kiln, force: 180,
+        onLand(b, h) {
+          if (typeof FX_PIECES !== 'undefined' && FX_PIECES && FXS.fire3) b.fxFireBoom(h.x, h.y - 4, h.r * 1.8, null); else b.fxBlast(h.x, h.y, h.r, BOSS_MV.kiln);
+          b.decalAt(h.x, h.y, 14); b.addShake(3);
+          if (!h.echo) B.hazard(b, { shape: 'circle', x: h.x, y: h.y, r: h.r * 0.6, delay: 0, linger: 3, every: 0.6, kind: 'embers', noEcho: true,
+            onTick(b, h2, P) { b.hit(m, P, BOSS_MV.embers, 1, { force: 20 }); } }); } });
+    }
+  } },
+  // Maelstrisk: three rings of water roll out from it one after another; step through the gap between them
+  tidalRings: { cd: 8, w: 3, run(B, b, m) {
+    B.act(m, 2.2, 'roar'); b.ui.callout('enemy', 'Tidal Rings', 'water');
+    for (let i = 0; i < 3; i++) {
+      const r0 = 30 + i * 70;
+      B.hazard(b, { shape: 'ring', x: m.x, y: m.y, r0, r1: r0 + 42, delay: 1.1 + i * 0.55, mv: BOSS_MV.tide, force: 220,
+        onLand(b, h) { for (let k = 0; k < 2; k++) b.particles.push({ kind: 'wave', x: h.x, y: h.y - 2, r0: h.r0, r1: h.r1 * (1 - k * 0.1), life: 0.35, max: 0.35, color: k ? '#8fd8ff' : '#ffffff', w: 4 }); b.addShake(4); Sfx.play('bigHit'); } });
+    }
+  } },
+  // the Warden's core: a storm of data hits the whole room except a few safe circles
+  dataStorm: { cd: 14, w: 2, run(B, b, m) {
+    B.act(m, 2.4, 'roar'); b.ui.banner('DATA STORM!', 'Get into a safe circle');
+    // the safe spots are always on screen (a boss room is bigger than the view), the first one in easy reach
+    const F = b.F, P = b.P, safes = [], cx = Math.round(b.cam.x), cy = Math.round(b.cam.y);
+    const X0 = Math.max(F.x0 + 40, cx + 40), X1 = Math.min(F.x1 - 40, cx + W - 40), Y0 = Math.max(F.y0 + 36, cy + 40), Y1 = Math.min(F.y1 - 24, cy + H - 30);
+    for (let tries = 0; safes.length < 3 && tries < 160; tries++) {
+      const first = !safes.length, a = rand(0, TAU), d = rand(80, 130);
+      const x = clamp(first ? P.x + Math.cos(a) * d : rand(X0, X1), X0, X1), y = clamp(first ? P.y + Math.sin(a) * d * SQUASH : rand(Y0, Y1), Y0, Y1);
+      if (safes.some(q => Math.hypot(q.x - x, q.y - y) < 120) || Math.hypot(P.x - x, P.y - y) < 60 || b.unblock({ x, y }, 22)) continue;
+      safes.push({ x, y, r: 34 });
+    }
+    B.hazard(b, { shape: 'safe', x0: F.x0, y0: F.y0, x1: F.x1, y1: F.y1, safes, delay: 2.2, pct: 0.3, noEcho: true, mv: BOSS_MV.storm,
+      onLand(b, h) { b.addShake(12); Sfx.play('bigHit'); for (let i = 0; i < 14; i++) b.fxBlast(rand(F.x0, F.x1), rand(F.y0, F.y1), 26, BOSS_MV.rain); } });
+  } },
+  // the stagger check near the end: hit it hard enough before the purge runs, or the whole room is purged
+  archivePurge: { cd: 999, w: 0, run(B, b, m) {
+    b.ui.banner('ARCHIVE PURGE!', 'Hit the core hard before the purge runs!');
+    B.special = { kind: 'stagger', t: 0, dur: 6, need: m.maxHp * 0.1, got: 0, fail: 'PURGE COMPLETE!', label: 'STOP THE PURGE!' };
+    m.action = { kind: 'cast', t: 0, dur: 6, lock: true, pose: 'proud' };
+    b.hazards = b.hazards.filter(h => h.linger);
+    Sfx.beamCharge(6);
+  } },
   // the stagger check: he curls up to sleep; hit him hard enough before he wakes, or the whole room shakes
   bigSleep: { cd: 999, w: 0, run(B, b, m) {
     b.ui.banner('BIG SLEEP!', 'Hit him hard before he wakes up!');
@@ -254,7 +364,8 @@ class BossBrain {
     this.phase = i; this.special = null; this.shifting = false; this.timers = []; this.busy = 0;
     m.action = null; m.jump = 0; m.invuln = 3; m.healPose = null;
     b.hazards = b.hazards.filter(h => h.kind === 'tear');
-    this.trans = { t: 0, dur: 2.4, from: m.id, to: this.ph.form, flip: 0 };
+    const form = typeof this.ph.form === 'function' ? this.ph.form(this) : this.ph.form || m.id;
+    this.trans = { t: 0, dur: 2.4, from: m.id, to: form, flip: 0 };
     if (this.ph.banner) b.ui.banner(...this.ph.banner);
     b.addShake(6); Sfx.play('recall');
     for (let k = 0; k < 2; k++) b.particles.push({ x: m.x, y: m.y - 2, r0: 6 + k * 10, r1: 70 + k * 16, life: 0.6, max: 0.6, color: k ? '#3af0ff' : '#ffffff', kind: 'ring', w: 3 });
@@ -313,9 +424,9 @@ class BossBrain {
         Sfx.play('buff');
       } else {   // he wakes up: the whole room
         const F = b.F;
-        b.ui.banner('HIBERNATION CRASH!');
+        b.ui.banner(s.fail || 'HIBERNATION CRASH!');
         this.act(m, 1.2, 'roar');
-        this.hazard(b, { shape: 'rect', x0: F.x0 - 40, y0: F.y0 - 40, x1: F.x1 + 40, y1: F.y1 + 40, delay: 0.5, pct: 0.45, noEcho: true, mv: BOSS_MV.crash,
+        this.hazard(b, { shape: 'rect', x0: F.x0 - 40, y0: F.y0 - 40, x1: F.x1 + 40, y1: F.y1 + 40, delay: 0.5, pct: 0.45, noEcho: true, mv: s.fail ? BOSS_MV.purge : BOSS_MV.crash,
           onLand(b) { b.addShake(14); Sfx.play('bigHit'); for (let i = 0; i < 12; i++) b.fxBlast(rand(F.x0, F.x1), rand(F.y0, F.y1), 30, BOSS_MV.quake); } });
       }
       this.patT = 2;
@@ -367,7 +478,7 @@ function bossTears(b, n) {
 // The banner as the fight starts, and the name on the boss bar.
 function bossIntro(b, m) {
   const g = m.bossGlitch ? 'GLITCHED ' : '';
-  if (m.final) b.ui.banner(g + 'FINAL BOSS!', m.def.name);
+  if (m.final) b.ui.banner(g + 'FINAL BOSS!', m.brain ? `${m.def.name} · ${m.brain.S.title}` : m.def.name);
   else if (m.brain) b.ui.banner(m.brain.S.title, `${g}ACT ${m.brain.S.act} BOSS · ${m.def.name}`);
   else if (m.gate) b.ui.banner('GATEKEEPER!', m.def.name);
   else b.ui.banner(g + 'BOSS!', m.def.name);
@@ -388,6 +499,7 @@ function inHazard(h, m, pad = 0) {
     case 'circle': { const r = h.r + e; return ((x - h.x) / r) ** 2 + ((y - h.y) / (r * SQUASH)) ** 2 < 1; }
     case 'ring': { const d = Math.hypot(x - h.x, (y - h.y) / SQUASH); return d < h.r1 + e && d > h.r0 - e; }
     case 'rect': return x > h.x0 - e && x < h.x1 + e && y > h.y0 - e && y < h.y1 + e;
+    case 'safe': return !h.safes.some(q => ((x - q.x) / Math.max(1, q.r - e)) ** 2 + ((y - q.y) / Math.max(1, (q.r - e) * SQUASH)) ** 2 < 1);   // everywhere but the safe circles
     case 'line': {
       const c = Math.cos(h.a), s = Math.sin(h.a), t = clamp((x - h.x) * c + (y - h.y) * s, 0, h.len);
       return Math.hypot(x - (h.x + c * t), y - (h.y + s * t)) < h.w / 2 + e;
@@ -443,6 +555,7 @@ mixInto(Battle, class {
           if (!opts.length) return null;
           const o = opts.sort((p, q) => p[0] - q[0])[0]; return { x: o[1], y: o[2] };
         }
+        case 'safe': { const q = h.safes.slice().sort((p, r) => Math.hypot(p.x - me.x, p.y - me.y) - Math.hypot(r.x - me.x, r.y - me.y))[0]; if (!q) return null; const d = Math.hypot(q.x - me.x, q.y - me.y) || 1; return { x: (q.x - me.x) / d, y: (q.y - me.y) / d }; }
         case 'line': { const side = Math.sign((me.x - h.x) * Math.sin(h.a) - (me.y - h.y) * Math.cos(h.a)) || 1; return { x: Math.sin(h.a) * side, y: -Math.cos(h.a) * side }; }
       }
     }
@@ -458,6 +571,7 @@ mixInto(Battle, class {
       if (h.shape === 'circle') ctx.ellipse(h.x, h.y, h.r * k, h.r * SQUASH * k, 0, 0, TAU);
       else if (h.shape === 'ring') { ctx.ellipse(h.x, h.y, h.r1, h.r1 * SQUASH, 0, 0, TAU); ctx.moveTo(h.x + h.r0, h.y); ctx.ellipse(h.x, h.y, h.r0, h.r0 * SQUASH, 0, TAU, 0, true); }
       else if (h.shape === 'rect') { const cx = (h.x0 + h.x1) / 2, cy = (h.y0 + h.y1) / 2, w = (h.x1 - h.x0) * k, hh = (h.y1 - h.y0) * k; ctx.rect(cx - w / 2, cy - hh / 2, w, hh); }
+      else if (h.shape === 'safe') { ctx.rect(h.x0, h.y0, h.x1 - h.x0, h.y1 - h.y0); for (const q of h.safes) { ctx.moveTo(q.x + q.r, q.y); ctx.ellipse(q.x, q.y, q.r, q.r * SQUASH, 0, TAU, 0, true); } }
       else if (h.shape === 'line') {
         const c = Math.cos(h.a), s = Math.sin(h.a), L = h.len * k, w = h.w / 2;
         ctx.moveTo(h.x - s * w, h.y + c * w); ctx.lineTo(h.x + c * L - s * w, h.y + s * L + c * w); ctx.lineTo(h.x + c * L + s * w, h.y + s * L - c * w); ctx.lineTo(h.x + s * w, h.y - c * w); ctx.closePath();
@@ -481,6 +595,10 @@ mixInto(Battle, class {
             ctx.fillRect(Math.round(h.x0 + r1 * (h.x1 - h.x0 - 6)), Math.round(h.y0 + r2 * (h.y1 - h.y0 - 3)), 6, 2);
           }
           ctx.globalAlpha = 0.9 * fade; ctx.strokeStyle = TEAR_COLS[seed % 2]; path(h); ctx.stroke();
+        } else if (h.kind === 'embers') {   // burning ground (the Warden's kiln vents)
+          ctx.globalAlpha = 0.35 * fade; ctx.fillStyle = '#ff7a2a'; path(h); if (!outlines) ctx.fill();
+          ctx.globalAlpha = 0.8 * fade; ctx.strokeStyle = '#ffd23f'; path(h); ctx.stroke();
+          for (let i = 0; i < 3; i++) { const ph = (this.time * 1.4 + i * 0.33 + h.x * 0.01) % 1, a = i * 2.1 + h.y; ctx.globalAlpha = (1 - ph) * fade; ctx.fillStyle = i % 2 ? '#ffd23f' : '#ff5a1a'; ctx.fillRect(Math.round(h.x + Math.cos(a) * h.r * 0.5), Math.round(h.y + Math.sin(a) * h.r * 0.3 - ph * 8), 1, 2); }
         } else {   // a frost patch
           ctx.globalAlpha = 0.35 * fade; ctx.fillStyle = '#bfe8f8'; path(h); if (!outlines) ctx.fill();
           ctx.globalAlpha = 0.8 * fade; ctx.strokeStyle = '#eefcff'; path(h); ctx.stroke();
@@ -499,7 +617,7 @@ mixInto(Battle, class {
       }
       const col = h.echo ? ECHO_COL : h.pct ? '#ff4a3a' : h.mv ? fxOf(h.mv)[0] : '#ffffff';
       ctx.globalAlpha = 0.2 + k * 0.28; ctx.fillStyle = col;
-      if (h.shape === 'ring') { path(h); if (!outlines) ctx.fill('evenodd'); }
+      if (h.shape === 'ring' || h.shape === 'safe') { path(h); if (!outlines) ctx.fill('evenodd'); }
       else { path(h, h.shape === 'rect' || h.shape === 'line' ? 1 : k); if (!outlines) ctx.fill(); }
       if (h.shape === 'rect' || h.shape === 'line') { ctx.globalAlpha = 0.25 * k; path(h, Math.max(0.05, k)); if (!outlines) ctx.fill(); }
       ctx.globalAlpha = 0.55; ctx.strokeStyle = '#15111f'; ctx.lineWidth = 3; path(h); ctx.stroke(); ctx.lineWidth = 1.5;   // a dark edge, so it reads on snow too
@@ -524,7 +642,7 @@ mixInto(Battle, class {
         ctx.fillStyle = '#2a2638'; ctx.fillRect(x - w / 2, y, w, 5);
         ctx.fillStyle = s.kind === 'snack' ? '#ffd23f' : '#ffffff'; ctx.fillRect(x - w / 2, y, Math.round(w * k), 5);
         ctx.fillStyle = '#e8433a'; ctx.fillRect(x - w / 2, y + 6, Math.round(w * left), 1);   // time left
-        label(s.kind === 'snack' ? 'INTERRUPT!' : 'STAGGER HIM!', x, y - 3, s.kind === 'snack' ? '#ffe066' : '#ffffff');
+        label(s.label || (s.kind === 'snack' ? 'INTERRUPT!' : 'STAGGER HIM!'), x, y - 3, s.kind === 'snack' ? '#ffe066' : '#ffffff');
       } else if (m.exposedT > 0) {
         for (let i = 0; i < 3; i++) { const a = this.time * 6 + i * TAU / 3; ctx.fillStyle = '#ffe066'; ctx.fillRect(Math.round(x + Math.cos(a) * 12) - 1, Math.round(y + 2 + Math.sin(a) * 4) - 1, 3, 3); }
         label('DIZZY! x1.5 DAMAGE', x, y - 4, '#ffe066');

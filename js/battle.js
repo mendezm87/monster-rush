@@ -810,7 +810,7 @@ class Battle {
     for (let i = 0; i < 4; i++) m.cd[i] = Math.max(0, m.cd[i] - dt);
     m.buffs.forEach(b => (b.t -= dt));
     m.buffs = m.buffs.filter(b => b.t > 0);
-    if (m.item.regen && m.hp > 0 && this.state === 'fight') m.hp = Math.min(m.maxHp, m.hp + m.maxHp * m.item.regen * dt);
+    if (m.item.regen && !m.brain && m.hp > 0 && this.state === 'fight') m.hp = Math.min(m.maxHp, m.hp + m.maxHp * m.item.regen * dt);   // (not a hand-made boss: its only heals are its warned ones, r280)
 
     // status effects tick only during fights
     if (m.status && this.state === 'fight') {

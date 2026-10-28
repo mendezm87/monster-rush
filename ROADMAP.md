@@ -66,7 +66,7 @@ The roguelikes people play for hundreds of hours are built on **builds**: items 
 
 ## Phase 3: Bosses and the world
 
-- [ ] **Hand-made bosses:** acts of three floors (r143: bosses after floors 3 and 6, gatekeepers on the other floors) and the engine for hand-made bosses (`js/bosses.js`: phases, warned attacks, interrupts, stagger checks, form changes, Glitched bosses). **1 of ~10 done:** Slumbear, the Jumbled King (act 1). Next: more act 1 bosses for variety, act 2 and a hand-made final boss, then more acts for endless. Research and mechanics: `docs/boss-research.md`.
+- [ ] **Hand-made bosses:** acts of three floors (r143: bosses after floors 3 and 6, gatekeepers on the other floors) and the engine for hand-made bosses (`js/bosses.js`: phases, warned attacks, interrupts, stagger checks, form changes, Glitched bosses). **2 of ~10 done:** Slumbear, the Jumbled King (act 1), and the Archive's Warden (the final boss, r280). Next: more act 1 bosses for variety, an act 2 boss for endless, then more acts. Research and mechanics: `docs/boss-research.md`.
 - [ ] **A true final boss** with its own design and story weight (the owner's open question: a Coreature of its own?), and a **secret final floor** for players who meet a hidden condition.
 - [ ] **Alternate areas:** two choices per floor (like Isaac's alt paths), so a run's route varies: 6 floors -> 10-12 areas.
 - [ ] **The story of the fallen civilization**, told a little each run (Hades-style): terminals in the ruins, the altar's machine, what the Arc-cores really are, why Coreatures lost their forms. Multiple endings.
