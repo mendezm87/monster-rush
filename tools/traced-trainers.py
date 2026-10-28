@@ -156,13 +156,16 @@ def main():
                 if src in frames and v not in frames:                     # turning them right, r279): the right-facing walk
                     frames[v] = [fix_left(look, sex, v, [r[::-1] for r in p]) for p in frames[src]]   # mirrored, one-sided things put right
             if 'back' in frames: frames.setdefault('bside', frames['back'])
-            for v in ('sideL', 'fsideL'):   # facing left, drawn by Gemini (not mirrored, so one-sided things stay put): its
-                if v not in frames: continue    # standing picture is the walk frame with the feet closest together
+            # every direction with a walk stands in its own walk's frame with the feet closest together (r286, the owner:
+            # the Scholar's bag popped between his front and back as he started or stopped: Gemini's standing sheet
+            # and its walk sheets didn't agree); facing the camera keeps the standing sheet (that walk is made from it)
+            for v in ('side', 'fside', 'back', 'sideL', 'fsideL'):
+                if v not in frames: continue
                 def stance(p):
                     bot = max(y for y, r in enumerate(p) if r.strip('.')); xs = [x for y in range(bot - 2, bot + 1) for x, c in enumerate(p[y]) if c != '.']
                     return max(xs) - min(xs)
                 still = min(frames[v], key=stance)
-                L[sex][v] = {'map': still, 'arms': find_arms(still, look, sex, v) if v == 'fsideL' else {}}
+                L[sex][v] = {'map': still, 'arms': find_arms(still, look, sex, v) if v in ('fside', 'fsideL', 'back') else {}}
             L[sex]['walk'] = {'pal': t['pal'], 'frames': frames}
         out[look] = L
     js = ('// The traced trainer looks (r275, the owner\'s new HD-2D trainers: docs/refs/TR-*-chibi.jpg), written by\n'
