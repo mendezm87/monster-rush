@@ -631,10 +631,12 @@ const trTraced = (T, f, v) => { const S = T.traced && T.traced[f ? 'f' : 'm']; r
 // 'fsideL') uses those instead, and its three-quarter back view (the back picture for now) is never mirrored.
 function trainerFacing(look, view, face) {
   const { T, f } = trSplit(look), S = T.traced && T.traced[f ? 'f' : 'm'];
+  // a traced look has no three-quarter back picture (Gemini wouldn't draw one): heading up-left or up-right it walks
+  // side-on toward where it's going, since the straight back view sliding sideways looked like moonwalking (r285)
+  if (S && view === 'bside' && !S.bside) view = 'side';
   const side = view === 'side' || view === 'fside' || view === 'bside';
   if (!side || face >= 0) return { v: view, flip: false };
   if (S && S[view + 'L']) return { v: view + 'L', flip: false };
-  if (S && view === 'bside' && !S.bside) return { v: view, flip: false };
   return { v: view, flip: true };
 }
 
