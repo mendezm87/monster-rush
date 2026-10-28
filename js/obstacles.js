@@ -10,7 +10,7 @@
 // Each obstacle: x, y = the middle of its base (where it stands, like a Coreature's feet), fw, fd = its footprint
 // (width, and depth up from its base), w, h = its picture's size in world units, p = the piece in the area's props
 // sheet, flip = mirrored.
-const OBSTACLE_ROOMS = { fight: true };
+const OBSTACLE_ROOMS = { fight: true, challenge: true };
 const OBST_LANE = 44;      // half the width of the open lanes through the middle
 const OBST_MIDDLE = 74;    // how far from the middle of the room everything stays clear
 const OBST_WALL = 40;      // the gap kept along every wall

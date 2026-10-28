@@ -357,7 +357,7 @@ $('#game').addEventListener('load', async () => {
   // first step towards the nearest unvisited room (ignoring the boss until everything else is seen)
   function nextDoor(from, floor) {
     const boss = floor.rooms.find(r => r.type === 'boss');
-    const goal = r => (r.type === 'boss' ? (floor.rooms.every(o => o.visited || o.type === 'boss') && !r.cleared) : !r.visited);
+    const goal = r => (r.type === 'boss' ? (floor.rooms.every(o => o.visited || o.type === 'boss' || o.hiddenRoom) && !r.cleared) : !r.visited);   // (a secret room only counts once it's found)
     const seen = new Set([from]), queue = [[from, null]];
     while (queue.length) {
       const [r, first] = queue.shift();

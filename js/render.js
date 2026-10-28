@@ -105,6 +105,22 @@ const SKULL_IMG = gridFromMap([
   '.kwkwk.',
   '..kkk..',
 ], { k: OUTLINE, w: '#f6f2ee' }).toCanvas();
+const CAMPFIRE_IMG = gridFromMap([   // (r281) the rest spot's sign
+  '...k...',
+  '..kok..',
+  '.koyok.',
+  '.koyok.',
+  'kbkkkbk',
+  '.kbbbk.',
+], { k: OUTLINE, o: '#ff8a3a', y: '#ffe066', b: '#8a5a32' }).toCanvas();
+const SWORDS_IMG = gridFromMap([   // a challenge room's sign: two crossed blades
+  'kk...kk',
+  'kwk.kwk',
+  '.kwkwk.',
+  '..kwk..',
+  '.kgkgk.',
+  'kgk.kgk',
+], { k: OUTLINE, w: '#f0f0f8', g: '#d8a030' }).toCanvas();
 const ALTAR_IMG = gridFromMap([
   '...k...',
   '..kpk..',
@@ -155,6 +171,10 @@ function doorSign(room) {
   if (room.type === 'treasure') return room.taken ? null : { img: CHEST_IMG, c: '#ffffff' };
   if (room.type === 'altar') return room.used ? null : { img: ALTAR_IMG, c: '#c87aff' };
   if (room.type === 'recruit') return room.recruited ? null : { img: ARC_CORE_IMG, c: '#5ad8ff' };
+  if (room.type === 'challenge') return room.cleared ? null : { img: SWORDS_IMG, c: '#ff8a3a' };   // (r281)
+  if (room.type === 'rest') return room.rested ? null : { img: CAMPFIRE_IMG, c: '#ffd23f' };
+  if (room.type === 'tutor') return room.taught ? null : { img: DISC_IMG, c: '#5ae8ff' };
+  if (room.type === 'secret') return room.looted ? null : { img: CHEST_IMG, c: '#ffffff' };
   return null;
 }
 
@@ -424,6 +444,7 @@ mixInto(Battle, class {
     const decor = typeof roomDecor === 'function' && roomDecor(this.room, this.run.stageKey);   // the area's walls and decorations (rooms.js)
     if (decor) ctx.drawImage(decor, 0, 0, decor.width * DECOR_PX, decor.height * DECOR_PX);
     ctx.drawImage(this.decal, 0, 0);
+    if (this.room.secret) this.drawCrack(ctx);   // a cracked wall hiding a secret room (r281)
     if (!decor) Lighting.drawTorches(ctx, this.room, this.time);   // the area's own walls carry their lights (their glow stays)
     this.drawDoors(ctx);
     if (this.stairs) this.drawStairs(ctx);
@@ -562,6 +583,21 @@ mixInto(Battle, class {
     }
   }
 
+  // a few dark cracks in the wall where a secret room's door is hidden
+  drawCrack(ctx) {
+    const S = this.room.secret, d = doorPos(this.room, S.dir), side = S.dir === 'e' || S.dir === 'w';
+    const pts = (side ? [[0, -14], [3, -7], [-2, -2], [2, 4], [-1, 9], [2, 14]] : [[0, -14], [-3, -8], [2, -3], [-2, 3], [3, 8], [0, 13]]).map(([x, y]) => [x * 1.4, y * 1.3]);
+    const off = { n: [0, -22], s: [0, 12], w: [-9, 0], e: [9, 0] }[S.dir];
+    ctx.fillStyle = '#8a8090';   // a few pebbles fallen from it
+    for (const [px, py] of [[-6, 2], [5, 3], [-2, 4], [8, 1]]) ctx.fillRect(Math.round(d.x + off[0] + (side ? py * 2 : px)), Math.round(d.y + off[1] + (side ? px : 19 + py * 0.5)), 2, 1);
+    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1; ctx.globalAlpha = 0.45;   // a lit edge beside the crack, so it reads on dark walls too
+    ctx.beginPath(); pts.forEach(([x, y], i) => (i ? ctx.lineTo : ctx.moveTo).call(ctx, d.x + off[0] + x + 1, d.y + off[1] + y + 1)); ctx.stroke();
+    ctx.strokeStyle = '#15111f'; ctx.lineWidth = 2; ctx.globalAlpha = 0.9;
+    ctx.beginPath(); pts.forEach(([x, y], i) => (i ? ctx.lineTo : ctx.moveTo).call(ctx, d.x + off[0] + x, d.y + off[1] + y)); ctx.stroke();
+    ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(d.x + off[0] + pts[2][0], d.y + off[1] + pts[2][1]); ctx.lineTo(d.x + off[0] + pts[2][0] + (side ? 6 : 4), d.y + off[1] + pts[2][1] + (side ? 3 : 6)); ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
   drawPedestal(ctx, ped) {
     const X = Math.round(ped.x), Y = Math.round(ped.y);
     Lighting.shadow(ctx, X, Y + 4, 22, 7, 1.1);
@@ -569,7 +605,30 @@ mixInto(Battle, class {
     ctx.fillStyle = ped.kind === 'relic' ? '#e0c060' : ped.kind === 'altar' ? '#6a5a7a' : '#b8b0c8'; ctx.fillRect(X - 18, Y - 6, 36, 5);
     ctx.fillStyle = ped.kind === 'relic' ? '#a8862a' : ped.kind === 'altar' ? '#44384e' : '#7a7090'; ctx.fillRect(X - 18, Y - 1, 36, 6);
     let name;
-    if (ped.kind === 'altar') {   // a purple flame over dark stone
+    if (ped.kind === 'rest') {   // a campfire on the stone (r281): flickering flames while it burns, embers once it's out
+      const t = this.time;
+      ctx.fillStyle = '#5a3a22'; ctx.fillRect(X - 10, Y - 9, 20, 3); ctx.fillStyle = '#7a5232'; ctx.fillRect(X - 8, Y - 11, 16, 3);
+      if (!ped.used) {
+        ctx.globalAlpha = 0.25 + Math.sin(t * 6) * 0.08; ctx.fillStyle = '#ffb04a'; ctx.beginPath(); ctx.arc(X, Y - 20, 20, 0, TAU); ctx.fill(); ctx.globalAlpha = 1;
+        // three tongues of flame, each a column of rows narrowing to a tip that sways: red edge, orange, a yellow core
+        for (const [ox, base, tall, ph] of [[-5, 7, 13, 0], [0, 9, 19, 1.3], [5, 7, 14, 2.6]]) {
+          const h = tall + Math.round(Math.sin(t * 9 + ph) * 2.5);
+          for (let r = 0; r < h; r++) {
+            const k = r / h, w = Math.max(1, Math.round(base * (1 - k * k))), sway = Math.round(Math.sin(t * 7 + ph + k * 3) * k * 2), y = Y - 12 - r;
+            const x0 = X + ox + sway - Math.floor(w / 2);
+            ctx.fillStyle = '#d8322a'; ctx.fillRect(x0, y, w, 1);
+            if (w > 2) { ctx.fillStyle = '#ff8a2a'; ctx.fillRect(x0 + 1, y, w - 2, 1); }
+            if (w > 4 && k < 0.6) { ctx.fillStyle = '#ffe066'; ctx.fillRect(x0 + 2, y, w - 4, 1); }
+          }
+        }
+      } else for (let i = 0; i < 3; i++) { ctx.fillStyle = Math.sin(t * 3 + i) > 0 ? '#ff6a2a' : '#8a3a22'; ctx.fillRect(X - 6 + i * 5, Y - 12, 2, 1); }
+      name = ped.used ? 'CAMPFIRE (OUT)' : 'CAMPFIRE: REST';
+    } else if (ped.kind === 'tutor') {   // a spinning move disc over the stone
+      const bob = Math.round(Math.sin(this.time * 2.5) * 2), S = DISC_IMG.width * 2.2, sq = Math.abs(Math.cos(this.time * 2));
+      ctx.globalAlpha = 0.3 + Math.sin(this.time * 4) * 0.1; ctx.fillStyle = '#5ae8ff'; ctx.beginPath(); ctx.arc(X, Y - 20 + bob, 15, 0, TAU); ctx.fill(); ctx.globalAlpha = 1;
+      ctx.drawImage(DISC_IMG, Math.round(X - S * sq / 2), Math.round(Y - 12 - S + bob), Math.max(1, Math.round(S * sq)), S);
+      name = 'MOVE TUTOR';
+    } else if (ped.kind === 'altar') {   // a purple flame over dark stone
       const bob = Math.round(Math.sin(this.time * 2.5) * 2), S = ALTAR_IMG.width * 2.5;
       ctx.globalAlpha = 0.3 + Math.sin(this.time * 4) * 0.12; ctx.fillStyle = '#c87aff';
       ctx.beginPath(); ctx.arc(X, Y - 22 + bob, 18, 0, TAU); ctx.fill(); ctx.globalAlpha = 1;
@@ -594,6 +653,12 @@ mixInto(Battle, class {
     ctx.textAlign = 'center'; ctx.lineJoin = 'round';
     ctx.lineWidth = 3; ctx.strokeStyle = '#2a1405'; ctx.strokeText(name, X, Y + 16);
     ctx.fillStyle = '#ffe066'; ctx.fillText(name, X, Y + 16);
+    if (ped.kind === 'tutor') {   // the tutor's price
+      const img = numberCanvas(ped.price, this.run.coins >= ped.price ? '#fff6c8' : '#ff9a8a', this.run.coins >= ped.price ? '#e0b040' : '#c04a3a');
+      const w = img.width * 1.5 + 11;
+      ctx.drawImage(COIN_IMG, Math.round(X - w / 2), Y + 20, COIN_IMG.width * 1.5, COIN_IMG.height * 1.5);
+      ctx.drawImage(img, Math.round(X - w / 2 + 10), Y + 20, img.width * 1.5, img.height * 1.5);
+    }
     if (ped.kind === 'shop') {   // price tag
       const img = numberCanvas(ped.item.price, this.run.coins >= ped.item.price ? '#fff6c8' : '#ff9a8a', this.run.coins >= ped.item.price ? '#e0b040' : '#c04a3a');
       const w = img.width * 1.5 + 11;
@@ -904,7 +969,7 @@ mixInto(Battle, class {
   // Top-right: the rooms you've seen on this floor, and your coins.
   drawMinimap(ctx) {
     const rooms = this.run.floor.rooms;
-    const seen = r => this.run.reveal || r.visited || Object.values(r.doors).some(o => o.visited);   // the Salvager's scanner shows it all
+    const seen = r => !r.hiddenRoom && (this.run.reveal || r.visited || Object.values(r.doors).some(o => o.visited));   // the Salvager's scanner shows it all (but not secret rooms)
     const shown = rooms.filter(seen);
     const cw = 13, ch = 9, gap = 2;
     const gxs = shown.map(r => r.gx), gys = shown.map(r => r.gy);
@@ -917,7 +982,8 @@ mixInto(Battle, class {
       ctx.fillStyle = r === this.room ? '#ffffff' : r.visited ? '#8a84a0' : '#3a3450';
       ctx.fillRect(x, y, cw, ch);
       const icon = r.type === 'boss' ? '#e8433a' : r.type === 'recruit' && !r.recruited ? '#5aa0ff'
-        : r.type === 'shop' ? '#ffd23f' : r.type === 'treasure' && !r.taken ? '#ffffff' : null;
+        : r.type === 'shop' ? '#ffd23f' : r.type === 'treasure' && !r.taken ? '#ffffff'
+        : r.type === 'challenge' && !r.cleared ? '#ff8a3a' : r.type === 'rest' && !r.rested ? '#7ae07a' : r.type === 'tutor' && !r.taught ? '#5ae8ff' : r.type === 'secret' ? '#c8b8a0' : null;
       if (icon) { ctx.fillStyle = icon; ctx.fillRect(x + 4, y + 3, 5, 3); }
     }
     // coins

@@ -79,6 +79,14 @@ class Battle {
 
     if (!room.cleared && room.enemies.length) this.startFight();
     this.makePedestals();
+    if (room.type === 'secret' && !room.looted) {   // a secret room's stash (r281)
+      room.looted = true;
+      const F = this.F, x = (F.x0 + F.x1) / 2, y = (F.y0 + F.y1) / 2;
+      for (let i = 0; i < 8 + this.run.floorN * 2; i++) this.spawnPickup('coin', x, y);
+      this.spawnPickup('chest', x, y);
+      this.ui.banner('SECRET ROOM!', 'Something was hidden here');
+    }
+    this.secretT = 0;
     if (room.type === 'boss' && room.cleared) this.placeStairs();
   }
 
@@ -185,6 +193,26 @@ class Battle {
     }
   }
 
+  // A challenge room's next wave (r281): the doors stay shut until the last one falls.
+  nextWave() {
+    const room = this.room, n = room.waveN - room.waves.length + 1;
+    room.enemies = room.waves.shift();
+    this.startFight();
+    this.ui.banner(`WAVE ${n}/${room.waveN}`, n === room.waveN ? 'The last one!' : '');
+  }
+
+  // A secret room's door opens when you press against the cracked wall in front of it (r281).
+  revealSecret() {
+    const room = this.room, S = room.secret, other = this.run.floor.rooms[S.i];
+    if (!other) return;
+    room.doors[S.dir] = other; other.hiddenRoom = false; delete room.secret;
+    freeCanvas(room.canvas); freeCanvas(room.decor); delete room.canvas; delete room.decor; delete room.torches;
+    const built = roomCanvas(room, this.run.stageKey); this.ground = built.canvas;
+    const d = doorPos(room, S.dir);
+    this.burst(d.x, d.y, ['#c8b8a0', '#8a7a68', '#ffffff'], 30, 140); this.addShake(6);
+    Sfx.play('doorOpen'); this.ui.banner('A HIDDEN DOOR!', 'There was a room behind the crack');
+  }
+
   // Things to walk up to: recruits, shop goods, a treasure relic.
   makePedestals() {
     const room = this.room, F = this.F, cx = (F.x0 + F.x1) / 2, cy = (F.y0 + F.y1) / 2;
@@ -196,6 +224,8 @@ class Battle {
       room.stock.forEach((it, i) => { if (!it.sold && !(RELICS[it.id] && this.run.relics.includes(it.id))) this.pedestals.push({ kind: 'shop', item: it, id: it.id, x: cx + (i - 1.5) * 100, y: cy - 6, cool: 0 }); });
     if (room.type === 'altar' && !room.used)
       this.pedestals = [{ kind: 'altar', id: 'altar', x: cx, y: cy - 6, cool: 0 }];
+    if (room.type === 'rest') this.pedestals = [{ kind: 'rest', id: 'rest', used: !!room.rested, x: cx, y: cy - 6, cool: 0 }];   // (r281)
+    if (room.type === 'tutor' && !room.taught) this.pedestals = [{ kind: 'tutor', id: 'tutor', price: room.price, x: cx, y: cy - 6, cool: 0 }];
     if (room.type === 'treasure' && !room.taken && room.relic && !room.relicChoice)   // a picnic (every relic owned), or a run saved before r159
       this.pedestals = [{ kind: 'relic', id: room.relic, x: cx, y: cy - 6, cool: 0 }];
     // a choice of relics (the treasure room, or a chest that was opened here): take one and the others vanish
@@ -632,7 +662,7 @@ class Battle {
         if (this.state === 'fight' && this.updateHazards) this.updateHazards(dt);   // bosses.js
         if (this.state === 'faint') break;
         this.updatePickups(dt);
-        if (this.state === 'fight' && this.e.length && this.e.every(m => m.fainted) && this.deploys.length === 0) this.clearRoom();
+        if (this.state === 'fight' && this.e.length && this.e.every(m => m.fainted) && this.deploys.length === 0) { if (this.room.waves && this.room.waves.length) this.nextWave(); else this.clearRoom(); }
         if (this.state === 'explore') this.checkExplore(dt);
         if (this.winT > 0 && (this.winT -= dt) <= 0) this.end('win');
         break;
@@ -678,6 +708,11 @@ class Battle {
   checkExplore(dt) {
     const P = this.P, F = this.F;
     if (!P.alive) return;
+    if (this.room.secret) {   // pressing against the cracked wall opens the secret room behind it (r281)
+      const d = doorPos(this.room, this.room.secret.dir);
+      this.secretT = Math.hypot(P.x - d.x, P.y - d.y) < 44 ? (this.secretT || 0) + dt : 0;
+      if (this.secretT > 0.7) { this.secretT = 0; this.revealSecret(); }
+    }
     const exit = P.y < F.y0 - 14 ? 'n' : P.y > F.y1 + 16 ? 's' : P.x < F.x0 - 14 ? 'w' : P.x > F.x1 + 14 ? 'e' : null;
     if (exit && this.room.doors[exit] && this.hooks.exit) { this.state = 'leaving'; this.hooks.exit(exit); return; }
     for (const ped of this.pedestals) {
@@ -686,6 +721,7 @@ class Battle {
       if (d < 18 + P.r) {   // solid: push the player back out
         const ux = (P.x - ped.x) / (d || 1), uy = (P.y - ped.y) / (d || 1);
         P.x = ped.x + ux * (18 + P.r); P.y = ped.y + uy * (18 + P.r);
+        if (ped.cool <= 0 && (ped.kind === 'rest' || ped.kind === 'tutor')) { ped.cool = 1.5; this.useStation(ped); return; }   // (r281) no menu
         if (ped.cool <= 0 && this.hooks.offer) {
           ped.cool = 1.2;
           this.state = 'pick'; Input.reset();
@@ -699,6 +735,32 @@ class Battle {
       Sfx.play('stairs');
       this.hooks.stairs();
     }
+  }
+
+  // The campfire (heals the party once) and the move tutor (coins for a move for the Coreature that's out).
+  useStation(ped) {
+    const P = this.P, run = this.run;
+    if (ped.kind === 'rest') {
+      if (ped.used) { this.text(ped.x, ped.y - 30, 'THE FIRE IS OUT', '#cfc8d8', ped.y); return; }
+      ped.used = this.room.rested = true;
+      for (const m of run.party) {
+        if (m.fainted) { m.fainted = false; m.hp = Math.round(m.maxHp * 0.25); m.status = null; }
+        else m.hp = Math.min(m.maxHp, m.hp + Math.round(m.maxHp * 0.4));
+      }
+      this.ui.banner('A GOOD REST', 'The party heals 40% (fainted ones get back up)');
+      this.burst(ped.x, ped.y - 16, ['#ffd23f', '#ff8a3a', '#ffffff'], 24, 70, -40);
+      this.trainerAct('cheer', ped); Sfx.play('heal');
+      return;
+    }
+    if (run.coins < ped.price) { this.text(ped.x, ped.y - 30, `NEEDS ${ped.price} COINS`, '#ff9a8a', ped.y); Sfx.play('back'); return; }
+    const id = run.learnMove(P);
+    if (!id) { this.text(ped.x, ped.y - 30, `${P.def.name} KNOWS IT ALL`, '#cfc8d8', ped.y); return; }
+    run.coins -= ped.price; this.room.taught = true;
+    run.learnQueue.push({ mon: P, id });
+    this.ui.banner('MOVE TUTOR', `${P.def.name} can learn a new move`);
+    this.burst(ped.x, ped.y - 16, ['#5ae8ff', '#ffffff'], 20, 70);
+    this.pedestals = this.pedestals.filter(o => o !== ped);
+    Sfx.play('coin');
   }
 
   // Called once an offer menu closes. took: true if the player recruited / bought / took it.

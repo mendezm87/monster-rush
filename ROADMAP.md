@@ -60,7 +60,7 @@ The roguelikes people play for hundreds of hours are built on **builds**: items 
 - [ ] **Active items** (like Isaac's space-bar items): a usable artifact that recharges by clearing rooms (a time-stop, a decoy, a heal pulse).
 - [ ] **Risk and reward:** a shrine per floor (trade HP or a relic for power), cursed relics, a gamble room.
 - [ ] **Floor twists:** a dark floor, a stampede floor, rain, a cursed floor; announced on the floor banner.
-- [ ] **More room types:** challenge rooms (waves for a prize), secret rooms (hidden doors), a move tutor, a rival trainer fight, a rest spot, a Coreature nursery (eggs that hatch later in the run).
+- [ ] **More room types:** done (r281): challenge rooms (three waves for a relic pick), secret rooms (behind a cracked wall), a move tutor, a campfire rest spot. Still to come: a rival trainer fight, a Coreature nursery (eggs that hatch later in the run).
 - [ ] **Level design (r258, the owner picked the order):** (1) each area its own walls and decorations from Gemini sheets (`docs/level-prompts.md`; done r260, `js/rooms.js`); (2) obstacles, hazards and room shapes (first try done r268, `js/obstacles.js`: prop clusters that block walking and shots, the areas' floor patches as hazards (mud, lava, ice, snow, crystals, quicksand, runes), L and T rooms from wall blocks; still to come: pits, breakable obstacles, hand-made layouts, beams blocked, AI that avoids hazards); (3) special rooms that look special (shop stall, vault, altar machine, boss arenas); (4) floors with loops, secret and challenge rooms.
 - [ ] **Smarter wild Coreatures:** each species fights in its own way (kiting, charging, burrowing, summoning, shielding a partner), plus elite versions.
 

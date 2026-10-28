@@ -454,6 +454,32 @@ function tryFloor(floorN, partyIds, relics, last, offers = 3) {
       r.offer = [...local, ...shuffle(ids.filter(id => !partyIds.includes(id) && !local.includes(id)))].slice(0, offers);
     }
   }
+  // More room types (r281): a challenge room (three waves for a relic), a campfire to rest at, a move tutor, and a
+  // secret room behind a cracked wall. Rest and tutor take a spare dead end, else stand in for a fight room.
+  const spare = rest.slice(altar ? 4 : 3).filter(r => r.type === 'fight');
+  const fightRoom = () => spare.shift() || pickRand(rooms.filter(r => r.type === 'fight')) || null;
+  const plain = r => { r.enemies = []; r.cleared = true; delete r.reward; [r.w, r.h] = ROOM_SIZES.s; };
+  if (floorN >= 2 && Math.random() < 0.6) {
+    const r = pickRand(rooms.filter(r => r.type === 'fight' && Object.keys(r.doors).length > 1)) || fightRoom();
+    if (r) { r.type = 'challenge'; [r.w, r.h] = ROOM_SIZES.big; r.waves = [makeWave(floorN, 'big', stage), makeWave(floorN, 'big', stage)]; r.waveN = 3; r.enemies = makeWave(floorN, 'big', stage); r.reward = 'chest'; }
+  }
+  if (floorN >= 2 && Math.random() < 0.55) { const r = fightRoom(); if (r) { r.type = 'rest'; plain(r); } }
+  if (Math.random() < 0.45) { const r = fightRoom(); if (r) { r.type = 'tutor'; plain(r); r.price = 8 + 2 * floorN; } }
+  if (Math.random() < 0.5) {   // a secret room: a grid spot next to a quiet room (no obstacles in its way) with no door to it yet
+    const opts = [];
+    for (const r of rooms) if (['start', 'shop', 'treasure', 'recruit', 'altar', 'rest', 'tutor'].includes(r.type))
+      for (const [dir, [dx, dy]] of Object.entries(DOOR_DIRS)) {
+        const x = r.gx + dx, y = r.gy + dy;
+        if (x >= 0 && y >= 0 && x < G && y < G && !grid.has(key(x, y)) && !r.doors[dir]) opts.push([r, dir, x, y]);
+      }
+    if (opts.length) {
+      const [r, dir, x, y] = pickRand(opts), s = add(x, y), back = { n: 's', s: 'n', e: 'w', w: 'e' }[dir];
+      Object.assign(s, { type: 'secret', hiddenRoom: true, cleared: true, visited: false, pickups: [], enemies: [], seed: (Math.random() * 1e9) | 0 });
+      [s.w, s.h] = ROOM_SIZES.s;
+      s.doors[back] = r;
+      r.secret = { dir, i: rooms.indexOf(s) };   // the door only opens once found (Battle.revealSecret)
+    }
+  }
   // the treasure room: pick 1 of 3 relics (r159, the owner liked relics as 1-of-3 picks); two more relics (and
   // two goods) in the shop
   const free = shuffle(Object.keys(RELICS).filter(id => !relics.includes(id)));
