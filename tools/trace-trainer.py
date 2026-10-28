@@ -25,7 +25,8 @@ VIEWS = ['front', 'fside', 'side', 'back']
 KEYS = 'kabcdefghijlmnopqtuvxyzABCDEFGHIJLMNOPQTUVXYZ'   # palette keys ('k' the darkest), clear of the game's own skin keys
 
 
-def figures(fg, n=None, gap=6):
+def figures(fg, n=None, gap=None):
+    gap = gap or max(6, round(fg.shape[0] * 0.04))   # pieces closer than this are one figure (scaled to the sheet: hair tips and sleeves on big sheets)
     cols = fg.any(0); segs, s = [], None
     for x, c in enumerate(cols):
         if c and s is None: s = x
@@ -36,6 +37,9 @@ def figures(fg, n=None, gap=6):
         if out and g[0] - out[-1][1] < gap: out[-1][1] = g[1]
         else: out.append(g)
     out = [g for g in out if g[1] - g[0] > 20]
+    while n and len(out) > n:   # pieces of one figure (an arm clear of the body on a big sheet): join the closest pair
+        i = min(range(len(out) - 1), key=lambda i: out[i + 1][0] - out[i][1])
+        out[i:i + 2] = [[out[i][0], out[i + 1][1]]]
     while n and len(out) < n:   # figures touching: split the widest at its emptiest column (away from its edges)
         i = max(range(len(out)), key=lambda i: out[i][1] - out[i][0]); a0, b0 = out[i]
         cnt = fg[:, a0:b0].sum(0); m = len(cnt) // 4
@@ -51,22 +55,24 @@ def main():
     ap.add_argument('--order', default='m0,m1,m2,m3,f0,f1,f2,f3'); ap.add_argument('--tol', type=int, default=36)
     ap.add_argument('--preview')
     ap.add_argument('--walk', help='a walk sheet: one --band per row, these views in order (e.g. fside,side,back); writes <id>-walk.json')
-    ap.add_argument('--per', type=int, default=6, help='frames in each row of a walk sheet')
+    ap.add_argument('--per', default='6', help='frames in each row of a walk sheet (one number, or one per row: 6,6,5)')
     a = ap.parse_args()
     src = Image.open(a.path).convert('RGB'); full = np.array(src).astype(int)
     found = []   # (crop box in sheet pixels)
-    for band in a.band.split(';'):
+    pers = [int(v) for v in str(a.per).split(',')]
+    for bi, band in enumerate(a.band.split(';')):
         b0, b1 = [float(v) for v in band.split(',')]
         y0b, y1b = int(b0 * full.shape[0]), int(b1 * full.shape[0])
         im = full[y0b:y1b]
         bg = np.median(np.concatenate([im[:3].reshape(-1, 3), im[-3:].reshape(-1, 3)]), axis=0)
         fg = np.abs(im - bg).sum(2) > a.tol
-        fg[fg.mean(1) > 0.5] = False   # a ground line drawn under the feet (the local generator's sheets) isn't a figure
-        for x0, x1 in figures(fg, a.per if a.walk else len(a.order.split(',')) // len(a.band.split(';'))):
+        fg[fg.mean(1) > 0.9] = False   # a ground line drawn under the feet (the local generator's sheets) isn't a figure
+        for x0, x1 in figures(fg, pers[min(bi, len(pers) - 1)] if a.walk else len(a.order.split(',')) // len(a.band.split(';'))):
             ys = np.where(fg[:, x0:x1].any(1))[0]
             found.append((x0, y0b + ys[0], x1, y0b + ys[-1] + 1, bg))
     if a.walk:   # a walk sheet: every frame is a figure, named by its row's view and its place in the row
-        a.order = ','.join(f'{v}:{i}' for v in a.walk.split(',') for i in range(a.per))
+        pv = [int(v) for v in str(a.per).split(',')]
+        a.order = ','.join(f'{v}:{i}' for k, v in enumerate(a.walk.split(',')) for i in range(pv[min(k, len(pv) - 1)]))
     order = a.order.split(',')
     assert len(found) >= len([o for o in order]), f'found {len(found)} figures'
     cell = max(f[3] - f[1] for f in found) / a.rows   # sheet pixels per game pixel
@@ -107,7 +113,7 @@ def main():
     json.dump(out, open(os.path.join(ROOT, 'tools', 'traced-trainers', a.id + ('-walk' if a.walk else '') + '.json'), 'w'), indent=0)
     if a.preview and a.walk:
         S = 8; frames = [(v, p) for v, ps in out['walk'].items() for p in ps]
-        prev = Image.new('RGB', ((TW * S + 6) * a.per, (TH * S + 6) * len(out['walk'])), (40, 40, 40)); d = ImageDraw.Draw(prev)
+        prev = Image.new('RGB', ((TW * S + 6) * max(len(v) for v in out['walk'].values()), (TH * S + 6) * len(out['walk'])), (40, 40, 40)); d = ImageDraw.Draw(prev)
         for r, (v, ps) in enumerate(out['walk'].items()):
             for c, rows in enumerate(ps):
                 ox, oy = c * (TW * S + 6), r * (TH * S + 6); d.rectangle([ox, oy, ox + TW * S - 1, oy + TH * S - 1], fill=(120, 150, 110))
