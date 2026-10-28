@@ -51,6 +51,35 @@ def fill_holes(rows):
     return [''.join(r) for r in g]
 
 
+def side_sig(rows):
+    """Where each colour sits left to right, from the figure's middle: {key: (count, mean x)}."""
+    pts = [(x, c) for r in rows for x, c in enumerate(r) if c != '.']
+    if not pts: return {}
+    mid = (min(x for x, _ in pts) + max(x for x, _ in pts)) / 2
+    sig = {}
+    for x, c in pts: n, sx = sig.get(c, (0, 0)); sig[c] = (n + 1, sx + x - mid)
+    return {c: (n, sx / n) for c, (n, sx) in sig.items()}
+
+
+def sig_dist(a, b):
+    return sum(min(a[c][0], b[c][0]) * abs(a[c][1] - b[c][1]) for c in a if c in b)
+
+
+def agree(frames):
+    """Gemini's walk rows aren't always consistent: a frame turned the other way, or the scarf swinging over the
+    other shoulder (r284, the owner: walking diagonally the Relay Runner seemed to flip back and forth). Mirror any
+    frame that matches the rest of its row better mirrored, so the whole cycle keeps one side."""
+    out = [list(f) for f in frames]
+    for _ in range(2):
+        sigs = [side_sig(f) for f in out]
+        for i, f in enumerate(out):
+            m = [r[::-1] for r in f]; sm = side_sig(m)
+            here = sum(sig_dist(sigs[i], sigs[j]) for j in range(len(out)) if j != i)
+            flipped = sum(sig_dist(sm, sigs[j]) for j in range(len(out)) if j != i)
+            if flipped < here * 0.8: out[i] = m; sigs[i] = sm
+    return out
+
+
 def fix_left(look, sex, view, rows):
     """A mirrored walk frame facing left: put back what the mirror moved to the wrong side (LEFT_FIX)."""
     return rows
@@ -120,6 +149,7 @@ def main():
                 for view, pics in w['walk'].items():
                     keep = [fill_holes(p) for i, p in enumerate(pics) if i not in WALK_SKIP.get((look, sex, view), ())]
                     if (look, sex, view) in WALK_FLIP: keep = [[r[::-1] for r in p] for p in keep]   # (FACE_LEFT is for the standing sheets only)
+                    keep = agree(keep)
                     frames[view] = keep
             if not frames: continue
             for v, src in (('sideL', 'side'), ('fsideL', 'fside')):   # facing left with no picture of its own (Gemini kept
