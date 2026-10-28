@@ -170,7 +170,8 @@ const Lighting = (() => {
       const mood = b.stage.light, cx = Math.round(b.cam.x), cy = Math.round(b.cam.y), t = b.time;
       const lc = light.getContext('2d');
       lc.setTransform(1, 0, 0, 1, 0, 0); lc.globalCompositeOperation = 'source-over'; lc.globalAlpha = 1;
-      lc.fillStyle = mood.amb; lc.fillRect(0, 0, LW, LH);
+      const dark = b.run && b.run.floor && b.run.floor.twist === 'dark';   // a dark floor: no torches, only you light the way (r282)
+      lc.fillStyle = dark ? 'rgb(34,32,52)' : mood.amb; lc.fillRect(0, 0, LW, LH);
       lc.globalCompositeOperation = 'lighter'; lc.imageSmoothingEnabled = true;
       const glow = (x, y, r, rgb, a) => {
         const sx = (x - cx) * LS, sy = (y - cy) * LS, sr = r * LS;
@@ -180,8 +181,9 @@ const Lighting = (() => {
       // a soft light over the whole floor, brightest in the middle (r277: with only the wall torches the middle of a
       // big room was left in the dim base light, a muddy pool, worst in the Sunken Ruins' orange-brown)
       const F = roomField(b.room);
-      glow((F.x0 + F.x1) / 2, (F.y0 + F.y1) / 2, Math.max(F.x1 - F.x0, F.y1 - F.y0) * 0.9, [255, 248, 235], 0.7);
-      for (const tc of torches(b.room)) glow(tc.x, tc.y + 14, 200 + Math.sin(t * 9 + tc.x) * 10, mood.torch, 0.6);
+      if (!dark) glow((F.x0 + F.x1) / 2, (F.y0 + F.y1) / 2, Math.max(F.x1 - F.x0, F.y1 - F.y0) * 0.9, [255, 248, 235], 0.7);
+      if (dark) { const P = b.P, T = b.trainer; if (P.visible) glow(P.x, P.y - 10, 190, [255, 230, 190], 0.95); if (T) glow(T.x, T.y - 14, 110, [255, 210, 150], 0.6); }
+      else for (const tc of torches(b.room)) glow(tc.x, tc.y + 14, 200 + Math.sin(t * 9 + tc.x) * 10, mood.torch, 0.6);
       const P = b.P;
       if (P.visible) glow(P.x, P.y - 10, 110, [255, 235, 210], 0.35);   // a soft light that follows your Coreature
       for (const m of b.e) if (m.alive) glow(m.x, m.y - 10, 70, [255, 235, 210], 0.18);

@@ -59,6 +59,7 @@
       <button class="small-btn" id="btn-help">How to play</button>
       <div class="row">
         <a class="small-btn" id="btn-gallery" href="gallery.html">Coreature gallery</a>
+        <button class="small-btn" id="btn-codex">Codex</button>
         <button class="small-btn" id="btn-settings">Settings</button>
       </div>
       <div id="title-stats"></div>
@@ -175,6 +176,7 @@
           <button class="app a-party" id="btn-party"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="2" y="4" width="4" height="4" fill="#fff"/><rect x="10" y="4" width="4" height="4" fill="#fff"/><rect x="6" y="2" width="4" height="5" fill="#ffe066"/><rect x="1" y="9" width="6" height="5" fill="#fff"/><rect x="9" y="9" width="6" height="5" fill="#fff"/><rect x="5" y="8" width="6" height="6" fill="#ffe066"/></svg>Party</button>
           <button class="app a-info" id="btn-info"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="3" y="2" width="10" height="12" fill="#fff"/><rect x="5" y="4" width="6" height="1" fill="#3a46a8"/><rect x="5" y="7" width="6" height="1" fill="#3a46a8"/><rect x="5" y="10" width="4" height="1" fill="#3a46a8"/></svg>Info</button>
           <button class="app a-gear" id="btn-settings2"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="7" y="1" width="2" height="14" fill="#fff"/><rect x="1" y="7" width="14" height="2" fill="#fff"/><rect x="3" y="3" width="10" height="10" fill="#fff"/><rect x="6" y="6" width="4" height="4" fill="#5a5e6e"/></svg>Settings</button>
+          <button class="app a-codex" id="btn-codex2"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="2" y="3" width="6" height="11" fill="#fff"/><rect x="8" y="3" width="6" height="11" fill="#f0e6c8"/><rect x="7" y="2" width="2" height="13" fill="#8a5a32"/><rect x="3" y="5" width="4" height="1" fill="#6a4a8a"/><rect x="3" y="8" width="3" height="1" fill="#6a4a8a"/><rect x="9" y="5" width="4" height="3" fill="#5ae8ff"/></svg>Codex</button>
           <button class="app a-quit" id="btn-quit"><svg viewBox="0 0 16 16" shape-rendering="crispEdges"><rect x="3" y="2" width="2" height="13" fill="#fff"/><rect x="5" y="2" width="8" height="2" fill="#fff"/><rect x="5" y="4" width="6" height="2" fill="#fff"/><rect x="5" y="6" width="8" height="2" fill="#fff"/></svg>Give up</button>
         </div>
         <button class="big-btn" id="btn-resume">Resume</button>
@@ -187,6 +189,13 @@
       <div id="info-tabs" class="info-tabs"><button data-tab="relics">Relics</button><button data-tab="items">Held items</button><button data-tab="types">Types</button></div>
       <div id="info-body" class="info-body"></div>
       <div class="row"><button class="big-btn" id="btn-info-back">Back</button></div>
+    </div>
+
+    <div class="screen hidden dim" id="screen-codex">
+      <h2>Deep Archive Codex</h2>
+      <div id="codex-tabs" class="info-tabs"><button data-tab="mons">Coreatures</button><button data-tab="relics">Relics</button><button data-tab="bosses">Bosses</button><button data-tab="areas">Areas</button></div>
+      <div id="codex-body" class="info-body"></div>
+      <div class="row"><button class="big-btn" id="btn-codex-back">Back</button></div>
     </div>
 
     <div class="screen hidden dim" id="screen-settings">
@@ -250,5 +259,6 @@
   <script src="js/main.js"></script>
   <script src="js/describe.js"></script>
   <script src="js/info.js"></script>
+  <script src="js/codex.js"></script>
 </body>
 </html>

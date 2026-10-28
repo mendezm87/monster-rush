@@ -2,6 +2,8 @@
 
 ## Where we left off (keep this current at the end of every session)
 
+**2026-10-27 (r280-r282):** the owner asked for all four non-Gemini items: a hand-made final boss (the Archive's Warden, r280), new room types (challenge, campfire, move tutor, secret rooms, r281), floor twists (dark, stampede, downpour, cursed) and the Deep Archive codex (r282). **Waiting on the owner:** a look in play. **Still to do:** the Shrine Keeper (her) walk after Gemini's limit resets (6:30 PM).
+
 **2026-10-27 (r279):** the trainers walk with Gemini walk cycles (three-quarter, side, back; facing left mirrored where Gemini wouldn't draw it, checked for swapped details), and they use their own facing-left pictures so the scarf and bracelet don't jump sides. **Still to do:** the Shrine Keeper (her) walk sheet (Gemini's daily image limit ran out; it resets at 6:30 PM). **Waiting on the owner:** a look in play. **Next (the owner):** the Coreatures' visual update.
 
 **2026-10-27 (r278):** the traced trainers walk (a leg lifts on each step, side-on a stride) and the Archive Scholar and Salvager face the way they go (Gemini drew their side views facing left). **Next (the owner):** the Coreatures' visual update, once the trainers are good.

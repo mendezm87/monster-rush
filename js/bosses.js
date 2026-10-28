@@ -382,7 +382,7 @@ class BossBrain {
     if (T.t >= T.dur - 0.5 && m.id !== T.to) { this.setForm(m, T.to); m.flash = 0.5; this.act(m, 0.9, 'roar'); b.addShake(7); Sfx.play('evolve'); b.burst(m.x, m.cy, ['#ffffff', ...TYPES[m.def.types[0]].fx], 40, 130, -30); }
     if (T.t >= T.dur) { this.trans = null; m.invuln = 0; this.patT = 0.6; this.cycleT = 7; }
   }
-  setForm(m, id) { if (m.id !== id) m.setDef(ROSTER_BY_ID[id]); }
+  setForm(m, id) { if (m.id !== id) { m.setDef(ROSTER_BY_ID[id]); if (typeof codexNote === 'function') codexNote('seen', id); } }
   // phase 3: a warned flicker, then he's a different bear and opens with its signature attack
   shiftTo(b, id) {
     const m = this.m;

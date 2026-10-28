@@ -140,6 +140,8 @@ mixInto(Battle, class {
     const itemMul = src.item.boostType === mv.type ? src.item.mul : 1;
     const crit = mult >= 1 && Math.random() < (mv.crit || 0.06);
     let dmg = DMG_SCALE * mv.power * mult * (src.atk() / tgt.defense()) * stab * eff * itemMul * (crit ? 1.5 : 1) * (mv.type === 'water' ? this.mod(src, 'waterMul') : 1) * rand(0.9, 1.05);
+    const tw = this.run && this.run.floor && this.run.floor.twist;   // a downpour floor: water hits harder, fire softer, for everyone (r282)
+    if (tw === 'downpour') dmg *= mv.type === 'water' ? 1.25 : mv.type === 'fire' ? 0.75 : 1;
     if (tgt.exposedT > 0) dmg *= 1.5;   // a boss knocked dizzy or staggered takes more (bosses.js)
     const anvil = tgt.side === 'player' && tgt.hp < tgt.maxHp / 2 ? this.mod(tgt, 'anvilMul') : 1;   // Anvil Plate: tougher below half HP
     dmg *= anvil;

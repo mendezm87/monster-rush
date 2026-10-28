@@ -156,6 +156,7 @@ class Battle {
       return m;
     });
     this.state = 'fight'; this.stateT = 0;
+    if (typeof codexNote === 'function') codexNote('seen', ...this.e.map(m => m.id));   // the codex (codex.js, r283)
     this.emit('fightStart', P);   // e.g. Gambler's Die picks this room's lucky move
     this.doorFx('close');
     if (this.boss) {
@@ -172,7 +173,7 @@ class Battle {
     for (const m of this.run.party) if (m.fused && m.fused.length) this.emit('clear', m, true);
     this.evolveReady();
     this.glitchReady();
-    if (this.boss && this.hooks.bossBeaten) this.hooks.bossBeaten(this.boss.baseId || this.boss.id);
+    if (this.boss && this.hooks.bossBeaten) this.hooks.bossBeaten(this.boss.baseId || this.boss.id, this.boss.brain && this.boss.brain.id);
     this.state = 'explore'; this.stateT = 0;
     this.projectiles = this.projectiles.filter(p => p.owner.side === 'player');
     this.zones = this.zones.filter(z => z.owner.side === 'player');
@@ -444,7 +445,7 @@ class Battle {
       this.run.stats.kos++;
       this.emit('ko', this.P, m);   // e.g. Data Leech
       this.dropLoot(m);
-      this.giveData(m.boss ? DATA_BOSS : m.scale > 1 ? DATA_TOUGH : DATA_WILD);
+      this.giveData(Math.round((m.boss ? DATA_BOSS : m.scale > 1 ? DATA_TOUGH : DATA_WILD) * (m.champ && this.run.floor.twist === 'cursed' ? 1.5 : 1)));   // (a cursed floor's champions are worth more, r282)
       if (m.champ === 'split') this.splitChampion(m);
       return;
     }
@@ -525,6 +526,7 @@ class Battle {
   // ---------------------------------------------------------- loot
   dropLoot(m) {
     let coins = m.boss ? 8 + this.run.floorN * 2 : m.scale > 1 ? 2 : (Math.random() < 0.5 ? 1 : 0);   // rooms give the rest (spawnReward)
+    if (this.run.floor.twist === 'stampede' && !m.boss) coins++;   // a stampede's spoils (r282)
     const cm = this.mod(null, 'coinMul');
     if (cm !== 1) coins = Math.round(coins * cm + Math.random() * 0.5);
     for (let i = 0; i < coins; i++) this.spawnPickup('coin', m.x, m.y);

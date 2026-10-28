@@ -3,7 +3,7 @@
 const $ = sel => document.querySelector(sel);
 
 const UI = {
-  screens: ['title', 'help', 'starter', 'recruit', 'party', 'pick', 'pause', 'result', 'settings', 'learn', 'memory', 'altar', 'info', 'trainer'],
+  screens: ['title', 'help', 'starter', 'recruit', 'party', 'pick', 'pause', 'result', 'settings', 'learn', 'memory', 'altar', 'info', 'trainer', 'codex'],
 
   show(name) {
     for (const s of this.screens) $('#screen-' + s).classList.toggle('hidden', s !== name);

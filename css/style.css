@@ -405,3 +405,12 @@ kbd { background: #2b2540; border: 0.3cqh solid #555; border-bottom-width: 0.8cq
 .mem-head { display: flex; align-items: center; justify-content: center; gap: 2.5cqh; }
 .mem-head > div { text-align: left; }
 #memory-portrait { width: 14cqh; height: 14cqh; image-rendering: pixelated; background: #241f36; border: 0.6cqh solid var(--ink); border-radius: 2cqh; }
+
+/* the Deep Archive codex (r283) */
+.codex-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(17cqh, 1fr)); gap: 1cqh; }
+.codex-card { display: flex; flex-direction: column; align-items: center; gap: 0.4cqh; background: var(--panel); border-radius: 1.6cqh; padding: 1cqh 0.6cqh; font: 700 2.2cqh system-ui, sans-serif; text-align: center; }
+.codex-card canvas { width: 9cqh; height: 9cqh; image-rendering: pixelated; }
+.codex-card b { font: 900 2.5cqh var(--font); }
+.codex-card .star { color: #ffd23f; }
+.codex-card.unknown b { opacity: .55; }
+.phone .a-codex svg { background: linear-gradient(#b07ae8, #6a3aa8); }

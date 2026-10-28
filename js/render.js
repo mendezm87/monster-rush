@@ -390,7 +390,8 @@ mixInto(Battle, class {
   text(x, y, str, color) { this.texts.push({ x, y, str, color, t: 0 }); }
 
   newFlake(anywhere) {
-    const kind = this.stage.weather;
+    const kind = this.run && this.run.floor && this.run.floor.twist === 'downpour' ? 'rain' : this.stage.weather;   // (a downpour floor rains, r282)
+    if (kind === 'rain') return { x: anywhere ? rand(0, W) : rand(-20, W + 40), y: anywhere ? rand(0, H) : -8, vx: -40, vy: rand(300, 380), s: 1, len: rand() < 0.5 ? 4 : 6, c: rand() < 0.6 ? '#a8c8f0' : '#e0ecff' };
     const y = anywhere ? rand(0, H) : -4;
     if (kind === 'ash') return { x: rand(0, W), y: anywhere ? rand(0, H) : H + 4, vx: rand(-6, 6), vy: rand(-26, -10), s: rand() < 0.3 ? 2 : 1, c: rand() < 0.5 ? '#ff8a3a' : '#5a4a48' };
     if (kind === 'petals') return { x: anywhere ? rand(0, W) : rand(-40, W), y, vx: rand(10, 24), vy: rand(10, 22), s: 2, c: rand() < 0.5 ? '#ffd0e0' : '#ffffff' };
@@ -498,6 +499,7 @@ mixInto(Battle, class {
     this.drawFloats(ctx);
     ctx.setTransform(RES, 0, 0, RES, 0, 0);
     this.drawWeather(ctx);
+    if (this.run.floor.twist === 'dark' && !Lighting.on) this.drawDarkness(ctx);   // with the lighting off, a dark floor still goes dark (r282)
     Lighting.overlay(ctx, this);
     ctx.setTransform(RES, 0, 0, RES, 0, 0);
     this.drawMinimap(ctx);
@@ -961,8 +963,26 @@ mixInto(Battle, class {
     ctx.globalAlpha = 1;
   }
 
+  // a dark floor without the lighting: everything dark but a pool of light round your Coreature and trainer
+  drawDarkness(ctx) {
+    if (!Battle.darkMask) {
+      const c = document.createElement('canvas'); c.width = W; c.height = H;
+      const x = c.getContext('2d'), g = x.createRadialGradient(W / 2, H / 2, 40, W / 2, H / 2, 150);
+      g.addColorStop(0, 'rgba(8,6,16,0)'); g.addColorStop(1, 'rgba(8,6,16,0.82)');
+      x.fillStyle = g; x.fillRect(0, 0, W, H);
+      Battle.darkMask = c;
+    }
+    const P = this.P, cx = Math.round(this.cam.x), cy = Math.round(this.cam.y), x0 = P.x - cx - W / 2, y0 = P.y - 12 - cy - H / 2;
+    ctx.save(); ctx.setTransform(RES, 0, 0, RES, 0, 0); ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(Battle.darkMask, x0, y0);
+    ctx.fillStyle = 'rgba(8,6,16,0.82)';
+    if (x0 > 0) ctx.fillRect(0, 0, x0, H); if (x0 < 0) ctx.fillRect(x0 + W, 0, -x0, H);
+    if (y0 > 0) ctx.fillRect(0, 0, W, y0); if (y0 < 0) ctx.fillRect(0, y0 + H, W, -y0);
+    ctx.restore();
+  }
+
   drawWeather(ctx) {
-    for (const f of this.weather) { ctx.fillStyle = f.c; ctx.globalAlpha = 0.85; ctx.fillRect(Math.round(f.x), Math.round(f.y), f.s, f.s); }
+    for (const f of this.weather) { ctx.fillStyle = f.c; ctx.globalAlpha = f.len ? 0.55 : 0.85; ctx.fillRect(Math.round(f.x), Math.round(f.y), f.s, f.len || f.s); }
     ctx.globalAlpha = 1;
   }
 

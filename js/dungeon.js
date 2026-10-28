@@ -15,7 +15,18 @@ const STAGE_SONGS = { meadow: 'rush', crater: 'magma', summit: 'summit', grotto:
 // 'FLOOR 2/6' in a normal run, 'ENDLESS FLOOR 9' in endless
 const floorLabel = run => run.endless ? `ENDLESS FLOOR ${run.floorN}` : `FLOOR ${run.floorN}/${RUN_FLOORS}`;
 // the big banner when a floor starts, with the area's name under it
-const floorBanner = run => [run.floor.last ? 'FINAL FLOOR' : floorLabel(run), STAGES[run.floor.stage].name.toUpperCase()];
+const floorBanner = run => [run.floor.last ? 'FINAL FLOOR' : floorLabel(run), STAGES[run.floor.stage].name.toUpperCase() + (run.floor.twist ? ' · ' + TWISTS[run.floor.twist].name : '')];
+// Floor twists (r282, the owner: "do them all"): from floor 2 a floor may have one, announced on its banner.
+// dark: the torches are out (Lighting.apply, Battle.drawDarkness); stampede: one more wild Coreature in every
+// fight and an extra coin from each; downpour: Water moves +25%, Fire -25%, for both sides (Battle.hit), and rain;
+// cursed: champions everywhere, worth 50% more data.
+const TWISTS = {
+  dark: { name: 'DARK FLOOR', desc: 'The torches are out: only your Coreature lights the way' },
+  stampede: { name: 'STAMPEDE', desc: 'Every fight has one more wild Coreature, and they drop more coins' },
+  downpour: { name: 'DOWNPOUR', desc: 'Water moves hit 25% harder, Fire moves 25% softer' },
+  cursed: { name: 'CURSED FLOOR', desc: 'Champions everywhere, worth 50% more data' },
+};
+const twistOdds = (floorN, last) => floorN < 2 || last ? 0 : 0.4;
 const floorSong = run => STAGE_SONGS[run.floor.stage] || 'rush';
 const roomSong = (run, room) => room.type === 'boss' && !room.cleared ? 'boss' : room.type === 'shop' ? 'shop' : floorSong(run);
 const STARTERS = ['smugshi', 'cinderox', 'tidalisk'];
@@ -353,8 +364,8 @@ const CHAMPIONS = {
   glitch: { name: 'GLITCHED', color: '#ff3ad8', w: 12 },   // already corrupted: Glitched look and type, drops a Corrupted Shard
 };
 const championOdds = floorN => Math.min(0.3, 0.06 + 0.035 * floorN);
-function makeChampion(spec, floorN) {
-  if (Math.random() >= championOdds(floorN)) return spec;
+function makeChampion(spec, floorN, odds = championOdds(floorN)) {
+  if (Math.random() >= odds) return spec;
   let r = Math.random() * Object.values(CHAMPIONS).reduce((a, c) => a + c.w, 0);
   spec.champ = Object.keys(CHAMPIONS).find(k => (r -= CHAMPIONS[k].w) < 0) || 'swift';
   if (spec.champ === 'giant') { spec.hpMul *= 1.8; spec.scale = 1.3; }
@@ -492,7 +503,11 @@ function tryFloor(floorN, partyIds, relics, last, offers = 3) {
     ...free.slice(3, 5).map(id => ({ id, price: relicPrice(floorN), relic: true })),
   ];
   while (shop.stock.length < 4 && goods.length > 1) { const id = goods.pop(); shop.stock.push({ id, price: GOODS[id].price }); }
-  return { n: floorN, last, rooms, start, boss, stage };
+  // a floor twist (TWISTS)
+  const twist = Math.random() < twistOdds(floorN, last) ? pickRand(Object.keys(TWISTS)) : null;
+  if (twist === 'stampede') for (const r of rooms) for (const wave of [r.enemies, ...(r.waves || [])]) if ((r.type === 'fight' || r.type === 'challenge') && wave.length && !wave[0].boss) wave.push(makeChampion(wildSpec(wildIds(stage, 1)[0], floorN, 'wild'), floorN));
+  if (twist === 'cursed') for (const r of rooms) for (const wave of [r.enemies, ...(r.waves || [])]) if (r.type === 'fight' || r.type === 'challenge') for (const spec of wave) if (!spec.champ && !spec.boss) makeChampion(spec, floorN, 0.55);
+  return { n: floorN, last, rooms, start, boss, stage, twist };
 }
 
 // Progress kept between runs (in this browser). Beating a boss unlocks its species as a starter.
@@ -527,7 +542,7 @@ const SAVE_UPGRADES = {
 };
 const DEFAULT_SETTINGS = { lighting: true, music: 0.8, sfx: 0.8, keys: {} };   // keys: action -> key code (see Input)
 const Save = {
-  data: { version: SAVE_VERSION, starters: [...STARTERS], runs: 0, wins: 0, bestFloor: 0, bestEndless: 0, recruited: [], found: [], trainers: ['scarf'], settings: { ...DEFAULT_SETTINGS } },
+  data: { version: SAVE_VERSION, starters: [...STARTERS], runs: 0, wins: 0, bestFloor: 0, bestEndless: 0, recruited: [], found: [], trainers: ['scarf'], codex: { seen: [], owned: [], relics: [], bosses: [], areas: [] }, settings: { ...DEFAULT_SETTINGS } },
   load() {
     moveOldSaves();
     let d = null, renamed = false;
@@ -649,7 +664,7 @@ class RunState {
       party: this.party.map(m => ({ id: m.id, bars: m.bars, data: m.data, mem: m.mem, pending: !!m.restorePending, mastery: m.mastery || 0, corrupt: m.corrupt || 0, glitched: !!m.glitched, gpending: !!m.glitchPending, hp: Math.round(m.hp), fainted: m.fainted,
         moves: m.moves.map(x => x.id), known: m.known, newMoves: m.newMoves || [], fused: m.fused || [] })),
       learnQueue: this.learnQueue.map(q => ({ mon: this.party.indexOf(q.mon), id: q.id, choice: q.choice })).filter(q => q.mon >= 0),
-      floor: { n: this.floor.n, last: this.floor.last, stage: this.floor.stage, start: at(this.floor.start), boss: at(this.floor.boss),
+      floor: { n: this.floor.n, last: this.floor.last, stage: this.floor.stage, twist: this.floor.twist || null, start: at(this.floor.start), boss: at(this.floor.boss),
         rooms: rooms.map(r => {
           const o = {};
           for (const [k, val] of Object.entries(r)) if (!SKIP.has(k)) o[k] = val;
@@ -674,7 +689,7 @@ class RunState {
     run.learnQueue = d.learnQueue.map(q => ({ mon: run.party[q.mon], id: q.id, choice: q.choice }));
     const rooms = d.floor.rooms.map(o => ({ ...o, doors: {} }));
     d.floor.rooms.forEach((o, i) => { for (const [dir, j] of Object.entries(o.doors)) rooms[i].doors[dir] = rooms[j]; });
-    run.floor = { n: d.floor.n, last: d.floor.last, stage: d.floor.stage, rooms, start: rooms[d.floor.start], boss: rooms[d.floor.boss] };
+    run.floor = { n: d.floor.n, last: d.floor.last, stage: d.floor.stage, twist: d.floor.twist || null, rooms, start: rooms[d.floor.start], boss: rooms[d.floor.boss] };
     run.room = rooms[d.room];
     run.applyRelics();
     run.warm();

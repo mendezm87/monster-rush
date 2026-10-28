@@ -2,7 +2,7 @@
 
 // Shown on the title screen so players can tell whether their browser has the latest
 // build (GitHub Pages lets browsers cache files for up to 10 minutes). Bump on every release.
-const VERSION = '2026.10.27-r281';
+const VERSION = '2026.10.27-r282';
 
 const App = {
   endless: false,   // the mode picked on the title screen
@@ -249,6 +249,7 @@ function startRun(starterId) {
   beginRun();
   enterRoom(App.run.room, null);
   UI.banner(...floorBanner(App.run));
+  twistBanner(App.run);
 }
 // Carry on with the run saved before a refresh (title screen, CONTINUE).
 function continueRun() {
@@ -270,6 +271,12 @@ function beginRun() {
   App.paused = false;
 }
 
+// a floor twist explains itself a moment after the floor's banner (r282)
+function twistBanner(run) {
+  const t = run.floor.twist && TWISTS[run.floor.twist];
+  if (t) setTimeout(() => { if (App.run === run && App.battle) UI.banner(t.name + '!', t.desc); }, 2600);
+}
+
 const roomHooks = {
   exit(dir) { transition(() => enterRoom(App.run.room.doors[dir], DOOR_DIRS[dir][2])); },
   stairs() {
@@ -280,10 +287,11 @@ const roomHooks = {
       trainerUnlocks(run);
       enterRoom(run.room, null);
       UI.banner(...floorBanner(run));
+      twistBanner(run);
     });
   },
   offer(ped) { openOffer(ped); },
-  bossBeaten(id) { if (Save.unlockStarter(id)) setTimeout(() => UI.banner(`NEW STARTER: ${ROSTER_BY_ID[id].name}!`), 2000); },
+  bossBeaten(id, key) { if (typeof codexNote === 'function') codexNote('bosses', key || id); if (Save.unlockStarter(id)) setTimeout(() => UI.banner(`NEW STARTER: ${ROSTER_BY_ID[id].name}!`), 2000); },
   end(result) { App.run.over = true; Save.clearRun(); trainerUnlocks(App.run, result === 'win'); const record = Save.endRun(App.run.floorN, result === 'win', App.run.endless); showResult(result, record); },
 };
 
@@ -293,6 +301,7 @@ function enterRoom(room, entry) {
   const prev = App.battle && App.battle.room;
   if (prev && prev !== room) { freeCanvas(prev.canvas); freeCanvas(prev.decal); freeCanvas(prev.decor); delete prev.canvas; delete prev.decal; delete prev.decor; }
   App.run.room = room;
+  if (typeof codexNoteRun === 'function') codexNoteRun(App.run);   // the codex (r283)
   Sfx.music.play(roomSong(App.run, room));
   App.battle = new Battle({ run: App.run, room, entry, ui: UI, hooks: roomHooks });
   UI.hudCache = {};
