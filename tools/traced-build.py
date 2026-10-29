@@ -68,8 +68,20 @@ def pixi_blush(m, view):
     return [''.join(r) for r in g], []
 
 
+def spark_edge(m, view):
+    """Sparkit (r288, traced from the owner's UP-sparkit guide at today's size, cleaned by tools/clean-trace.py): the
+    trace's own near-black edge ('a') goes where it touches the outside, like the outline (the builder draws its own)."""
+    H, W = len(m), len(m[0]); g = [list(r) for r in m]
+    out = lambda x, y: x < 0 or y < 0 or x >= W or y >= H or m[y][x] == '.'
+    for y in range(H):
+        for x in range(W):
+            if m[y][x] == 'a' and any(out(x + dx, y + dy) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))): g[y][x] = 'k'
+    return [''.join(r) for r in g], []
+
+
 CFG = {   # neck/ear: head and ear rows; hb: the head's columns per view (shares); leg: where legs start; eyeKeys: eye colours
   'lumawool':  dict(neck=0.55, ear=0.3, hb={'front': [0.2, 0.8], 'back': [0.15, 0.85], 'fside': [0.45, 1], 'side': [0.62, 1]}, tail={'side': [0, 0.3, 0.12, 0.65], 'fside': [0, 0.35, 0.1, 0.7]}, leg=0.82, eyeKeys=None, palx={'j': '#ffe14a', 'm': '#fff27a'}),
+  'sparkit':   dict(neck=0.5, ear=5 / 30, hb={'front': [0, 15 / 22], 'fside': [6 / 21, 1], 'side': [7 / 22, 1], 'back': [6 / 21, 1]}, tail={'front': [15 / 22, 5 / 30, 1, 22 / 30], 'fside': [0, 6 / 30, 7 / 21, 25 / 30], 'side': [0, 5 / 30, 7 / 22, 24 / 30], 'back': [0, 4 / 30, 6 / 21, 21 / 30]}, leg=26 / 30, eyeKeys=None, eyes={'front': [[4, 9, 2], [10, 9, 2]], 'fside': [[11, 9, 2], [17, 9, 2]], 'side': [[15, 9, 2]]}, post=spark_edge),
   'coilizard': dict(neck=0.5, ear=0.0, hb={'front': [0.2, 0.8], 'back': [0, 0.6], 'fside': [0.55, 1], 'side': [0.6, 1]}, tail={}, leg=0.72, eyeKeys=None, eyes={'front': [[5, 6, 3], [14, 6, 3]], 'fside': [[16, 9, 3]], 'side': [[23, 6, 3]]}, src={'front': 'coil-27.json', 'fside': 'coil-27.json', 'side': 'coil-22.json', 'back': 'coil-27.json'}, post=coil_spring, palx={'y': '#eef8d4'}),
 }
 
