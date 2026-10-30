@@ -82,7 +82,7 @@ def main():
             for c in np.array(qa.getpalette()[:3 * a.accents]).reshape(-1, 3).tolist():
                 if min(sum(abs(c[i] - d[i]) for i in range(3)) for d in cs) > 60: cs.append(c)
         cs = sorted(cs, key=lambda c: sum(c))
-        keys = 'k' + 'abcdefghijmnopqrstuvwxyz'
+        keys = 'k' + 'abcdefghijmnopqrstuvwxyz' + 'ABCDEGHIJLMNOPQRTUWXYZ'   # upper case once the lower runs out (r289)
         PAL = {keys[i]: hexc(c) for i, c in enumerate(cs)}
     keys = list(PAL); cols = np.array([rgb(PAL[k]) for k in keys])
     near = np.argmin(((im[:, :, None, :] - cols[None, None]) ** 2).sum(3), axis=2)
