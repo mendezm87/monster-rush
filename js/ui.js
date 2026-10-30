@@ -164,6 +164,7 @@ const UI = {
       return { el: b, cd: b.querySelector('.cd'), eff: b.querySelector('.eff'), shown: 1 };
     });
     $('#btn-swap .key').textContent = Input.swapLabel();
+    $('#btn-dodge .key').textContent = Input.dodgeLabel();
   },
 
   hudCache: {},
@@ -195,6 +196,7 @@ const UI = {
     const scd = Math.max(0, battle.run.swapCd);
     $('#btn-swap .cd').style.height = (scd / 8 * 100) + '%';
     $('#btn-swap').classList.toggle('off', battle.p.length < 2);
+    $('#btn-dodge .cd').style.height = (Math.max(0, battle.P.dodgeCd || 0) / DODGE.cd * 100) + '%';   // the dodge recharging (r290)
     if (this.swapOpen) {
       if (battle.state !== 'fight' && battle.state !== 'explore') this.closeSwap();
       else for (const c of this.swapChips) {

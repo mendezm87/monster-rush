@@ -160,6 +160,17 @@ body.no-touch .mbtn .key b { font-size: 2.4cqh; line-height: 1; }
 body.no-touch .mouse-ico { height: 2.6cqh; }
 .mouse-ico { height: 3.6cqh; width: auto; display: block; }
 
+/* ---------- Dodge (r290): a round button left of the moves on touch, a small one left of the mouse block on PC ---------- */
+#btn-dodge { position: absolute; right: 55cqh; bottom: 4cqh; width: 15cqh; height: 15cqh; border-radius: 50%; pointer-events: auto; overflow: hidden;
+  font: 900 2.6cqh var(--font); color: #fff; cursor: pointer; border: 0.6cqh solid var(--ink);
+  background: linear-gradient(#5ad0c8, #2f8f98); box-shadow: inset 0 -0.8cqh 0 rgba(0,0,0,.25);
+  -webkit-text-stroke: 0.3cqh rgba(0,0,0,.5); paint-order: stroke fill; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+body.no-touch #btn-dodge { right: 37cqh; bottom: 1.5cqh; width: auto; height: auto; border-radius: 3cqh; font-size: 2.2cqh; padding: 0.8cqh 2.2cqh; opacity: .8; flex-direction: row; gap: 1cqh; }
+#btn-dodge .nm, #btn-dodge .key { position: relative; z-index: 1; }
+#btn-dodge .key { font-size: 2cqh; opacity: .75; }
+body:not(.no-touch) #btn-dodge .key { display: none; }
+#btn-dodge .cd { position: absolute; left: 0; right: 0; bottom: 0; height: 0; background: rgba(10,8,18,.6); }
+
 /* ---------- Swap ---------- */
 #btn-swap { position: absolute; right: 2cqh; bottom: 31cqh; pointer-events: auto; overflow: hidden;
   font: 900 3.4cqh var(--font); color: #fff; padding: 1.6cqh 4cqh; border-radius: 3cqh; cursor: pointer;

@@ -39,6 +39,10 @@ function restorePixels(m) {
 // The colours of the dust Coreatures kick up (Battle.dust, and the thud when one faints).
 const DUST = ['#d8ccb0', '#b8a888', '#ece4d0'];
 
+// The dodge (r290): how long the dart lasts, how fast it goes (about 70 units), how long nothing can hit, the recharge,
+// and how long a press made mid-attack is kept.
+const DODGE = { dur: 0.17, speed: 420, safe: 0.24, cd: 0.7, queue: 0.4 };
+
 class Battle {
   constructor({ run, room, entry = null, ui, hooks = {} }) {
     this.run = run; this.room = room; this.ui = ui; this.hooks = hooks;
@@ -636,6 +640,7 @@ class Battle {
         this.run.stats.time += dt;
         this.run.swapCd -= dt; this.enemyAtkT -= dt;
         const P = this.P;
+        if (this.dodgeQ > this.time) this.dodge(P);   // a dodge pressed mid-attack goes as soon as it can
         this.updateMon(P, dt, Input.dir(0));
         if (this.state === 'fight') {
           const held = Input.moves(0);
@@ -684,6 +689,35 @@ class Battle {
     }
     this.updateTrainer(dt);
     this.updateCamera(dt);
+  }
+
+  // The dodge (r290, the owner: "a way to dodge attacks like in Hades"): your Coreature darts a short way in the
+  // direction you're pushing (or the way it faces) and nothing can hit it for a moment (DODGE.safe). It cuts a
+  // quick cast or a dash attack short, but not a beam or a charged blast: pressed during one of those, it goes as soon as it
+  // ends (within DODGE.queue). Wild Coreatures don't dodge.
+  dodge(m) {
+    if (m !== this.P || (this.state !== 'fight' && this.state !== 'explore') || this.restoring) return false;
+    const now = this.time;
+    if (m.action && (m.action.kind === 'cast' || m.action.kind === 'dash') && (m.dodgeCd || 0) <= 0 && !(m.dodgeT > 0) && m.stunT <= 0 && m.status !== 'frz') {
+      m.action = null; animMark(m, 'done');   // a quick cast or a dash attack is cut short, like Hades (beams and charged blasts aren't)
+    }
+    if (!m.canAct() || (m.dodgeCd || 0) > 0 || m.dodgeT > 0) {   // not yet: keep it for a moment
+      if (!(this.dodgeQ > now)) this.dodgeQ = now + DODGE.queue;
+      return false;
+    }
+    this.dodgeQ = 0;
+    const c = Input.dir(0);
+    let dx = c.x, dy = c.y;
+    if (Math.hypot(dx, dy) < 0.2) {   // standing still: the way it faces
+      const f = m.face || 1, v = m.view;
+      [dx, dy] = v === 'back' ? [0, -1] : v === 'side' ? [f, 0] : v === 'fside' ? [f, 0.7] : v === 'bside' ? [f, -0.7] : [0, 1];
+    }
+    m.dodgeDir = Math.atan2(dy, dx); m.dodgeT = DODGE.dur; m.dodgeCd = DODGE.cd;
+    m.invuln = Math.max(m.invuln, DODGE.safe); m.ghostT = 0;
+    m.look(dx, dy);
+    this.burst(m.x, m.y - 1, DUST, 5, 40, -10, 3);
+    Sfx.play('whoosh');
+    return true;
   }
 
   // Dust kicked up by a Coreature on the ground: puffs behind it as it dashes or runs flat out (r110).
@@ -870,7 +904,7 @@ class Battle {
   updateMon(m, dt, ctrl) {
     if (!m.visible || m.fainted) return;
     m.flash = Math.max(0, m.flash - dt);
-    m.invuln -= dt; m.gcd -= dt; m.stunT -= dt; m.slowT -= dt;
+    m.invuln -= dt; m.gcd -= dt; m.stunT -= dt; m.slowT -= dt; if (m.dodgeCd > 0) m.dodgeCd -= dt;
     for (let i = 0; i < 4; i++) m.cd[i] = Math.max(0, m.cd[i] - dt);
     m.buffs.forEach(b => (b.t -= dt));
     m.buffs = m.buffs.filter(b => b.t > 0);
@@ -913,11 +947,16 @@ class Battle {
     if (m.action) this.updateAction(m, dt);
     if (m.fainted || (this.state !== 'fight' && this.state !== 'explore')) return;
 
-    const hz = this.floorHazard(m, dt);   // the floor under it (obstacles.js): mud, ice, lava...
+    const hz = m.dodgeT > 0 ? null : this.floorHazard(m, dt);   // the floor under it (obstacles.js): mud, ice, lava... (skipped over mid-dodge)
     if (m.fainted) return;
     const lock = (m.action && m.action.lock) || m.stunT > 0 || m.status === 'frz';
     const a = m.action;
-    if (a && a.kind === 'dash' && a.t > 0.1 + (a.mv.windup || 0) && a.phase !== 'combo') {
+    if (m.dodgeT > 0) {   // mid-dodge (Battle.dodge): a quick dart, leaving afterimages
+      m.dodgeT -= dt;
+      m.vx = Math.cos(m.dodgeDir) * DODGE.speed; m.vy = Math.sin(m.dodgeDir) * DODGE.speed;
+      if ((m.ghostT -= dt) <= 0) { m.ghostT = 0.04; m.ghosts.push({ x: m.x, y: m.y, face: m.face, view: m.view, t: 0.18, color: '#dff6ff' }); }
+      if (m.dodgeT <= 0) { m.vx *= 0.35; m.vy *= 0.35; }
+    } else if (a && a.kind === 'dash' && a.t > 0.1 + (a.mv.windup || 0) && a.phase !== 'combo') {
       m.vx = Math.cos(a.dir) * a.mv.speed; m.vy = Math.sin(a.dir) * a.mv.speed;
     } else {
       const spd = m.speed() * (hz && hz.slow ? 1 - hz.slow : 1);

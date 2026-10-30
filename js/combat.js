@@ -6,7 +6,7 @@ const TIMES_EXPLAINED = 3;   // how many times each type matchup explains itself
 mixInto(Battle, class {
   // ---------------------------------------------------------- moves
   tryMove(m, i) {
-    if (this.state !== 'fight' || !m.canAct() || m.cd[i] > 0 || m.gcd > 0 || !this.foe(m)) return false;
+    if (this.state !== 'fight' || !m.canAct() || m.dodgeT > 0 || m.cd[i] > 0 || m.gcd > 0 || !this.foe(m)) return false;
     this.execute(m, i);
     return true;
   }
@@ -470,7 +470,7 @@ mixInto(Battle, class {
       p.x += p.vx * dt; p.y += p.vy * dt;
       const fx = fxOf(p.mv);
       if (Math.random() < 0.9) this.particles.push({ x: p.x + rand(-1, 1) * p.r * 0.5, y: p.y + rand(-1, 1) * p.r * 0.5, vx: -p.vx * 0.1, vy: -p.vy * 0.1, life: 0.25, max: 0.25, size: Math.max(1, p.r * 0.6), color: fx[rand() < 0.5 ? 0 : 1], kind: 'sq' });
-      const foe = p.life > 0 && !(p.hitCd > 0) && this.foes(p.owner).find(f => Math.hypot(p.x - f.x, p.y - f.cy) < p.r + f.r);
+      const foe = p.life > 0 && !(p.hitCd > 0) && this.foes(p.owner).find(f => !(f.dodgeT > 0) && Math.hypot(p.x - f.x, p.y - f.cy) < p.r + f.r);   // (shots fly through a dodge, r290)
       if (foe) {
         // a boomerang cuts through and can hit again on the way back
         if (p.mv.boomerang) p.hitCd = 0.35; else p.life = -1;

@@ -2,7 +2,7 @@
 
 // Shown on the title screen so players can tell whether their browser has the latest
 // build (GitHub Pages lets browsers cache files for up to 10 minutes). Bump on every release.
-const VERSION = '2026.10.29-r289';
+const VERSION = '2026.10.30-r290';
 
 const App = {
   endless: false,   // the mode picked on the title screen
@@ -715,6 +715,9 @@ function cycleSwap() {
   }
 }
 Input.onSwap = cycleSwap;
+const tryDodge = () => { const b = App.battle; if (b && !App.paused && b.dodge) b.dodge(b.P); };   // the dodge (r290)
+Input.onDodge = tryDodge;
+$('#btn-dodge').addEventListener('pointerdown', e => { e.preventDefault(); tryDodge(); });
 $('#btn-swap').addEventListener('pointerdown', e => { e.preventDefault(); UI.toggleSwap(App.battle); });
 $('#btn-pause').onclick = togglePause;
 $('#btn-resume').onclick = togglePause;

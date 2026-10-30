@@ -13,9 +13,9 @@ const Input = (() => {
   const ACTIONS = [
     ['up', 'Move up', ['KeyW', 'ArrowUp']], ['down', 'Move down', ['KeyS', 'ArrowDown']],
     ['left', 'Move left', ['KeyA', 'ArrowLeft']], ['right', 'Move right', ['KeyD', 'ArrowRight']],
-    ['move1', 'Move 1', ['KeyJ', 'Digit1', 'Space']], ['move2', 'Move 2', ['KeyK', 'Digit2']],
+    ['move1', 'Move 1', ['KeyJ', 'Digit1']], ['move2', 'Move 2', ['KeyK', 'Digit2']],
     ['move3', 'Move 3', ['KeyL', 'Digit3']], ['move4', 'Move 4', ['Semicolon', 'Digit4', 'KeyI']],
-    ['swap', 'Swap', ['KeyQ', 'Tab']],
+    ['swap', 'Swap', ['KeyQ', 'Tab']], ['dodge', 'Dodge', ['Space']],   // the dodge (r290; Space used to be a spare key for move 1)
   ];
   const DEFAULT_KEYS = Object.fromEntries(ACTIONS.map(([a, , keys]) => [a, keys]));
   const RESERVED = ['Escape', 'KeyP', 'KeyM'];   // pause, pause, mute
@@ -26,11 +26,11 @@ const Input = (() => {
       const first = custom[a] || (taken.has(DEFAULT_KEYS[a][0]) ? null : DEFAULT_KEYS[a][0]);
       return [first, ...DEFAULT_KEYS[a].slice(1).filter(k => !taken.has(k))].filter(Boolean);
     };
-    const swap = keysFor('swap');
+    const swap = keysFor('swap'), dodge = keysFor('dodge');
     return {
       up: keysFor('up'), down: keysFor('down'), left: keysFor('left'), right: keysFor('right'),
       moves: [keysFor('move1'), keysFor('move2'), keysFor('move3'), keysFor('move4')],
-      swap, labels: ['CLICK', 'R-CLICK', '⇧ CLICK', '⇧ R-CLICK'], swapLabel: keyName(swap[0]),
+      swap, labels: ['CLICK', 'R-CLICK', '⇧ CLICK', '⇧ R-CLICK'], swapLabel: keyName(swap[0]), dodge, dodgeLabel: keyName(dodge[0]),
     };
   }
   function keyName(code) {
@@ -50,15 +50,15 @@ const Input = (() => {
     duo: [{
       up: ['KeyW'], down: ['KeyS'], left: ['KeyA'], right: ['KeyD'],
       moves: [['KeyR'], ['KeyT'], ['KeyF'], ['KeyG']],
-      swap: ['KeyQ'], labels: ['R', 'T', 'F', 'G'], swapLabel: 'Q',
+      swap: ['KeyQ'], labels: ['R', 'T', 'F', 'G'], swapLabel: 'Q', dodge: [],
     }, {
       up: ['ArrowUp'], down: ['ArrowDown'], left: ['ArrowLeft'], right: ['ArrowRight'],
       moves: [['KeyI', 'Numpad1'], ['KeyO', 'Numpad2'], ['KeyK', 'Numpad3'], ['KeyL', 'Numpad4']],
-      swap: ['KeyP', 'Numpad0', 'Enter'], labels: ['I', 'O', 'K', 'L'], swapLabel: 'P',
+      swap: ['KeyP', 'Numpad0', 'Enter'], labels: ['I', 'O', 'K', 'L'], swapLabel: 'P', dodge: [],
     }],
   };
   let mode = 'solo';
-  let onPause = null, onMute = null, onSwap = null;
+  let onPause = null, onMute = null, onSwap = null, onDodge = null;
   const anyKey = list => list.some(k => keys[k]);
 
   window.addEventListener('keydown', e => {
@@ -70,6 +70,7 @@ const Input = (() => {
     if (e.code === 'KeyM' && onMute) onMute();
     LAYOUT[mode].forEach((L, p) => {
       if (L.swap.includes(e.code) && onSwap) { e.preventDefault(); onSwap(p); }
+      if (L.dodge && L.dodge.includes(e.code) && onDodge) { e.preventDefault(); onDodge(p); }
     });
     if (e.code.startsWith('Arrow') || e.code === 'Space' || e.code === 'Tab') e.preventDefault();
     document.body.classList.add('no-touch');
@@ -171,7 +172,7 @@ const Input = (() => {
   }
 
   // ---------- gamepads: connected pads are handed to players in order ----------
-  // A B X Y = moves 1-4, either bumper = swap, Start = pause.
+  // A B X Y = moves 1-4, either bumper = swap, either trigger = dodge, Start = pause.
   const padPrev = [{}, {}];
   function pad(p) {
     const pads = navigator.getGamepads ? [...navigator.getGamepads()].filter(Boolean) : [];
@@ -182,8 +183,9 @@ const Input = (() => {
   function poll() {
     for (let p = 0; p < 2; p++) {
       const g = pad(p), prev = padPrev[p];
-      const now = { swap: pressed(g, 4) || pressed(g, 5), pause: pressed(g, 9) };
+      const now = { swap: pressed(g, 4) || pressed(g, 5), pause: pressed(g, 9), dodge: pressed(g, 6) || pressed(g, 7) };
       if (now.swap && !prev.swap && onSwap) onSwap(p);
+      if (now.dodge && !prev.dodge && onDodge) onDodge(p);
       if (now.pause && !prev.pause && onPause) onPause();
       padPrev[p] = now;
     }
@@ -191,13 +193,14 @@ const Input = (() => {
 
   return {
     bindStick, bindMoveButton, poll, isTouch,
-    set onPause(f) { onPause = f; }, set onMute(f) { onMute = f; }, set onSwap(f) { onSwap = f; },
+    set onPause(f) { onPause = f; }, set onMute(f) { onMute = f; }, set onSwap(f) { onSwap = f; }, set onDodge(f) { onDodge = f; },
     setMode(m) { mode = m; this.reset(); },
     // mouse attacks are on only during a 1-player or online battle (main.js switches this)
     set mouse(on) { mouseOn = on; if (!on) clearMouse(); },
     get mode() { return mode; },
     labels(p = 0) { return LAYOUT[mode][p] ? LAYOUT[mode][p].labels : LAYOUT.solo[0].labels; },
     swapLabel() { return LAYOUT.solo[0].swapLabel; },
+    dodgeLabel() { return LAYOUT.solo[0].dodgeLabel; },
     // ---- remapping (Settings) ----
     ACTIONS: ACTIONS.map(([id, name]) => ({ id, name })),
     RESERVED, keyName,
