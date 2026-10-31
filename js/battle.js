@@ -943,6 +943,10 @@ class Battle {
         m.status = null;
       }
     } else if (m.status === 'frz') m.status = null;   // never stay frozen between fights
+    else if (m.status) {   // out of a fight a status still wears off with time, without its damage or stuns (r291: a
+      m.statusT -= dt;     // paralysed Coreature used to crawl through the whole floor, and a burn kept its time for the next fight)
+      if (m.statusT <= 0) m.status = null;
+    }
 
     if (m.action) this.updateAction(m, dt);
     if (m.fainted || (this.state !== 'fight' && this.state !== 'explore')) return;

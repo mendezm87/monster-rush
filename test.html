@@ -394,7 +394,8 @@ $('#game').addEventListener('load', async () => {
         if (b.state === 'fight') note = 'fight lasted 4+ minutes in ' + msg; else {
           const t = exploreTarget(b, bot), r = n => Math.round(n);
           problem = `stuck (${b.state}) in ` + msg + ` at ${r(b.P.x)},${r(b.P.y)} going to ${t ? r(t.x) + ',' + r(t.y) : 'nothing'} (room ${b.room.w}x${b.room.h}, ${b.obstacles.map(q => q.block || `${r(q.x)},${r(q.y)} ${q.fw}x${q.fd}`).join('; ')}; pickups ${b.pickups.map(k => k.kind + ' ' + r(k.x) + ',' + r(k.y)).join('; ')})`;
-          window.stuckRoom = b.room;
+          problem += ` [enemies ${b.e.map(m => m.id + (m.fainted ? ' fainted' : m.alive ? ' alive' : ' spawning')).join(', ') || 'none'}; room.enemies ${b.room.enemies.length}; cleared ${b.room.cleared}; stairs ${b.stairs ? r(b.stairs.x) + ',' + r(b.stairs.y) : 'none'}; path ${t && findPath(b, b.P, t) ? 'found' : 'none'}]`;   // (r291: what's left to do there, for stuck bugs)
+          window.stuckRoom = b.room; window.stuckBattle = b;
         }
         break;
       }
