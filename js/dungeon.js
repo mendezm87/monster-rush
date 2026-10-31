@@ -106,7 +106,7 @@ const WILD_AI = {
 };
 // The climb ramps (r295): the growth per floor is the game's on floor 2 and RAMP times it by the last floor (and keeps
 // steepening in endless), because a flat climb is outrun by the party's growth halfway through (docs/run-length.md).
-const RAMP = 1.5;   // (r295, tuned with bots: 2.0 gave 1 win in 12 with floor 8 a wall, 1.6 gave 2 with floor 7 one)
+const RAMP = 1.6;   // (r295-r296, tuned with bots: 2.0 gave 1 win in 12 with floor 8 a wall; with act 3's rooms eased, 1.5 gave 6 of 12 and 1.6 gave 10 of 24 with deaths on every floor and the late floors reached at 73-82% HP)
 const ramp = floorN => 1 + (RAMP - 1) * Math.max(0, (floorN - 2) / Math.max(1, RUN_FLOORS - 2));
 function wildSpec(id, floorN, kind) {
   const f = (floorN - 1) * ramp(floorN);   // the climb is spread over the floors of a run (endless keeps climbing)

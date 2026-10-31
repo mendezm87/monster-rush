@@ -468,7 +468,9 @@ class Battle {
     this.state = 'pick';
     this.ui.pickNext(this.p, idx => {
       this.pi = idx;
-      this.state = this.e.some(m => !m.fainted) ? 'fight' : 'explore';
+      // back to the fight; also when the last wild Coreature fell in the same moment (the room then clears the usual way,
+      // with its reward and stairs: r296, it used to go straight to exploring with the boss room never cleared, a stuck run)
+      this.state = this.e.some(m => !m.fainted) || (this.e.length && !this.room.cleared) ? 'fight' : 'explore';
       this.stateT = 0;
       this.sendOut();
     });
