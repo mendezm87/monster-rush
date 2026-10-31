@@ -99,14 +99,15 @@ const WILD_AI = {
 function wildSpec(id, floorN, kind) {
   const f = floorN - 1;   // the climb is spread over the 6 floors of a run (endless keeps climbing)
   // the final boss: an evolved starter, bigger and tougher than any other boss
-  if (kind === 'final') return { id, hpMul: 1.6 + 0.5 * f, atkMul: 0.75 + 0.13 * f, scale: 1.45, boss: true, final: true, ai: 'boss' };
-  if (kind === 'boss') return { id, hpMul: 1.3 + 0.45 * f, atkMul: 0.7 + 0.12 * f, scale: 1.35, boss: true, ai: 'boss' };
+  // (r292: every climb per floor is about 12% steeper, after bots won 18 of 24 runs; floor 1 is as it was)
+  if (kind === 'final') return { id, hpMul: 1.6 + 0.55 * f, atkMul: 0.75 + 0.145 * f, scale: 1.45, boss: true, final: true, ai: 'boss' };
+  if (kind === 'boss') return { id, hpMul: 1.3 + 0.5 * f, atkMul: 0.7 + 0.135 * f, scale: 1.35, boss: true, ai: 'boss' };
   // a hand-made act boss (bosses.js BOSSES[id]): its own phases and attacks
-  if (kind === 'act') return { id, hpMul: 1.8 + 1.0 * f, atkMul: 0.72 + 0.12 * f, scale: 1.4, boss: true, act: true, script: id, ai: 'boss' };
+  if (kind === 'act') return { id, hpMul: 1.8 + 1.1 * f, atkMul: 0.72 + 0.135 * f, scale: 1.4, boss: true, act: true, script: id, ai: 'boss' };
   // a gatekeeper: the floor's guardian when it isn't the end of an act, a step down from a boss
-  if (kind === 'gate') return { id, hpMul: 1.0 + 0.38 * f, atkMul: 0.64 + 0.11 * f, scale: 1.25, boss: true, gate: true, ai: 'boss' };
-  if (kind === 'tough') return { id, hpMul: 0.65 + 0.25 * f, atkMul: 0.5 + 0.12 * f, scale: 1.15, ai: 'wild' };
-  return { id, hpMul: 0.3 + 0.15 * f, atkMul: 0.36 + 0.11 * f, ai: 'wild' };
+  if (kind === 'gate') return { id, hpMul: 1.0 + 0.42 * f, atkMul: 0.64 + 0.125 * f, scale: 1.25, boss: true, gate: true, ai: 'boss' };
+  if (kind === 'tough') return { id, hpMul: 0.65 + 0.28 * f, atkMul: 0.5 + 0.135 * f, scale: 1.15, ai: 'wild' };
+  return { id, hpMul: 0.3 + 0.17 * f, atkMul: 0.36 + 0.125 * f, ai: 'wild' };
 }
 
 // Relics last for the whole run and help the whole party. Each relic is one self-contained entry:
@@ -465,6 +466,9 @@ function tryFloor(floorN, partyIds, relics, last, offers = 3) {
       r.offer = [...local, ...shuffle(ids.filter(id => !partyIds.includes(id) && !local.includes(id)))].slice(0, offers);
     }
   }
+  // The first fight of a run is one wild Coreature, no champion (r292: a starter alone against three with the type
+  // advantage could lose its very first room in half a minute). Only the rooms right next to the start, floor 1.
+  if (floorN === 1) for (const o of Object.values(start.doors)) if (o && o.type === 'fight') o.enemies = [wildSpec(wildIds(stage, 1)[0], floorN, 'wild')];
   // More room types (r281): a challenge room (three waves for a relic), a campfire to rest at, a move tutor, and a
   // secret room behind a cracked wall. Rest and tutor take a spare dead end, else stand in for a fight room.
   const spare = rest.slice(altar ? 4 : 3).filter(r => r.type === 'fight');

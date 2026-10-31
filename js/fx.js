@@ -1006,6 +1006,10 @@ function drawScreenFlash(ctx, b) {
 
 // Shots from pieces (WATER-2, r210): water slugs (frames 0-3, growing; the biggest flies), splash 4-7, bubble 8-10
 // wobbling, pop 11-13, droplets 14-16, spray 17. Each hit plays its own pieces (PIECE_SHOT_HITS: sheet, frames, size).
+// Whole-attack sheets that aren't shipped any more (tools/fx-sheets.py UNSHIPPED, r292): their entries go, so with
+// pieces off those attacks fall back to their code-drawn art instead of a missing picture.
+for (const T of [SHEET_MOVES, SHEET_BEAMS, SHEET_SHOTS]) for (const id of Object.keys(T)) if (!FX_SHEET_DATA[T[id].sheet || id]) delete T[id];
+
 const PIECE_SHOTS = {
   spoutShot:  { sheet: 'water2', fly: [3], len: 26, ax: 0.7 },
   cuffCannon: { sheet: 'water2', fly: [3], len: 30, ax: 0.7 },

@@ -190,7 +190,12 @@ mixInto(Battle, class {
     if (!s || q.block) return;   // wall blocks are part of the walls (rooms.js)
     Lighting.shadow(ctx, q.x, q.y - 1, q.fw / 2 + 2, Math.max(3, q.fd * 0.4), 1.1);
     const [sx, sy, w, h] = q.p, X = Math.round(q.x - q.w / 2), Y = Math.round(q.y - q.h + 3);
-    if (!q.flip) { ctx.drawImage(s.img, sx, sy, w, h, X, Y, q.w, q.h); return; }
-    ctx.save(); ctx.translate(X + q.w, Y); ctx.scale(-1, 1); ctx.drawImage(s.img, sx, sy, w, h, 0, 0, q.w, q.h); ctx.restore();
+    // see-through when it stands in front of your Coreature (r292: it used to vanish behind a rock)
+    const P = this.P, hide = P && P.visible && !P.fainted && q.y > P.y - 2 && X < P.x + P.r + 2 && X + q.w > P.x - P.r - 2 && Y < P.y && Y + q.h > P.y - P.h;
+    ctx.save();
+    if (hide) ctx.globalAlpha = 0.4;
+    if (!q.flip) ctx.drawImage(s.img, sx, sy, w, h, X, Y, q.w, q.h);
+    else { ctx.translate(X + q.w, Y); ctx.scale(-1, 1); ctx.drawImage(s.img, sx, sy, w, h, 0, 0, q.w, q.h); }
+    ctx.restore();
   }
 });

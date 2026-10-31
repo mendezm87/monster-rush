@@ -116,6 +116,22 @@ html, body {
 #banner { position: absolute; left: 0; right: 0; top: 36cqh; text-align: center; pointer-events: none;
   font-size: 11cqh; font-style: italic; color: #ffe066; -webkit-text-stroke: 1.2cqh #3a1d05; paint-order: stroke fill;
   text-shadow: 0 1.2cqh 0 #3a1d05; white-space: nowrap; opacity: 0; }
+/* first-run prompts (r292): a pill under the HUD until the player has moved, attacked and dodged once */
+#coach { position: absolute; left: 50%; top: 17cqh; transform: translateX(-50%); pointer-events: none; z-index: 4; white-space: nowrap;
+  font: 900 3.6cqh var(--font); color: #fff6d8; background: rgba(10, 8, 18, .72); border: 0.5cqh solid #ffe066; border-radius: 3cqh; padding: 1.2cqh 3cqh;
+  -webkit-text-stroke: 0.3cqh rgba(0,0,0,.5); paint-order: stroke fill; animation: coachIn .3s ease-out; }
+#coach.hidden { display: none; }
+@keyframes coachIn { from { opacity: 0; transform: translate(-50%, -1.5cqh); } to { opacity: 1; transform: translateX(-50%); } }
+/* the run's summary card on the results screen (r292) */
+#result-card { display: flex; flex-direction: column; align-items: center; gap: 1.2cqh; background: var(--panel); border-radius: 2cqh; padding: 1.6cqh 2.4cqh; max-width: 92%; }
+#result-card .rc-party { display: flex; gap: 1.6cqh; flex-wrap: wrap; justify-content: center; }
+#result-card .rc-mon { display: flex; flex-direction: column; align-items: center; font: 700 2.2cqh system-ui, sans-serif; color: #cfd6e6; }
+#result-card .rc-mon canvas { width: 10cqh; height: 10cqh; image-rendering: pixelated; }
+#result-card .rc-mon.out canvas { filter: grayscale(1) brightness(.55); }
+#result-card .rc-mon b { font: 900 2.6cqh var(--font); color: #fff; }
+#result-card .rc-relics { display: flex; gap: 0.8cqh; flex-wrap: wrap; justify-content: center; }
+#result-card .rc-relics canvas { width: 5cqh; height: 5cqh; image-rendering: pixelated; }
+#result-card .rc-line { font: 700 3cqh system-ui, sans-serif; }
 #banner small { display: block; font-size: 5cqh; margin-top: 1cqh; -webkit-text-stroke: 0.8cqh #3a1d05; text-shadow: 0 0.6cqh 0 #3a1d05; color: #fff6d8; }
 #banner.show { animation: bannerIn 1.8s ease forwards; }
 @keyframes bannerIn { 0% { transform: translateX(100%) skewX(-8deg); opacity: 1; }

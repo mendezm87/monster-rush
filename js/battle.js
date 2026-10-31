@@ -529,7 +529,7 @@ class Battle {
 
   // ---------------------------------------------------------- loot
   dropLoot(m) {
-    let coins = m.boss ? 8 + this.run.floorN * 2 : m.scale > 1 ? 2 : (Math.random() < 0.5 ? 1 : 0);   // rooms give the rest (spawnReward)
+    let coins = m.boss ? 8 + this.run.floorN * 2 : m.scale > 1 ? 2 : (this.run.floorN === 1 || Math.random() < 0.5 ? 1 : 0);   // rooms give the rest (spawnReward); floor 1 always a coin (r292)
     if (this.run.floor.twist === 'stampede' && !m.boss) coins++;   // a stampede's spoils (r282)
     const cm = this.mod(null, 'coinMul');
     if (cm !== 1) coins = Math.round(coins * cm + Math.random() * 0.5);

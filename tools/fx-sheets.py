@@ -12,6 +12,10 @@ REFS = os.path.join(ROOT, 'docs', 'refs')
 
 # id: (reference, px: the height of its tallest frame in sprite pixels, frames in each row of the sheet). px is chosen so
 # the game draws the frames at about one pixel per sprite pixel (big attacks get more pixels, not bigger ones).
+# Whole-attack sheets kept out of js/fx-sheets.js (r292, about 270 KB): every one of these attacks plays its pieces now, and
+# with pieces off the game falls back to its code-drawn art (fx.js prunes SHEET_* entries whose sheet isn't shipped).
+UNSHIPPED = {'flameWheel', 'blazeRush', 'flamethrower', 'infernoBeam', 'hydroCannon', 'tidalCannon', 'voltCannon', 'hornLance', 'deadlineDash', 'braveDive', 'aquaJet', 'phantomStrike', 'zoomies', 'voltRush', 'ironSlam', 'lanceCharge'}
+
 SHEETS = {
     'flameWheel':    ('f1-flame-wheel.png', 56, [5]),
     'blazeRush':     ('f2-blaze-rush.png', 56, [5]),
@@ -456,6 +460,7 @@ def build(only=None, sheet=False):
             review.append((sid + ' (back)', bk, meta)); review.append((sid + ' (front)', fs, meta))
         review.append((sid, q, meta))
         print(f'{sid}: {len(meta)} frames, scale 1/{k:.1f}, sizes {[(f[2], f[3]) for f in meta]}, {len(buf.getvalue())} bytes')
+    for sid in UNSHIPPED: data.pop(sid, None)
     js = ('// Attack frames cut from the owner\'s reference sheets (docs/refs) by tools/fx-sheets.py. Do not edit by hand:\n'
           '// change the tool or the reference and run it again. One pixel here is one sprite pixel. Shared with the Stadium.\n'
           'const FX_SHEET_DATA = ' + json.dumps(data, separators=(',', ':')) + ';\n')

@@ -84,9 +84,9 @@ The roguelikes people play for hundreds of hours are built on **builds**: items 
 
 ## Phase 5: Polish and feel
 
-- [ ] **Onboarding:** a first run that teaches by playing (move, attack, swap, recruit), instead of only the How to Play page.
+- [x] **Onboarding, first step (r292):** three prompts the first time anyone plays (move, attack, dodge). Later: swap and recruit, a proper first run.
 - [x] **A dodge** (r290): a Hades-style dart with a moment where nothing can hit. Next: relics that change it.
-- [ ] **Game feel:** hit-stop on big hits, stronger screen shake options, better death and victory moments, a run-summary screen worth screenshotting.
+- [ ] **Game feel:** hit-stop on big hits (done), a run-summary card (r292); still to do: stronger screen shake options, better death and victory moments.
 - [ ] **Accessibility:** colour-blind-safe type colours, text size, reduced flashing, remappable gamepad buttons.
 - [ ] **Audio:** more songs (a title song, alternate areas, boss themes per area), a sound pass on the UI.
 - [ ] **Translations** (later; text is already in a few places, so keep new text easy to find).

@@ -2,7 +2,7 @@
 
 // Shown on the title screen so players can tell whether their browser has the latest
 // build (GitHub Pages lets browsers cache files for up to 10 minutes). Bump on every release.
-const VERSION = '2026.10.30-r291';
+const VERSION = '2026.10.31-r292';
 
 const App = {
   endless: false,   // the mode picked on the title screen
@@ -244,6 +244,26 @@ Input.bindStick($('#stick-zone'), $('#stick'), $('#knob'), 0);
 
 // Save the run now (out of a fight, or on entering a room), so a refresh can continue it.
 function saveRun() { if (App.run && !App.run.over) Save.saveRun(App.run.toSave()); }
+// First-run prompts (r292, the game taught nothing by playing): three short hints the first time anyone plays, each
+// until it's done (moved, attacked, dodged), then never again (Save.data.coached). Checked every frame (coachTick).
+const COACH_STEPS = [
+  { text: () => Input.isTouch ? 'Drag the stick to move' : 'Move with WASD or the arrow keys', when: () => true, done: (b, c) => c.moved > 60 },
+  { text: () => Input.isTouch ? 'Tap a move button to attack' : 'Left click to attack (right click and Shift for your other moves)', when: b => b.state === 'fight', done: b => b.P.cd.some(x => x > 0) },
+  { text: () => Input.isTouch ? 'Tap DODGE to dodge an attack' : 'Press Space to dodge an attack', when: b => b.state === 'fight', done: b => b.P.dodgeCd > 0 },
+];
+const Coach = { step: 0, moved: 0, last: null, shown: '' };
+function coachTick(b) {
+  const el = $('#coach');
+  if (Save.data.coached || !b || !App.run || App.paused) { if (Coach.shown) { el.classList.add('hidden'); Coach.shown = ''; } return; }
+  const P = b.P;
+  if (Coach.last && Coach.last.b === b) Coach.moved += Math.hypot(P.x - Coach.last.x, P.y - Coach.last.y);
+  Coach.last = { b, x: P.x, y: P.y };
+  const S = COACH_STEPS[Coach.step];
+  if (S.done(b, Coach)) { Coach.step++; if (Coach.step >= COACH_STEPS.length) { Save.data.coached = true; Save.write(); } el.classList.add('hidden'); Coach.shown = ''; return; }
+  const want = S.when(b) ? S.text() : '';
+  if (want !== Coach.shown) { Coach.shown = want; el.textContent = want; el.classList.toggle('hidden', !want); }
+}
+
 function startRun(starterId) {
   App.run = new RunState(starterId, App.endless, App.trainer || 'scarf', App.look || 'm');
   beginRun();
@@ -339,10 +359,19 @@ function showResult(result, record = false) {
     if (App.run !== run) return;
     $('#result-title').textContent = result === 'win' ? 'RUN CLEARED!' : run.endless ? (record ? 'NEW RECORD!' : 'ENDLESS OVER') : 'RUN OVER';
     const t = Math.floor(run.stats.time), ts = `${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}`;
+    const card = $('#result-card'); card.innerHTML = '';
+    const party = document.createElement('div'); party.className = 'rc-party';
+    for (const m of run.party) {
+      const d = document.createElement('div'); d.className = 'rc-mon' + (m.fainted ? ' out' : '');
+      const cv = document.createElement('canvas'); cv.width = cv.height = 48; drawPortrait(cv, m.id, {});
+      d.appendChild(cv); d.insertAdjacentHTML('beforeend', `<b>${m.def.name}</b><span>${restoreLabel(m)}</span>`);
+      party.appendChild(d);
+    }
+    card.appendChild(party);
+    if (run.relics.length) { const rel = document.createElement('div'); rel.className = 'rc-relics'; for (const id of run.relics) { const cv = iconCanvas(id); cv.title = RELICS[id].name; rel.appendChild(cv); } card.appendChild(rel); }
     $('#result-stats').innerHTML = `Reached floor ${run.floorN}${run.endless ? ` (best ${Save.data.bestEndless})` : ` of ${RUN_FLOORS}, ${STAGES[run.floor.stage].name}`} &nbsp;·&nbsp; Time ${ts}<br>
       Rooms cleared ${run.stats.rooms} &nbsp;·&nbsp; Wild Coreatures beaten ${run.stats.kos}<br>
-      Coins ${run.coins} &nbsp;·&nbsp; Relics ${run.relics.length}<br>
-      Party ${run.party.map(m => `${m.def.name} (${restoreLabel(m)})`).join(', ')}`;
+      Coins ${run.coins} &nbsp;·&nbsp; Relics ${run.relics.length}`;
     UI.show('result');
   }, 1400);
 }
@@ -738,6 +767,7 @@ function frame(now) {
     if (!App.paused && b.state === 'explore' && (App.savedAt === undefined || clockT - App.savedAt > 3)) { App.savedAt = clockT; saveRun(); }
     b.render(ctx);
     UI.updateHud(b);
+    coachTick(b);
   } else {
     Backdrop.render(dt, clockT);
   }
