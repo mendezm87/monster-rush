@@ -92,7 +92,11 @@ class Mon {
   get alive() { return this.visible && !this.fainted; }
   buffMul(stat) { return this.buffs.reduce((m, b) => (b.stat === stat ? m * b.mul : m), 1); }
   // everything restored so far adds RS_HP to HP and RS_STAT to attack and defence per full bar, smoothly
-  growMul(per) { return 1 + (typeof RS_HP === 'number' ? per : 0) * this.progress; }
+  growMul(per) {
+    if (typeof RS_HP !== 'number') return 1;
+    const p = this.progress, full = typeof RS_FULL === 'number' ? RS_FULL : Infinity, late = typeof RS_LATE === 'number' ? RS_LATE : 1;
+    return 1 + per * (Math.min(p, full) + Math.max(0, p - full) * late);   // (bars past the third count half, Deep Archive r295)
+  }
   calcMaxHp() { return Math.round(this.def.hp * this.hpMul * this.growMul(typeof RS_HP === 'number' ? RS_HP : 0) * this.mem.hp); }
   atk() { return this.def.atk * this.atkMul * this.growMul(typeof RS_STAT === 'number' ? RS_STAT : 0) * this.mem.atk * this.bonus.atk * (this.item.atk || 1) * this.buffMul('atk') * (this.status === 'brn' ? 0.75 : 1); }
   defense() { return this.def.def * this.growMul(typeof RS_STAT === 'number' ? RS_STAT : 0) * this.mem.def * this.bonus.def * (this.item.def || 1) * this.buffMul('def'); }

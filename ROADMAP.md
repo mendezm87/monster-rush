@@ -69,13 +69,13 @@ The roguelikes people play for hundreds of hours are built on **builds**: items 
 The 6-floor run was kept short for development. The goal: a run long and hard enough that a player who made the right
 choices feels **overpowered by the end**, and a story that finishes. Not started; decide the numbers with the owner first.
 
-- [ ] **Length (researched and tested, r294, `docs/run-length.md`):** 9 floors in 3 acts as the standard run (50-55
+- [x] **Length (r295; researched and tested in r294, `docs/run-length.md`):** 9 floors in 3 acts as the standard run (50-55
   minutes for a person, the genre's sweet spot; 12 is 70-75, where runs get called tiring), plus a hidden 4th act of 3
   floors for the true ending, Spire-style, for players who meet a condition found in the story. Each act gets two areas
   with a choice at the stairs (the six areas now pair up; the second ones come later, alternates (a recoloured area with
   its own natives and a twist) as cheap stand-ins). `RUN_FLOORS` and `ACT_FLOORS` are single constants; everything else
   already takes a floor number. New per act: its boss, its story beat, a second area.
-- [ ] **The curve (tested, r294):** as the game is, bots clear 12 floors 8 times in 9 and arrive at every late floor at
+- [ ] **The curve (first pass r295: the ramp, tapering restoration, challenge rooms from floor 4, rooms of four in act 3; still to do: more relics, Restored wilds, elites, scripted bosses; tested r294):** as the game is, bots clear 12 floors 8 times in 9 and arrive at every late floor at
   90-98% HP: the party's growth (restoration above all, about 0.65 bars a floor, plus six bodies and the whole relic pool
   by floor 10) outruns any flat climb; steeper or gentler by 30% changes nothing. A climb that ramps to about 2.2x the
   game's growth per floor by the last act gives the roguelike shape (deaths spread over floors 2-9, late floors reached

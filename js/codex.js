@@ -91,7 +91,7 @@ function drawCodex() {
       const x = sw.getContext('2d'); if (got) { S.ground.forEach((col, j) => { x.fillStyle = col; x.fillRect(0, j * 3, 14, 3); }); x.fillStyle = S.wall[1]; x.fillRect(0, 0, 14, 3); } else { x.fillStyle = '#1a1626'; x.fillRect(0, 0, 14, 14); }
       row.appendChild(sw);
       const natives = got ? AREA_MONS[k].natives.map(id => c.seen.includes(id) ? ROSTER_BY_ID[id].name : '???').join(', ') : '';
-      row.insertAdjacentHTML('beforeend', `<div><b>${got ? S.name : '???'}</b> <span class="lbl">Floor ${i + 1}</span>${got ? `<br><span class="lbl">Lives here</span> ${natives}` : ''}</div>`);
+      row.insertAdjacentHTML('beforeend', `<div><b>${got ? S.name : '???'}</b> <span class="lbl">Act ${Math.floor(i / 2) + 1}</span>${got ? `<br><span class="lbl">Lives here</span> ${natives}` : ''}</div>`);
       body.appendChild(row);
     });
   }

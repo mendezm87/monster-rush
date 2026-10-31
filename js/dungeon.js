@@ -1,21 +1,27 @@
 // Floors (a grid of rooms joined by doors, Isaac-style) and the state of a run.
 
-const RUN_FLOORS = 6;                                    // floors in a normal run; the last one has the final boss
+const RUN_FLOORS = 9;                                    // floors in a normal run; the last one has the final boss (9 since r295, 6 before)
 // Acts (r143, the owner: "at least three floors per act"): a boss only at the end of an act; the other
-// floors end with a gatekeeper (a tough Coreature guarding the stairs). A normal run is two acts:
-// the act 1 boss on floor 3 (a hand-made boss, bosses.js) and the final boss on floor 6.
+// floors end with a gatekeeper (a tough Coreature guarding the stairs). A normal run is three acts (r295, after the
+// research in docs/run-length.md): the act 1 boss on floor 3 (a hand-made boss, bosses.js), an act 2 boss on floor 6
+// (an area boss until one is hand-made) and the final boss on floor 9.
 const ACT_FLOORS = 3;
 const actOf = floorN => Math.ceil(floorN / ACT_FLOORS);
 const actEnd = floorN => floorN % ACT_FLOORS === 0;
 // how often an act boss (or the final boss) is Glitched: corrupted beyond what a party Coreature can be (bosses.js BOSS_GLITCH)
 const bossGlitchOdds = floorN => (floorN <= 3 ? 0.3 : 0.5);
-const FLOOR_STAGES = ['meadow', 'crater', 'summit', 'grotto', 'ruins', 'spire'];   // one per floor; endless mode loops through them
+// Each act's two areas (r295): a run starts in the first area of act 1, and after every boss the stairs down come in a
+// pair, one for each of the next floor's act's areas, so the route is the player's (an area can come twice in a row,
+// like Isaac's Basement I and II). Endless mode loops through the acts. FLOOR_STAGES lists every area, in order.
+const ACT_AREAS = [['meadow', 'crater'], ['summit', 'grotto'], ['ruins', 'spire']];
+const actAreas = floorN => ACT_AREAS[(actOf(floorN) - 1) % ACT_AREAS.length];
+const FLOOR_STAGES = ACT_AREAS.flat();
 // Each floor theme's song (Sfx.music.SONGS); boss rooms and the shop have their own.
 const STAGE_SONGS = { meadow: 'rush', crater: 'magma', summit: 'summit', grotto: 'deep', ruins: 'deep', spire: 'spire' };
 // 'FLOOR 2/6' in a normal run, 'ENDLESS FLOOR 9' in endless
 const floorLabel = run => run.endless ? `ENDLESS FLOOR ${run.floorN}` : `FLOOR ${run.floorN}/${RUN_FLOORS}`;
 // the big banner when a floor starts, with the area's name under it
-const floorBanner = run => [run.floor.last ? 'FINAL FLOOR' : floorLabel(run), STAGES[run.floor.stage].name.toUpperCase() + (run.floor.twist ? ' · ' + TWISTS[run.floor.twist].name : '')];
+const floorBanner = run => [run.floor.last ? 'FINAL FLOOR' : floorLabel(run), (run.endless ? '' : `ACT ${actOf(run.floorN)} · `) + STAGES[run.floor.stage].name.toUpperCase() + (run.floor.twist ? ' · ' + TWISTS[run.floor.twist].name : '')];
 // Floor twists (r282, the owner: "do them all"): from floor 2 a floor may have one, announced on its banner.
 // dark: the torches are out (Lighting.apply, Battle.drawDarkness); stampede: one more wild Coreature in every
 // fight and an extra coin from each; downpour: Water moves +25%, Fire -25%, for both sides (Battle.hit), and rain;
@@ -44,6 +50,8 @@ const REVIVE_HP = 0.3;                                   // fainted party member
 const DATA_WILD = 10, DATA_TOUGH = 20, DATA_BOSS = 50, DATA_BENCH = 0.5;
 const RESTORE_NEED = bars => 220 + 70 * bars;
 const RS_HP = 0.15, RS_STAT = 0.08, RS_HEAL = 0.1;   // per full bar: +15% HP, +8% attack and defence; a full bar heals 10%
+// Growth tapers (r295, from the run-length tests: restoration outran any climb): bars past the third count half
+const RS_FULL = 3, RS_LATE = 0.5;
 const MEMORY_AT = [0.25, 0.5, 0.75];
 // The strengths a memory can bring back instead of a move (multipliers on this Coreature, for the run).
 const STRENGTHS = {
@@ -96,8 +104,12 @@ const WILD_AI = {
   wild: { think: 0.3, dodge: 0.3, aggro: 0.45, react: 0.45, aimErr: 0.18, lead: false },
   boss: { think: 0.22, dodge: 0.55, aggro: 0.7, react: 0.3, aimErr: 0.1, lead: false },
 };
+// The climb ramps (r295): the growth per floor is the game's on floor 2 and RAMP times it by the last floor (and keeps
+// steepening in endless), because a flat climb is outrun by the party's growth halfway through (docs/run-length.md).
+const RAMP = 1.5;   // (r295, tuned with bots: 2.0 gave 1 win in 12 with floor 8 a wall, 1.6 gave 2 with floor 7 one)
+const ramp = floorN => 1 + (RAMP - 1) * Math.max(0, (floorN - 2) / Math.max(1, RUN_FLOORS - 2));
 function wildSpec(id, floorN, kind) {
-  const f = floorN - 1;   // the climb is spread over the 6 floors of a run (endless keeps climbing)
+  const f = (floorN - 1) * ramp(floorN);   // the climb is spread over the floors of a run (endless keeps climbing)
   // the final boss: an evolved starter, bigger and tougher than any other boss
   // (r292: every climb per floor is about 12% steeper, after bots won 18 of 24 runs; floor 1 is as it was)
   if (kind === 'final') return { id, hpMul: 1.6 + 0.55 * f, atkMul: 0.75 + 0.145 * f, scale: 1.45, boss: true, final: true, ai: 'boss' };
@@ -377,23 +389,23 @@ function makeChampion(spec, floorN, odds = championOdds(floorN)) {
 function makeWave(floorN, sizeKey, stage) {
   if (Math.random() < (floorN > 3 ? 0.25 : 0.18)) return [wildSpec(wildIds(stage, 1)[0], floorN, 'tough')];
   const roomy = sizeKey === 'big' || sizeKey === 'wide' || sizeKey === 'tall';
-  const table = floorN === 1 ? [1, 2, 2, 3] : floorN <= 3 ? [2, 2, 3, 3] : [2, 3, 3, 3];
+  const table = floorN === 1 ? [1, 2, 2, 3] : floorN <= 3 ? [2, 2, 3, 3] : floorN <= 6 ? [2, 3, 3, 3] : [2, 3, 3, 4];   // (act 3: rooms of four now and then, r295)
   let n = pickRand(table);
-  if (roomy && n < 3 && Math.random() < 0.5) n++;
+  if (roomy && n < (floorN >= 7 ? 4 : 3) && Math.random() < 0.5) n++;
   return wildIds(stage, n).map(id => makeChampion(wildSpec(id, floorN, 'wild'), floorN));
 }
 
 // last: the last floor of a normal run (its boss is the final boss)
-function genFloor(floorN, partyIds, relics = [], last = false, offers = 3) {
+function genFloor(floorN, partyIds, relics = [], last = false, offers = 3, stage = null) {
   for (let tries = 0; tries < 2000; tries++) {
-    const f = tryFloor(floorN, partyIds, relics, last, offers);
+    const f = tryFloor(floorN, partyIds, relics, last, offers, stage);
     if (f) return f;
   }
   throw new Error('could not build a floor');
 }
 
-function tryFloor(floorN, partyIds, relics, last, offers = 3) {
-  const stage = FLOOR_STAGES[(floorN - 1) % FLOOR_STAGES.length];
+function tryFloor(floorN, partyIds, relics, last, offers = 3, stageKey = null) {
+  const stage = stageKey || actAreas(floorN)[0];
   const G = 9, target = 10 + Math.min(floorN, 4) + ((Math.random() * 2) | 0);
   const grid = new Map(), key = (x, y) => x + ',' + y;
   const rooms = [];
@@ -474,7 +486,7 @@ function tryFloor(floorN, partyIds, relics, last, offers = 3) {
   const spare = rest.slice(altar ? 4 : 3).filter(r => r.type === 'fight');
   const fightRoom = () => spare.shift() || pickRand(rooms.filter(r => r.type === 'fight')) || null;
   const plain = r => { r.enemies = []; r.cleared = true; delete r.reward; [r.w, r.h] = ROOM_SIZES.s; };
-  if (floorN >= 2 && Math.random() < 0.6) {
+  if (floorN >= 4 && Math.random() < 0.6) {   // (from floor 4, r295: on floors 2-3 the three waves killed parties of two)
     const r = pickRand(rooms.filter(r => r.type === 'fight' && Object.keys(r.doors).length > 1)) || fightRoom();
     if (r) { r.type = 'challenge'; [r.w, r.h] = ROOM_SIZES.big; r.waves = [makeWave(floorN, 'big', stage), makeWave(floorN, 'big', stage)]; r.waveN = 3; r.enemies = makeWave(floorN, 'big', stage); r.reward = 'chest'; }
   }
@@ -645,11 +657,13 @@ class RunState {
   get perk() { return this.T.perk || null; }
   get partyMax() { return this.T.partyMax || 6; }   // the Arcbracer's slots
   get reveal() { return !!this.T.reveal; }
-  newFloor(n) {
+  // stage: the area the player picked at the stairs (r295); floor 1 is the first area of act 1, else one of the act's at random
+  newFloor(n, stage = null) {
     // the old floor's room pictures and scorch marks: freed now (phones cap canvas memory)
     if (this.floor) for (const r of this.floor.rooms) { freeCanvas(r.canvas); freeCanvas(r.decal); freeCanvas(r.decor); delete r.canvas; delete r.decal; delete r.decor; }
     this.floorN = n;
-    this.floor = genFloor(n, this.party.map(m => m.def.from || m.id), this.relics, !this.endless && n === RUN_FLOORS, this.T.offers || 3);
+    if (!stage) stage = n === 1 ? actAreas(1)[0] : pickRand(actAreas(n));
+    this.floor = genFloor(n, this.party.map(m => m.def.from || m.id), this.relics, !this.endless && n === RUN_FLOORS, this.T.offers || 3, stage);
     this.warm();
     // fainted Coreatures get back up at 30% for the new floor
     for (const m of this.party) if (m.fainted) { m.fainted = false; m.hp = Math.round(m.maxHp * REVIVE_HP); m.status = null; }

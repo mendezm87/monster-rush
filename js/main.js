@@ -2,7 +2,7 @@
 
 // Shown on the title screen so players can tell whether their browser has the latest
 // build (GitHub Pages lets browsers cache files for up to 10 minutes). Bump on every release.
-const VERSION = '2026.10.31-r294';
+const VERSION = '2026.10.31-r295';
 
 const App = {
   endless: false,   // the mode picked on the title screen
@@ -299,11 +299,11 @@ function twistBanner(run) {
 
 const roomHooks = {
   exit(dir) { transition(() => enterRoom(App.run.room.doors[dir], DOOR_DIRS[dir][2])); },
-  stairs() {
+  stairs(stage) {   // stage: the area picked at the stairs (r295)
     transition(() => {
       const run = App.run;
       run.stats.floors++;
-      run.newFloor(run.floorN + 1);
+      run.newFloor(run.floorN + 1, stage);
       trainerUnlocks(run);
       enterRoom(run.room, null);
       UI.banner(...floorBanner(run));

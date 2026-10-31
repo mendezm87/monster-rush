@@ -555,17 +555,32 @@ mixInto(Battle, class {
     }
   }
 
+  // The stairs down, one or a pair (r295), each with a plaque naming the area it leads to.
   drawStairs(ctx) {
-    const s = this.stairs, x = Math.round(s.x), y = Math.round(s.y);
-    ctx.fillStyle = OUTLINE; ctx.fillRect(x - 18, y - 13, 36, 26);
-    for (let i = 0; i < 4; i++) {
-      ctx.fillStyle = ['#6a6070', '#544a5c', '#3e3648', '#2a2432'][i];
-      ctx.fillRect(x - 16, y - 11 + i * 6, 32, 6);
-      ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fillRect(x - 16, y - 11 + i * 6, 32, 1);
+    for (const s of [this.stairs, this.stairsAlt]) {
+      if (!s) continue;
+      const x = Math.round(s.x), y = Math.round(s.y);
+      ctx.fillStyle = OUTLINE; ctx.fillRect(x - 18, y - 13, 36, 26);
+      for (let i = 0; i < 4; i++) {
+        ctx.fillStyle = ['#6a6070', '#544a5c', '#3e3648', '#2a2432'][i];
+        ctx.fillRect(x - 16, y - 11 + i * 6, 32, 6);
+        ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fillRect(x - 16, y - 11 + i * 6, 32, 1);
+      }
+      const glow = 0.25 + Math.sin(this.time * 4) * 0.15;
+      ctx.globalAlpha = glow; ctx.strokeStyle = '#ffe066'; ctx.lineWidth = 2;
+      ctx.strokeRect(x - 19, y - 14, 38, 28); ctx.globalAlpha = 1;
+      if (s.stage && STAGES[s.stage]) {   // the plaque: the area's name over the stairs
+        const name = STAGES[s.stage].name.toUpperCase();
+        ctx.font = '7px "Lilita One", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        const tw = Math.ceil(ctx.measureText(name).width) + 10, px = x, py = y - 26;
+        ctx.fillStyle = OUTLINE; ctx.fillRect(px - tw / 2 - 1, py - 7, tw + 2, 14);
+        ctx.fillStyle = '#6b5436'; ctx.fillRect(px - tw / 2, py - 6, tw, 12);
+        ctx.fillStyle = '#8a6e48'; ctx.fillRect(px - tw / 2 + 1, py - 5, tw - 2, 1);
+        ctx.fillStyle = '#ffe9b0'; ctx.fillText(name, px, py + 0.5);
+        ctx.fillStyle = OUTLINE; ctx.fillRect(x - 1, y - 19, 2, 6);   // the post down to the stairs
+        ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+      }
     }
-    const glow = 0.25 + Math.sin(this.time * 4) * 0.15;
-    ctx.globalAlpha = glow; ctx.strokeStyle = '#ffe066'; ctx.lineWidth = 2;
-    ctx.strokeRect(x - 19, y - 14, 38, 28); ctx.globalAlpha = 1;
   }
 
   drawPickups(ctx) {

@@ -339,7 +339,7 @@ $('#game').addEventListener('load', async () => {
       if (Math.hypot(P.x - ped.x, P.y - ped.y) < 22 + P.r) bot.peds.add(ped);
       return { x: ped.x, y: ped.y + 4 };
     }
-    if (b.stairs) return b.stairs;
+    if (b.stairs) { if (bot.stairsRoom !== b.room) { bot.stairsRoom = b.room; bot.stairsPick = b.stairsAlt && Math.random() < 0.5 ? b.stairsAlt : b.stairs; } return bot.stairsPick; }   // (a pair of stairs, r295: either)
     const dir = nextDoor(room, App.run.floor);
     if (!dir) return null;
     const d = doorPos(room, dir), F = b.F;

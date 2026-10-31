@@ -61,7 +61,7 @@ class Battle {
     this.shake = 0; this.hitstop = 0; this.enemyAtkT = 0; this.winT = 0;
     this.e = [];
     this.pedestals = [];
-    this.stairs = null;
+    this.stairs = null; this.stairsAlt = null;   // the way down: one staircase, or a pair with an area each (r295)
     room.visited = true;
 
     // walk in through the doorway we came from (or stand in the middle of the start room)
@@ -241,9 +241,12 @@ class Battle {
     }
   }
 
+  // The stairs down (r295): a pair, one for each of the next floor's act's areas (actAreas), signed with the area's name,
+  // so the player picks the route; one staircase when the act has one area.
   placeStairs() {
-    const F = this.F;
-    this.stairs = { x: (F.x0 + F.x1) / 2, y: (F.y0 + F.y1) / 2 };
+    const F = this.F, cx = (F.x0 + F.x1) / 2, cy = (F.y0 + F.y1) / 2, areas = typeof actAreas === 'function' ? actAreas(this.run.floorN + 1) : [null];
+    if (areas.length > 1) { this.stairs = { x: cx - 60, y: cy, stage: areas[0] }; this.stairsAlt = { x: cx + 60, y: cy, stage: areas[1] }; }
+    else { this.stairs = { x: cx, y: cy, stage: areas[0] }; this.stairsAlt = null; }
   }
 
   // Coreatures whose bar is full Restore into their next form (between fights, so moves don't change
@@ -766,10 +769,10 @@ class Battle {
         }
       }
     }
-    if (this.stairs && Math.hypot(P.x - this.stairs.x, P.y - this.stairs.y) < 16 && this.hooks.stairs) {
+    for (const s of [this.stairs, this.stairsAlt]) if (s && Math.hypot(P.x - s.x, P.y - s.y) < 16 && this.hooks.stairs) {
       this.state = 'leaving';
       Sfx.play('stairs');
-      this.hooks.stairs();
+      this.hooks.stairs(s.stage);
     }
   }
 
