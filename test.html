@@ -39,13 +39,15 @@
   <table id="checks"><tr><th>Check</th><th>Result</th><th>Details</th></tr></table>
   <h2>Bot runs</h2>
   <p class="hint">Hard bots. Balance numbers aren't pass/fail, they're there to compare before and after a change. Bots favour ranged moves, so read them with that in mind.</p>
+  <p class="hint" id="floors-hint" style="display:none">Floor by floor (r294): how many runs reached each floor, how many ended there, and the party's shape on arriving: average restoration (bars + the current bar), relics held, party size, HP share, game time. The shape of a run's difficulty, for trying lengths and curves (<code>&amp;maxfloor=12&amp;endless=3&amp;curve=0.8</code>).</p>
+  <table id="floors" style="display:none"><tr><th>Floor</th><th>Reached</th><th>Ended here</th><th>Restoration</th><th>Relics</th><th>Party</th><th>HP</th><th>Time</th></tr></table>
   <table id="runs"><tr><th>Starter</th><th>Mode</th><th>Runs</th><th>Wins</th><th>Avg floor</th><th>Best floor</th><th>Lost on floor</th><th>Avg rooms</th><th>Avg game time</th><th>Problems</th><th>Notes</th></tr></table>
   <button id="again">Run again</button>
 
 <script>
 const q = new URLSearchParams(location.search);
 const QUICK = q.has('quick');   // ?quick: the checks plus one run per starter
-const RUNS = +(q.get('runs') ?? (QUICK ? 1 : 10)), ENDLESS = +(q.get('endless') ?? (QUICK ? 0 : 2)), MAX_FLOOR = +(q.get('maxfloor') ?? 6), LEARN = q.get('learn') !== '0';
+const RUNS = +(q.get('runs') ?? (QUICK ? 1 : 10)), ENDLESS = +(q.get('endless') ?? (QUICK ? 0 : 2)), MAX_FLOOR = +(q.get('maxfloor') ?? 6), LEARN = q.get('learn') !== '0', CURVE = (q.get('curve') ?? '1').split(',').map(Number), RECRUIT_EVERY = +(q.get('recruitEvery') ?? 1), TREASURE_EVERY = +(q.get('treasureEvery') ?? 1), PARTY = +(q.get('party') ?? 0);   // r294: how fast the party gathers (recruit and treasure rooms only every Nth floor, counted from floor 1; a smaller Arcbracer)   // curve: how steep the wild Coreatures' climb per floor is, 1 = the game's; 'a,b' ramps from a at floor 2 to b at maxfloor (r294, for trying run lengths)
 const $ = s => document.querySelector(s);
 const logEl = $('#log');
 const log = s => { logEl.textContent += s + '\n'; logEl.scrollTop = logEl.scrollHeight; };
@@ -82,6 +84,25 @@ $('#game').addEventListener('load', async () => {
   if (!$('#game').getAttribute('src')) return;
   const w = $('#game').contentWindow;
   const G = name => w.eval(name);     // the game's globals (const/let ones aren't on window)
+  if (RECRUIT_EVERY > 1 || TREASURE_EVERY > 1) {   // fewer recruit and treasure rooms (r294): the others become fight rooms
+    const og = w.genFloor;
+    w.genFloor = (...a) => {
+      const f = og(...a);
+      for (const r of f.rooms) {
+        const drop = (r.type === 'recruit' && (f.n - 1) % RECRUIT_EVERY !== 0) || (r.type === 'treasure' && (f.n - 1) % TREASURE_EVERY !== 0);
+        if (!drop) continue;
+        r.type = 'fight'; r.cleared = false; delete r.offer; delete r.relicChoice;
+        r.enemies = w.makeWave(f.n, 's', f.stage); r.reward = w.pickReward();
+      }
+      return f;
+    };
+  }
+  if (PARTY) Object.defineProperty(G('RunState').prototype, 'partyMax', { get() { return PARTY; } });   // a smaller Arcbracer (r294)
+  if (CURVE.length > 1 || CURVE[0] !== 1) {   // a gentler or steeper climb per floor than the game's, to try run lengths (r294): floor 1 stays as it is
+    const orig = w.wildSpec, [c0, c1] = CURVE.length > 1 ? CURVE : [CURVE[0], CURVE[0]];
+    const at = floorN => c0 + (c1 - c0) * Math.max(0, Math.min(1, (floorN - 2) / Math.max(1, MAX_FLOOR - 2)));   // the factor ramps from floor 2 to the last floor
+    w.wildSpec = (id, floorN, kind) => { const b = orig(id, 1, kind), f = orig(id, floorN, kind), c = at(floorN); return { ...f, hpMul: b.hpMul + (f.hpMul - b.hpMul) * c, atkMul: b.atkMul + (f.atkMul - b.atkMul) * c }; };
+  }
   const errors = [];
   w.addEventListener('error', e => errors.push(String(e.message || e.error)));
   w.addEventListener('unhandledrejection', e => errors.push(String(e.reason)));
@@ -379,10 +400,14 @@ $('#game').addEventListener('load', async () => {
     const bot = { peds: new Set(), room: null, roomT: 0, lastPos: null, stuckT: 0, wiggle: 0, swaps: 0 };
     let dir = { x: 0, y: 0 }, steps = 0, problem = null, note = null;
     Input.dir = () => dir;
+    const floors = [];   // the party's shape on arriving at each floor (r294)
+    const noteFloor = () => { const run = App.run, alive = run.party.filter(m => !m.fainted); floors.push({ n: run.floorN, prog: run.party.reduce((a, m) => a + m.progress, 0) / run.party.length, relics: run.relics.length, party: run.party.length, hp: alive.length ? alive.reduce((a, m) => a + m.hp / m.maxHp, 0) / alive.length : 0, time: run.stats.time }); };
+    noteFloor();
     const DT = 1 / 60, LIMIT = 60 * 60 * 90;   // 90 minutes of game time at most (a full 6-floor run takes 25-35)
     while (true) {
       const b = App.battle;
       if (!b || b.state === 'over') break;
+      if (App.run.floorN !== floors[floors.length - 1].n) noteFloor();
       if (endless && App.run.floorN > MAX_FLOOR) break;
       if (++steps > LIMIT) { problem = 'took too long'; break; }
       if (b.room !== bot.room) { bot.room = b.room; bot.roomT = 0; bot.peds = new Set(); bot.swaps = 0; bot.skip = new Set(); }
@@ -468,9 +493,10 @@ $('#game').addEventListener('load', async () => {
       if (steps % 400 === 0) await tick();
     }
     Input.dir = origDir;
-    const run = App.run;
+    const run = App.run, bEnd = App.battle;
+    const end = `${bEnd ? bEnd.state + ' in a ' + bEnd.room.type + ' room' : 'no battle'}; party ${run.party.map(m => m.id + ' ' + Math.round(m.hp) + '/' + Math.round(m.maxHp) + (m.fainted ? ' fainted' : '')).join(', ')}${bEnd && bEnd.e.length ? '; vs ' + bEnd.e.map(m => m.id + (m.champ ? ' ' + m.champ : '') + ' ' + Math.round(m.hp) + '/' + Math.round(m.maxHp)).join(', ') : ''}; ${run.relics.length} relics`;
     const res = { win: !!(App.battle && App.battle.state === 'over' && run.floorN >= G('RUN_FLOORS') && !endless && run.party.some(m => !m.fainted)),
-      floor: run.floorN, rooms: run.stats.rooms, time: run.stats.time, problem, note };
+      floor: run.floorN, rooms: run.stats.rooms, time: run.stats.time, problem, note, floors, cleared: endless && run.floorN > MAX_FLOOR, end };
     w.leaveRun('title');
     return res;
   }
@@ -488,7 +514,7 @@ $('#game').addEventListener('load', async () => {
       const r = await botRun(starter, endless);
       if (errors.length > before && !r.problem) r.problem = 'error: ' + errors[before];
       rs.push(r);
-      log(`${starter} ${endless ? 'endless' : 'normal'} #${i + 1}: ${r.win ? 'WIN' : 'floor ' + r.floor}, ${r.rooms} rooms, ${Math.round(r.time)} s${r.problem ? '  ✗ ' + r.problem : ''}${r.note ? '  ⚠ ' + r.note : ''}`);
+      log(`${starter} ${endless ? 'endless' : 'normal'} #${i + 1}: ${r.win ? 'WIN' : 'floor ' + r.floor}, ${r.rooms} rooms, ${Math.round(r.time)} s${r.problem ? '  ✗ ' + r.problem : ''}${r.note ? '  ⚠ ' + r.note : ''}${!r.win && !r.cleared ? '  (' + r.end + ')' : ''}`);
     }
     const avg = k => rs.reduce((a, r) => a + r[k], 0) / rs.length;
     const probs = [...new Set(rs.map(r => r.problem).filter(Boolean))];
@@ -496,12 +522,25 @@ $('#game').addEventListener('load', async () => {
     probs.forEach(p => runProblems.push(`${starter}: ${p}`));
     const t = Math.round(avg('time'));
     $('#runs').insertAdjacentHTML('beforeend', `<tr><td>${G('ROSTER_BY_ID')[starter].name}</td><td>${endless ? 'Endless' : 'Normal'}</td>
-      <td class="num">${rs.length}</td><td class="num">${endless ? '–' : rs.filter(r => r.win).length}</td>
+      <td class="num">${rs.length}</td><td class="num">${endless ? rs.filter(r => r.cleared).length + ' past ' + MAX_FLOOR : rs.filter(r => r.win).length}</td>
       <td class="num">${avg('floor').toFixed(1)}</td><td class="num">${Math.max(...rs.map(r => r.floor))}</td>
       <td>${(() => { const h = {}; for (const r of rs) if (!r.win) h[r.floor] = (h[r.floor] || 0) + 1; return Object.keys(h).sort((a, b) => a - b).map(f => `${f}: ${h[f]}`).join(', ') || '–'; })()}</td>
       <td class="num">${avg('rooms').toFixed(1)}</td><td class="num">${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}</td>
       <td class="${probs.length ? 'bad' : 'ok'}">${probs.join('; ') || 'none'}</td><td class="warn">${notes.join('; ')}</td></tr>`);
     rows.push({ starter, endless, rs });
+  }
+  // floor by floor, over every run (r294)
+  {
+    const all = rows.flatMap(r => r.rs), top = Math.max(0, ...all.flatMap(r => r.floors.map(f => f.n)));
+    if (all.length && top > 1) {
+      $('#floors').style.display = ''; $('#floors-hint').style.display = '';
+      for (let n = 1; n <= top; n++) {
+        const at = all.map(r => r.floors.find(f => f.n === n)).filter(Boolean), ended = all.filter(r => !r.win && !r.cleared && r.floor === n).length;
+        if (!at.length) continue;
+        const avg = k => at.reduce((a, f) => a + f[k], 0) / at.length, t = Math.round(avg('time'));
+        $('#floors').insertAdjacentHTML('beforeend', `<tr><td class="num">${n}</td><td class="num">${at.length}</td><td class="num${ended ? ' warn' : ''}">${ended || '–'}</td><td class="num">${avg('prog').toFixed(2)}</td><td class="num">${avg('relics').toFixed(1)}</td><td class="num">${avg('party').toFixed(1)}</td><td class="num">${Math.round(avg('hp') * 100)}%</td><td class="num">${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}</td></tr>`);
+      }
+    }
   }
   check('Bot runs', !runProblems.length, runProblems.length ? runProblems.join(' | ') : `${rows.reduce((a, r) => a + r.rs.length, 0)} runs, no errors and nobody got stuck`);
   check('No errors in the page', !errors.length, errors.length ? [...new Set(errors)].slice(0, 5).join(' | ') : 'none');

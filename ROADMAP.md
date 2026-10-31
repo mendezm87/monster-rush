@@ -69,10 +69,20 @@ The roguelikes people play for hundreds of hours are built on **builds**: items 
 The 6-floor run was kept short for development. The goal: a run long and hard enough that a player who made the right
 choices feels **overpowered by the end**, and a story that finishes. Not started; decide the numbers with the owner first.
 
-- [ ] **Length:** 12 floors in 4 acts of 3 (a run of about an hour; the 6 areas now, plus 6 more or alternates per act,
-  so acts 3-4 aren't repeats), or 9 floors in 3 acts as a first step. `RUN_FLOORS` and `ACT_FLOORS` are single constants,
-  so the length is one change; everything else (wild scaling, data per floor, relic prices, `FLOOR_STAGES` looping) already
-  takes a floor number. New per act: its boss, its story beat, a new area or alternate.
+- [ ] **Length (researched and tested, r294, `docs/run-length.md`):** 9 floors in 3 acts as the standard run (50-55
+  minutes for a person, the genre's sweet spot; 12 is 70-75, where runs get called tiring), plus a hidden 4th act of 3
+  floors for the true ending, Spire-style, for players who meet a condition found in the story. Each act gets two areas
+  with a choice at the stairs (the six areas now pair up; the second ones come later, alternates (a recoloured area with
+  its own natives and a twist) as cheap stand-ins). `RUN_FLOORS` and `ACT_FLOORS` are single constants; everything else
+  already takes a floor number. New per act: its boss, its story beat, a second area.
+- [ ] **The curve (tested, r294):** as the game is, bots clear 12 floors 8 times in 9 and arrive at every late floor at
+  90-98% HP: the party's growth (restoration above all, about 0.65 bars a floor, plus six bodies and the whole relic pool
+  by floor 10) outruns any flat climb; steeper or gentler by 30% changes nothing. A climb that ramps to about 2.2x the
+  game's growth per floor by the last act gives the roguelike shape (deaths spread over floors 2-9, late floors reached
+  at 76-85% HP, the best starter still through); steeper turns the act bosses into walls. Fewer relics and recruits on
+  their own only move deaths earlier. So: the ramp, restoration that tapers past the third bar, challenge rooms later,
+  60+ relics with rarities, and threat that isn't numbers (rooms of four and five, Restored wilds, elites, scripted
+  bosses).
 - [ ] **The power curve:** wild Coreatures grow by a fixed amount per floor (`wildSpec`, linear), the party grows by its
   choices, which compound (relic synergies and fusions, memories, third forms, the altar). Aim: a party that picked well is
   about twice a "took whatever came" party by the last act, and the last act's wilds sit in between, so good choices feel
@@ -81,11 +91,12 @@ choices feels **overpowered by the end**, and a story that finishes. Not started
 - [ ] **Story beats, one per act** (Hades-style, a little each run): act 1 the ruins and the first jumbled Coreature (Slumbear);
   act 2 what the Arc-cores are (terminals, the ominous figure); act 3 the altar's makers; act 4 the Archive's core, the Warden,
   and an ending that completes, plus a secret ending for a hidden condition.
-- [ ] **A balance check that scales with the length:** test.html's table now shows **where runs end, floor by floor** (r293),
-  so a longer run reads as a curve, not one win rate. To add as the run grows: a per-floor power line (the party's damage per
-  second against that floor's wild HP, logged at each floor's stairs), a target shape (hard-bot wins about 25-35%, losses
-  spread over the middle acts, almost none on floor 1), bots that use the dodge, and `?floors=N` on the test page to try a
-  length before changing the constant. Compare before and after every balance change with 8 runs per starter at least.
+- [x] **A balance check that scales with the length (r293-r294):** test.html shows where runs end floor by floor and the
+  party's shape on arriving at each floor (restoration, relics, size, HP, time), says how each lost run ended (room, party,
+  foes), and tries a length and a shape without touching the game: `&maxfloor=12&endless=3` (endless is a long run in all
+  but name), `&curve=1,2.2` (the climb ramping from floor 2 to the last), `&recruitEvery=2&treasureEvery=2&party=4`. Target
+  shape for a 9-floor run: hard bots win about a third, losses spread over acts 2-3, almost none on floor 1, the act
+  bosses reached at 60-80% HP. Still to add: bots that use the dodge; compare with 8 runs per starter at least.
 
 ## Phase 3: Bosses and the world
 
