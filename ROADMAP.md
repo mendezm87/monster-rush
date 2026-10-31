@@ -64,6 +64,29 @@ The roguelikes people play for hundreds of hours are built on **builds**: items 
 - [ ] **Level design (r258, the owner picked the order):** (1) each area its own walls and decorations from Gemini sheets (`docs/level-prompts.md`; done r260, `js/rooms.js`); (2) obstacles, hazards and room shapes (first try done r268, `js/obstacles.js`: prop clusters that block walking and shots, the areas' floor patches as hazards (mud, lava, ice, snow, crystals, quicksand, runes), L and T rooms from wall blocks; still to come: pits, breakable obstacles, hand-made layouts, beams blocked, AI that avoids hazards); (3) special rooms that look special (shop stall, vault, altar machine, boss arenas); (4) floors with loops, secret and challenge rooms.
 - [ ] **Smarter wild Coreatures:** each species fights in its own way (kiting, charging, burrowing, summoning, shielding a partner), plus elite versions.
 
+## A full-length run (the owner, 2026-10-31): longer, harder, and a story that completes
+
+The 6-floor run was kept short for development. The goal: a run long and hard enough that a player who made the right
+choices feels **overpowered by the end**, and a story that finishes. Not started; decide the numbers with the owner first.
+
+- [ ] **Length:** 12 floors in 4 acts of 3 (a run of about an hour; the 6 areas now, plus 6 more or alternates per act,
+  so acts 3-4 aren't repeats), or 9 floors in 3 acts as a first step. `RUN_FLOORS` and `ACT_FLOORS` are single constants,
+  so the length is one change; everything else (wild scaling, data per floor, relic prices, `FLOOR_STAGES` looping) already
+  takes a floor number. New per act: its boss, its story beat, a new area or alternate.
+- [ ] **The power curve:** wild Coreatures grow by a fixed amount per floor (`wildSpec`, linear), the party grows by its
+  choices, which compound (relic synergies and fusions, memories, third forms, the altar). Aim: a party that picked well is
+  about twice a "took whatever came" party by the last act, and the last act's wilds sit in between, so good choices feel
+  overpowered and poor ones feel the wall. Levers for that: stronger late relics and relic sets (Phase 2), third forms for
+  more lines, the altar earlier, a late-run shop with legendary relics.
+- [ ] **Story beats, one per act** (Hades-style, a little each run): act 1 the ruins and the first jumbled Coreature (Slumbear);
+  act 2 what the Arc-cores are (terminals, the ominous figure); act 3 the altar's makers; act 4 the Archive's core, the Warden,
+  and an ending that completes, plus a secret ending for a hidden condition.
+- [ ] **A balance check that scales with the length:** test.html's table now shows **where runs end, floor by floor** (r293),
+  so a longer run reads as a curve, not one win rate. To add as the run grows: a per-floor power line (the party's damage per
+  second against that floor's wild HP, logged at each floor's stairs), a target shape (hard-bot wins about 25-35%, losses
+  spread over the middle acts, almost none on floor 1), bots that use the dodge, and `?floors=N` on the test page to try a
+  length before changing the constant. Compare before and after every balance change with 8 runs per starter at least.
+
 ## Phase 3: Bosses and the world
 
 - [ ] **Hand-made bosses:** acts of three floors (r143: bosses after floors 3 and 6, gatekeepers on the other floors) and the engine for hand-made bosses (`js/bosses.js`: phases, warned attacks, interrupts, stagger checks, form changes, Glitched bosses). **2 of ~10 done:** Slumbear, the Jumbled King (act 1), and the Archive's Warden (the final boss, r280). Next: more act 1 bosses for variety, an act 2 boss for endless, then more acts. Research and mechanics: `docs/boss-research.md`.

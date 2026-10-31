@@ -39,7 +39,7 @@
   <table id="checks"><tr><th>Check</th><th>Result</th><th>Details</th></tr></table>
   <h2>Bot runs</h2>
   <p class="hint">Hard bots. Balance numbers aren't pass/fail, they're there to compare before and after a change. Bots favour ranged moves, so read them with that in mind.</p>
-  <table id="runs"><tr><th>Starter</th><th>Mode</th><th>Runs</th><th>Wins</th><th>Avg floor</th><th>Best floor</th><th>Avg rooms</th><th>Avg game time</th><th>Problems</th><th>Notes</th></tr></table>
+  <table id="runs"><tr><th>Starter</th><th>Mode</th><th>Runs</th><th>Wins</th><th>Avg floor</th><th>Best floor</th><th>Lost on floor</th><th>Avg rooms</th><th>Avg game time</th><th>Problems</th><th>Notes</th></tr></table>
   <button id="again">Run again</button>
 
 <script>
@@ -498,6 +498,7 @@ $('#game').addEventListener('load', async () => {
     $('#runs').insertAdjacentHTML('beforeend', `<tr><td>${G('ROSTER_BY_ID')[starter].name}</td><td>${endless ? 'Endless' : 'Normal'}</td>
       <td class="num">${rs.length}</td><td class="num">${endless ? '–' : rs.filter(r => r.win).length}</td>
       <td class="num">${avg('floor').toFixed(1)}</td><td class="num">${Math.max(...rs.map(r => r.floor))}</td>
+      <td>${(() => { const h = {}; for (const r of rs) if (!r.win) h[r.floor] = (h[r.floor] || 0) + 1; return Object.keys(h).sort((a, b) => a - b).map(f => `${f}: ${h[f]}`).join(', ') || '–'; })()}</td>
       <td class="num">${avg('rooms').toFixed(1)}</td><td class="num">${Math.floor(t / 60)}:${String(t % 60).padStart(2, '0')}</td>
       <td class="${probs.length ? 'bad' : 'ok'}">${probs.join('; ') || 'none'}</td><td class="warn">${notes.join('; ')}</td></tr>`);
     rows.push({ starter, endless, rs });
